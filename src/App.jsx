@@ -53,6 +53,10 @@ import MainMenu from './components/navigation/MainMenu';
 import ModulesView from './components/navigation/ModulesView';
 import SearchView from './components/navigation/SearchView';
 import LessonsView from './components/navigation/LessonsView';
+import UpdateToast from './components/common/UpdateToast';
+
+// --- Hooks ---
+import useAutoReload from './hooks/useAutoReload';
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -65,6 +69,7 @@ const generateAIResponse = async (prompt) => {
 
 // --- MAIN APP ---
 export default function App() {
+    const { updateAvailable, countdown } = useAutoReload();
     const [appMode, setAppMode] = useState('menu');
     const [searchQuery, setSearchQuery] = useState('');
     const [history, setHistory] = useState(['start']);
@@ -461,6 +466,8 @@ export default function App() {
                         </div>
                     </div>
                 )}
+
+                {updateAvailable && <UpdateToast countdown={countdown} />}
             </div>
         </ErrorBoundary>
     );
