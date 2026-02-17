@@ -60,7 +60,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               </div>
             ) : (
               <div className="flex items-center">
-                <span className="mr-1">{calc("sp", Math.sqrt(getV('sp2')))}</span>
+                <span className="mr-1">{calc("sp", Math.sqrt(getV('pooledVar')))}</span>
                 <div className="flex items-start">
                   <span className="text-2xl -mr-0.5 leading-none mt-[-1px]">√</span>
                   <div className={`border-t-2 pt-1.5 ${borderCol} flex items-center gap-2 px-1`}>

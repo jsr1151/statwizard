@@ -37,6 +37,7 @@ export const MATH_TERMS = {
     "SE": { title: "Standard Error (SE)", desc: "Expected noise/spread of sampling dist.", calc: "varies by test." },
     "SE_delta": { title: "Standard Error of Difference (SE<sub>Δ</sub>)", desc: "Estimated noise in the mean gap.", calc: "√( {s₁²}/{n₁} + {s₂²}/{n₂} )" },
     "sp2": { title: "Pooled Variance (s<sub>pooled</sub>²)", desc: "Weighted average of both group variances.", calc: "( ({n₁}-1)s₁² + ({n₂}-1)s₂² ) / (n₁+n₂-2)" },
+    "sp": { title: "Pooled Standard Deviation (s<sub>pooled</sub>)", desc: "The square root of the pooled variance.", calc: "√s<sub>pooled</sub>²" },
     // Paired T-Test
     "dBar": { title: "Mean Difference (d̄)", desc: "The average change between paired scores.", calc: "Σd / {n_pairs}" },
     "sd_diff": { title: "SD of Differences (s_d)", desc: "Spread of the change scores.", calc: "√[ Σ(d - {dBar})² / ({n_pairs} - 1) ]" },
