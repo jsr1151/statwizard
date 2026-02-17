@@ -58,6 +58,55 @@ export const lnGamma = (z) => {
 // --- HELPER: Beta Function using Log Gamma ---
 export const beta = (x, y) => Math.exp(lnGamma(x) + lnGamma(y) - lnGamma(x + y));
 
+// --- HELPER: Incomplete Beta Continued Fraction (Lentz's Method) ---
+export const betacf = (x, a, b) => {
+    const MAXIT = 100;
+    const EPS = 3e-7;
+    const FPMIN = 1e-30;
+    let qab = a + b;
+    let qap = a + 1;
+    let qam = a - 1;
+    let c = 1;
+    let d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= MAXIT; m++) {
+        let m2 = 2 * m;
+        let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < FPMIN) d = FPMIN;
+        c = 1 + aa / c;
+        if (Math.abs(c) < FPMIN) c = FPMIN;
+        d = 1 / d;
+        h *= d * c;
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < FPMIN) d = FPMIN;
+        c = 1 + aa / c;
+        if (Math.abs(c) < FPMIN) c = FPMIN;
+        d = 1 / d;
+        let del = d * c;
+        h *= del;
+        if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+};
+
+// --- HELPER: Regularized Incomplete Beta Function Ix(a, b) ---
+export const incBeta = (x, a, b) => {
+    if (x < 0 || x > 1) return NaN;
+    if (x === 0) return 0;
+    if (x === 1) return 1;
+    const lbeta = lnGamma(a) + lnGamma(b) - lnGamma(a + b);
+    const bt = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - lbeta);
+    if (x < (a + 1) / (a + b + 2)) {
+        return bt * betacf(x, a, b) / a;
+    } else {
+        return 1 - bt * betacf(1 - x, b, a) / b;
+    }
+};
+
 // --- HELPER: Accurate F-Distribution Density (PDF) ---
 export const getFDensity = (f, d1, d2) => {
     if (f <= 0) return 0;
@@ -67,26 +116,23 @@ export const getFDensity = (f, d1, d2) => {
     return isFinite(val) ? val : 0;
 };
 
-// --- HELPER: F-Distribution CDF (Approximate via Numerical Integration) ---
+// --- HELPER: F-Distribution CDF (Accurate via Incomplete Beta) ---
 export const fCDF = (f, df1, df2) => {
     if (f <= 0) return 0;
-    const n = Math.max(400, Math.ceil(f * 50));
-    const h = f / n;
-    let sum = getFDensity(1e-6, df1, df2) + getFDensity(f, df1, df2);
-    for (let i = 1; i < n; i++) {
-        const x = i * h;
-        sum += (i % 2 === 0 ? 2 : 4) * getFDensity(x, df1, df2);
-    }
-    const result = (h / 3) * sum;
-    return Math.min(1, Math.max(0, result));
+    const x = (df1 * f) / (df1 * f + df2);
+    return incBeta(x, df1 / 2, df2 / 2);
 };
 
 // --- HELPER: F-Distribution Inverse CDF (Percent Point Function) ---
 export const fPPF = (p, d1, d2) => {
     if (p <= 0) return 0;
-    if (p >= 1) return 200;
+    if (p >= 1) return 1000000;
     let low = 0, high = 200;
-    for (let i = 0; i < 30; i++) {
+    // Dynamic bracketing to find high bound
+    while (high < 1000000 && fCDF(high, d1, d2) < p) {
+        high *= 2;
+    }
+    for (let i = 0; i < 40; i++) {
         const mid = (low + high) / 2;
         if (fCDF(mid, d1, d2) < p) { low = mid; }
         else { high = mid; }
@@ -121,22 +167,9 @@ export const getFPoints = (df1, df2, heightScale = 40, width = 300, maxX = 6) =>
     return points;
 };
 
-// --- HELPER: F-Critical Table Lookup ---
+// --- HELPER: F-Critical Table Lookup (Now Dynamic) ---
 export const getFCrit = (alpha, df1, df2) => {
-    if (alpha === 0.01) {
-        if (df1 === 1) return df2 > 30 ? 7.56 : 9.33;
-        if (df1 === 2) return df2 > 30 ? 5.39 : 6.51;
-        return df2 > 30 ? 4.50 : 5.40;
-    }
-    if (alpha === 0.10) {
-        if (df1 === 1) return df2 > 30 ? 2.89 : 3.10;
-        if (df1 === 2) return df2 > 30 ? 2.49 : 2.60;
-        return df2 > 30 ? 2.20 : 2.30;
-    }
-    if (df1 === 1) return df2 > 30 ? 4.15 : 4.30;
-    if (df1 === 2) return df2 > 30 ? 3.32 : 3.50;
-    if (df1 === 3) return df2 > 30 ? 2.92 : 3.10;
-    return df2 > 30 ? 2.60 : 2.80;
+    return fPPF(1 - alpha, df1, df2);
 };
 
 // --- HELPER: ANOVA Calculator ---
