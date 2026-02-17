@@ -28,7 +28,8 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               ({calc("x̄1", getV('x1'))} - {calc("x̄2", getV('x2'))})
             </div>
             <div className="pt-1 flex items-center group relative">
-              <span className="mr-1">{calc("SE_delta", getV('se'))}</span>
+              <span className="mr-1">SE<sub>Δ</sub></span>
+              {showValues && <span className="text-xs font-bold text-indigo-500 ml-1">({getV('se')?.toFixed(3)})</span>}
             </div>
           </div>
         </div>
@@ -58,16 +59,18 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             ) : (
               <div className="flex items-center">
                 <span className="mr-1">{calc("sp", Math.sqrt(getV('sp2')))}</span>
-                <span className="text-xl mr-1">√</span>
-                <div className={`border-t pt-1 ${borderCol} flex items-center gap-1`}>
-                  <div className="flex flex-col items-center">
-                    <span className={`border-b ${borderCol} px-1`}>1</span>
-                    <span>{calc("n1", getV('n1'))}</span>
-                  </div>
-                  <span className="mx-0.5">+</span>
-                  <div className="flex flex-col items-center">
-                    <span className={`border-b ${borderCol} px-1`}>1</span>
-                    <span>{calc("n2", getV('n2'))}</span>
+                <div className="flex items-start">
+                  <span className="text-2xl -mr-0.5 leading-none mt-[-1px]">√</span>
+                  <div className={`border-t-2 pt-1.5 ${borderCol} flex items-center gap-2 px-1`}>
+                    <div className="flex flex-col items-center">
+                      <span className={`border-b ${borderCol} px-1 leading-tight`}>1</span>
+                      <span className="leading-tight">{calc("n1", getV('n1'))}</span>
+                    </div>
+                    <span className="self-center font-bold">+</span>
+                    <div className="flex flex-col items-center">
+                      <span className={`border-b ${borderCol} px-1 leading-tight`}>1</span>
+                      <span className="leading-tight">{calc("n2", getV('n2'))}</span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -35,8 +35,8 @@ export const MATH_TERMS = {
     "x̄1": { title: "Mean Group 1", desc: "Average of Group 1.", calc: "Σ{x1} / {n1}" },
     "x̄2": { title: "Mean Group 2", desc: "Average of Group 2.", calc: "Σ{x2} / {n2}" },
     "SE": { title: "Standard Error (SE)", desc: "Expected noise/spread of sampling dist.", calc: "varies by test." },
-    "SE_delta": { title: "SE of Difference", desc: "Estimated noise in the mean gap.", calc: "√( {s1_2}/{n1} + {s2_2}/{n2} )" },
-    "sp2": { title: "Pooled Variance ($s_p^2$)", desc: "Weighted average of both group variances.", calc: "( ({n1}-1){s1_2} + ({n2}-1){s2_2} ) / ({n1}+{n2}-2)" },
+    "SE_delta": { title: "SE of Difference", desc: "Estimated noise in the mean gap.", calc: "√( {s₁²}/{n₁} + {s₂²}/{n₂} )" },
+    "sp2": { title: "Pooled Variance ($s_p^2$)", desc: "Weighted average of both group variances.", calc: "( ({n₁}-1)s₁² + ({n₂}-1)s₂² ) / (n₁+n₂-2)" },
     // Paired T-Test
     "dBar": { title: "Mean Difference (d̄)", desc: "The average change between paired scores.", calc: "Σd / {n_pairs}" },
     "sd_diff": { title: "SD of Differences (s_d)", desc: "Spread of the change scores.", calc: "√[ Σ(d - {dBar})² / ({n_pairs} - 1) ]" },

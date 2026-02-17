@@ -33,7 +33,6 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/SE_delta/g, "SE<sub>Δ</sub>")
             .replace(/SE_paired/g, "SE<sub>d̄</sub>")
             .replace(/sd_diff/g, "s<sub>d</sub>")
-            .replace(/dBar/g, "d̄")
             .replace(/dz/g, "d<sub>z</sub>")
             .replace(/MS_between/g, "MS<sub>between</sub>")
             .replace(/MS_within/g, "MS<sub>within</sub>")
@@ -44,9 +43,12 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/df_within/g, "df<sub>within</sub>")
             .replace(/eta2/g, "η²")
             .replace(/s2/g, "s²")
+            .replace(/s1_2/g, "s₁²")
+            .replace(/s2_2/g, "s₂²")
             .replace(/sp2/g, "sₚ²")
             .replace(/n1/g, "n₁")
-            .replace(/n2/g, "n₂");
+            .replace(/n2/g, "n₂")
+            .replace(/delta/g, "Δ");
     };
 
     const cleanTerm = getCleanTerm(term.replace(/[\{\}]/g, ''));
