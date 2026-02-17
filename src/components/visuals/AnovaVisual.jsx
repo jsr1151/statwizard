@@ -6,6 +6,10 @@ import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
+import MathTerm from '../common/MathTerm';
+import FSamplingDist from './FSamplingDist';
+import GroupsMeansView from './GroupsMeansView';
+import VarianceDecomposition from './VarianceDecomposition';
 const AnovaVisual = ({ highlight = null, darkMode, showValues, onTutorUpdate, onStatsUpdate }) => {
   const [groups, setGroups] = useState([
     { id: 1, label: 'Control', color: '#6366f1', inputMode: 'raw', values: [5, 6, 7, 5, 6], summary: { mean: "5.8", sd: "0.8", n: "5" }, collapsed: false },
