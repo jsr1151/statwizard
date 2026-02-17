@@ -57,10 +57,9 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               </div>
             ) : (
               <div className="flex items-center">
+                <span className="mr-1">{calc("sp", Math.sqrt(getV('sp2')))}</span>
                 <span className="text-xl mr-1">√</span>
                 <div className={`border-t pt-1 ${borderCol} flex items-center gap-1`}>
-                  <span>{calc("sp2", getV('sp2'))}</span>
-                  <span className="mx-1">·</span>
                   <div className="flex flex-col items-center">
                     <span className={`border-b ${borderCol} px-1`}>1</span>
                     <span>{calc("n1", getV('n1'))}</span>
