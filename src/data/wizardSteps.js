@@ -6,7 +6,7 @@ export const STEPS = {
     // Navigation Steps
     start: {
         id: 'start',
-        title: "Hello World",
+        title: "Select Analysis Goal",
         question: "What is the primary goal of your analysis?",
         description: "Choose the option that best describes what you want to find out.",
         helpId: 'help_start',
