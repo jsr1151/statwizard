@@ -43,16 +43,18 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             <span className="mx-2">=</span>
             {isWelch ? (
               <div className="flex items-center">
-                <span className="text-xl mr-1">√</span>
-                <div className={`border-t pt-1 ${borderCol} flex gap-2`}>
-                  <div className="flex flex-col items-center">
-                    <span className={`border-b ${borderCol} px-1`}>{calc("s1_2", getV('s1') ** 2)}</span>
-                    <span>{calc("n1", getV('n1'))}</span>
-                  </div>
-                  <span className="self-center">+</span>
-                  <div className="flex flex-col items-center">
-                    <span className={`border-b ${borderCol} px-1`}>{calc("s2_2", getV('s2') ** 2)}</span>
-                    <span>{calc("n2", getV('n2'))}</span>
+                <div className="flex items-start">
+                  <span className="text-2xl -mr-0.5 leading-none mt-[-1px]">√</span>
+                  <div className={`border-t-2 pt-1.5 ${borderCol} flex items-center gap-3 px-1`}>
+                    <div className="flex flex-col items-center">
+                      <span className={`border-b ${borderCol} px-1 leading-tight`}>{calc("s1_2", getV('s1') ** 2)}</span>
+                      <span className="leading-tight">{calc("n1", getV('n1'))}</span>
+                    </div>
+                    <span className="self-center font-bold px-1">+</span>
+                    <div className="flex flex-col items-center">
+                      <span className={`border-b ${borderCol} px-1 leading-tight`}>{calc("s2_2", getV('s2') ** 2)}</span>
+                      <span className="leading-tight">{calc("n2", getV('n2'))}</span>
+                    </div>
                   </div>
                 </div>
               </div>
