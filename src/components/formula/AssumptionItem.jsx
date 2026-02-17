@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, CheckCircle, ChevronUp, ChevronDown, Info } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronUp, ChevronDown, Info, RotateCcw, Search, Terminal } from 'lucide-react';
 import SkewedDistributionVisual from '../visuals/SkewedDistributionVisual';
 const AssumptionItem = ({ assumption, darkMode }) => {
   const [expanded, setExpanded] = useState(false);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, ArrowRight, CheckCircle } from 'lucide-react';
+import { BookOpen, ArrowRight, CheckCircle, Compass } from 'lucide-react';
 const LessonsView = ({ darkMode }) => (
   <div className="max-w-4xl mx-auto py-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div className="text-center mb-12">

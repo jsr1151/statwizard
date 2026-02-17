@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Activity, AlertCircle } from 'lucide-react';
 import { STAT_PAGE_LIST } from '../../data/wizardSteps';
 const SearchView = ({ onSelect, darkMode, searchQuery, setSearchQuery }) => {
   const normalize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Activity, Layers, ChevronDown, BarChart2 } from 'lucide-react';
+import { ArrowRight, Activity, Layers, ChevronDown, ChevronLeft, BarChart2, Play } from 'lucide-react';
 import { STAT_PAGE_LIST, FAMILIES } from '../../data/wizardSteps';
 const ModulesView = ({ onSelect, darkMode }) => {
   const categories = ['Descriptive', 'Mean Comparisons', 'Linear Modeling', 'Non-parametric'];
