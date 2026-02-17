@@ -194,4 +194,111 @@ Before submitting any change, mentally verify:
 
 ---
 
+## 8. Git Recovery & Rollback
+
+> Every push to `main` triggers an automatic deploy. If bad code goes live, use these commands to revert.
+
+### 8.1 View Commit History
+
+```bash
+# Show the last 20 commits (most recent first)
+git log --oneline -20
+```
+
+Output looks like:
+```
+18e776c  Add AI Rulebook and auto-reload deployment indicator feature
+d3ae46e  Fix missing component imports in AnovaVisual
+44dc4e9  Fix missing lucide-react icon imports in 6 components
+d543630  Initial commit - StatWizard Alpha modular architecture
+```
+
+### 8.2 Revert to a Previous State
+
+**Option A — Undo the last N commits:**
+
+```bash
+# Undo the last 1 commit (keep files changed on disk for review)
+git reset --soft HEAD~1
+
+# Undo the last 3 commits
+git reset --soft HEAD~3
+
+# Then force-push to update the website
+git push --force
+```
+
+**Option B — Jump to a specific commit by hash:**
+
+```bash
+git reset --hard d543630
+git push --force
+```
+
+### 8.3 Quick Reference
+
+| Command | What It Does |
+|---|---|
+| `HEAD~1` | 1 commit ago |
+| `HEAD~5` | 5 commits ago |
+| `--soft` | Undoes commits but **keeps files changed** on disk (safe to inspect) |
+| `--hard` | Undoes commits **and wipes all file changes** (nuclear option) |
+| `git push --force` | Required after any reset to update GitHub and trigger a new deploy |
+
+### 8.4 Recommended Recovery Workflow
+
+1. **`git log --oneline -20`** — Find the last known-good commit
+2. **`git reset --soft <hash>`** — Revert to it, keeping files visible for inspection
+3. Verify the code looks correct
+4. **`git push --force`** — Push it live (auto-triggers GitHub Actions deploy)
+5. The auto-reload indicator will refresh the site when the reverted deploy goes live
+
+### 8.5 Rules for AI Assistants
+
+- **Never force-push without being explicitly asked by the user.**
+- **Never rewrite history (`rebase`, `reset`) without user approval.**
+- If you realize you've introduced a bug, tell the user and offer a revert — don't silently reset.
+
+---
+
+## 9. Multi-Device Workflow
+
+> Follow these steps to work on this project from different computers while keeping everything in sync.
+
+### 9.1 Setting up a New Computer
+
+1. **Install Node.js**: Ensure Node.js (v20+) is installed.
+2. **Clone the Repo**:
+   ```bash
+   git clone https://github.com/jsr1151/statwizard.git
+   cd statwizard
+   ```
+3. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+### 9.2 The Daily Sync (The "Sandwich" Routine)
+
+To avoid conflicts when moving between devices:
+
+1. **START** with a pull:
+   ```bash
+   git pull
+   ```
+2. **WORK**: Make changes, test with `npm run dev`.
+3. **END** with a push:
+   ```bash
+   git add .
+   git commit -m "Brief description of work"
+   git push
+   ```
+
+### 9.3 Troubleshooting Sync Issues
+
+- **"Merge Conflict"**: If you forgot to push on Computer A and started working on Computer B, Git might complain. Usually, `git pull` will try to merge them. If it fails, follow the AI's instructions to resolve the conflicts.
+- **"node_modules" errors**: If you see errors about missing packages after a pull, run `npm install` again to update your local libraries.
+
+---
+
 *Last updated: February 16, 2026*
