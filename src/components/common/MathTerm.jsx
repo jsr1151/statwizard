@@ -62,9 +62,9 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             onMouseEnter={() => onHover && onHover(actualTerm)}
             onMouseLeave={() => onHover && onHover(null)}
             title={tooltip}
-            className={`inline-block px-1 mx-0.5 rounded transition-all border-b border-dotted ${isCalculable
-                ? (darkMode ? 'cursor-pointer hover:bg-indigo-500/20 hover:text-indigo-300 text-indigo-400 font-bold border-indigo-500/40' : 'cursor-pointer hover:bg-indigo-100 hover:text-indigo-700 text-indigo-900 font-bold border-indigo-300')
-                : (darkMode ? (showValue ? 'text-indigo-400 font-bold' : 'text-slate-400 font-serif border-transparent') : (showValue ? 'text-indigo-600 font-bold' : 'text-slate-800 font-serif border-transparent'))}`}
+            className={`inline-block px-1 mx-0.5 rounded transition-all sym-link ${isCalculable
+                ? (darkMode ? 'cursor-pointer hover:bg-indigo-500/20 text-indigo-400 font-bold' : 'cursor-pointer hover:bg-indigo-100 text-indigo-900 font-bold')
+                : (darkMode ? (showValue ? 'text-indigo-400 font-bold' : 'text-slate-400 font-serif') : (showValue ? 'text-indigo-600 font-bold' : 'text-slate-800 font-serif'))}`}
             dangerouslySetInnerHTML={{ __html: displayValue }}
         />
     );
