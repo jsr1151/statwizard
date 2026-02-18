@@ -94,6 +94,9 @@ export default function App() {
     const [currentStats, setCurrentStats] = useState(null);
     const [hoveredTerm, setHoveredTerm] = useState(null);
 
+    // --- SHARED ANOVA TUTOR STATE ---
+    const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
+
     const currentStep = STEPS[currentStepId];
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
@@ -145,33 +148,31 @@ export default function App() {
 
     const toggleDarkMode = () => setDarkMode(!darkMode);
 
-    // --- SHARED ANOVA TUTOR LOGIC ---
-    const isAnovaActive = currentStepId === 'res_anova' || displayVisualType === 'anova';
-    const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
-    useEffect(() => {
-        if (anovaIsFirstVisit && isAnovaActive) {
-            localStorage.setItem('anova_tutor_onboarded', 'true');
-        }
-    }, [anovaIsFirstVisit, isAnovaActive]);
-
     const anovaTutorContext = useMemo(() => ({
         isFirstVisit: anovaIsFirstVisit,
-        activePanel: activeMathTermKey,
+        activePanel: mathHistory.length > 0 ? mathHistory[mathHistory.length - 1] : null, // activeMathTermKey
         hoveredTerm: hoveredTerm,
         showValues: showEquationValues,
         isSymbolKeyFirstOpen: symbolKeyOpen,
-        // we'll let AnovaVisual provide scroll data via event signals if needed, 
-        // but basics are here
-    }), [anovaIsFirstVisit, activeMathTermKey, hoveredTerm, showEquationValues, symbolKeyOpen]);
+    }), [anovaIsFirstVisit, mathHistory, hoveredTerm, showEquationValues, symbolKeyOpen]);
 
     const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
 
+    const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStep?.visualType === 'anova';
+
+    useEffect(() => {
+        if (anovaIsFirstVisit && isAnovaTrulyActive) {
+            localStorage.setItem('anova_tutor_onboarded', 'true');
+        }
+    }, [anovaIsFirstVisit, isAnovaTrulyActive]);
+
     // Sync ANOVA tutor with visibility
     useEffect(() => {
-        if (!isAnovaActive && anovaTutor.activeTip) {
+        if (!isAnovaTrulyActive && anovaTutor.activeTip) {
             anovaTutor.dismissTip(anovaTutor.activeTip.id);
         }
-    }, [isAnovaActive, anovaTutor]);
+    }, [isAnovaTrulyActive, anovaTutor]);
+
 
     const askAI = async (context) => {
         setAiLoading(true);
@@ -208,6 +209,8 @@ export default function App() {
     if (displayFormulaId === 'range') relevantSymbols = SYMBOL_KEYS.range;
     if (displayFormulaId === 'z_test' || displayFormulaId === 't_onesample') relevantSymbols = SYMBOL_KEYS.sd_pop;
     if (displayFormulaId === 'anova') relevantSymbols = SYMBOL_KEYS.anova;
+
+    const isAnovaActive = isAnovaTrulyActive;
 
     return (
         <ErrorBoundary>
