@@ -18,7 +18,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
         type: "onboarding",
         title: "How to use this page",
         body: "Tip: Use 'Show Values' to reveal the numbers in each formula. Hover symbols for definitions. Switch Raw Data vs Summary Stats for SS_within.",
-        condition: (state) => state.isFirstVisit && state.idleTime >= 10 && !state.hasInteracted,
+        condition: (state) => state.isFirstVisit && state.idleTime >= 10,
         buttons: [
             { label: "Show me", action: "toggle_show_values" },
             { label: "Later", action: "dismiss_session" }

@@ -43,8 +43,6 @@ const useAnovaTutor = (stats, context) => {
     }, []);
 
     const triggerEvent = useCallback((eventData) => {
-        resetIdle();
-
         // Check for high priority error tips first (bypass cooldown)
         const validScripts = ANOVA_TUTOR_SCRIPTS.filter(s => {
             if (dismissedIds.includes(s.id)) return false;

@@ -86,8 +86,8 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   }, [renderModel, onStatsUpdate]);
 
   // --- Advanced ANOVA Tutor Logic ---
-  const [isFirstVisit, setIsFirstVisit] = useState(() => !localStorage.getItem('anova_visited'));
-  useEffect(() => { if (isFirstVisit) localStorage.setItem('anova_visited', 'true'); }, [isFirstVisit]);
+  const [isFirstVisit, setIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
+  useEffect(() => { if (isFirstVisit) localStorage.setItem('anova_tutor_onboarded', 'true'); }, [isFirstVisit]);
 
   const [scrollData, setScrollData] = useState({ velocity: 0, direction: 'none', depth: 0 });
   const lastScrollTime = useRef(Date.now());

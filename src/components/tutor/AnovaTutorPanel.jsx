@@ -24,7 +24,7 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, darkMode }) => {
     };
 
     return (
-        <div className={`fixed right-6 top-1/2 -translate-y-1/2 z-[100] w-80 transition-all duration-300 transform ${isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100 animate-in slide-in-from-right-8'}`}>
+        <div className={`fixed right-6 top-1/2 -translate-y-1/2 z-[1000] w-80 transition-all duration-300 transform ${isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100 animate-in slide-in-from-right-4'}`}>
             <div className={`relative overflow-hidden rounded-2xl border-2 shadow-2xl backdrop-blur-xl ${darkMode ? 'bg-slate-900/90 border-slate-800 shadow-black/50' : 'bg-white/90 border-slate-100 shadow-slate-200'}`}>
                 {/* Header/Type Line */}
                 <div className={`h-1.5 w-full ${tip.type === 'error' ? 'bg-rose-500' : tip.type === 'misconception' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
@@ -70,8 +70,8 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, darkMode }) => {
                                     }
                                 }}
                                 className={`group flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${idx === 0
-                                        ? (darkMode ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100')
-                                        : (darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600')
+                                    ? (darkMode ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100')
+                                    : (darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600')
                                     }`}
                             >
                                 <span>{btn.label}</span>
