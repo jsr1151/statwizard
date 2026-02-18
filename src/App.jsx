@@ -15,7 +15,9 @@ import {
     BarChart2,
     Grid,
     LayoutGrid,
-    X
+    X,
+    History,
+    BookOpen
 } from 'lucide-react';
 
 // --- Data ---
@@ -94,6 +96,7 @@ export default function App() {
     const [currentStats, setCurrentStats] = useState(null);
     const [hoveredTerm, setHoveredTerm] = useState(null);
     const [activeExplanation, setActiveExplanation] = useState(null);
+    const [showHistory, setShowHistory] = useState(false);
 
     // --- SHARED ANOVA TUTOR STATE ---
     const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
@@ -533,10 +536,49 @@ export default function App() {
                     </div>
                 )}
 
+                {showHistory && (
+                    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[11000] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                        <div className={`rounded-2xl shadow-2xl max-w-lg w-full p-6 border animate-in zoom-in-95 duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
+                                        <History size={20} />
+                                    </div>
+                                    <h3 className={`font-black text-xl tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>Tutor Library</h3>
+                                </div>
+                                <button onClick={() => setShowHistory(false)} className={`p-2 rounded-full hover:bg-slate-800 transition-colors ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}><X size={20} /></button>
+                            </div>
+
+                            <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                                {anovaTutor.history.length === 0 ? (
+                                    <div className="text-center py-12 opacity-40">
+                                        <BookOpen size={40} className="mx-auto mb-4" />
+                                        <p className="text-sm">No tips collected yet. Play with the data to trigger tutor insights!</p>
+                                    </div>
+                                ) : (
+                                    anovaTutor.history.map((tip, idx) => (
+                                        <div key={idx} className={`p-4 rounded-xl border-2 transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800 hover:border-indigo-500/50' : 'bg-slate-50 border-slate-100 hover:border-indigo-500/30'}`}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${tip.type === 'error' ? 'bg-rose-500' : tip.type === 'misconception' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                                                <h4 className={`text-[10px] font-black uppercase tracking-[0.2em] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{tip.type}</h4>
+                                            </div>
+                                            <h5 className={`font-bold text-sm mb-1 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{tip.title}</h5>
+                                            <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{tip.body}</p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <button onClick={() => setShowHistory(false)} className={`mt-8 w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${darkMode ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl'}`}>Back to Analysis</button>
+                        </div>
+                    </div>
+                )}
+
                 {isAnovaActive && anovaTutor.activeTip && (
                     <AnovaTutorPanel
                         tip={anovaTutor.activeTip}
                         onDismiss={anovaTutor.dismissTip}
+                        onShowHistory={() => setShowHistory(true)}
                         onAction={(action) => {
                             if (action === 'toggle_show_values') setShowEquationValues(!showEquationValues);
                             if (action === 'dismiss_permanent') anovaTutor.dismissTip(anovaTutor.activeTip.id, true);
@@ -546,11 +588,28 @@ export default function App() {
                             const explanations = {
                                 'show_index_example': {
                                     title: "Example: indices i and j",
-                                    body: "If Group 1 has scores [5, 6, 7], then j=1 for all of them. The first score (5) is x₁,₁. The second (6) is x₂,₁, and the third (7) is x₃,₁.",
+                                    body: "If Group 1 has scores [5, 6, 7], then j=1 for all of them. The first score (5) is x₁,₁. The second (6) is x₂,₁. And the third (7) is x₃,₁.",
                                 },
                                 'show_nj_example': {
                                     title: "Numeric Example: Scaling",
                                     body: "If group size nⱼ = 10 and the mean difference (x̄ⱼ - x̄_grand)² = 4, that group contributes 10 * 4 = 40 to the SS_between.",
+                                },
+                                'generate_apa_report': {
+                                    title: "ANOVA Report Builder",
+                                    body: "Based on your current data, here is an APA-formatted sentence for your results section:",
+                                    content: (
+                                        <div className="space-y-3">
+                                            <p className={`font-mono text-[13px] leading-relaxed p-4 rounded-lg italic ${darkMode ? 'bg-slate-900 border-slate-800 text-indigo-300' : 'bg-white border-slate-200 text-indigo-700 shadow-sm'}`}>
+                                                {(() => {
+                                                    if (!currentStats) return "Add more data to generate a report.";
+                                                    const { F, dfB, dfW, p, eta2 } = currentStats;
+                                                    const sigText = p < .05 ? "was statistically significant" : "was not statistically significant";
+                                                    return `A one-way ANOVA revealed that the effect of group membership ${sigText}, F(${dfB}, ${dfW}) = ${F.toFixed(2)}, p ${p < .001 ? '< .001' : '= ' + p.toFixed(3)}, η² = ${eta2.toFixed(2)}.`;
+                                                })()}
+                                            </p>
+                                            <p className="text-[10px] opacity-60">Tip: Report F with both degrees of freedom in parentheses.</p>
+                                        </div>
+                                    )
                                 },
                                 'show_f1_example': {
                                     title: "F ≈ 1 Example",
@@ -571,6 +630,10 @@ export default function App() {
                                 'show_unbalanced_info': {
                                     title: "Unequal Group Sizes",
                                     body: "When n₁ ≠ n₂ ≠ n₃, the F-test is slightly less 'robust' if variances also differ. Use Levene's test to ensure homogeneity.",
+                                },
+                                'show_square_demo': {
+                                    title: "Why we square",
+                                    body: "If we just added differences (x - x̄), they would sum to zero because positives and negatives cancel out. Squaring ensures every distance counts toward total variability.",
                                 }
                             };
 

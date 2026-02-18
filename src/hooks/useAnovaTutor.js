@@ -9,9 +9,9 @@ const useAnovaTutor = (stats, context) => {
     });
     const [sessionDismissedIds, setSessionDismissedIds] = useState([]);
     const [lastTipTime, setLastTipTime] = useState(0);
-    const [idleTime, setIdleTime] = useState(0);
     const [hasInteracted, setHasInteracted] = useState(false);
     const [lastAction, setLastAction] = useState(null);
+    const [history, setHistory] = useState([]);
 
     const timerRef = useRef(null);
 
@@ -34,6 +34,14 @@ const useAnovaTutor = (stats, context) => {
     }, []);
 
     const dismissTip = useCallback((id, permanent = false) => {
+        if (activeTip && activeTip.id === id) {
+            setHistory(prev => {
+                const exists = prev.find(t => t.id === id);
+                if (exists) return prev;
+                return [...prev, activeTip];
+            });
+        }
+
         if (permanent) {
             setDismissedIds(prev => [...new Set([...prev, id])]);
         } else {
@@ -41,28 +49,15 @@ const useAnovaTutor = (stats, context) => {
         }
         setActiveTip(null);
         setLastTipTime(Date.now());
-    }, []);
+    }, [activeTip]);
 
     const triggerEvent = useCallback((eventData) => {
-        // Check for high priority error tips first (bypass cooldown)
+        // Resolve functions for title/body one last time for evaluation
+        const combinedState = { stats, ...context, ...eventData, idleTime, hasInteracted, lastAction: eventData?.lastAction || lastAction, activeTip };
+
         const validScripts = ANOVA_TUTOR_SCRIPTS.filter(s => {
             if (dismissedIds.includes(s.id)) return false;
             if (sessionDismissedIds.includes(s.id)) return false;
-
-            const combinedState = {
-                stats,
-                ...context,
-                ...eventData,
-                idleTime,
-                hasInteracted,
-                lastAction,
-                activeTip
-            };
-
-            // Handle title/body functions
-            const evalScript = { ...s };
-            if (typeof s.title === 'function') evalScript.title = s.title(combinedState);
-            if (typeof s.body === 'function') evalScript.body = s.body(combinedState);
 
             return s.condition(combinedState);
         });
@@ -74,15 +69,16 @@ const useAnovaTutor = (stats, context) => {
         // Safety check: Don't show if active tip is already higher priority
         if (activeTip && activeTip.priority >= highestPriority.priority) return;
 
-        // Cooldown check (bypass if priority > 1000 i.e. errors)
+        // Cooldown check
         const now = Date.now();
-        const cooldown = 30000; // 30s base
+        // Reduce cooldown to 3s if triggered by a signal (interaction), otherwise 30s
+        const isSignal = !!eventData?.signal;
+        const cooldown = (highestPriority.priority >= 1000 || isSignal) ? 3000 : 30000;
         const timeSinceLast = now - lastTipTime;
 
-        if (highestPriority.priority < 1000 && timeSinceLast < cooldown) return;
+        if (timeSinceLast < cooldown) return;
 
         // Resolve functions for title/body one last time for the winner
-        const combinedState = { stats, ...context, ...eventData, idleTime, hasInteracted, lastAction, activeTip };
         const resolved = { ...highestPriority };
         if (typeof resolved.title === 'function') resolved.title = resolved.title(combinedState);
         if (typeof resolved.body === 'function') resolved.body = resolved.body(combinedState);
@@ -103,7 +99,8 @@ const useAnovaTutor = (stats, context) => {
         dismissTip,
         triggerEvent,
         resetIdle,
-        setLastAction
+        setLastAction,
+        history
     };
 };
 

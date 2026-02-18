@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Sparkles, AlertCircle, HelpCircle, Info, ChevronRight } from 'lucide-react';
+import { X, Sparkles, AlertCircle, HelpCircle, Info, ChevronRight, History } from 'lucide-react';
 
-const AnovaTutorPanel = ({ tip, onDismiss, onAction, darkMode }) => {
+const AnovaTutorPanel = ({ tip, onDismiss, onAction, onShowHistory, darkMode }) => {
     const [isExiting, setIsExiting] = useState(false);
 
     if (!tip) return null;
@@ -47,12 +47,23 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, darkMode }) => {
                                 </h3>
                             </div>
                         </div>
-                        <button
-                            onClick={() => handleDismiss(false)}
-                            className={`p-1 rounded-full transition-colors ${darkMode ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-900'}`}
-                        >
-                            <X size={16} />
-                        </button>
+                        <div className="flex gap-1 -mt-1">
+                            {onShowHistory && (
+                                <button
+                                    onClick={onShowHistory}
+                                    className={`p-1.5 rounded-lg transition-all ${darkMode ? 'hover:bg-slate-800 text-slate-500 hover:text-indigo-400' : 'hover:bg-slate-100 text-slate-400 hover:text-indigo-600'}`}
+                                    title="View Tutor Library"
+                                >
+                                    <History size={15} />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleDismiss(false)}
+                                className={`p-1.5 rounded-lg transition-all ${darkMode ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-900'}`}
+                            >
+                                <X size={15} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className={`text-xs leading-relaxed font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
