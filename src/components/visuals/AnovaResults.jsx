@@ -20,14 +20,17 @@ const AnovaResults = ({
                     <h6 className={`text-[12px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-3 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}><Layers size={18} /> ANOVA {anovaMode === 'data' ? 'Observed Results' : 'Explore Output'}</h6>
                     <div className={`text-5xl md:text-7xl font-black text-indigo-500 uppercase tracking-tighter mb-4 flex flex-wrap items-baseline gap-2 justify-center md:justify-start`}>
                         <MathTerm term="F" showValue={false} darkMode={darkMode} onInfo={() => { }} />
-                        <span className="text-3xl md:text-4xl">
+                        <span className="text-3xl md:text-4xl" onMouseEnter={() => window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: 'indices' }))}>
                             (<MathTerm term="df_between" value={renderModel.df1.toString()} showValue={true} darkMode={darkMode} onInfo={() => { }} />,
                             <MathTerm term="df_within" value={renderModel.df2.toString()} showValue={true} darkMode={darkMode} onInfo={() => { }} />)
                         </span>
                         <span className="mx-1 md:mx-2">=</span>
                         <span className="truncate">{renderModel.F?.toFixed(2)}</span>
                     </div>
-                    <div className={`text-[16px] font-black uppercase tracking-[0.2em] flex flex-wrap items-center justify-center md:justify-start gap-3 ${renderModel.F > renderModel.Fcrit ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    <div
+                        onMouseEnter={() => window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: 'calc_results' }))}
+                        className={`text-[16px] font-black uppercase tracking-[0.2em] flex flex-wrap items-center justify-center md:justify-start gap-3 ${renderModel.F > renderModel.Fcrit ? 'text-emerald-400' : 'text-slate-500'}`}
+                    >
                         {renderModel.F > renderModel.Fcrit ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
                         <span>p {renderModel.p < 0.001 ? '< .001' : (renderModel.p < 0.05 ? '< .05' : '> .05')}</span>
                         <span className="opacity-50 tracking-widest">{renderModel.p < 0.05 ? '(Significant)' : '(Non-Sig)'}</span>
@@ -78,6 +81,7 @@ const AnovaResults = ({
 
                 <button
                     onClick={() => {
+                        window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: 'calc_results' }));
                         const line = `One-way ANOVA revealed a ${renderModel.p < renderModel.alpha ? 'significant' : 'non-significant'} effect${renderModel.mode === 'data' ? ' of group' : ''}, F(${renderModel.df1}, ${renderModel.df2}) = ${renderModel.F.toFixed(2)}, p ${renderModel.p < 0.05 ? '< .05' : '> .05'}${renderModel.mode === 'data' ? `, η² = ${renderModel.eta2?.toFixed(3)}` : ''}.`;
                         navigator.clipboard.writeText(line);
                         const btn = document.activeElement;

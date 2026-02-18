@@ -26,7 +26,7 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, onShowHistory, darkMode }) 
     return (
         <div
             className={`fixed right-6 top-[20%] w-80 transition-all duration-300 ${isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100 animate-in slide-in-from-right-4'}`}
-            style={{ zIndex: 10000 }}
+            style={{ zIndex: 20000 }}
         >
             <div className={`relative overflow-hidden rounded-2xl border-2 shadow-2xl backdrop-blur-xl ${darkMode ? 'bg-slate-900/90 border-slate-800 shadow-black/50' : 'bg-white/90 border-slate-100 shadow-slate-200'}`}>
                 {/* Header/Type Line */}

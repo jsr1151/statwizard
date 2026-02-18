@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { AlertCircle, Sparkles, Calculator, MousePointer2, Info, ArrowDown, MousePointerClick, Maximize2, Minimize2, RefreshCw, Play, Activity, Lightbulb, BrainCircuit, BarChart2, Sigma, BookOpen, Plus, X, Trash2, Edit2, TrendingUp, Grid, FileText, PieChart, CheckCircle, Layers, LayoutGrid, RotateCcw } from 'lucide-react';
-import { getGaussianPoints, getTPoints, normalCDF, tCDF, erf, getTCrit, getFDensity, fCDF, fPPF, getFCrit, getFPoints, calculateAnova, calculatePostHoc, lnGamma, beta } from '../../utils/mathHelpers';
-import { pointsToPath, pointsToLine, getOrdinal } from '../../utils/svgHelpers';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Activity, LayoutGrid, PieChart, Plus, Sigma, X } from 'lucide-react';
+import { fCDF, fPPF, calculateAnova, calculatePostHoc } from '../../utils/mathHelpers';
 import AnovaDatasetEditor from './AnovaDatasetEditor';
 import AnovaResults from './AnovaResults';
-import CalculationText from '../common/CalculationText';
-import TabButton from '../common/TabButton';
-import MathTerm from '../common/MathTerm';
 import FSamplingDist from './FSamplingDist';
 import GroupsMeansView from './GroupsMeansView';
 import VarianceDecomposition from './VarianceDecomposition';
+
 const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor }) => {
   const [localShowValues, setLocalShowValues] = useState(propShowValues);
   useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
@@ -102,10 +99,26 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   useEffect(() => {
     if (anovaMode === 'calc') {
       window.dispatchEvent(new CustomEvent('anovaTutorAction', {
-        detail: { signal: 'change_explore_params' }
+        detail: { signal: 'change_df1', val: calcDf1 }
       }));
     }
-  }, [calcDf1, calcDf2, calcF, anovaMode]);
+  }, [calcDf1, anovaMode]);
+
+  useEffect(() => {
+    if (anovaMode === 'calc') {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+        detail: { signal: 'change_df2', val: calcDf2 }
+      }));
+    }
+  }, [calcDf2, anovaMode]);
+
+  useEffect(() => {
+    if (anovaMode === 'calc') {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+        detail: { signal: 'change_f_calc', val: calcF }
+      }));
+    }
+  }, [calcF, anovaMode]);
 
   useEffect(() => {
     if (showPostHoc) {
@@ -115,29 +128,22 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     }
   }, [showPostHoc]);
 
-  useEffect(() => {
-    if (renderModel && renderModel.F !== undefined && renderModel.Fcrit !== undefined) {
-      const diff = Math.abs(renderModel.F - renderModel.Fcrit);
-      if (diff < 0.5) {
-        window.dispatchEvent(new CustomEvent('anovaTutorAction', {
-          detail: { signal: 'near_cutoff', diff }
-        }));
-      }
-    }
-  }, [renderModel?.F, renderModel?.Fcrit]);
-
-  // --- Navigation & Scroll Logic ---
-
+  // --- Navigation & Action Handlers ---
   useEffect(() => {
     const handleAction = (e) => {
-      if (e.detail) handleTutorAction(e.detail);
+      const detail = e.detail;
+      if (!detail) return;
+
+      // Tutor actions can be strings
+      if (typeof detail === 'string') {
+        handleTutorAction(detail);
+      }
     };
     window.addEventListener('anovaTutorAction', handleAction);
     return () => window.removeEventListener('anovaTutorAction', handleAction);
-  }, [groups, localShowValues]); // dependencies for handlers used inside handleTutorAction
+  }, [groups, localShowValues]);
 
   const handleTutorAction = (action) => {
-    if (!action) return;
     switch (action) {
       case 'toggle_show_values':
         setLocalShowValues(!localShowValues);
@@ -145,33 +151,29 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       case 'add_group':
         addGroup();
         break;
-      case 'set_ssw_mode_raw':
-        setGroups(groups.map(g => ({ ...g, inputMode: 'raw' })));
-        break;
-      case 'set_ssw_mode_summary':
-        setGroups(groups.map(g => ({ ...g, inputMode: 'summary' })));
-        break;
       case 'highlight_ssb':
-        onTutorUpdate({ id: 'highlight', target: 'ss_between' });
-        break;
-      case 'highlight_ssb_parts':
-        onTutorUpdate({ id: 'highlight', target: 'ssb_contributions' });
-        break;
-      case 'highlight_ssw_parts':
-        onTutorUpdate({ id: 'highlight', target: 'ssw_contributions' });
-        break;
-      case 'highlight_grand_mean':
-        onTutorUpdate({ id: 'highlight', target: 'x_grand' });
+        onTutorUpdate({
+          id: 'highlight_ssb',
+          body: "Focusing on between-group distances.",
+          content: {
+            now: "Highlighting SS_between",
+            whatChanged: "The distances from each group mean to the grand mean are emphasized.",
+            tryNext: "Try moving a group mean to see the distances grow."
+          }
+        });
         break;
       case 'highlight_f_drivers':
         setHighlightTarget('f_ratio');
+        onTutorUpdate({
+          id: 'highlight_f_drivers',
+          body: "Highlighting the F-ratio and its components.",
+          content: {
+            now: "Showing F-ratio drivers",
+            whatChanged: "The F-ratio box is highlighted above.",
+            tryNext: "Adjust the data to see how the ratio responds."
+          }
+        });
         setTimeout(() => setHighlightTarget(null), 3000);
-        break;
-      case 'focus_group_1':
-        setGroups(groups.map((g, i) => i === 0 ? { ...g, collapsed: false } : { ...g, collapsed: true }));
-        break;
-      case 'collapse_all_but_active':
-        setGroups(groups.map(g => ({ ...g, collapsed: true })));
         break;
       default: console.log("Tutor Action:", action);
     }
@@ -181,15 +183,15 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     const newId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 1;
     const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
     const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
-    if (groups.length >= colors.length) return; // Limit groups to available colors
+    if (groups.length >= colors.length) return;
 
     const newGroup = {
       id: newId,
       label: `Group ${labels[groups.length]}`,
       color: colors[groups.length],
-      inputMode: groups[0]?.inputMode || 'raw', // Inherit input mode from first group or default to raw
-      values: [5, 5, 5], // Default values for new group
-      summary: { mean: "5.0", sd: "1.0", n: "3" }, // Default summary for new group
+      inputMode: groups[0]?.inputMode || 'raw',
+      values: [5, 6, 7],
+      summary: { mean: "6.0", sd: "1.0", n: "3" },
       collapsed: false
     };
     setGroups([...groups, newGroup]);
@@ -197,31 +199,38 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   };
 
   const removeGroup = (id) => {
-    if (groups.length <= 2) return; // Ensure at least 2 groups remain
+    if (groups.length <= 2) return;
     setGroups(groups.filter(g => g.id !== id));
     window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'remove_group' } }));
   };
 
   const updateGroup = (id, field, val) => {
     setGroups(groups.map(g => g.id === id ? { ...g, [field]: val } : g));
-    if (field === 'inputMode') window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'toggle_input_mode', value: val } }));
   };
 
   const updateGroupStats = (id, field, val) => {
-    // Keep as string to avoid finicky decimal typing issues
     setGroups(groups.map(g => g.id === id ? { ...g, summary: { ...g.summary, [field]: val } } : g));
-    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'change_stats', field, value: val } }));
+    if (val === "" || isNaN(parseFloat(val))) {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: 'data_error_summary' }));
+    } else {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'change_stats', field, value: val } }));
+    }
   };
 
   const parseRaw = (id, rawStr) => {
-    // Forgiving parsing: split on any whitespace or commas, filter out non-numbers
     const tokens = rawStr.split(/[,\s\t\n]+/).filter(t => t.trim() !== "");
-    const vals = tokens.map(v => parseFloat(v)).filter(v => !isNaN(v));
+    const rawVals = tokens.map(v => parseFloat(v));
+    const vals = rawVals.filter(v => !isNaN(v));
     const n = vals.length;
 
-    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'change_raw', count: n } }));
+    if (rawVals.some(v => isNaN(v))) {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: 'data_error_missing' }));
+    }
 
-    // Update group even if n < 2, but calculate stats only if possible
+    if (n > 0) {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'change_raw', count: n } }));
+    }
+
     setGroups(groups.map(g => {
       if (g.id !== id) return g;
       const meanVal = n > 0 ? vals.reduce((a, b) => a + b, 0) / n : 0;
@@ -241,46 +250,19 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   return (
     <div
       className="w-full flex flex-col gap-8 animate-in fade-in duration-700 relative"
-      onMouseMove={() => tutor.resetIdle()}
-      onKeyDown={() => tutor.resetIdle()}
+      onMouseMove={() => tutor?.resetIdle?.()}
     >
-      {/* MODE SWITCH TOAST */}
-      {modeToast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-500">
-          <div className={`px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border-2 ${anovaMode === 'data' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-amber-500 border-amber-300 text-white'}`}>
-            <Activity size={18} />
-            <span className="text-[11px] font-black uppercase tracking-widest">{modeToast}</span>
-          </div>
-        </div>
-      )}
-      {/* 1. TOP SECTION: THE VISUALIZER (Full Width & Enlarged) */}
-      <div className={`w-full overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800 shadow-2xl shadow-black/40' : 'bg-white border-slate-200 shadow-xl'}`}>
-        {/* COMPACT TOOLBAR CLUSTER */}
+      {/* Visualizer Frame */}
+      <div className={`w-full h-[600px] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
         <div className="absolute top-4 left-4 flex gap-2 z-40">
-          <button onClick={() => setActiveTab('fDist')} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === 'fDist' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'bg-slate-900/90 text-slate-500 hover:text-slate-300' : 'bg-slate-100 text-slate-400 hover:bg-slate-200')}`}><Activity size={14} /> F-Dist</button>
-          <button onClick={() => setActiveTab('means')} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === 'means' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'bg-slate-900/90 text-slate-500 hover:text-slate-300' : 'bg-slate-100 text-slate-400 hover:bg-slate-200')}`}><LayoutGrid size={14} /> Means</button>
-          <button onClick={() => setActiveTab('decomp')} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === 'decomp' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'bg-slate-900/90 text-slate-500 hover:text-slate-300' : 'bg-slate-100 text-slate-400 hover:bg-slate-200')}`}><PieChart size={14} /> Decomp</button>
+          {['fDist', 'means', 'decomp'].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}>
+              {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : 'Decomp'}
+            </button>
+          ))}
         </div>
 
-        <div className="absolute top-4 right-4 flex items-center gap-3 z-40 pointer-events-none">
-          <div className={`px-4 py-2 rounded-xl border-2 flex flex-col items-center justify-center min-w-[90px] shadow-lg animate-in zoom-in-95 duration-300 pointer-events-auto transition-all ${highlightTarget === 'f_ratio' ? 'scale-110 ring-4 ring-indigo-500 bg-indigo-500/20 border-indigo-500' : (renderModel.p < renderModel.alpha ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-500/5 border-slate-500/10')}`}>
-            <span className={`text-[8px] font-black uppercase tracking-widest leading-none mb-1 ${highlightTarget === 'f_ratio' ? 'text-indigo-400' : (renderModel.p < renderModel.alpha ? 'text-emerald-500' : 'text-slate-500')}`}>Signif. (p)</span>
-            <span className={`text-xl font-black tabular-nums transition-colors ${highlightTarget === 'f_ratio' ? 'text-indigo-500' : (renderModel.p < renderModel.alpha ? 'text-emerald-400' : 'text-slate-400')}`}>
-              {renderModel.p < 0.001 ? '< .001' : renderModel.p.toFixed(4)}
-            </span>
-            <span className={`text-[6px] font-black uppercase tracking-tighter mt-0.5 ${highlightTarget === 'f_ratio' ? 'text-indigo-400' : (renderModel.mode === 'data' ? 'text-blue-400/60' : 'text-amber-400/60')}`}>
-              {renderModel.mode === 'data' ? 'From Dataset' : 'From Calculator'}
-            </span>
-          </div>
-          {renderModel.p < renderModel.alpha && (
-            <div className="px-3 py-3 rounded-xl bg-emerald-500 shadow-xl shadow-emerald-500/40 flex items-center justify-center animate-in slide-in-from-right-4 pointer-events-auto">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-          )}
-        </div>
-
-        {/* ENLARGED: Height increased to 600px for y-axis stretch */}
-        <div className="w-full h-[600px] flex items-center justify-center overflow-hidden">
+        <div className="w-full h-full">
           {activeTab === 'fDist' && (
             <FSamplingDist
               mode={anovaMode}
@@ -294,133 +276,58 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
               setZoomDist={setZoomDist}
             />
           )}
-          {activeTab === 'means' && (
-            <div className="w-full h-full relative">
-              {anovaMode === 'calc' && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] z-10 flex items-center justify-center text-center p-8">
-                  <div className="max-w-xs">
-                    <LayoutGrid size={48} className="mx-auto text-slate-500 mb-4 opacity-30" />
-                    <p className="text-sm font-black text-slate-400 uppercase tracking-widest leading-relaxed">Means view requires dataset computation.</p>
-                    <button onClick={() => setAnovaMode('data')} className="mt-4 text-[10px] font-black text-indigo-400 border border-indigo-400/30 px-4 py-2 rounded-xl hover:bg-indigo-400/10 transition-colors">SWITCH TO DATA MODE</button>
-                  </div>
-                </div>
-              )}
-              <GroupsMeansView groups={groups} grandMean={renderModel.grandMean} darkMode={darkMode} showSpread={showSpread} />
-            </div>
-          )}
-          {activeTab === 'decomp' && (
-            <div className="w-full h-full relative">
-              {anovaMode === 'calc' && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] z-10 flex items-center justify-center text-center p-8">
-                  <div className="max-w-xs">
-                    <PieChart size={48} className="mx-auto text-slate-500 mb-4 opacity-30" />
-                    <p className="text-sm font-black text-slate-400 uppercase tracking-widest leading-relaxed">Decomp is dataset-only.</p>
-                  </div>
-                </div>
-              )}
-              <VarianceDecomposition ssB={renderModel.ssB || 0} ssW={renderModel.ssW || 0} ssT={renderModel.ssT || 1} darkMode={darkMode} />
-            </div>
-          )}
+          {activeTab === 'means' && <GroupsMeansView groups={groups} grandMean={renderModel.grandMean} darkMode={darkMode} showSpread={showSpread} />}
+          {activeTab === 'decomp' && <VarianceDecomposition ssB={renderModel.ssB || 0} ssW={renderModel.ssW || 0} ssT={renderModel.ssT || 1} darkMode={darkMode} />}
         </div>
       </div>
 
-
-      {/* 2. MIDDLE SECTION: DATASET EDITOR & MODE TOGGLE */}
-      <div className="w-full flex flex-col gap-4">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center px-2 gap-4">
+      {/* Mode Controls */}
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center px-2">
           <div className="flex items-center gap-6">
-            <h6 className={`text-[11px] font-black uppercase tracking-[0.2em] p-1 flex items-center gap-2 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}><Sigma size={14} /> ANOVA {anovaMode === 'data' ? 'DATASET' : 'EXPLORE'}</h6>
-
-            {/* MODE TOGGLE (Global) */}
-            <div className={`flex p-1 rounded-2xl border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200 shadow-inner'}`}>
-              <button
-                onClick={() => toggleMode('data')}
-                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${anovaMode === 'data' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Data (Compute)
-              </button>
-              <button
-                onClick={() => toggleMode('calc')}
-                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${anovaMode === 'calc' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Explore
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex bg-slate-800/50 p-1.5 rounded-xl border border-slate-700">
-              <span className="text-[8px] font-black text-slate-500 uppercase px-2 py-1">ALPHA:</span>
-              {[0.1, 0.05, 0.01].map(a => (
-                <button key={a} onClick={() => setAlpha(a)} className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${alpha === a ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}>{a}</button>
+            <h6 className="text-[11px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2"><Sigma size={14} /> ANOVA {anovaMode.toUpperCase()}</h6>
+            <div className="flex p-1 rounded-2xl bg-slate-900 border border-slate-800">
+              {['data', 'calc'].map(m => (
+                <button key={m} onClick={() => toggleMode(m)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${anovaMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
+                  {m === 'data' ? 'Compute' : 'Explore'}
+                </button>
               ))}
             </div>
-
+          </div>
+          <div className="flex gap-4">
+            <div className="flex bg-slate-800/50 p-1.5 rounded-xl border border-slate-700">
+              {[0.1, 0.05, 0.01].map(a => (
+                <button key={a} onClick={() => setAlpha(a)} className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${alpha === a ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500'}`}>{a}</button>
+              ))}
+            </div>
             {anovaMode === 'data' && (
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => setShowSpread(!showSpread)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${showSpread ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
-                  title="Offsets overlapping points so the full distribution is visible"
-                >
-                  <Activity size={14} /> {showSpread ? 'Jitter ON' : 'Show Jitter'}
-                </button>
-                <button
-                  onClick={addGroup}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 active:scale-95 flex items-center gap-2"
-                >
-                  <Plus size={16} /> ADD GROUP
-                </button>
-              </div>
+              <button onClick={addGroup} className="bg-indigo-600 text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl flex items-center gap-2">
+                <Plus size={16} /> ADD GROUP
+              </button>
             )}
           </div>
         </div>
 
-        {/* EXPLORE CONTROLS (Only in Explore mode) */}
+        {/* Explore Sliders */}
         {anovaMode === 'calc' && (
-          <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 px-4 py-8 bg-indigo-500/5 border-2 border-indigo-500/10 rounded-[2.5rem] animate-in slide-in-from-top-4 shadow-inner">
-            <div className="flex flex-col gap-3 p-5 bg-slate-900/40 rounded-2xl border border-slate-800/80 shadow-lg">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Between-Groups (df₁)</span>
-                <span className="text-[10px] font-black text-indigo-400 tabular-nums bg-indigo-400/10 px-2 py-0.5 rounded-md">{calcDf1}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-indigo-500/5 border-2 border-indigo-500/10 rounded-[2.5rem]">
+            {[
+              { label: 'df1', val: calcDf1, min: 1, max: 50, setter: setCalcDf1 },
+              { label: 'df2', val: calcDf2, min: 1, max: 250, setter: setCalcDf2 },
+              { label: 'F', val: calcF, min: 0, max: 25, step: 0.1, setter: setCalcF }
+            ].map(s => (
+              <div key={s.label} className="p-5 bg-slate-900/40 rounded-2xl border border-slate-800">
+                <div className="flex justify-between text-[9px] font-black text-slate-500 uppercase mb-2">
+                  <span>{s.label}</span>
+                  <span className="text-indigo-400">{s.val}</span>
+                </div>
+                <input type="range" min={s.min} max={s.max} step={s.step} value={s.val} onChange={e => s.setter(parseFloat(e.target.value))} className="w-full accent-indigo-500" />
               </div>
-              <input
-                type="range" min="1" max="50"
-                value={calcDf1}
-                onChange={e => setCalcDf1(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full accent-indigo-500 cursor-pointer"
-              />
-            </div>
-
-            <div className="flex flex-col gap-3 p-5 bg-slate-900/40 rounded-2xl border border-slate-800/80 shadow-lg">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Within-Groups (df₂)</span>
-                <span className="text-[10px] font-black text-indigo-400 tabular-nums bg-indigo-400/10 px-2 py-0.5 rounded-md">{calcDf2}</span>
-              </div>
-              <input
-                type="range" min="1" max="250"
-                value={calcDf2}
-                onChange={e => setCalcDf2(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full accent-indigo-500 cursor-pointer"
-              />
-            </div>
-
-            <div className="flex flex-col gap-3 p-5 bg-slate-900/40 rounded-2xl border border-slate-800/80 shadow-lg">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-black text-amber-500/60 uppercase tracking-widest">Test statistic F</span>
-                <span className="text-[10px] font-black text-amber-400 tabular-nums bg-amber-400/10 px-2 py-0.5 rounded-md">{calcF.toFixed(2)}</span>
-              </div>
-              <input
-                type="range" min="0" max="25" step="0.1"
-                value={calcF}
-                onChange={e => setCalcF(parseFloat(e.target.value))}
-                className="w-full accent-amber-500 cursor-pointer"
-              />
-            </div>
+            ))}
           </div>
         )}
 
-        {/* DATA MODE EDITOR */}
+        {/* Editor */}
         {anovaMode === 'data' && (
           <AnovaDatasetEditor
             groups={groups}
@@ -446,8 +353,5 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     </div>
   );
 };
-
-// --- ANOVA SUB-COMPONENTS ---
-
 
 export default AnovaVisual;

@@ -169,22 +169,11 @@ export default function App() {
     // and useAnovaTutor's persistence. We just need to track if it's the first visit session-wise
     // to pass down as context if needed.
 
-    // Sync ANOVA tutor with visibility and interaction
+    // Higher-level visibility sync
     useEffect(() => {
         if (!isAnovaActive && anovaTutor.activeTip) {
             anovaTutor.dismissTip(anovaTutor.activeTip.id);
         }
-
-        const handleInteraction = (e) => {
-            if (e.detail && e.detail.signal) {
-                anovaTutor.resetIdle();
-                anovaTutor.setLastAction(e.detail.signal);
-                anovaTutor.triggerEvent({ lastAction: e.detail.signal, ...e.detail });
-            }
-        };
-
-        window.addEventListener('anovaTutorAction', handleInteraction);
-        return () => window.removeEventListener('anovaTutorAction', handleInteraction);
     }, [isAnovaActive, anovaTutor]);
 
 
@@ -586,6 +575,30 @@ export default function App() {
 
                             // Educational/Explanation actions
                             const explanations = {
+                                'show_f_starts_0': {
+                                    title: "Why does F start at 0?",
+                                    body: "F is a ratio of two variances (MS_between / MS_within). Since variances are sums of squares (always positive), the ratio can never be negative. F starts at 0 and goes to positive infinity.",
+                                },
+                                'show_welch_info': {
+                                    title: "Welch’s ANOVA",
+                                    body: "Standard ANOVA assumes equal variances (homogeneity). If your group variances differ significantly, Welch’s ANOVA is a robust alternative that doesn't require this assumption.",
+                                },
+                                'show_power_tip': {
+                                    title: "Low Statistical Power",
+                                    body: "A non-significant result doesn't mean there's no effect—it might just mean the study was too 'small' to find it. Power increases with larger sample sizes and less within-group noise.",
+                                },
+                                'show_nonsig_explanation': {
+                                    title: "What is 'Non-Significant'?",
+                                    body: "It means the observed differences are small enough that they could easily happen by random chance. We 'fail to reject' the null hypothesis because the evidence isn't strong enough.",
+                                },
+                                'show_assumptions_checklist': {
+                                    title: "ANOVA Assumptions Checklist",
+                                    body: "For your results to be valid, check these: 1. Independent observations, 2. Normality (scores are bell-curved in each group), 3. Homogeneity (variances are similar).",
+                                },
+                                'show_effect_size_info': {
+                                    title: "Strength of Effect (η²)",
+                                    body: "While p-values tell you if an effect is likely 'real,' η² tells you how 'big' it is. It's the percentage of total variance explained by your groups.",
+                                },
                                 'show_index_example': {
                                     title: "Example: indices i and j",
                                     body: "If Group 1 has scores [5, 6, 7], then j=1 for all of them. The first score (5) is x₁,₁. The second (6) is x₂,₁. And the third (7) is x₃,₁.",
@@ -643,6 +656,10 @@ export default function App() {
 
                             if (explanations[action]) {
                                 setActiveExplanation(explanations[action]);
+                            }
+
+                            // Dismiss for any action by default to prevent stuck tips
+                            if (anovaTutor.activeTip) {
                                 anovaTutor.dismissTip(anovaTutor.activeTip.id, false);
                             }
 
@@ -651,6 +668,7 @@ export default function App() {
                         darkMode={darkMode}
                     />
                 )}
+
 
                 {isAnovaActive && !anovaTutor.activeTip && (
                     <div className="fixed top-24 right-10 z-[5000] animate-in slide-in-from-right-10 fade-in duration-700">

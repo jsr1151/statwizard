@@ -16,6 +16,28 @@ const useAnovaTutor = (stats, context) => {
 
     const timerRef = useRef(null);
 
+    // Refs for stable identity of triggerEvent
+    const statsRef = useRef(stats);
+    const contextRef = useRef(context);
+    const idleTimeRef = useRef(idleTime);
+    const activeTipRef = useRef(activeTip);
+    const lastTipTimeRef = useRef(lastTipTime);
+    const lastActionRef = useRef(lastAction);
+    const hasInteractedRef = useRef(hasInteracted);
+    const dismissedIdsRef = useRef(dismissedIds);
+    const sessionDismissedIdsRef = useRef(sessionDismissedIds);
+
+    // Update refs whenever values change
+    useEffect(() => { statsRef.current = stats; }, [stats]);
+    useEffect(() => { contextRef.current = context; }, [context]);
+    useEffect(() => { idleTimeRef.current = idleTime; }, [idleTime]);
+    useEffect(() => { activeTipRef.current = activeTip; }, [activeTip]);
+    useEffect(() => { lastTipTimeRef.current = lastTipTime; }, [lastTipTime]);
+    useEffect(() => { lastActionRef.current = lastAction; }, [lastAction]);
+    useEffect(() => { hasInteractedRef.current = hasInteracted; }, [hasInteracted]);
+    useEffect(() => { dismissedIdsRef.current = dismissedIds; }, [dismissedIds]);
+    useEffect(() => { sessionDismissedIdsRef.current = sessionDismissedIds; }, [sessionDismissedIds]);
+
     // Persistence
     useEffect(() => {
         localStorage.setItem('anova_tutor_dismissed', JSON.stringify(dismissedIds));
@@ -35,11 +57,11 @@ const useAnovaTutor = (stats, context) => {
     }, []);
 
     const dismissTip = useCallback((id, permanent = false) => {
-        if (activeTip && activeTip.id === id) {
+        if (activeTipRef.current && activeTipRef.current.id === id) {
             setHistory(prev => {
                 const exists = prev.find(t => t.id === id);
                 if (exists) return prev;
-                return [...prev, activeTip];
+                return [...prev, activeTipRef.current];
             });
         }
 
@@ -50,16 +72,24 @@ const useAnovaTutor = (stats, context) => {
         }
         setActiveTip(null);
         setLastTipTime(Date.now());
-    }, [activeTip]);
+    }, []);
 
     const triggerEvent = useCallback((eventData) => {
-        // Resolve functions for title/body one last time for evaluation
-        const combinedState = { stats, ...context, ...eventData, idleTime, hasInteracted, lastAction: eventData?.lastAction || lastAction, activeTip };
+        const isSignal = !!eventData?.signal;
+
+        const combinedState = {
+            stats: statsRef.current,
+            ...contextRef.current,
+            ...eventData,
+            idleTime: idleTimeRef.current,
+            hasInteracted: hasInteractedRef.current,
+            lastAction: eventData?.lastAction || lastActionRef.current,
+            activeTip: activeTipRef.current
+        };
 
         const validScripts = ANOVA_TUTOR_SCRIPTS.filter(s => {
-            if (dismissedIds.includes(s.id)) return false;
-            if (sessionDismissedIds.includes(s.id)) return false;
-
+            if (dismissedIdsRef.current.includes(s.id)) return false;
+            if (sessionDismissedIdsRef.current.includes(s.id)) return false;
             return s.condition(combinedState);
         });
 
@@ -67,27 +97,55 @@ const useAnovaTutor = (stats, context) => {
 
         const highestPriority = validScripts.sort((a, b) => b.priority - a.priority)[0];
 
-        // Safety check: Don't show if active tip is already higher priority
-        if (activeTip && activeTip.priority >= highestPriority.priority) return;
+        // Override logic
+        const shouldOverride = isSignal && activeTipRef.current && activeTipRef.current.id !== highestPriority.id;
+        if (activeTipRef.current && !shouldOverride && activeTipRef.current.priority >= highestPriority.priority) {
+            return;
+        }
 
         // Cooldown check
         const now = Date.now();
-        // Reduce cooldown to 3s if triggered by a signal (interaction), otherwise 30s
-        const isSignal = !!eventData?.signal;
-        const cooldown = (highestPriority.priority >= 1000 || isSignal) ? 3000 : 30000;
-        const timeSinceLast = now - lastTipTime;
+        const cooldown = (highestPriority.priority >= 1000 || isSignal) ? 1000 : 30000;
+        const timeSinceLast = now - lastTipTimeRef.current;
 
-        if (timeSinceLast < cooldown) return;
+        if (timeSinceLast < cooldown && !shouldOverride) {
+            return;
+        }
 
-        // Resolve functions for title/body one last time for the winner
+        // Save old tip to history if overriding
+        if (shouldOverride && activeTipRef.current) {
+            setHistory(prev => {
+                const exists = prev.find(t => t.id === activeTipRef.current.id);
+                if (exists) return prev;
+                return [...prev, activeTipRef.current];
+            });
+        }
+
         const resolved = { ...highestPriority };
         if (typeof resolved.title === 'function') resolved.title = resolved.title(combinedState);
         if (typeof resolved.body === 'function') resolved.body = resolved.body(combinedState);
 
         setActiveTip(resolved);
-    }, [stats, context, idleTime, hasInteracted, lastAction, activeTip, dismissedIds, sessionDismissedIds, lastTipTime, resetIdle]);
+        setLastTipTime(Date.now());
+        if (isSignal) setLastAction(eventData.signal);
+        resetIdle();
+    }, [resetIdle]);
 
-    // Periodic check for hesitation/stuck triggers
+    // Handle signals internally
+    useEffect(() => {
+        const handleInteraction = (e) => {
+            if (!e.detail) return;
+            const eventData = typeof e.detail === 'string' ? { signal: e.detail } : e.detail;
+
+            if (eventData.signal) {
+                triggerEvent({ ...eventData, lastAction: eventData.signal });
+            }
+        };
+        window.addEventListener('anovaTutorAction', handleInteraction);
+        return () => window.removeEventListener('anovaTutorAction', handleInteraction);
+    }, [triggerEvent]);
+
+    // Periodic check
     useEffect(() => {
         const checkInterval = setInterval(() => {
             triggerEvent({});

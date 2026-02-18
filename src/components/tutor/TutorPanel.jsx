@@ -24,16 +24,22 @@ const TutorPanel = ({ script, level, onClose, darkMode, inline = false }) => {
                 <div className="space-y-1">
                     <div className="text-[8px] font-bold text-indigo-400 uppercase">Now</div>
                     <div className={`text-xs font-medium leading-relaxed ${darkMode ? 'text-white' : 'text-slate-800'}`}>
-                        <CalculationText text={script.content.now} darkMode={darkMode} onInfo={() => { }} />
+                        {script.content?.now ? (
+                            <CalculationText text={script.content.now} darkMode={darkMode} onInfo={() => { }} />
+                        ) : (
+                            <span>{script.body || "Tutor active. Check the visualizer for highlights."}</span>
+                        )}
                     </div>
                 </div>
 
-                <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-500 delay-150">
-                    <div className={`text-[8px] font-bold uppercase ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>What Changed</div>
-                    <div className={`text-[11px] leading-relaxed font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                        <CalculationText text={script.content.whatChanged} darkMode={darkMode} onInfo={() => { }} />
+                {script.content?.whatChanged && (
+                    <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-500 delay-150">
+                        <div className={`text-[8px] font-bold uppercase ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>What Changed</div>
+                        <div className={`text-[11px] leading-relaxed font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                            <CalculationText text={script.content.whatChanged} darkMode={darkMode} onInfo={() => { }} />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {level === 'tutor' && (
                     <div className={`pt-4 mt-4 border-t space-y-4 animate-in fade-in duration-700 delay-300 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>

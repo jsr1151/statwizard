@@ -213,7 +213,7 @@ export const STEPS = {
                 label: "Normality",
                 whatItMeans: "The scores in each group should follow a bell-shaped Normal distribution. This ensures the p-values and confidence intervals are accurate.",
                 howToTest: [
-                    { name: "Visual Check", desc: "Examine a Histogram or Q-Q plot for symmetry and a bell shape." },
+                    { name: "Visual Check", desc: "Examine a Histogram or Q-Q plot for symmetry and a bell shape.", examples: true },
                     { name: "Shapiro-Wilk Test", desc: "A formal test where p > .05 suggests normality is likely." }
                 ],
                 ifItFails: "If your sample size is large (N > 30), t-tests are 'robust' to non-normality. For small samples, use a non-parametric alternative.",
@@ -260,7 +260,7 @@ export const STEPS = {
                 label: "Normality of Difference Scores",
                 whatItMeans: "The *change* (Difference = X1 - X2) for each pair should follow a normal distribution.",
                 howToTest: [
-                    { name: "Difference Variable", desc: "Subtract Condition 2 from Condition 1 and check the histogram of those residuals." }
+                    { name: "Q-Q Plot", desc: "Subtract Condition 2 from Condition 1 and check if the residuals follow the diagonal line.", examples: true }
                 ],
                 ifItFails: "For n < 30, non-normality can bias results. Use Wilcoxon for small skewed samples.",
                 nonParametric: "Wilcoxon Signed-Rank Test",
@@ -310,24 +310,53 @@ export const STEPS = {
         software: SOFTWARE_GUIDES.anova,
         assumptions: [
             {
+                id: 'independence',
+                label: "Independence of Observations",
+                whatItMeans: "Each person’s score must not be influenced by another person’s score. There should be no pairing, clustering, or repeated measures.",
+                howToTest: [
+                    { name: "Design Review", desc: "Check if participants were tested in groups (e.g., roommates, classroom clusters) or if the same person was measured twice." }
+                ],
+                ifItFails: "Independence is the most critical assumption. Violations can seriously break the p-value. If your data is nested or repeated, you need a different test (e.g., RM-ANOVA or Mixed Models).",
+                link: "Note: You typically can't diagnose this from a plot; it is a study design issue."
+            },
+            {
                 id: 'normality',
                 label: "Normality of Residuals",
-                whatItMeans: "The errors (differences from group means) should be normally distributed across the whole study.",
+                whatItMeans: "The residuals (observed - predicted) should be roughly normal. ANOVA is often robust here if group sizes are moderate and not extremely skewed.",
                 howToTest: [
-                    { name: "Q-Q Plot", desc: "Check if points fall along a straight diagonal line." }
+                    { name: "Q-Q Plot", desc: "Points should follow the diagonal line. Curves suggest skew; peeling ends suggest outliers or non-normal errors.", examples: true }
                 ],
-                ifItFails: "ANOVA is robust to some non-normality, but extreme skew can hide real group differences.",
+                ifItFails: "For small samples, extreme skew can hide real differences. Consider a non-parametric alternative like Kruskal-Wallis.",
                 nonParametric: "Kruskal-Wallis H Test",
                 visual: "normality"
             },
             {
-                label: "Homogeneity of Variance (Sphericity)",
-                whatItMeans: "All groups should have roughly the same amount of variability.",
+                id: 'homogeneity',
+                label: "Homogeneity of Variance",
+                whatItMeans: "The within-group spread (variance) should be similar across all groups.",
                 howToTest: [
-                    { name: "Levene's Test", desc: "Look for p > .05 to confirm groups have equal variance." }
+                    { name: "Levene's Test", desc: "Look for p > .05 to confirm groups have similar variance." }
                 ],
-                ifItFails: "Standard ANOVA assumes equal variance. Use Welch's ANOVA if this assumption is violated.",
-                nonParametric: "Welch's ANOVA"
+                ifItFails: "If violated, standard ANOVA is unreliable. Use Welch's ANOVA or variance-stabilizing transforms.",
+                nonParametric: "Welch’s ANOVA"
+            },
+            {
+                id: 'outliers',
+                label: "No Extreme Outliers",
+                whatItMeans: "There should be no extreme scores within groups that distort the means and inflate variability.",
+                howToTest: [
+                    { name: "Boxplots", desc: "Check for individual points plotted far outside the whiskers." }
+                ],
+                ifItFails: "Investigate the outlier. If it's a data error, correct it. Otherwise, consider a robust check or transformation."
+            },
+            {
+                id: 'quantitative',
+                label: "Quantitative Outcome",
+                whatItMeans: "The outcome must be measured on an interval or ratio scale (not purely ordinal categories).",
+                howToTest: [
+                    { name: "Measurement Scale", desc: "Ensure you are averaging meaningful numbers where the distance between them is consistent." }
+                ],
+                ifItFails: "If data is purely ordinal (ranks), use Kruskal-Wallis."
             }
         ]
     },
@@ -355,7 +384,7 @@ export const STEPS = {
                 label: "Normality of Residuals",
                 whatItMeans: "The 'errors' at each time point should follow a normal distribution.",
                 howToTest: [
-                    { name: "Residual Analysis", desc: "Plot the residuals; they should look like a bell curve around zero." }
+                    { name: "Residual Analysis", desc: "Plot the residuals; they should follow the diagonal line in a Q-Q plot.", examples: true }
                 ],
                 ifItFails: "If data is extremely non-normal, the F-statistic may be biased.",
                 nonParametric: "Friedman Test",

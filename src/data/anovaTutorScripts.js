@@ -1,20 +1,23 @@
 export const ANOVA_TUTOR_SCRIPTS = [
-    // --- MODE / TAB TRIGGERS (New) ---
+    // --- MODE / TAB TRIGGERS (Elevated Priority: 800) ---
     {
         id: "tab_fdist_info",
-        priority: 150,
+        priority: 800,
         type: "hint",
         title: "The F-Distribution",
-        body: "This curve shows the 'null hypothesis' distribution—what F would look like if there were no real differences between groups.",
+        body: "This curve shows the F values you’d expect if the null hypothesis were true (all population means are equal). Its shape depends on df_between (df1) and df_within (df2).",
         condition: (state) => state.lastAction === 'change_tab_fdist',
-        buttons: [{ label: "Got it", action: "dismiss_session" }]
+        buttons: [
+            { label: "Why starts at 0?", action: "show_f_starts_0" },
+            { label: "Got it", action: "dismiss_session" }
+        ]
     },
     {
         id: "tab_means_info",
-        priority: 151,
+        priority: 801,
         type: "hint",
         title: "Group Means Visualizer",
-        body: "Here you can see exactly how far apart the group means are. The 'between-group' variance comes from these distances.",
+        body: "Between-group variability comes from how far each group mean is from the grand mean, with larger groups counting more.",
         condition: (state) => state.lastAction === 'change_tab_means',
         buttons: [
             { label: "Show SS_between", action: "highlight_ssb" },
@@ -23,21 +26,24 @@ export const ANOVA_TUTOR_SCRIPTS = [
     },
     {
         id: "tab_decomp_info",
-        priority: 152,
+        priority: 802,
         type: "hint",
         title: "Variance Decomposition",
-        body: "This view slices the total pie into signal (Between) and noise (Within). The ratio of these slices determines your F-value.",
+        body: "Total variability splits into SS_total = SS_between + SS_within. ANOVA turns these into mean squares (MS), then computes F = MS_between / MS_within.",
         condition: (state) => state.lastAction === 'change_tab_decomp',
-        buttons: [{ label: "Got it", action: "dismiss_session" }]
+        buttons: [
+            { label: "Check assumptions", action: "show_assumptions_checklist" },
+            { label: "Got it", action: "dismiss_session" }
+        ]
     },
 
-    // --- INTERACTION TRIGGERS (New) ---
+    // --- INTERACTION TRIGGERS (Elevated Priority: 850) ---
     {
         id: "signal_add_group",
-        priority: 200,
+        priority: 850,
         type: "enrichment",
-        title: "Adding Groups Increases df_between",
-        body: "Each new group adds 1 to your numerator degrees of freedom (df_between = k - 1). This shifts the shape of the F-distribution curve.",
+        title: "Adding Groups Changes df",
+        body: "Adding a group increases df_between (k - 1). If total N stays the same, df_within (N - k) decreases.",
         condition: (state) => state.lastAction === 'add_group',
         buttons: [
             { label: "Show df calculation", action: "show_df_explanation" },
@@ -46,92 +52,140 @@ export const ANOVA_TUTOR_SCRIPTS = [
     },
     {
         id: "signal_remove_group",
-        priority: 200,
+        priority: 850,
         type: "enrichment",
         title: "Removing Groups",
-        body: "Fewer groups means fewer degrees of freedom for signal. df_between is now k - 1.",
+        body: "With fewer groups, df_between (k - 1) decreases. If total N stays the same, df_within (N - k) increases.",
         condition: (state) => state.lastAction === 'remove_group',
         buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
     {
         id: "signal_post_hoc",
-        priority: 210,
+        priority: 860,
         type: "enrichment",
         title: "Why use Post-Hocs?",
-        body: "ANOVA tells you IF there is a difference, but not WHERE. Post-hocs like Tukey test all pairs to see which specific groups differ.",
+        body: "ANOVA can show evidence that at least one mean differs, but it does not identify which groups differ. Post-hoc tests (like Tukey) compare pairs while controlling the overall Type I error rate.",
         condition: (state) => state.lastAction === 'run_post_hoc',
         buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
     {
         id: "signal_alpha",
-        priority: 220,
+        priority: 870,
         type: "hint",
         title: "Adjusting Alpha",
-        body: "Alpha is your 'error budget'. Lowering it (e.g., to .01) makes the test more strict and pushes the critical cutoff further to the right.",
+        body: "Alpha is the cutoff for calling a result ‘significant.’ Lower alpha (like .01) makes significance harder and pushes F_crit to the right.",
         condition: (state) => state.lastAction === 'change_alpha',
         buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
 
-    // --- EXPLORE MODE (New) ---
+    // --- EXPLORE MODE (Elevated Priority: 820) ---
     {
-        id: "explore_params",
-        priority: 160,
+        id: "explore_df1",
+        priority: 820,
         type: "hint",
-        title: "Explore Mode: Play with F",
-        body: "In this mode, you control F and df directly. Watch how the p-value responds instantly as you drag the sliders.",
-        condition: (state) => state.lastAction === 'change_explore_params',
+        title: "Adjusting df1 (Numerator)",
+        body: "Increasing df1 usually makes the curve less skewed and more concentrated near 1.",
+        condition: (state) => state.lastAction === 'change_df1',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+    {
+        id: "explore_df2",
+        priority: 820,
+        type: "hint",
+        title: "Adjusting df2 (Denominator)",
+        body: "Increasing df2 usually makes the curve less skewed and more concentrated near 1, which stabilizes p-values.",
+        condition: (state) => state.lastAction === 'change_df2',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+    {
+        id: "explore_f_calc",
+        priority: 820,
+        type: "hint",
+        title: "Adjusting the F-statistic",
+        body: "As F increases, the shaded right-tail area (the p-value) gets smaller. F is MS_between / MS_within.",
+        condition: (state) => state.lastAction === 'change_f_calc',
         buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
 
-    // --- GLOBAL THRESHOLDS (New) ---
+    // --- GLOBAL THRESHOLDS (Elevated Priority: 900) ---
     {
         id: "global_near_cutoff",
-        priority: 450,
+        priority: 950,
         type: "enrichment",
         title: "Near the Edge",
-        body: "Your F-value is very close to the critical cutoff. Small changes in your data could flip this test from significant to non-significant!",
-        condition: (state) => state.lastAction === 'near_cutoff',
+        body: "This is a borderline result. Your F-value is very close to the critical cutoff, meaning small changes in data could flip the significance.",
+        condition: (state) => {
+            if (!state.stats?.valid) return false;
+            const p = state.stats.p;
+            const alpha = state.stats.alpha;
+            const fVal = state.stats.F;
+            const fCrit = state.stats.Fcrit;
+            return Math.abs(p - alpha) <= 0.01 || (Math.abs(fVal - fCrit) / fCrit <= 0.05);
+        },
         buttons: [
             { label: "What is F_crit?", action: "show_df_explanation" },
             { label: "Got it", action: "dismiss_session" }
         ]
     },
-    // --- Onboarding (Priority: 200-300) ---
+    {
+        id: "global_f_near_1",
+        priority: 900,
+        type: "hint",
+        title: "F near 1",
+        body: "F near 1 means the between-group variability is about the same size as within-group variability. That usually leads to a larger p-value.",
+        condition: (state) => state.stats?.F >= 0.9 && state.stats?.F <= 1.1,
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+    {
+        id: "global_f_large",
+        priority: 920,
+        type: "enrichment",
+        title: "Significant F-ratio",
+        body: "When F is significantly larger than F_crit (and p < alpha), it suggests group differences are larger than expected by random noise.",
+        condition: (state) => state.stats?.p <= (state.stats?.alpha || 0.05),
+        buttons: [
+            { label: "Highlight what changed", action: "highlight_f_drivers" },
+            { label: "Got it", action: "dismiss_session" }
+        ]
+    },
+
+    // --- INTERPRETATION (Priority: 900) ---
+    {
+        id: "res_significant",
+        priority: 900,
+        type: "enrichment",
+        title: "Significant Result",
+        body: "Result is significant. This supports that at least one group mean differs. Next step is usually a post-hoc test or planned contrasts.",
+        condition: (state) => state.stats?.p < state.stats?.alpha && state.lastAction === 'calc_results',
+        buttons: [
+            { label: "Run Post-Hoc", action: "run_post_hoc" },
+            { label: "Show Effect Size", action: "show_effect_size_info" }
+        ]
+    },
+    {
+        id: "res_nonsignificant",
+        priority: 900,
+        type: "enrichment",
+        title: "Not Significant",
+        body: "Not significant. This means the data do not provide strong evidence that the group means differ. Small samples and high within-group variability can reduce power.",
+        condition: (state) => state.stats?.p >= state.stats?.alpha && state.lastAction === 'calc_results',
+        buttons: [
+            { label: "Show Power Tip", action: "show_power_tip" },
+            { label: "What does this mean?", action: "show_nonsig_explanation" }
+        ]
+    },
+
+    // --- Onboarding (Priority: 300-300) ---
     {
         id: "onboarding_intro",
         priority: 300,
         type: "onboarding",
-        title: "ANOVA in one sentence",
-        body: "ANOVA compares group means by splitting total variability into between-group signal and within-group noise.",
+        title: "ANOVA Introduction",
+        body: "ANOVA evaluates whether observed separation between groups is larger than expected from within-group noise (random chance).",
         condition: (state) => state.isFirstVisit && !state.activeTip,
         buttons: [
-            { label: "Start", action: "highlight_ssb", next: "onboarding_how_to" },
+            { label: "Start", action: "onboarding_step_1", next: "onboarding_how_to" },
             { label: "Skip", action: "dismiss_permanent" }
-        ]
-    },
-    {
-        id: "onboarding_how_to",
-        priority: 250,
-        type: "onboarding",
-        title: "How to use this page",
-        body: "Tip: Use 'Show Values' to reveal the numbers in each formula. Hover symbols for definitions. Switch Raw Data vs Summary Stats for SS_within.",
-        condition: (state) => state.isFirstVisit && (state.idleTime >= 10 || state.lastAction === 'add_group'),
-        buttons: [
-            { label: "Show me", action: "toggle_show_values" },
-            { label: "Later", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "onboarding_mode",
-        priority: 200,
-        type: "onboarding",
-        title: "Choose your computation mode",
-        body: "If you have raw scores, use Raw Data. If you only have group size and variance, use Summary Stats. Both give the same SS_within.",
-        condition: (state) => state.activePanel === 'ss_within' && state.isFirstVisitToPanel,
-        buttons: [
-            { label: "Raw Data", action: "set_ssw_mode_raw" },
-            { label: "Summary Stats", action: "set_ssw_mode_summary" },
-            { label: "Don't show again", action: "dismiss_permanent" }
         ]
     },
 
@@ -142,76 +196,32 @@ export const ANOVA_TUTOR_SCRIPTS = [
         type: "misconception",
         title: "What do i and j mean?",
         body: "j labels groups (1…k). i labels individuals inside a group (1…nⱼ).",
-        condition: (state) => state.hoveredTerm === 'sigma' || state.hoveredTerm === 'indices' || state.isSymbolKeyFirstOpen,
+        condition: (state) => state.hoveredTerm === 'Sigma' || state.hoveredTerm === 'i' || state.hoveredTerm === 'j' || state.hoveredTerm === 'indices',
         buttons: [
             { label: "Got it", action: "dismiss_session" },
             { label: "Show example", action: "show_index_example" }
         ]
     },
     {
-        id: "confusion_grand_mean",
-        priority: 400,
-        type: "misconception",
-        title: "What is the grand mean?",
-        body: "Grand mean is the average of all scores from all groups combined.",
-        condition: (state) => state.hoveredTerm === 'x_grand' || state.clickedTerm === 'x_grand',
-        buttons: [
-            { label: "Highlight in table", action: "highlight_grand_mean" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
+        id: "confusion_ms",
+        priority: 450,
+        type: "hint",
+        title: "What is MS (Mean Square)?",
+        body: "Mean square is a sum of squares divided by its df: MS_between = SS_between/df_between, MS_within = SS_within/df_within.",
+        condition: (state) => state.hoveredTerm === 'MS_between' || state.hoveredTerm === 'MS_within',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
     {
-        id: "confusion_scaling",
-        priority: 400,
-        type: "misconception",
-        title: "Why is nⱼ multiplying naming?",
-        body: "Each group mean represents every score in that group. Multiplying by nⱼ scales that mean difference to the group's total contribution.",
-        condition: (state) => state.hoveredTerm === 'nj' && state.activePanel === 'ss_between',
-        buttons: [
-            { label: "Show numeric example", action: "show_nj_example" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
+        id: "concept_eta2",
+        priority: 450,
+        type: "enrichment",
+        title: "Effect Size (η²)",
+        body: "Effect size estimates how much total variability is associated with group membership. For example, η² ≈ SS_between / SS_total.",
+        condition: (state) => state.hoveredTerm === 'eta2',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
 
-    // --- Stuck Detection (Priority: 150) ---
-    {
-        id: "stuck_show_values",
-        priority: 150,
-        type: "hint",
-        title: "Try Show Values",
-        body: "Want it to feel less abstract? Turn on 'Show Values' to see the actual numbers substituted into each term.",
-        condition: (state) => state.scrollDepth > 500 && !state.showValues && state.idleTime >= 20 && !state.dismissed_stuck_values,
-        buttons: [
-            { label: "Show Values", action: "toggle_show_values" },
-            { label: "Not now", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "stuck_focus_group",
-        priority: 140,
-        type: "hint",
-        title: "One group at a time",
-        body: "Compute SS_between by adding group contributions one at a time: nⱼ(x̄ⱼ - x̄_grand)². Start with just one group.",
-        condition: (state) => state.showValues && state.activePanel === 'ss_between' && state.idleTime >= 15,
-        buttons: [
-            { label: "Focus Group 1", action: "focus_group_1" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "stuck_collapse",
-        priority: 130,
-        type: "hint",
-        title: "You can collapse panels",
-        body: "Tip: Collapse sections you're done with so you only see the current step.",
-        condition: (state) => state.scrollVelocity > 2000 && state.scrollDirection === 'up',
-        buttons: [
-            { label: "Collapse completed", action: "collapse_all_but_active" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-
-    // --- Data Errors (Priority: 1000+) ---
+    // --- Data Errors (Priority: 1100+) ---
     {
         id: "error_k_count",
         priority: 1100,
@@ -227,204 +237,40 @@ export const ANOVA_TUTOR_SCRIPTS = [
         id: "error_nj_count",
         priority: 1090,
         type: "error",
-        title: "Group must have at least 2 observations",
-        body: "A group with 1 score cannot have within-group variance. Add at least one more observation to that group.",
+        title: "Min 2 observations per group",
+        body: "A group with only 1 score has no within-group variance. Add another observation.",
         condition: (state) => state.stats?.anyNj < 2 && state.inputMode === 'raw',
         buttons: [
-            { label: "Go to group", action: "focus_empty_group" },
             { label: "Got it", action: "dismiss_session" }
         ]
     },
     {
-        id: "error_variance_invalid",
-        priority: 1080,
+        id: "error_invalid_input",
+        priority: 1150,
         type: "error",
-        title: "Variance undefined",
-        body: "Variance must be a nonnegative number. Check your input for sⱼ².",
-        condition: (state) => (state.stats?.anyInvalidVariance || state.lastAction === 'change_stats') && state.inputMode === 'summary' && state.stats?.anyInvalidVariance,
-        buttons: [
-            { label: "Take me there", action: "focus_invalid_variance" }
-        ]
+        title: "Data Entry Issues",
+        body: "Some entries are missing or not numbers. ANOVA needs numeric scores in each group.",
+        condition: (state) => state.lastAction === 'data_error_missing',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
     {
-        id: "error_df_within",
-        priority: 1070,
+        id: "error_summary_missing",
+        priority: 1150,
         type: "error",
-        title: "Degrees of freedom issue",
-        body: "Within-group degrees of freedom must be positive. You need more total observations than groups.",
-        condition: (state) => state.stats?.df_within <= 0,
-        buttons: [
-            { label: "Show me why", action: "show_df_explanation" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "error_ssw_mismatch",
-        priority: 1060,
-        type: "error",
-        title: "Raw vs Summary mismatch",
-        body: "Your raw-data SS_within and summary-stats SS_within do not match. This usually means a variance or group size was entered incorrectly.",
-        condition: (state) => Math.abs(state.stats?.ssw_raw - state.stats?.ssw_summary) > 0.1,
-        buttons: [
-            { label: "Compare group-by-group", action: "highlight_mismatch" },
-            { label: "Ignore", action: "dismiss_session" }
-        ]
+        title: "Summary Stats Missing",
+        body: "To compute SS_within from summary stats, each group needs a variance (or SD) and sample size.",
+        condition: (state) => state.lastAction === 'data_error_summary',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
 
-    // --- Conceptual (Priority: 500-600) ---
-    {
-        id: "concept_f_ratio",
-        priority: 600,
-        type: "misconception",
-        title: "F is a ratio, not a difference",
-        body: "F compares two averages of variance: MS_between (signal) divided by MS_within (noise). Bigger F means group separation is large relative to within-group spread.",
-        condition: (state) => state.hoveredTerm === 'F' || state.clickedTerm === 'F_help',
-        buttons: [
-            { label: "Show F≈1 example", action: "show_f1_example" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "concept_f_near_1",
-        priority: 550,
-        type: "enrichment",
-        title: "Anchor: F near 1",
-        body: "F is close to 1. That pattern happens when between-group variation is similar to within-group variation.",
-        condition: (state) => state.stats?.F >= 0.8 && state.stats?.F <= 1.2,
-        buttons: [
-            { label: "What would raise F?", action: "show_f_factors" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "concept_f_large",
-        priority: 550,
-        type: "enrichment",
-        title: "When F gets large",
-        body: "F is getting large. That happens when group means separate, within-group spread shrinks, or both.",
-        condition: (state) => state.stats?.F >= 4,
-        buttons: [
-            { label: "Highlight which changed", action: "highlight_f_drivers" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "concept_ss_size",
-        priority: 540,
-        type: "misconception",
-        title: "SS increases with spread and sample size",
-        body: "SS depends on both spread and sample size. If n grows, SS can grow even if the mean differences stay the same.",
-        condition: (state) => state.lastAction === 'change_n' && Math.abs(state.last_ss - state.current_ss) > 1,
-        buttons: [
-            { label: "Show a quick example", action: "show_ss_n_example" }
-        ]
-    },
-    {
-        id: "concept_why_square",
-        priority: 530,
-        type: "misconception",
-        title: "Why we square",
-        body: "Squaring makes all distances positive and gives more weight to larger deviations. It is why SS captures overall variability.",
-        condition: (state) => state.hoveredTerm === 'square',
-        buttons: [
-            { label: "Show before/after squaring", action: "show_square_demo" }
-        ]
-    },
-    {
-        id: "concept_ms_average",
-        priority: 520,
-        type: "enrichment",
-        title: "MS is an average SS",
-        body: "Mean square is SS divided by its degrees of freedom. It converts totals into an average variance estimate.",
-        condition: (state) => state.activePanel?.includes('ms_') && state.isFirstVisitToMs,
-        buttons: [
-            { label: "Show with numbers", action: "toggle_show_values" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "concept_eta_interpretation",
-        priority: 510,
-        type: "enrichment",
-        title: "Eta squared interpretation",
-        body: "η² is the fraction of total variability linked to group membership. Example: η² = .30 means about 30% of the variance is associated with groups.",
-        condition: (state) => state.stats?.eta2 !== undefined && state.isFirstVisitToEta,
-        buttons: [
-            { label: "Give me a plain-language sentence", action: "generate_eta_sentence" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "concept_eta_magnitude",
-        priority: 505,
-        type: "enrichment",
-        title: (state) => state.stats?.eta2 < 0.05 ? "Small η²" : "Large η²",
-        body: (state) => state.stats?.eta2 < 0.05
-            ? "η² is small. Group membership explains a small portion of the total variability here."
-            : "η² is large. Group membership accounts for a large portion of the total variability here.",
-        condition: (state) => state.stats?.eta2 < 0.05 || state.stats?.eta2 > 0.30,
-        buttons: [
-            { label: "How to report", action: "show_eta_apa" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-
-    // --- Process Guidance (Priority: 200) ---
-    {
-        id: "process_order",
-        priority: 200,
-        type: "hint",
-        title: "You can compute in this order",
-        body: "A reliable order: 1) compute SS_between and SS_within, 2) find df_between and df_within, 3) compute MS_between and MS_within, 4) compute F, 5) interpret p and η².",
-        condition: (state) => state.clickedTerm === 'help_general',
-        buttons: [
-            { label: "Guide me step-by-step", action: "start_step_by_step" },
-            { label: "Got it", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "process_check_df",
-        priority: 190,
-        type: "hint",
-        title: "Check your df",
-        body: "Before interpreting p, confirm df: df_between = k−1 and df_within = N−k.",
-        condition: (state) => state.clickedTerm === 'interpret_p' || state.activePanel === 'p_value',
-        buttons: [
-            { label: "Verify df", action: "highlight_df_panels" },
-            { label: "Continue", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "process_ssb_drivers",
-        priority: 180,
-        type: "hint",
-        title: "What changes SS_between?",
-        body: "SS_between increases when group means move farther from the grand mean, especially for larger groups.",
-        condition: (state) => state.lastAction === 'drag_mean',
-        buttons: [
-            { label: "Show contributions per group", action: "highlight_ssb_parts" }
-        ]
-    },
-    {
-        id: "process_ssw_drivers",
-        priority: 170,
-        type: "hint",
-        title: "What changes SS_within?",
-        body: "SS_within increases when points spread out more around their group mean.",
-        condition: (state) => state.lastAction === 'drag_point',
-        buttons: [
-            { label: "Show within deviations", action: "highlight_ssw_parts" }
-        ]
-    },
-
-    // --- Assumptions/Edge Cases (Priority: 100) ---
+    // --- Assumptions/Edge Cases (Priority: 850) ---
     {
         id: "edge_unbalanced",
-        priority: 180,
+        priority: 850,
         type: "hint",
         title: "Unequal group sizes",
-        body: "Your group sizes are quite different. ANOVA still works, but large imbalances can affect robustness when variances differ.",
-        condition: (state) => (state.stats?.maxNj / state.stats?.minNj >= 2) && (state.lastAction === 'add_group' || state.lastAction === 'remove_group' || state.idleTime >= 10),
+        body: "Imbalanced group sizes + variance differences together are when ANOVA becomes most vulnerable. Check both.",
+        condition: (state) => (state.stats?.maxNj / state.stats?.minNj >= 2) && (state.lastAction === 'add_group' || state.lastAction === 'remove_group' || state.lastAction === 'change_raw'),
         buttons: [
             { label: "Tell me more", action: "show_unbalanced_info" },
             { label: "Don't show again", action: "dismiss_permanent" }
@@ -432,53 +278,14 @@ export const ANOVA_TUTOR_SCRIPTS = [
     },
     {
         id: "edge_variances",
-        priority: 180,
+        priority: 850,
         type: "hint",
-        title: "Variance differences",
-        body: "Group variances differ a lot. If this is real data, consider checking the equal-variance assumption.",
-        condition: (state) => (state.stats?.maxVar / state.stats?.minVar > 4) && (state.lastAction === 'change_stats' || state.idleTime >= 15),
+        title: "Homogeneity of Variance",
+        body: "Group variances differ significantly. Big differences can inflate false positives or reduce power. Consider Welch's ANOVA.",
+        condition: (state) => (state.stats?.maxVar / state.stats?.minVar > 4) && (state.lastAction === 'change_stats' || state.lastAction === 'change_raw'),
         buttons: [
-            { label: "Show variance check", action: "show_homogeneity_info" },
-            { label: "Ignore", action: "dismiss_session" }
-        ]
-    },
-    {
-        id: "edge_outlier",
-        priority: 90,
-        type: "hint",
-        title: "Outlier warning",
-        body: "One score is far from its group mean. Outliers can inflate SS_within and reduce F.",
-        condition: (state) => state.stats?.hasOutlier,
-        buttons: [
-            { label: "Highlight point", action: "highlight_outlier" },
-            { label: "Ignore", action: "dismiss_session" }
-        ]
-    },
-
-    // --- Mini Questions (Priority: 50) ---
-    {
-        id: "quiz_spread_f",
-        priority: 50,
-        type: "enrichment",
-        title: "Predict before reveal",
-        body: "Quick check: If within-group spread shrinks, what happens to F?",
-        condition: (state) => state.lastAction === 'toggle_values_first_time',
-        buttons: [
-            { label: "F increases", action: "quiz_correct" },
-            { label: "F decreases", action: "quiz_incorrect" },
-            { label: "Not sure", action: "show_f_spread_explanation" }
-        ]
-    },
-    {
-        id: "quiz_sentence_builder",
-        priority: 50,
-        type: "enrichment",
-        title: "Interpretation sentence builder",
-        body: "Want a report-ready sentence? I can generate one using your values.",
-        condition: (state) => state.stats?.p !== undefined && state.stats?.F !== undefined,
-        buttons: [
-            { label: "Generate sentence", action: "generate_apa_report" },
-            { label: "No thanks", action: "dismiss_permanent" }
+            { label: "What is Welch ANOVA?", action: "show_welch_info" },
+            { label: "Check assumptions", action: "show_assumptions_checklist" }
         ]
     }
 ];
