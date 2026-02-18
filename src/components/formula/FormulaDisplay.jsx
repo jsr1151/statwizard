@@ -162,7 +162,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
         {/* Main F-Ratio Card */}
         <div className={`flex flex-col items-center w-full`}>
           <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1`}>The F-Ratio</div>
-          <div className={`flex items-center text-2xl md:text-4xl font-serif ${textCol}`}>
+          <div className={`flex items-center text-2xl md:text-4xl font-serif ${textCol} whitespace-nowrap`}>
             <span className="font-bold mr-3 italic">F</span>
             <span className="mr-3">=</span>
             <div className="flex flex-col items-center">
@@ -185,7 +185,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 Turns SS_between into an average by dividing by its degrees of freedom. MS_between estimates variation due to group differences.
               </div>
               <div className="eq-wrap">
-                <div className={`flex flex-col items-center eq-text font-serif ${textCol}`}>
+                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
                   <div className="flex items-center gap-2">
                     <span>{calc("MS_between", getV('msB'))}</span>
                     <span className="opacity-50">=</span>
@@ -209,7 +209,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 Turns SS_within into an average by dividing by its degrees of freedom. MS_within estimates the typical within-group variability (noise).
               </div>
               <div className="eq-wrap">
-                <div className={`flex flex-col items-center eq-text font-serif ${textCol}`}>
+                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
                   <div className="flex items-center gap-2">
                     <span>{calc("MS_within", getV('msW'))}</span>
                     <span className="opacity-50">=</span>
@@ -241,7 +241,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               </div>
 
               <div className="eq-wrap mt-2">
-                <div className={`eq-text font-serif ${textCol} flex items-center`}>
+                <div className={`eq-text font-serif ${textCol} flex items-center whitespace-nowrap`}>
                   {calc("SS_between", getV('ssB'))}
                   <span className="mx-2 opacity-50">=</span>
                   <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" />
@@ -280,7 +280,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               <div className="flex flex-col gap-3 w-full items-center min-h-[40px]">
                 {ssWTab === 'raw' ? (
                   <div className="eq-wrap animate-in fade-in duration-300">
-                    <div className={`eq-text font-serif ${textCol} flex items-center`}>
+                    <div className={`eq-text font-serif ${textCol} flex items-center whitespace-nowrap`}>
                       {calc("SS_within", getV('ssW'))}
                       <span className="mx-2 opacity-50">=</span>
                       <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" />
@@ -294,7 +294,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                       Computed from each group’s variance: {calc("SS_within", getV('ssW'))} = {calc("nj_minus_1_sj2", undefined)}
                     </div>
                     <div className="eq-wrap">
-                      <div className={`eq-text font-serif ${textCol} flex items-center`}>
+                      <div className={`eq-text font-serif ${textCol} flex items-center whitespace-nowrap`}>
                         {calc("SS_within", getV('ssW'))}
                         <span className="mx-2 opacity-50">=</span>
                         <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" />
@@ -341,7 +341,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
 
             <div className={`flex flex-col items-center gap-2 w-full mt-2`}>
               <div className="eq-wrap">
-                <div className={`eq-text font-serif ${textCol} flex items-center`}>
+                <div className={`eq-text font-serif ${textCol} flex items-center whitespace-nowrap`}>
                   <span>{calc("SS_total", getV('ssT'))}</span>
                   <span className="mx-3 opacity-50">=</span>
                   <span>{calc("SS_between", getV('ssB'))}</span>
@@ -353,7 +353,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 Total variability = explained (between) + unexplained (within)
               </div>
               <div className="eq-wrap">
-                <div className={`text-[10px] flex items-center font-serif ${labelCol} opacity-70 mt-1`}>
+                <div className={`text-[10px] flex items-center font-serif ${labelCol} opacity-70 mt-1 whitespace-nowrap`}>
                   Formula: {calc("SS_total", getV('ssT'))} = <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" className="scale-75 origin-center" /><SigmaWithLimits top="nⱼ" bottom="i=1" term="Sigma_nj" className="scale-75 origin-center" />({calc("xij", undefined)} - {calc("x̄_grand", undefined)})²
                 </div>
               </div>
@@ -367,7 +367,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               Proportion of total variability accounted for by group differences. For example, η² = .30 means about 30% of the variance is associated with group membership.
             </div>
             <div className="eq-wrap mt-2">
-              <div className={`eq-text font-serif ${textCol} flex items-center`}>
+              <div className={`eq-text font-serif ${textCol} flex items-center whitespace-nowrap`}>
                 {calc("eta2", getV('eta2'))}
                 <span className="mx-4 font-light opacity-50">=</span>
                 <div className="flex flex-col items-center">
