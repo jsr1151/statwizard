@@ -11,6 +11,7 @@ const useAnovaTutor = (stats, context) => {
     const [lastTipTime, setLastTipTime] = useState(0);
     const [idleTime, setIdleTime] = useState(0);
     const [hasInteracted, setHasInteracted] = useState(false);
+    const [lastAction, setLastAction] = useState(null);
 
     const timerRef = useRef(null);
 
@@ -54,6 +55,7 @@ const useAnovaTutor = (stats, context) => {
                 ...eventData,
                 idleTime,
                 hasInteracted,
+                lastAction,
                 activeTip
             };
 
@@ -80,7 +82,7 @@ const useAnovaTutor = (stats, context) => {
         if (highestPriority.priority < 1000 && timeSinceLast < cooldown) return;
 
         // Resolve functions for title/body one last time for the winner
-        const combinedState = { stats, ...context, ...eventData, idleTime, hasInteracted, activeTip };
+        const combinedState = { stats, ...context, ...eventData, idleTime, hasInteracted, lastAction, activeTip };
         const resolved = { ...highestPriority };
         if (typeof resolved.title === 'function') resolved.title = resolved.title(combinedState);
         if (typeof resolved.body === 'function') resolved.body = resolved.body(combinedState);
@@ -100,7 +102,8 @@ const useAnovaTutor = (stats, context) => {
         activeTip,
         dismissTip,
         triggerEvent,
-        resetIdle
+        resetIdle,
+        setLastAction
     };
 };
 

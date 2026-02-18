@@ -93,6 +93,7 @@ export default function App() {
     const [showEquationValues, setShowEquationValues] = useState(false);
     const [currentStats, setCurrentStats] = useState(null);
     const [hoveredTerm, setHoveredTerm] = useState(null);
+    const [activeExplanation, setActiveExplanation] = useState(null);
 
     // --- SHARED ANOVA TUTOR STATE ---
     const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
@@ -164,12 +165,23 @@ export default function App() {
     // and useAnovaTutor's persistence. We just need to track if it's the first visit session-wise
     // to pass down as context if needed.
 
-    // Sync ANOVA tutor with visibility
+    // Sync ANOVA tutor with visibility and interaction
     useEffect(() => {
-        if (!isAnovaTrulyActive && anovaTutor.activeTip) {
+        if (!isAnovaActive && anovaTutor.activeTip) {
             anovaTutor.dismissTip(anovaTutor.activeTip.id);
         }
-    }, [isAnovaTrulyActive, anovaTutor]);
+
+        const handleInteraction = (e) => {
+            if (e.detail && e.detail.signal) {
+                anovaTutor.resetIdle();
+                anovaTutor.setLastAction(e.detail.signal);
+                anovaTutor.triggerEvent({ lastAction: e.detail.signal, ...e.detail });
+            }
+        };
+
+        window.addEventListener('anovaTutorAction', handleInteraction);
+        return () => window.removeEventListener('anovaTutorAction', handleInteraction);
+    }, [isAnovaActive, anovaTutor]);
 
 
     const askAI = async (context) => {
@@ -501,12 +513,72 @@ export default function App() {
                     </div>
                 )}
 
+                {activeExplanation && (
+                    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[11000] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                        <div className={`rounded-2xl shadow-2xl max-w-lg w-full p-6 border animate-in zoom-in-95 duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className={`font-bold text-lg ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{activeExplanation.title}</h3>
+                                <button onClick={() => setActiveExplanation(null)} className={`p-1 rounded-full hover:bg-slate-800 transition-colors ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}><X size={18} /></button>
+                            </div>
+                            <div className={`text-sm leading-relaxed max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                                <p className="mb-4">{activeExplanation.body}</p>
+                                {activeExplanation.content && (
+                                    <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                        {activeExplanation.content}
+                                    </div>
+                                )}
+                            </div>
+                            <button onClick={() => setActiveExplanation(null)} className={`mt-6 w-full py-3 rounded-xl font-bold transition-all ${darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>Close</button>
+                        </div>
+                    </div>
+                )}
+
                 {isAnovaActive && anovaTutor.activeTip && (
                     <AnovaTutorPanel
                         tip={anovaTutor.activeTip}
                         onDismiss={anovaTutor.dismissTip}
                         onAction={(action) => {
                             if (action === 'toggle_show_values') setShowEquationValues(!showEquationValues);
+                            if (action === 'dismiss_permanent') anovaTutor.dismissTip(anovaTutor.activeTip.id, true);
+                            if (action === 'dismiss_session') anovaTutor.dismissTip(anovaTutor.activeTip.id, false);
+
+                            // Educational/Explanation actions
+                            const explanations = {
+                                'show_index_example': {
+                                    title: "Example: indices i and j",
+                                    body: "If Group 1 has scores [5, 6, 7], then j=1 for all of them. The first score (5) is x₁,₁. The second (6) is x₂,₁, and the third (7) is x₃,₁.",
+                                },
+                                'show_nj_example': {
+                                    title: "Numeric Example: Scaling",
+                                    body: "If group size nⱼ = 10 and the mean difference (x̄ⱼ - x̄_grand)² = 4, that group contributes 10 * 4 = 40 to the SS_between.",
+                                },
+                                'show_f1_example': {
+                                    title: "F ≈ 1 Example",
+                                    body: "If between-group variance is 20 and within-group variance is 20, F = 20/20 = 1.0. This happens when the treatment has no more effect than random chance.",
+                                },
+                                'show_df_explanation': {
+                                    title: "Understanding df_within",
+                                    body: "df_within = N - k. Every group uses up 1 'degree of freedom' to calculate its mean. If you have 30 people and 3 groups, you have 30 - 3 = 27 degrees of freedom left for noise.",
+                                },
+                                'show_f_factors': {
+                                    title: "What raises F?",
+                                    body: "Increasing group separation (bigger numerator) or decreasing individual spread (smaller denominator) both raise the F-ratio.",
+                                },
+                                'show_eta_apa': {
+                                    title: "Reporting η² in APA Style",
+                                    body: "Include η² after the F-test results. Example: F(2, 27) = 4.54, p = .020, η² = .25.",
+                                },
+                                'show_unbalanced_info': {
+                                    title: "Unequal Group Sizes",
+                                    body: "When n₁ ≠ n₂ ≠ n₃, the F-test is slightly less 'robust' if variances also differ. Use Levene's test to ensure homogeneity.",
+                                }
+                            };
+
+                            if (explanations[action]) {
+                                setActiveExplanation(explanations[action]);
+                                anovaTutor.dismissTip(anovaTutor.activeTip.id, false);
+                            }
+
                             window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: action }));
                         }}
                         darkMode={darkMode}

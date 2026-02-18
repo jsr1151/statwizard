@@ -143,6 +143,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       summary: { mean: "5.0", sd: "1.0", n: "5" },
       collapsed: false
     }]);
+    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'add_group' } }));
   };
 
   const removeGroup = (id) => {
@@ -152,11 +153,13 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
 
   const updateGroup = (id, field, val) => {
     setGroups(groups.map(g => g.id === id ? { ...g, [field]: val } : g));
+    if (field === 'inputMode') window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'toggle_input_mode', value: val } }));
   };
 
   const updateGroupStats = (id, field, val) => {
     // Keep as string to avoid finicky decimal typing issues
     setGroups(groups.map(g => g.id === id ? { ...g, summary: { ...g.summary, [field]: val } } : g));
+    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'change_stats', field, value: val } }));
   };
 
   const parseRaw = (id, rawStr) => {
@@ -164,6 +167,8 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     const tokens = rawStr.split(/[,\s\t\n]+/).filter(t => t.trim() !== "");
     const vals = tokens.map(v => parseFloat(v)).filter(v => !isNaN(v));
     const n = vals.length;
+
+    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'change_raw', count: n } }));
 
     // Update group even if n < 2, but calculate stats only if possible
     setGroups(groups.map(g => {

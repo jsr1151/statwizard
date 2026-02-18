@@ -18,7 +18,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
         type: "onboarding",
         title: "How to use this page",
         body: "Tip: Use 'Show Values' to reveal the numbers in each formula. Hover symbols for definitions. Switch Raw Data vs Summary Stats for SS_within.",
-        condition: (state) => state.isFirstVisit && state.idleTime >= 10,
+        condition: (state) => state.isFirstVisit && (state.idleTime >= 10 || state.lastAction === 'add_group'),
         buttons: [
             { label: "Show me", action: "toggle_show_values" },
             { label: "Later", action: "dismiss_session" }
@@ -144,7 +144,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
         type: "error",
         title: "Variance undefined",
         body: "Variance must be a nonnegative number. Check your input for sⱼ².",
-        condition: (state) => state.stats?.anyInvalidVariance && state.inputMode === 'summary',
+        condition: (state) => (state.stats?.anyInvalidVariance || state.lastAction === 'change_stats') && state.inputMode === 'summary' && state.stats?.anyInvalidVariance,
         buttons: [
             { label: "Take me there", action: "focus_invalid_variance" }
         ]
