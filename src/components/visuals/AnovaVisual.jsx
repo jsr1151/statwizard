@@ -37,6 +37,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   const [showPostHoc, setShowPostHoc] = useState(false);
   const [showSpread, setShowSpread] = useState(true);
   const [manualF, setManualF] = useState(null);
+  const [highlightTarget, setHighlightTarget] = useState(null);
 
   const anovaStats = useMemo(() => calculateAnova(groups), [groups]);
 
@@ -83,6 +84,48 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     if (onStatsUpdate) onStatsUpdate(renderModel);
   }, [renderModel, onStatsUpdate]);
 
+  // --- Reactive Signals for Tutor ---
+  useEffect(() => {
+    if (activeTab) {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+        detail: { signal: `change_tab_${activeTab.toLowerCase()}` }
+      }));
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+      detail: { signal: 'change_alpha', val: alpha }
+    }));
+  }, [alpha]);
+
+  useEffect(() => {
+    if (anovaMode === 'calc') {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+        detail: { signal: 'change_explore_params' }
+      }));
+    }
+  }, [calcDf1, calcDf2, calcF, anovaMode]);
+
+  useEffect(() => {
+    if (showPostHoc) {
+      window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+        detail: { signal: 'run_post_hoc' }
+      }));
+    }
+  }, [showPostHoc]);
+
+  useEffect(() => {
+    if (renderModel && renderModel.F !== undefined && renderModel.Fcrit !== undefined) {
+      const diff = Math.abs(renderModel.F - renderModel.Fcrit);
+      if (diff < 0.5) {
+        window.dispatchEvent(new CustomEvent('anovaTutorAction', {
+          detail: { signal: 'near_cutoff', diff }
+        }));
+      }
+    }
+  }, [renderModel?.F, renderModel?.Fcrit]);
+
   // --- Navigation & Scroll Logic ---
 
   useEffect(() => {
@@ -120,6 +163,10 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       case 'highlight_grand_mean':
         onTutorUpdate({ id: 'highlight', target: 'x_grand' });
         break;
+      case 'highlight_f_drivers':
+        setHighlightTarget('f_ratio');
+        setTimeout(() => setHighlightTarget(null), 3000);
+        break;
       case 'focus_group_1':
         setGroups(groups.map((g, i) => i === 0 ? { ...g, collapsed: false } : { ...g, collapsed: true }));
         break;
@@ -131,24 +178,28 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   };
 
   const addGroup = () => {
-    if (groups.length >= 6) return;
+    const newId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 1;
     const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
     const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
-    setGroups([...groups, {
-      id: Date.now(),
+    if (groups.length >= colors.length) return; // Limit groups to available colors
+
+    const newGroup = {
+      id: newId,
       label: `Group ${labels[groups.length]}`,
       color: colors[groups.length],
-      inputMode: 'raw',
-      values: [5, 5, 5, 5, 5],
-      summary: { mean: "5.0", sd: "1.0", n: "5" },
+      inputMode: groups[0]?.inputMode || 'raw', // Inherit input mode from first group or default to raw
+      values: [5, 5, 5], // Default values for new group
+      summary: { mean: "5.0", sd: "1.0", n: "3" }, // Default summary for new group
       collapsed: false
-    }]);
+    };
+    setGroups([...groups, newGroup]);
     window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'add_group' } }));
   };
 
   const removeGroup = (id) => {
-    if (groups.length <= 2) return;
+    if (groups.length <= 2) return; // Ensure at least 2 groups remain
     setGroups(groups.filter(g => g.id !== id));
+    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'remove_group' } }));
   };
 
   const updateGroup = (id, field, val) => {
@@ -212,12 +263,12 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
         </div>
 
         <div className="absolute top-4 right-4 flex items-center gap-3 z-40 pointer-events-none">
-          <div className={`px-4 py-2 rounded-xl border-2 flex flex-col items-center justify-center min-w-[90px] shadow-lg animate-in zoom-in-95 duration-300 pointer-events-auto ${renderModel.p < renderModel.alpha ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-500/5 border-slate-500/10'}`}>
-            <span className={`text-[8px] font-black uppercase tracking-widest leading-none mb-1 ${renderModel.p < renderModel.alpha ? 'text-emerald-500' : 'text-slate-500'}`}>Signif. (p)</span>
-            <span className={`text-xl font-black tabular-nums transition-colors ${renderModel.p < renderModel.alpha ? 'text-emerald-400' : 'text-slate-400'}`}>
+          <div className={`px-4 py-2 rounded-xl border-2 flex flex-col items-center justify-center min-w-[90px] shadow-lg animate-in zoom-in-95 duration-300 pointer-events-auto transition-all ${highlightTarget === 'f_ratio' ? 'scale-110 ring-4 ring-indigo-500 bg-indigo-500/20 border-indigo-500' : (renderModel.p < renderModel.alpha ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-500/5 border-slate-500/10')}`}>
+            <span className={`text-[8px] font-black uppercase tracking-widest leading-none mb-1 ${highlightTarget === 'f_ratio' ? 'text-indigo-400' : (renderModel.p < renderModel.alpha ? 'text-emerald-500' : 'text-slate-500')}`}>Signif. (p)</span>
+            <span className={`text-xl font-black tabular-nums transition-colors ${highlightTarget === 'f_ratio' ? 'text-indigo-500' : (renderModel.p < renderModel.alpha ? 'text-emerald-400' : 'text-slate-400')}`}>
               {renderModel.p < 0.001 ? '< .001' : renderModel.p.toFixed(4)}
             </span>
-            <span className={`text-[6px] font-black uppercase tracking-tighter mt-0.5 ${renderModel.mode === 'data' ? 'text-blue-400/60' : 'text-amber-400/60'}`}>
+            <span className={`text-[6px] font-black uppercase tracking-tighter mt-0.5 ${highlightTarget === 'f_ratio' ? 'text-indigo-400' : (renderModel.mode === 'data' ? 'text-blue-400/60' : 'text-amber-400/60')}`}>
               {renderModel.mode === 'data' ? 'From Dataset' : 'From Calculator'}
             </span>
           </div>

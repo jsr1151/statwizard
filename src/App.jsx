@@ -623,6 +623,10 @@ export default function App() {
                                     title: "What raises F?",
                                     body: "Increasing group separation (bigger numerator) or decreasing individual spread (smaller denominator) both raise the F-ratio.",
                                 },
+                                'highlight_f_drivers': {
+                                    title: "What is driving your F-ratio?",
+                                    body: "Is it a large difference between groups, or very small differences within them? I'll highlight the components in the table for you.",
+                                },
                                 'show_eta_apa': {
                                     title: "Reporting η² in APA Style",
                                     body: "Include η² after the F-test results. Example: F(2, 27) = 4.54, p = .020, η² = .25.",
@@ -646,6 +650,23 @@ export default function App() {
                         }}
                         darkMode={darkMode}
                     />
+                )}
+
+                {isAnovaActive && !anovaTutor.activeTip && (
+                    <div className="fixed top-24 right-10 z-[5000] animate-in slide-in-from-right-10 fade-in duration-700">
+                        <button
+                            onClick={() => setShowHistory(true)}
+                            className={`group flex items-center gap-3 px-5 py-3 rounded-2xl border-2 shadow-xl backdrop-blur-xl transition-all hover:scale-105 active:scale-95 ${darkMode ? 'bg-slate-900/90 border-slate-800 text-indigo-400 hover:border-indigo-500/50' : 'bg-white/90 border-slate-100 text-indigo-600 hover:border-indigo-200'}`}
+                        >
+                            <History size={18} className="group-hover:rotate-[-20deg] transition-transform" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Tutor Library</span>
+                            {anovaTutor.history.length > 0 && (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">
+                                    {anovaTutor.history.length}
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 )}
 
                 {updateAvailable && <UpdateToast countdown={countdown} />}

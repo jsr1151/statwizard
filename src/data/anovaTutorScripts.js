@@ -1,4 +1,101 @@
 export const ANOVA_TUTOR_SCRIPTS = [
+    // --- MODE / TAB TRIGGERS (New) ---
+    {
+        id: "tab_fdist_info",
+        priority: 150,
+        type: "hint",
+        title: "The F-Distribution",
+        body: "This curve shows the 'null hypothesis' distribution—what F would look like if there were no real differences between groups.",
+        condition: (state) => state.lastAction === 'change_tab_fdist',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+    {
+        id: "tab_means_info",
+        priority: 151,
+        type: "hint",
+        title: "Group Means Visualizer",
+        body: "Here you can see exactly how far apart the group means are. The 'between-group' variance comes from these distances.",
+        condition: (state) => state.lastAction === 'change_tab_means',
+        buttons: [
+            { label: "Show SS_between", action: "highlight_ssb" },
+            { label: "Got it", action: "dismiss_session" }
+        ]
+    },
+    {
+        id: "tab_decomp_info",
+        priority: 152,
+        type: "hint",
+        title: "Variance Decomposition",
+        body: "This view slices the total pie into signal (Between) and noise (Within). The ratio of these slices determines your F-value.",
+        condition: (state) => state.lastAction === 'change_tab_decomp',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+
+    // --- INTERACTION TRIGGERS (New) ---
+    {
+        id: "signal_add_group",
+        priority: 200,
+        type: "enrichment",
+        title: "Adding Groups Increases df_between",
+        body: "Each new group adds 1 to your numerator degrees of freedom (df_between = k - 1). This shifts the shape of the F-distribution curve.",
+        condition: (state) => state.lastAction === 'add_group',
+        buttons: [
+            { label: "Show df calculation", action: "show_df_explanation" },
+            { label: "Got it", action: "dismiss_session" }
+        ]
+    },
+    {
+        id: "signal_remove_group",
+        priority: 200,
+        type: "enrichment",
+        title: "Removing Groups",
+        body: "Fewer groups means fewer degrees of freedom for signal. df_between is now k - 1.",
+        condition: (state) => state.lastAction === 'remove_group',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+    {
+        id: "signal_post_hoc",
+        priority: 210,
+        type: "enrichment",
+        title: "Why use Post-Hocs?",
+        body: "ANOVA tells you IF there is a difference, but not WHERE. Post-hocs like Tukey test all pairs to see which specific groups differ.",
+        condition: (state) => state.lastAction === 'run_post_hoc',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+    {
+        id: "signal_alpha",
+        priority: 220,
+        type: "hint",
+        title: "Adjusting Alpha",
+        body: "Alpha is your 'error budget'. Lowering it (e.g., to .01) makes the test more strict and pushes the critical cutoff further to the right.",
+        condition: (state) => state.lastAction === 'change_alpha',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+
+    // --- EXPLORE MODE (New) ---
+    {
+        id: "explore_params",
+        priority: 160,
+        type: "hint",
+        title: "Explore Mode: Play with F",
+        body: "In this mode, you control F and df directly. Watch how the p-value responds instantly as you drag the sliders.",
+        condition: (state) => state.lastAction === 'change_explore_params',
+        buttons: [{ label: "Got it", action: "dismiss_session" }]
+    },
+
+    // --- GLOBAL THRESHOLDS (New) ---
+    {
+        id: "global_near_cutoff",
+        priority: 450,
+        type: "enrichment",
+        title: "Near the Edge",
+        body: "Your F-value is very close to the critical cutoff. Small changes in your data could flip this test from significant to non-significant!",
+        condition: (state) => state.lastAction === 'near_cutoff',
+        buttons: [
+            { label: "What is F_crit?", action: "show_df_explanation" },
+            { label: "Got it", action: "dismiss_session" }
+        ]
+    },
     // --- Onboarding (Priority: 200-300) ---
     {
         id: "onboarding_intro",
@@ -323,11 +420,11 @@ export const ANOVA_TUTOR_SCRIPTS = [
     // --- Assumptions/Edge Cases (Priority: 100) ---
     {
         id: "edge_unbalanced",
-        priority: 100,
+        priority: 180,
         type: "hint",
         title: "Unequal group sizes",
         body: "Your group sizes are quite different. ANOVA still works, but large imbalances can affect robustness when variances differ.",
-        condition: (state) => state.stats?.maxNj / state.stats?.minNj >= 2,
+        condition: (state) => (state.stats?.maxNj / state.stats?.minNj >= 2) && (state.lastAction === 'add_group' || state.lastAction === 'remove_group' || state.idleTime >= 10),
         buttons: [
             { label: "Tell me more", action: "show_unbalanced_info" },
             { label: "Don't show again", action: "dismiss_permanent" }
@@ -335,11 +432,11 @@ export const ANOVA_TUTOR_SCRIPTS = [
     },
     {
         id: "edge_variances",
-        priority: 100,
+        priority: 180,
         type: "hint",
         title: "Variance differences",
         body: "Group variances differ a lot. If this is real data, consider checking the equal-variance assumption.",
-        condition: (state) => state.stats?.maxVar / state.stats?.minVar > 4,
+        condition: (state) => (state.stats?.maxVar / state.stats?.minVar > 4) && (state.lastAction === 'change_stats' || state.idleTime >= 15),
         buttons: [
             { label: "Show variance check", action: "show_homogeneity_info" },
             { label: "Ignore", action: "dismiss_session" }
