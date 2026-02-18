@@ -57,6 +57,10 @@ import UpdateToast from './components/common/UpdateToast';
 
 // --- Hooks ---
 import useAutoReload from './hooks/useAutoReload';
+import useAnovaTutor from './hooks/useAnovaTutor';
+
+// --- Tutor Components ---
+import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -140,6 +144,34 @@ export default function App() {
     const activeMathTerm = activeMathTermKey ? MATH_TERMS[activeMathTermKey] : null;
 
     const toggleDarkMode = () => setDarkMode(!darkMode);
+
+    // --- SHARED ANOVA TUTOR LOGIC ---
+    const isAnovaActive = currentStepId === 'res_anova' || displayVisualType === 'anova';
+    const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
+    useEffect(() => {
+        if (anovaIsFirstVisit && isAnovaActive) {
+            localStorage.setItem('anova_tutor_onboarded', 'true');
+        }
+    }, [anovaIsFirstVisit, isAnovaActive]);
+
+    const anovaTutorContext = useMemo(() => ({
+        isFirstVisit: anovaIsFirstVisit,
+        activePanel: activeMathTermKey,
+        hoveredTerm: hoveredTerm,
+        showValues: showEquationValues,
+        isSymbolKeyFirstOpen: symbolKeyOpen,
+        // we'll let AnovaVisual provide scroll data via event signals if needed, 
+        // but basics are here
+    }), [anovaIsFirstVisit, activeMathTermKey, hoveredTerm, showEquationValues, symbolKeyOpen]);
+
+    const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
+
+    // Sync ANOVA tutor with visibility
+    useEffect(() => {
+        if (!isAnovaActive && anovaTutor.activeTip) {
+            anovaTutor.dismissTip(anovaTutor.activeTip.id);
+        }
+    }, [isAnovaActive, anovaTutor]);
 
     const askAI = async (context) => {
         setAiLoading(true);
@@ -359,6 +391,7 @@ export default function App() {
                                                                         showValues={showEquationValues}
                                                                         onTutorUpdate={setActiveTutorScript}
                                                                         onStatsUpdate={setCurrentStats}
+                                                                        tutor={anovaTutor}
                                                                     />
                                                                 </ErrorBoundary>
                                                             ) : displayVisualType === 'indep_ttest' ? (
@@ -465,6 +498,18 @@ export default function App() {
                             <button onClick={() => setAiModalOpen(false)} className={`mt-6 w-full py-3 rounded-xl font-bold transition-all ${darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>Dismiss</button>
                         </div>
                     </div>
+                )}
+
+                {isAnovaActive && anovaTutor.activeTip && (
+                    <AnovaTutorPanel
+                        tip={anovaTutor.activeTip}
+                        onDismiss={anovaTutor.dismissTip}
+                        onAction={(action) => {
+                            if (action === 'toggle_show_values') setShowEquationValues(!showEquationValues);
+                            window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: action }));
+                        }}
+                        darkMode={darkMode}
+                    />
                 )}
 
                 {updateAvailable && <UpdateToast countdown={countdown} />}

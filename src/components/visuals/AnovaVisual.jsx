@@ -2,8 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AlertCircle, Sparkles, Calculator, MousePointer2, Info, ArrowDown, MousePointerClick, Maximize2, Minimize2, RefreshCw, Play, Activity, Lightbulb, BrainCircuit, BarChart2, Sigma, BookOpen, Plus, X, Trash2, Edit2, TrendingUp, Grid, FileText, PieChart, CheckCircle, Layers, LayoutGrid, RotateCcw } from 'lucide-react';
 import { getGaussianPoints, getTPoints, normalCDF, tCDF, erf, getTCrit, getFDensity, fCDF, fPPF, getFCrit, getFPoints, calculateAnova, calculatePostHoc, lnGamma, beta } from '../../utils/mathHelpers';
 import { pointsToPath, pointsToLine, getOrdinal } from '../../utils/svgHelpers';
-import useAnovaTutor from '../../hooks/useAnovaTutor';
-import AnovaTutorPanel from '../tutor/AnovaTutorPanel';
 import AnovaDatasetEditor from './AnovaDatasetEditor';
 import AnovaResults from './AnovaResults';
 import CalculationText from '../common/CalculationText';
@@ -12,7 +10,7 @@ import MathTerm from '../common/MathTerm';
 import FSamplingDist from './FSamplingDist';
 import GroupsMeansView from './GroupsMeansView';
 import VarianceDecomposition from './VarianceDecomposition';
-const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate }) => {
+const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor }) => {
   const [localShowValues, setLocalShowValues] = useState(propShowValues);
   useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
@@ -125,9 +123,16 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     inputMode: groups[0].inputMode, // Assumes uniform input mode for simplicity in tutor triggers
   }), [isFirstVisit, highlight, scrollData, showValues, groups]);
 
-  const tutor = useAnovaTutor(renderModel, tutorContext);
+  useEffect(() => {
+    const handleAction = (e) => {
+      if (e.detail) handleTutorAction(e.detail);
+    };
+    window.addEventListener('anovaTutorAction', handleAction);
+    return () => window.removeEventListener('anovaTutorAction', handleAction);
+  }, [groups, localShowValues]); // dependencies for handlers used inside handleTutorAction
 
   const handleTutorAction = (action) => {
+    if (!action) return;
     switch (action) {
       case 'toggle_show_values':
         setLocalShowValues(!localShowValues);
@@ -418,13 +423,6 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
         setShowPostHoc={setShowPostHoc}
         postHoc={postHoc}
         showValues={showValues}
-        darkMode={darkMode}
-      />
-      {/* ANOVA TUTOR PANEL */}
-      <AnovaTutorPanel
-        tip={tutor.activeTip}
-        onDismiss={tutor.dismissTip}
-        onAction={handleTutorAction}
         darkMode={darkMode}
       />
     </div>
