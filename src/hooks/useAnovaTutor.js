@@ -9,6 +9,7 @@ const useAnovaTutor = (stats, context) => {
     });
     const [sessionDismissedIds, setSessionDismissedIds] = useState([]);
     const [lastTipTime, setLastTipTime] = useState(0);
+    const [idleTime, setIdleTime] = useState(0);
     const [hasInteracted, setHasInteracted] = useState(false);
     const [lastAction, setLastAction] = useState(null);
     const [history, setHistory] = useState([]);
@@ -84,7 +85,7 @@ const useAnovaTutor = (stats, context) => {
         if (typeof resolved.body === 'function') resolved.body = resolved.body(combinedState);
 
         setActiveTip(resolved);
-    }, [stats, context, idleTime, hasInteracted, activeTip, dismissedIds, sessionDismissedIds, lastTipTime, resetIdle]);
+    }, [stats, context, idleTime, hasInteracted, lastAction, activeTip, dismissedIds, sessionDismissedIds, lastTipTime, resetIdle]);
 
     // Periodic check for hesitation/stuck triggers
     useEffect(() => {
