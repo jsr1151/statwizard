@@ -344,8 +344,18 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues, onTutorUpdate, on
                         className={`text-[12px] font-black uppercase tracking-widest bg-transparent border-none focus:outline-none w-32 ${darkMode ? 'text-white' : 'text-slate-800'}`}
                       />
                       <div className="flex items-center gap-2">
-                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${isValid ? 'text-slate-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                          {n} Obs {!isValid && '(Needs \u22652)'}
+                        <span className={`text-[9px] font-bold uppercase tabular-nums tracking-tight px-2 py-0.5 rounded-md ${isValid ? (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500') : 'bg-rose-500/10 text-rose-500'}`}>
+                          {isValid ? (
+                            <span className="flex items-center gap-2">
+                              <span>N={n}</span>
+                              <span className="opacity-30">|</span>
+                              <span>M={parseFloat(g.summary.mean).toFixed(2)}</span>
+                              <span className="opacity-30">|</span>
+                              <span>SD={parseFloat(g.summary.sd).toFixed(2)}</span>
+                            </span>
+                          ) : (
+                            <span>{n} Obs (Needs ≥2)</span>
+                          )}
                         </span>
                       </div>
                     </div>
