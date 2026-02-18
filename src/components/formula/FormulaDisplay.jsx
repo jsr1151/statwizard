@@ -160,7 +160,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
     return (
       <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-hidden px-1">
         {/* Main F-Ratio Card */}
-        <div className={`flex flex-col items-center w-full`}>
+        <div
+          className="flex flex-col items-center w-full group cursor-help"
+          onMouseEnter={() => onHover && onHover('f_ratio')}
+          onMouseLeave={() => onHover && onHover(null)}
+        >
           <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1`}>The F-Ratio</div>
           <div className={`flex items-center text-2xl md:text-4xl font-serif ${textCol} whitespace-nowrap`}>
             <span className="font-bold mr-3 italic">F</span>
@@ -179,7 +183,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
         <div className={`w-full flex flex-col gap-6 border-t border-dashed ${darkMode ? 'border-slate-800' : 'border-slate-200'} pt-6 overflow-visible`}>
           {/* Mean Square Components */}
           <div className="ms-grid">
-            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible`}>
+            <div
+              className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
+              onMouseEnter={() => onHover && onHover('ms_between')}
+              onMouseLeave={() => onHover && onHover(null)}
+            >
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Between</div>
               <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
                 Turns SS_between into an average by dividing by its degrees of freedom. MS_between estimates variation due to group differences.
@@ -203,7 +211,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible`}>
+            <div
+              className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
+              onMouseEnter={() => onHover && onHover('ms_within')}
+              onMouseLeave={() => onHover && onHover(null)}
+            >
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Within</div>
               <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
                 Turns SS_within into an average by dividing by its degrees of freedom. MS_within estimates the typical within-group variability (noise).
@@ -232,7 +244,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           {/* Sum of Squares Definitions */}
           <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/20 border-slate-800' : 'bg-white border-slate-100'} flex flex-col gap-4 min-w-0 overflow-visible`}>
             {/* SS BETWEEN PANEL */}
-            <div className="flex flex-col items-center gap-2">
+            <div
+              className="flex flex-col items-center gap-2 p-2 rounded-xl transition-all hover:bg-slate-500/5 cursor-link"
+              onMouseEnter={() => onHover && onHover('ss_between')}
+              onMouseLeave={() => onHover && onHover(null)}
+            >
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>SS Between (Signal)</div>
               <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
                 Adds up how far each group mean is from the grand mean, weighted by the group’s size. Larger gaps between group means create larger SS_between.
@@ -257,7 +273,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             <div className="border-t border-slate-800/10 dark:border-slate-100/10 my-1" />
 
             {/* SS WITHIN PANEL */}
-            <div className="flex flex-col items-center gap-2">
+            <div
+              className="flex flex-col items-center gap-2 p-2 rounded-xl transition-all hover:bg-slate-500/5 cursor-link"
+              onMouseEnter={() => onHover && onHover('ss_within')}
+              onMouseLeave={() => onHover && onHover(null)}
+            >
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>SS Within (Noise)</div>
               <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-3`}>
                 Adds up how far each individual score is from its own group mean. More spread inside groups creates larger SS_within.
@@ -331,7 +351,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           )}
 
           {/* SS Total Identity Card */}
-          <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible`}>
+          <div
+            className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
+            onMouseEnter={() => onHover && onHover('ss_total')}
+            onMouseLeave={() => onHover && onHover(null)}
+          >
             <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>The SS Total identity</div>
             <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
               Total variability equals variability explained by group differences plus variability inside the groups.
@@ -361,7 +385,12 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           </div>
 
           {/* Effect Size Card */}
-          <div className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100 hover:border-indigo-200'} transition-all`} onClick={() => onInfo && onInfo('eta2')}>
+          <div
+            className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100 hover:border-indigo-200'} transition-all cursor-link`}
+            onClick={() => onInfo && onInfo('eta2')}
+            onMouseEnter={() => onHover && onHover('eta_squared')}
+            onMouseLeave={() => onHover && onHover(null)}
+          >
             <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500 text-center`}>Effect Size (Eta Squared)</div>
             <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
               Proportion of total variability accounted for by group differences. For example, η² = .30 means about 30% of the variance is associated with group membership.
