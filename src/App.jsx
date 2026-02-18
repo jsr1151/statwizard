@@ -1,7 +1,7 @@
 // StatWizard Alpha - Modular Architecture
 // App.jsx - Orchestration Layer
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     ArrowRight,
     CheckCircle,
