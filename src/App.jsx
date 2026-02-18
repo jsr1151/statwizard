@@ -158,13 +158,11 @@ export default function App() {
 
     const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
 
-    const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStep?.visualType === 'anova';
+    const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStep?.visualType === 'anova';
 
-    useEffect(() => {
-        if (anovaIsFirstVisit && isAnovaTrulyActive) {
-            localStorage.setItem('anova_tutor_onboarded', 'true');
-        }
-    }, [anovaIsFirstVisit, isAnovaTrulyActive]);
+    // The tutor logic itself handles its own onboarded/dismissed state via anovaTutorScripts
+    // and useAnovaTutor's persistence. We just need to track if it's the first visit session-wise
+    // to pass down as context if needed.
 
     // Sync ANOVA tutor with visibility
     useEffect(() => {

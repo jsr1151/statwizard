@@ -92,7 +92,7 @@ const useAnovaTutor = (stats, context) => {
     useEffect(() => {
         const checkInterval = setInterval(() => {
             triggerEvent({});
-        }, 2000);
+        }, 1000);
         return () => clearInterval(checkInterval);
     }, [triggerEvent]);
 

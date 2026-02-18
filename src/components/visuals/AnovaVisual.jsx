@@ -83,45 +83,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     if (onStatsUpdate) onStatsUpdate(renderModel);
   }, [renderModel, onStatsUpdate]);
 
-  // --- Advanced ANOVA Tutor Logic ---
-  const [isFirstVisit, setIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
-  useEffect(() => { if (isFirstVisit) localStorage.setItem('anova_tutor_onboarded', 'true'); }, [isFirstVisit]);
-
-  const [scrollData, setScrollData] = useState({ velocity: 0, direction: 'none', depth: 0 });
-  const lastScrollTime = useRef(Date.now());
-  const lastScrollTop = useRef(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const now = Date.now();
-      const top = window.scrollY;
-      const dt = now - lastScrollTime.current;
-      const dy = top - lastScrollTop.current;
-
-      if (dt > 0) {
-        setScrollData({
-          velocity: Math.abs(dy / dt) * 1000,
-          direction: dy > 0 ? 'down' : 'up',
-          depth: top
-        });
-      }
-
-      lastScrollTime.current = now;
-      lastScrollTop.current = top;
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const tutorContext = useMemo(() => ({
-    isFirstVisit,
-    activePanel: highlight, // Using the highlight prop as current focus
-    scrollVelocity: scrollData.velocity,
-    scrollDirection: scrollData.direction,
-    scrollDepth: scrollData.depth,
-    showValues,
-    inputMode: groups[0].inputMode, // Assumes uniform input mode for simplicity in tutor triggers
-  }), [isFirstVisit, highlight, scrollData, showValues, groups]);
+  // --- Navigation & Scroll Logic ---
 
   useEffect(() => {
     const handleAction = (e) => {
