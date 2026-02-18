@@ -147,12 +147,13 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   if (type === 'anova') {
     const groupStats = getV('groupStats') || [];
     const grandM = getV('grandMean') || 0;
+    const [ssWTab, setSsWTab] = useState('raw'); // 'raw' or 'stats'
 
-    const SigmaWithLimits = ({ top, bottom, className }) => (
+    const SigmaWithLimits = ({ top, bottom, className, term }) => (
       <div className={`inline-flex flex-col items-center leading-none mx-1 ${className}`}>
-        <span className="text-[10px] h-3 select-none">{top}</span>
-        <span className="text-2xl -my-1 select-none">Σ</span>
-        <span className="text-[10px] h-3 select-none">{bottom}</span>
+        <span className="text-[10px] h-3 select-none">{calc(top, undefined)}</span>
+        <span className="text-2xl -my-1 select-none" title={term ? MATH_TERMS[term]?.desc : undefined}>Σ</span>
+        <span className="text-[10px] h-3 select-none">{calc(bottom, undefined)}</span>
       </div>
     );
 
@@ -160,7 +161,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
       <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-hidden px-1">
         {/* Main F-Ratio Card */}
         <div className={`flex flex-col items-center w-full`}>
-          <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-3`}>The F-Ratio</div>
+          <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1`}>The F-Ratio</div>
           <div className={`flex items-center text-2xl md:text-4xl font-serif ${textCol}`}>
             <span className="font-bold mr-3 italic">F</span>
             <span className="mr-3">=</span>
@@ -178,8 +179,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
         <div className={`w-full flex flex-col gap-6 border-t border-dashed ${darkMode ? 'border-slate-800' : 'border-slate-200'} pt-6 overflow-visible`}>
           {/* Mean Square Components */}
           <div className="ms-grid">
-            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-3 min-w-0 overflow-visible`}>
+            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible`}>
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Between</div>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
+                Turns SS_between into an average by dividing by its degrees of freedom. MS_between estimates variation due to group differences.
+              </div>
               <div className="eq-wrap">
                 <div className={`flex flex-col items-center eq-text font-serif ${textCol}`}>
                   <div className="flex items-center gap-2">
@@ -199,8 +203,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-3 min-w-0 overflow-visible`}>
+            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible`}>
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Within</div>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
+                Turns SS_within into an average by dividing by its degrees of freedom. MS_within estimates the typical within-group variability (noise).
+              </div>
               <div className="eq-wrap">
                 <div className={`flex flex-col items-center eq-text font-serif ${textCol}`}>
                   <div className="flex items-center gap-2">
@@ -214,7 +221,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                   <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex flex-col items-center gap-1 italic`}>
                     <span>{calc("df_within", getV('dfW'))} = {calc("N", undefined)} - {calc("k", undefined)}</span>
                     <span className="flex items-center gap-1 text-indigo-400 font-bold">
-                      {calc("N", undefined)} = <SigmaWithLimits top="k" bottom="j=1" className="scale-75 origin-center mx-0.5" /> {calc("nj", undefined)} = total sample size
+                      {calc("N", undefined)} = <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" className="scale-75 origin-center mx-0.5" /> {calc("nj", undefined)} = total sample size
                     </span>
                   </div>
                 </div>
@@ -224,48 +231,83 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
 
           {/* Sum of Squares Definitions */}
           <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/20 border-slate-800' : 'bg-white border-slate-100'} flex flex-col gap-4 min-w-0 overflow-visible`}>
+            {/* SS BETWEEN PANEL */}
             <div className="flex flex-col items-center gap-2">
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>SS Between (Signal)</div>
-              <div className="eq-wrap">
+              <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+                Adds up how far each group mean is from the grand mean, weighted by the group’s size. Larger gaps between group means create larger SS_between.
+                <br />
+                <span className="italic mt-1 block">Think: “How separated are the group averages?”</span>
+              </div>
+
+              <div className="eq-wrap mt-2">
                 <div className={`eq-text font-serif ${textCol} flex items-center`}>
                   {calc("SS_between", getV('ssB'))}
                   <span className="mx-2 opacity-50">=</span>
-                  <SigmaWithLimits top="k" bottom="j=1" />
-                  <span>{calc("nj", undefined)}({calc("x̄j", undefined)} - {calc("x̄_grand", undefined)})²</span>
+                  <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" />
+                  <span>{calc("nj", undefined)}<span title={MATH_TERMS["Square"].desc}>({calc("x̄j", undefined)} - {calc("x̄_grand", undefined)})²</span></span>
                 </div>
+              </div>
+
+              <div className={`text-[10px] font-bold ${darkMode ? 'text-emerald-500/80' : 'text-emerald-600/80'} uppercase tracking-tight mt-1`}>
+                Between: “Increases when group means separate.”
               </div>
             </div>
 
             <div className="border-t border-slate-800/10 dark:border-slate-100/10 my-1" />
 
+            {/* SS WITHIN PANEL */}
             <div className="flex flex-col items-center gap-2">
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>SS Within (Noise)</div>
-              <div className="flex flex-col gap-3 w-full items-center">
-                <div className="eq-wrap">
-                  <div className={`eq-text font-serif ${textCol} flex items-center`}>
-                    <div className={`text-[0.4em] mr-2 uppercase tracking-tighter ${labelCol} font-bold opacity-60`}>Raw data form:</div>
-                    {calc("SS_within", getV('ssW'))}
-                    <span className="mx-2 opacity-50">=</span>
-                    <SigmaWithLimits top="k" bottom="j=1" />
-                    <SigmaWithLimits top="nⱼ" bottom="i=1" />
-                    <span>({calc("xij", undefined)} - {calc("x̄j", undefined)})²</span>
-                  </div>
-                </div>
-                <div className="h-px w-8 bg-slate-500/20" />
-                <div className="eq-wrap">
-                  <div className={`eq-text font-serif ${textCol} flex items-center`}>
-                    <div className={`text-[0.4em] mr-2 uppercase tracking-tighter ${labelCol} font-bold opacity-60`}>Summary stats form:</div>
-                    {calc("SS_within", getV('ssW'))}
-                    <span className="mx-2 opacity-50">=</span>
-                    <SigmaWithLimits top="k" bottom="j=1" />
-                    <span>({calc("nj", undefined)} - 1){calc("sj", undefined)}²</span>
-                  </div>
-                </div>
+              <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-3`}>
+                Adds up how far each individual score is from its own group mean. More spread inside groups creates larger SS_within.
               </div>
-            </div>
 
-            <div className={`text-[9px] font-serif ${labelCol} italic text-center mt-1 opacity-70`}>
-              j = group index, i = observation index within group
+              {/* TABS FOR SS WITHIN */}
+              <div className="flex p-1 bg-slate-500/10 rounded-lg mb-3">
+                <button
+                  onClick={() => setSsWTab('raw')}
+                  className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${ssWTab === 'raw' ? (darkMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 shadow-sm') : (labelCol + ' hover:bg-slate-500/10')}`}>
+                  RAW DATA
+                </button>
+                <button
+                  onClick={() => setSsWTab('stats')}
+                  className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${ssWTab === 'stats' ? (darkMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 shadow-sm') : (labelCol + ' hover:bg-slate-500/10')}`}>
+                  SUMMARY STATS
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full items-center min-h-[40px]">
+                {ssWTab === 'raw' ? (
+                  <div className="eq-wrap animate-in fade-in duration-300">
+                    <div className={`eq-text font-serif ${textCol} flex items-center`}>
+                      {calc("SS_within", getV('ssW'))}
+                      <span className="mx-2 opacity-50">=</span>
+                      <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" />
+                      <SigmaWithLimits top="nⱼ" bottom="i=1" term="Sigma_nj" />
+                      <span><span title={MATH_TERMS["Square"].desc}>({calc("xij", undefined)} - {calc("x̄j", undefined)})²</span></span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center animate-in fade-in duration-300">
+                    <div className={`text-[9px] italic ${labelCol} mb-2 opacity-80`}>
+                      Computed from each group’s variance: {calc("SS_within", getV('ssW'))} = {calc("nj_minus_1_sj2", undefined)}
+                    </div>
+                    <div className="eq-wrap">
+                      <div className={`eq-text font-serif ${textCol} flex items-center`}>
+                        {calc("SS_within", getV('ssW'))}
+                        <span className="mx-2 opacity-50">=</span>
+                        <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" />
+                        <span>({calc("nj", undefined)} - 1){calc("sj2", undefined)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={`text-[10px] font-bold ${darkMode ? 'text-amber-500/80' : 'text-amber-600/80'} uppercase tracking-tight mt-1`}>
+                Within: “Increases when points spread out within groups.”
+              </div>
             </div>
           </div>
 
@@ -289,9 +331,15 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           )}
 
           {/* SS Total Identity Card */}
-          <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-3 min-w-0 overflow-visible`}>
+          <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible`}>
             <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>The SS Total identity</div>
-            <div className={`flex flex-col items-center gap-2 w-full`}>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+              Total variability equals variability explained by group differences plus variability inside the groups.
+              <br />
+              <span className="italic mt-1 block">“This identity is what makes ANOVA a ‘variance partitioning’ method.”</span>
+            </div>
+
+            <div className={`flex flex-col items-center gap-2 w-full mt-2`}>
               <div className="eq-wrap">
                 <div className={`eq-text font-serif ${textCol} flex items-center`}>
                   <span>{calc("SS_total", getV('ssT'))}</span>
@@ -306,16 +354,19 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               </div>
               <div className="eq-wrap">
                 <div className={`text-[10px] flex items-center font-serif ${labelCol} opacity-70 mt-1`}>
-                  Formula: {calc("SS_total", getV('ssT'))} = <SigmaWithLimits top="k" bottom="j=1" className="scale-75 origin-center" /><SigmaWithLimits top="nⱼ" bottom="i=1" className="scale-75 origin-center" />({calc("xij", undefined)} - {calc("x̄_grand", undefined)})²
+                  Formula: {calc("SS_total", getV('ssT'))} = <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" className="scale-75 origin-center" /><SigmaWithLimits top="nⱼ" bottom="i=1" term="Sigma_nj" className="scale-75 origin-center" />({calc("xij", undefined)} - {calc("x̄_grand", undefined)})²
                 </div>
               </div>
             </div>
           </div>
 
           {/* Effect Size Card */}
-          <div className={`p-5 rounded-2xl border flex flex-col items-center gap-3 min-w-0 ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100 hover:border-indigo-200'} transition-all`} onClick={() => onInfo && onInfo('eta2')}>
+          <div className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100 hover:border-indigo-200'} transition-all`} onClick={() => onInfo && onInfo('eta2')}>
             <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500 text-center`}>Effect Size (Eta Squared)</div>
-            <div className="eq-wrap">
+            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+              Proportion of total variability accounted for by group differences. For example, η² = .30 means about 30% of the variance is associated with group membership.
+            </div>
+            <div className="eq-wrap mt-2">
               <div className={`eq-text font-serif ${textCol} flex items-center`}>
                 {calc("eta2", getV('eta2'))}
                 <span className="mx-4 font-light opacity-50">=</span>

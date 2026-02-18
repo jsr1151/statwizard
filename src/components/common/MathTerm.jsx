@@ -36,8 +36,6 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/mu/g, "μ")
             .replace(/sigma/g, "σ")
             .replace(/alpha/g, "α")
-            .replace(/sp2/g, "s<sub>pooled</sub>²")
-            .replace(/sp/g, "s<sub>pooled</sub>")
             .replace(/s1_2/g, "s<sub>1</sub>²")
             .replace(/s2_2/g, "s<sub>2</sub>²")
             .replace(/s2/g, "s²")
@@ -45,6 +43,9 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/dBar/g, "d̄")
             .replace(/dz/g, "d<sub>z</sub>")
             .replace(/eta2/g, "η²")
+            .replace(/sp2/g, "s<sub>pooled</sub>²")
+            .replace(/sp/g, "s<sub>pooled</sub>")
+            .replace(/sj2/g, "s<sub>j</sub>²")
             .replace(/n1/g, "n₁")
             .replace(/n2/g, "n₂")
             .replace(/delta/g, "Δ");
@@ -55,7 +56,7 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
     const valDisplay = isNumber ? value.toFixed(2) : value;
     const displayValue = (showValue && value !== undefined) ? valDisplay : cleanTerm;
 
-    const tooltip = isCalculable ? `${MATH_TERMS[actualTerm].title}${showValue && value !== undefined ? `: ${valDisplay}` : ''}` : '';
+    const tooltip = isCalculable ? `${MATH_TERMS[actualTerm].desc}${showValue && value !== undefined ? ` (Value: ${valDisplay})` : ''}` : '';
 
     return (
         <span
