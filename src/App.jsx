@@ -160,6 +160,7 @@ export default function App() {
     const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
 
     const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStep?.visualType === 'anova';
+    const isAnovaActive = isAnovaTrulyActive;
 
     // The tutor logic itself handles its own onboarded/dismissed state via anovaTutorScripts
     // and useAnovaTutor's persistence. We just need to track if it's the first visit session-wise
@@ -220,7 +221,6 @@ export default function App() {
     if (displayFormulaId === 'z_test' || displayFormulaId === 't_onesample') relevantSymbols = SYMBOL_KEYS.sd_pop;
     if (displayFormulaId === 'anova') relevantSymbols = SYMBOL_KEYS.anova;
 
-    const isAnovaActive = isAnovaTrulyActive;
 
     return (
         <ErrorBoundary>
