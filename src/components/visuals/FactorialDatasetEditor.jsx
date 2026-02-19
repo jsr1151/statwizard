@@ -95,7 +95,7 @@ const FactorialDatasetEditor = ({
                                     const n = cell.inputMode === 'summary' ? (parseInt(cell.summary?.n) || 0) : (cell.values?.length || 0);
 
                                     return (
-                                        <td key={b.id} className="min-w-[240px]">
+                                        <td key={b.id} className="min-w-[200px]">
                                             <div className={`p-4 rounded-[1.5rem] border-2 transition-all relative ${darkMode ? 'bg-slate-950 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
                                                 <div className="flex justify-between items-center mb-3">
                                                     <span className="text-[9px] font-black text-slate-500 uppercase">N={n}</span>

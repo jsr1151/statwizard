@@ -118,7 +118,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
-                <div className="w-full h-full pt-20">
+                <div className="w-full h-full pt-16">
                     {activeTab === 'data' && (
                         <div className="w-full h-full overflow-y-auto p-8 custom-scrollbar">
                             <FactorialDatasetEditor

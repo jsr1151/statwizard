@@ -462,10 +462,10 @@ export default function App() {
                                                     )}
                                                 </div>
 
-                                                <div className="lg:col-span-3">
+                                                <div className="lg:col-span-5">
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
-                                                        <div className={`flex-1 flex items-center justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
+                                                        <div className={`flex-1 flex items-start justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
                                                             {displayVisualType === 'anova' ? (
                                                                 <ErrorBoundary>
                                                                     <AnovaVisual
