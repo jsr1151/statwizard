@@ -95,7 +95,14 @@ export const SOFTWARE_GUIDES = {
         spss: "Analyze > Nonparametric Tests > Legacy Dialogs.",
         jasp: "T-Tests > Check 'Mann-Whitney' or 'Wilcoxon'.",
         r: "wilcox.test(y1, y2)",
-        excel: "1. Use =RANK.AVG(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns.",
+        excel: "1. Use =RANK(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns.",
         google_sheets: "1. Use =RANK(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns."
+    },
+    factorial_anova: {
+        spss: "Analyze > General Linear Model > Univariate.\nFixed Factor(s): Move both factors here.\nDependent Variable: Move outcome variable here.\nPlots: Factor A (Horizontal Axis), Factor B (Separate Lines) > Add.",
+        jasp: "ANOVA > ANOVA.\nFixed Factors: Move both factors here.\nDependent Variable: Move outcome here.\nPlots: Factor A (Horizontal Axis), Factor B (Separate Lines).",
+        r: "summary(aov(outcome ~ factorA * factorB, data = df))",
+        excel: "Path A (Toolpak): Data Analysis > ANOVA: Two-Factor With Replication.\nPath B (Manual): SS for A, B, and Interaction require advanced =SUMPRODUCT calculations.",
+        google_sheets: "Path A (Add-on): 'Analysis ToolPak' > ANOVA: Two-Factor With Replication.\nPath B (Manual): Use =SUMPRODUCT results to partition variance manually."
     }
 };

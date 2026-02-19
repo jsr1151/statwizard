@@ -317,6 +317,184 @@ export const calculatePostHoc = (groups, anovaResults) => {
     return comparisons;
 };
 
+// --- HELPER: Factorial ANOVA Calculator (Two-Way Between-Subjects) ---
+export const calculateFactorialAnova = (factorA, factorB, cellData) => {
+    // factorA: { label: string, levels: [{ id, label }] }
+    // factorB: { label: string, levels: [{ id, label }] }
+    // cellData: { [aId_bId]: { values: [], summary: { mean, sd, n }, inputMode } }
+
+    const aLevels = factorA.levels;
+    const bLevels = factorB.levels;
+
+    let totalN = 0;
+    let sumTotal = 0;
+    const cellStats = {};
+
+    // 1. Collect Cell Stats and Grand Totals
+    aLevels.forEach(a => {
+        bLevels.forEach(b => {
+            const key = `${a.id}_${b.id}`;
+            const cell = cellData[key] || { values: [], summary: { n: 0, mean: 0 }, inputMode: 'raw' };
+            let n, mean, ss_cell = 0;
+
+            if (cell.inputMode === 'summary') {
+                n = parseFloat(cell.summary.n || 0);
+                mean = parseFloat(cell.summary.mean || 0);
+                const sd = parseFloat(cell.summary.sd || 0);
+                ss_cell = (n > 1) ? (n - 1) * Math.pow(sd, 2) : 0;
+            } else {
+                const vals = cell.values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+                n = vals.length;
+                mean = n > 0 ? vals.reduce((s, v) => s + v, 0) / n : 0;
+                ss_cell = vals.reduce((s, v) => s + Math.pow(v - mean, 2), 0);
+            }
+
+            cellStats[key] = { n, mean, ss: ss_cell };
+            totalN += n;
+            sumTotal += n * mean;
+        });
+    });
+
+    if (totalN === 0) return null;
+    const GM = sumTotal / totalN;
+
+    // 2. Marginal Means and SS Calculations
+    let ssA = 0, ssB = 0, ssCells = 0, ssError = 0;
+
+    // SS Cells and SS Error
+    Object.values(cellStats).forEach(c => {
+        if (c.n > 0) {
+            ssCells += c.n * Math.pow(c.mean - GM, 2);
+            ssError += c.ss;
+        }
+    });
+
+    // SS A (Main Effect A)
+    aLevels.forEach(a => {
+        let nA = 0, sumA = 0;
+        bLevels.forEach(b => {
+            const c = cellStats[`${a.id}_${b.id}`];
+            nA += c.n;
+            sumA += c.n * c.mean;
+        });
+        if (nA > 0) {
+            const meanA = sumA / nA;
+            ssA += nA * Math.pow(meanA - GM, 2);
+        }
+    });
+
+    // SS B (Main Effect B)
+    bLevels.forEach(b => {
+        let nB = 0, sumB = 0;
+        aLevels.forEach(a => {
+            const c = cellStats[`${a.id}_${b.id}`];
+            nB += c.n;
+            sumB += c.n * c.mean;
+        });
+        if (nB > 0) {
+            const meanB = sumB / nB;
+            ssB += nB * Math.pow(meanB - GM, 2);
+        }
+    });
+
+    const ssAxB = Math.max(0, ssCells - ssA - ssB);
+    const ssTotal = ssCells + ssError;
+
+    // 3. Degrees of Freedom
+    const kA = aLevels.length;
+    const kB = bLevels.length;
+    const dfA = kA - 1;
+    const dfB = kB - 1;
+    const dfAxB = dfA * dfB;
+    const dfError = totalN - (kA * kB);
+    const dfTotal = totalN - 1;
+
+    // 4. Mean Squares and F-Ratios
+    const msA = ssA / (dfA || 1);
+    const msB = ssB / (dfB || 1);
+    const msAxB = ssAxB / (dfAxB || 1);
+    const msError = ssError / (dfError || 1);
+
+    const fA = msError !== 0 ? msA / msError : 0;
+    const fB = msError !== 0 ? msB / msError : 0;
+    const fAxB = msError !== 0 ? msAxB / msError : 0;
+
+    // 5. p-values
+    const pA = 1 - fCDF(fA, dfA, dfError);
+    const pB = 1 - fCDF(fB, dfB, dfError);
+    const pAxB = 1 - fCDF(fAxB, dfAxB, dfError);
+
+    // 6. Effect Sizes (Partial Eta Squared)
+    const pesA = ssA / (ssA + ssError);
+    const pesB = ssB / (ssB + ssError);
+    const pesAxB = ssAxB / (ssAxB + ssError);
+
+    return {
+        totalN, GM,
+        effects: {
+            A: { ss: ssA, df: dfA, ms: msA, f: fA, p: pA, pes: pesA, label: factorA.label },
+            B: { ss: ssB, df: dfB, ms: msB, f: fB, p: pB, pes: pesB, label: factorB.label },
+            AxB: { ss: ssAxB, df: dfAxB, ms: msAxB, f: fAxB, p: pAxB, pes: pesAxB, label: `${factorA.label} × ${factorB.label}` },
+            Error: { ss: ssError, df: dfError, ms: msError },
+            Total: { ss: ssTotal, df: dfTotal }
+        },
+        cellStats,
+        marginalA: aLevels.map(a => {
+            let n = 0, sum = 0;
+            bLevels.forEach(b => {
+                const c = cellStats[`${a.id}_${b.id}`];
+                n += c.n;
+                sum += c.n * c.mean;
+            });
+            return { label: a.label, n, mean: n > 0 ? sum / n : 0 };
+        }),
+        marginalB: bLevels.map(b => {
+            let n = 0, sum = 0;
+            aLevels.forEach(a => {
+                const c = cellStats[`${a.id}_${b.id}`];
+                n += c.n;
+                sum += c.n * c.mean;
+            });
+            return { label: b.label, n, mean: n > 0 ? sum / n : 0 };
+        })
+    };
+};
+
+export const calculatePostHocFactorial = (results, mode = 'A') => {
+    // Simple implementation: Pairwise comparisons on marginal means
+    // Future: Add simple effects (A at Level B1, etc.)
+    if (!results) return [];
+
+    const marginals = mode === 'A' ? results.marginalA : results.marginalB;
+    const msError = results.effects.Error.ms;
+    const dfError = results.effects.Error.df;
+    const comparisons = [];
+
+    for (let i = 0; i < marginals.length; i++) {
+        for (let j = i + 1; j < marginals.length; j++) {
+            const m1 = marginals[i];
+            const m2 = marginals[j];
+
+            const diff = Math.abs(m1.mean - m2.mean);
+            const se = Math.sqrt(msError * (1 / m1.n + 1 / m2.n));
+            const t = se !== 0 ? diff / se : 0;
+            const p = (1 - tCDF(t, dfError)) * 2;
+
+            // Bonferroni adjustment
+            const numComp = (marginals.length * (marginals.length - 1)) / 2;
+            const pAdj = Math.min(1, p * numComp);
+
+            comparisons.push({
+                pair: [m1.label, m2.label],
+                diff,
+                pAdj,
+                sig: pAdj < 0.05
+            });
+        }
+    }
+    return comparisons;
+};
+
 // --- STUB: generateAIResponse ---
 export const generateAIResponse = async (prompt) => {
     return new Promise((resolve) => {

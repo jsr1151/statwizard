@@ -149,9 +149,10 @@ export const STEPS = {
     anova_branch: {
         id: 'anova_branch',
         title: "ANOVA Design",
-        question: "Are the 3+ groups independent or related?",
+        question: "How is your study structured?",
         options: [
-            { label: "Independent Groups", value: 'indep', next: 'res_one_way_anova' },
+            { label: "One-Way (1 Factor, 3+ Groups)", value: 'indep', next: 'res_one_way_anova' },
+            { label: "Factorial (2+ Factors, e.g., 2x2)", value: 'factorial', next: 'res_factorial_anova' },
             { label: "Repeated Measures (Same people)", value: 'repeated', next: 'res_rm_anova' }
         ]
     },
@@ -360,6 +361,21 @@ export const STEPS = {
             }
         ]
     },
+    res_factorial_anova: {
+        id: 'res_factorial_anova',
+        type: 'result',
+        title: "Factorial ANOVA",
+        content: "Examines the effects of two or more independent categorical variables on a continuous outcome.",
+        details: ["Main Effect A", "Main Effect B", "Interaction (AxB)"],
+        formulaId: 'anova',
+        visualType: 'factorial_anova',
+        software: SOFTWARE_GUIDES.factorial_anova,
+        assumptions: [
+            { id: 'independence', label: "Independence", whatItMeans: "Observations are independent." },
+            { id: 'normality', label: "Normality", whatItMeans: "Residuals follow a normal distribution." },
+            { id: 'homogeneity', label: "Homogeneity", whatItMeans: "Variances are equal across cells." }
+        ]
+    },
     res_rm_anova: {
         id: 'res_rm_anova',
         type: 'result',
@@ -523,6 +539,7 @@ export const STAT_PAGE_LIST = [
     { id: 'res_indep_ttest', title: 'Independent Samples T-Test', category: 'Mean Comparisons', family: 'T-Tests' },
     { id: 'res_paired_ttest', title: 'Paired Samples T-Test', category: 'Mean Comparisons', family: 'T-Tests' },
     { id: 'res_one_way_anova', title: 'One-Way ANOVA', category: 'Mean Comparisons', family: 'ANOVA' },
+    { id: 'res_factorial_anova', title: 'Factorial ANOVA (Two-Way)', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'res_rm_anova', title: 'Repeated Measures ANOVA', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'correlation_result', title: 'Pearson Correlation', category: 'Linear Modeling' },
     { id: 'regression_result', title: 'Linear Regression', category: 'Linear Modeling' },

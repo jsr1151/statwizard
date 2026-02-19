@@ -39,27 +39,17 @@ import TutorPanel from './components/tutor/TutorPanel';
 import FormulaDisplay from './components/formula/FormulaDisplay';
 import AssumptionItem from './components/formula/AssumptionItem';
 
+// --- Hooks ---
+import useAutoReload from './hooks/useAutoReload';
+import useAnovaTutor from './hooks/useAnovaTutor';
+import useFactorialAnovaTutor from './hooks/useFactorialAnovaTutor';
+
 // --- Visualizers ---
 import NormalDistributionVisual from './components/visuals/NormalDistributionVisual';
 import IndependentTTestVisual from './components/visuals/IndependentTTestVisual';
 import PairedTTestVisual from './components/visuals/PairedTTestVisual';
 import AnovaVisual from './components/visuals/AnovaVisual';
-import VariabilityVisual from './components/visuals/VariabilityVisual';
-import FrequencyVisual from './components/visuals/FrequencyVisual';
-import ShapeVisual from './components/visuals/ShapeVisual';
-import QuartileVisual from './components/visuals/QuartileVisual';
-import ProbabilityVisual from './components/visuals/ProbabilityVisual';
-
-// --- Navigation ---
-import MainMenu from './components/navigation/MainMenu';
-import ModulesView from './components/navigation/ModulesView';
-import SearchView from './components/navigation/SearchView';
-import LessonsView from './components/navigation/LessonsView';
-import UpdateToast from './components/common/UpdateToast';
-
-// --- Hooks ---
-import useAutoReload from './hooks/useAutoReload';
-import useAnovaTutor from './hooks/useAnovaTutor';
+import FactorialAnovaVisual from './components/visuals/FactorialAnovaVisual';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -101,6 +91,82 @@ export default function App() {
     // --- SHARED ANOVA TUTOR STATE ---
     const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
 
+    const isPopStateRef = useRef(false);
+    const isFirstMountRef = useRef(true);
+
+    // --- BROWSER HISTORY SYNC ---
+    useEffect(() => {
+        const handleNavigation = (event) => {
+            if (event.state) {
+                isPopStateRef.current = true;
+                const { appMode, currentStepId, history, answers } = event.state;
+
+                // Batch updates
+                setAppMode(appMode);
+                setCurrentStepId(currentStepId);
+                setHistory(history);
+                setAnswers(answers);
+
+                // Clear ephemeral UI state
+                setMathHistory([]);
+                setAiExplanation(null);
+                setAiModalOpen(false);
+            } else if (window.location.hash === '' || window.location.hash === '#/') {
+                isPopStateRef.current = true;
+                setAppMode('menu');
+                setCurrentStepId('start');
+                setHistory(['start']);
+                setAnswers({});
+            }
+        };
+
+        window.addEventListener('popstate', handleNavigation);
+
+        // Push initial state if missing
+        if (!window.history.state) {
+            window.history.replaceState({
+                appMode: 'menu',
+                currentStepId: 'start',
+                history: ['start'],
+                answers: {}
+            }, '', '#/');
+        } else {
+            // If we reloaded and have state, sync it
+            handleNavigation({ state: window.history.state });
+        }
+
+        return () => window.removeEventListener('popstate', handleNavigation);
+    }, []);
+
+    // Sync app state TO browser history
+    useEffect(() => {
+        // Skip on first mount (handled by replaceState in the other effect)
+        if (isFirstMountRef.current) {
+            isFirstMountRef.current = false;
+            return;
+        }
+
+        // If this state change was caused by a popstate event, don't push it back!
+        if (isPopStateRef.current) {
+            isPopStateRef.current = false;
+            return;
+        }
+
+        const statePayload = { appMode, currentStepId, history, answers };
+        const newHash = `#/${appMode}${appMode === 'wizard' && currentStepId !== 'start' ? `/${currentStepId}` : ''}`;
+
+        // Log for debugging if the user says it "still doesn't work"
+        // console.log("Pushing History State:", newHash, statePayload);
+
+        // Only PUSH if the identifying URL characteristics (hash) changed
+        // Use REPLACE for internal state changes that shouldn't clog the back stack
+        if (window.location.hash !== newHash) {
+            window.history.pushState(statePayload, '', newHash);
+        } else {
+            window.history.replaceState(statePayload, '', newHash);
+        }
+    }, [appMode, currentStepId, history, answers]);
+
     const currentStep = STEPS[currentStepId];
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
@@ -120,17 +186,13 @@ export default function App() {
         setHistory([...history, nextStepId]);
         setCurrentStepId(nextStepId);
     };
+
     const handleBack = () => {
-        if (appMode !== 'menu' && (appMode !== 'wizard' || history.length === 1)) {
-            setAppMode('menu');
-            return;
-        }
-        if (history.length <= 1) return;
-        const newHistory = [...history];
-        newHistory.pop();
-        setHistory(newHistory);
-        setCurrentStepId(newHistory[newHistory.length - 1]);
+        // Just call browser back - if we have history within the app, it will pop.
+        // If we don't (e.g. at Menu), it will go to last site.
+        window.history.back();
     };
+
     const handleRestart = () => {
         setAppMode('menu');
         setHistory(['start']);
@@ -161,6 +223,7 @@ export default function App() {
     }), [anovaIsFirstVisit, mathHistory, hoveredTerm, showEquationValues, symbolKeyOpen]);
 
     const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
+    const factorialAnovaTutor = useFactorialAnovaTutor(currentStats, anovaTutorContext);
 
     const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStep?.visualType === 'anova';
     const isAnovaActive = isAnovaTrulyActive;
@@ -174,7 +237,10 @@ export default function App() {
         if (!isAnovaActive && anovaTutor.activeTip) {
             anovaTutor.dismissTip(anovaTutor.activeTip.id);
         }
-    }, [isAnovaActive, anovaTutor]);
+        if (currentStepId !== 'res_factorial_anova' && factorialAnovaTutor.activeTip) {
+            factorialAnovaTutor.dismissTip(factorialAnovaTutor.activeTip.id);
+        }
+    }, [isAnovaActive, anovaTutor, currentStepId, factorialAnovaTutor]);
 
 
     const askAI = async (context) => {
@@ -233,7 +299,7 @@ export default function App() {
                             </div>
                         )}
 
-                        {appMode === 'menu' && <MainMenu onSelect={(mode) => setAppMode(mode)} darkMode={darkMode} />}
+                        {appMode === 'menu' && <MainMenu onSelect={setAppMode} darkMode={darkMode} />}
 
                         {appMode === 'modules' && <ModulesView onSelect={(id) => { setCurrentStepId(id); setAppMode('wizard'); }} darkMode={darkMode} />}
 
@@ -397,6 +463,16 @@ export default function App() {
                                                                         onTutorUpdate={setActiveTutorScript}
                                                                         onStatsUpdate={setCurrentStats}
                                                                         tutor={anovaTutor}
+                                                                    />
+                                                                </ErrorBoundary>
+                                                            ) : displayVisualType === 'factorial_anova' ? (
+                                                                <ErrorBoundary>
+                                                                    <FactorialAnovaVisual
+                                                                        darkMode={darkMode}
+                                                                        showValues={showEquationValues}
+                                                                        onTutorUpdate={setActiveTutorScript}
+                                                                        onStatsUpdate={setCurrentStats}
+                                                                        tutor={factorialAnovaTutor}
                                                                     />
                                                                 </ErrorBoundary>
                                                             ) : displayVisualType === 'indep_ttest' ? (
