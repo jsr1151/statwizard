@@ -135,13 +135,13 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
-                {/* Study Themes (Relocated and Relabeled) */}
-                <div className="absolute top-[80px] left-6 z-40">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-black uppercase text-indigo-500/60 tracking-widest px-1">Study Themes</span>
+                {/* Study Themes (Positioned below tabs, above content) */}
+                <div className="absolute top-[85px] left-6 z-40">
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-black uppercase text-indigo-500/50 tracking-[0.2em] px-1">Study Themes</span>
                         <select
                             onChange={(e) => loadPreset(e.target.value)}
-                            className={`bg-slate-900/60 backdrop-blur-xl text-slate-300 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-2xl border border-slate-700/50 outline-none hover:border-indigo-500/50 hover:text-white transition-all cursor-pointer shadow-lg`}
+                            className={`bg-slate-900/40 backdrop-blur-2xl text-slate-300 text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-2xl border border-white/5 outline-none hover:border-indigo-500/30 hover:text-white transition-all cursor-pointer shadow-2xl min-w-[220px]`}
                         >
                             <option value="">Select a Theme...</option>
                             {FACTORIAL_PRESETS.map(p => (
@@ -151,7 +151,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     </div>
                 </div>
 
-                <div className="w-full h-full pt-20">
+                {/* Main Content Area with increased padding to avoid overlap */}
+                <div className="w-full h-full pt-44">
                     {activeTab === 'data' && (
                         <div className="w-full h-full overflow-y-auto p-8 custom-scrollbar">
                             <FactorialDatasetEditor
