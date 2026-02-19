@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { AlertCircle, Sparkles, Calculator, MousePointer2, Info, ArrowDown, MousePointerClick, Maximize2, Minimize2, RefreshCw, Play, ChevronsRight, ChevronUp, ChevronDown, Activity, Lightbulb, BrainCircuit, BarChart2, Sigma, BookOpen, Plus, X, Trash2, Edit2, TrendingUp, Grid, FileText, PieChart } from 'lucide-react';
+import { AlertCircle, Sparkles, Calculator, MousePointer2, Info, ArrowDown, MousePointerClick, Maximize2, Minimize2, RefreshCw, Play, ChevronsRight, ChevronUp, ChevronDown, Activity, Lightbulb, BrainCircuit, BarChart2, Sigma, BookOpen, Plus, X, Trash2, Edit2, TrendingUp, Grid, FileText, PieChart, Palette, Settings2 } from 'lucide-react';
 import { getGaussianPoints, getTPoints, normalCDF, tCDF, erf, getTCrit, getFDensity, fCDF, fPPF, getFCrit, getFPoints, calculateAnova, calculatePostHoc, lnGamma, beta } from '../../utils/mathHelpers';
 import { pointsToPath, pointsToLine, getOrdinal } from '../../utils/svgHelpers';
 import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
+import IndependentTTestPlots from './IndependentTTestPlots';
 const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate }) => {
   const [group1, setGroup1] = useState({ xBar: 12, s: 2.5, n: 30, raw: "" });
   const [group2, setGroup2] = useState({ xBar: 10, s: 2.5, n: 30, raw: "" });
@@ -20,9 +21,19 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const [precision, setPrecision] = useState(2);
   const [showCI, setShowCI] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [displayVisual, setDisplayVisual] = useState('sampling'); // 'sampling' or 'distribution'
+  const [displayVisual, setDisplayVisual] = useState('sampling'); // 'sampling', 'distribution', or 'plots'
   const [showWhiskers, setShowWhiskers] = useState(false);
   const [showCritGap, setShowCritGap] = useState(false);
+  const [plotSettings, setPlotSettings] = useState({
+    type: 'bar',
+    errorType: 'se',
+    g1Color: '#6366f1',
+    g2Color: '#10b981',
+    yMin: null,
+    yMax: null,
+    xLabel: 'Group',
+    yLabel: 'Outcome'
+  });
   const svgRef = useRef(null);
 
   // --- Calculations ---
@@ -167,6 +178,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
           <div className="absolute top-4 left-4 flex gap-2 z-10">
             <button onClick={() => setDisplayVisual('sampling')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayVisual === 'sampling' ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>Sampling dist.</button>
             <button onClick={() => setDisplayVisual('distribution')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayVisual === 'distribution' ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>Group curves</button>
+            <button onClick={() => setDisplayVisual('plots')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayVisual === 'plots' ? 'bg-amber-600 border-amber-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>Plots</button>
           </div>
 
           {displayVisual === 'distribution' && (
@@ -176,167 +188,177 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
             </div>
           )}
 
-          <svg ref={svgRef} viewBox="-20 0 340 200" className="w-full h-full overflow-visible" onPointerMove={handlePointerMove} onPointerUp={() => setIsDragging(false)} onPointerLeave={() => setIsDragging(false)}>
-            <defs>
-              <linearGradient id="indepGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#818cf8" stopOpacity="0.4" /><stop offset="100%" stopColor="#818cf8" stopOpacity="0" /></linearGradient>
-              <linearGradient id="g1Gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" /><stop offset="100%" stopColor="#6366f1" stopOpacity="0" /></linearGradient>
-              <linearGradient id="g2Gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity="0.3" /><stop offset="100%" stopColor="#10b981" stopOpacity="0" /></linearGradient>
-            </defs>
-            <text x="150" y="192" textAnchor="middle" className={`text-[7px] font-bold uppercase transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>{displayVisual === 'sampling' ? "Sampling Distribution (H₀)" : "Relative Group Positions (Mean estimate distributions)"}</text>
 
-            {displayVisual === 'sampling' ? (
-              <>
-                <g className={`text-[8px] font-mono transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>
-                  {[-3, -2, -1, 0, 1, 2, 3].map(z => (
-                    <g key={z} transform={`translate(${mean + z * stdDev}, 150)`}>
-                      <line y2="5" stroke={darkMode ? "#334155" : "#e2e8f0"} />
-                      <text y="15" textAnchor="middle">{z}</text>
-                    </g>
-                  ))}
-                </g>
-                <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
-                <text x="150" y="180" textAnchor="middle" className={`text-[7px] font-bold uppercase transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>Test statistic (T)</text>
-                <path d={pathData} fill="url(#indepGradient)" stroke="#4f46e5" strokeWidth="3" />
+          {displayVisual === 'plots' ? (
+            <IndependentTTestPlots
+              group1={group1}
+              group2={group2}
+              settings={plotSettings}
+              darkMode={darkMode}
+            />
+          ) : (
+            <svg ref={svgRef} viewBox="-20 0 340 200" className="w-full h-full overflow-visible" onPointerMove={handlePointerMove} onPointerUp={() => setIsDragging(false)} onPointerLeave={() => setIsDragging(false)}>
+              <defs>
+                <linearGradient id="indepGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#818cf8" stopOpacity="0.4" /><stop offset="100%" stopColor="#818cf8" stopOpacity="0" /></linearGradient>
+                <linearGradient id="g1Gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" /><stop offset="100%" stopColor="#6366f1" stopOpacity="0" /></linearGradient>
+                <linearGradient id="g2Gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity="0.3" /><stop offset="100%" stopColor="#10b981" stopOpacity="0" /></linearGradient>
+              </defs>
+              <text x="150" y="192" textAnchor="middle" className={`text-[7px] font-bold uppercase transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>{displayVisual === 'sampling' ? "Sampling Distribution (H₀)" : "Relative Group Positions (Mean estimate distributions)"}</text>
 
-                {/* Shading */}
-                {tails === 2 ? (
-                  <>
-                    <path d={`M ${mean + Math.abs(criticalValue) * stdDev},150 ` + points.filter(p => p[0] >= mean + Math.abs(criticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`} fill="#ef4444" opacity="0.2" />
-                    <path d={`M 0,150 ` + points.filter(p => p[0] <= mean - Math.abs(criticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean - Math.abs(criticalValue) * stdDev},150 Z`} fill="#ef4444" opacity="0.2" />
-                  </>
-                ) : (
-                  h1Direction === 'greater'
-                    ? <path d={`M ${mean + criticalValue * stdDev},150 ` + points.filter(p => p[0] >= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`} fill="#ef4444" opacity="0.2" />
-                    : <path d={`M 0,150 ` + points.filter(p => p[0] <= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + criticalValue * stdDev},150 Z`} fill="#ef4444" opacity="0.2" />
-                )}
-
-                {/* Critical Boundaries */}
-                {tails === 2 ? (
-                  <>
-                    <line x1={mean + Math.abs(criticalValue) * stdDev} y1="30" x2={mean + Math.abs(criticalValue) * stdDev} y2="150" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2" />
-                    <line x1={mean - Math.abs(criticalValue) * stdDev} y1="30" x2={mean - Math.abs(criticalValue) * stdDev} y2="150" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2" />
-                    <text x={mean + Math.abs(criticalValue) * stdDev} y="25" textAnchor="middle" className="text-[6px] fill-red-500 font-bold">{`tCrit = ${Math.abs(criticalValue).toFixed(3)}`}</text>
-                    <text x={mean - Math.abs(criticalValue) * stdDev} y="25" textAnchor="middle" className="text-[6px] fill-red-500 font-bold">{`tCrit = -${Math.abs(criticalValue).toFixed(3)}`}</text>
-                  </>
-                ) : (
-                  <>
-                    <line x1={mean + criticalValue * stdDev} y1="30" x2={mean + criticalValue * stdDev} y2="150" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2" />
-                    <text x={mean + criticalValue * stdDev} y="25" textAnchor="middle" className="text-[6px] fill-red-500 font-bold">{`tCrit = ${criticalValue.toFixed(3)}`}</text>
-                  </>
-                )}
-
-                <g className="cursor-grab active:cursor-grabbing marker-group" onPointerDown={(e) => { e.preventDefault(); setIsDragging(true); e.target.setPointerCapture(e.pointerId); }}>
-                  <line x1={mean + tScore * stdDev} y1="30" x2={mean + tScore * stdDev} y2="150" stroke="#4f46e5" strokeWidth="2" strokeDasharray="4,2" opacity="0.5" />
-                  <circle cx={mean + tScore * stdDev} cy="148" r="7" fill="#4f46e5" stroke="white" strokeWidth="2" />
-                  <g transform={`translate(${mean + tScore * stdDev}, 165)`}>
-                    <text textAnchor="middle" className="text-[10px] font-black fill-indigo-500">{`Δ = ${delta.toFixed(2)}`}</text>
-                    <text y="12" textAnchor="middle" className="text-[9px] font-bold fill-indigo-400">{`t(${df.toFixed(0)}) = ${tScore.toFixed(3)}`}</text>
+              {displayVisual === 'sampling' ? (
+                <>
+                  <g className={`text-[8px] font-mono transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>
+                    {[-3, -2, -1, 0, 1, 2, 3].map(z => (
+                      <g key={z} transform={`translate(${mean + z * stdDev}, 150)`}>
+                        <line y2="5" stroke={darkMode ? "#334155" : "#e2e8f0"} />
+                        <text y="15" textAnchor="middle">{z}</text>
+                      </g>
+                    ))}
                   </g>
-                </g>
-              </>
-            ) : (
-              <>
-                {/* X-Axis and Ticks */}
-                <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
-                {[-2, -1, 0, 1, 2].map(tick => {
-                  const tickVal = tick * 50 * (se / stdDev);
-                  return (
-                    <g key={tick} transform={`translate(${mean + tick * 50}, 150)`}>
-                      <line y2="4" stroke={darkMode ? "#475569" : "#cbd5e1"} strokeWidth="1" />
-                      <text y="12" textAnchor="middle" className="text-[6px] fill-slate-500 font-bold">
-                        {tick === 0 ? "0 REF" : tickVal.toFixed(1)}
-                      </text>
-                    </g>
-                  );
-                })}
+                  <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
+                  <text x="150" y="180" textAnchor="middle" className={`text-[7px] font-bold uppercase transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>Test statistic (T)</text>
+                  <path d={pathData} fill="url(#indepGradient)" stroke="#4f46e5" strokeWidth="3" />
 
-                <path d={g1Path} fill="url(#g1Gradient)" stroke="#6366f1" strokeWidth="2" />
-                <path d={g2Path} fill="url(#g2Gradient)" stroke="#10b981" strokeWidth="2" />
-
-                {/* Group 2 Mean & SEM */}
-                <g transform={`translate(${mean}, 150)`}>
-                  <circle r="4" fill="#10b981" stroke="white" strokeWidth="1" />
-                  <text y="22" textAnchor="middle" className="text-[8px] font-black fill-emerald-500">{`x̄₂ = ${group2.xBar}`}</text>
-                  {showWhiskers && (
-                    <g className="animate-in fade-in duration-500">
-                      <line x1={-sem2 * (stdDev / se)} x2={sem2 * (stdDev / se)} y1="0" y2="0" stroke="#10b981" strokeWidth="2" />
-                      <line x1={-sem2 * (stdDev / se)} x2={-sem2 * (stdDev / se)} y1="-3" y2="3" stroke="#10b981" strokeWidth="1" />
-                      <line x1={sem2 * (stdDev / se)} x2={sem2 * (stdDev / se)} y1="-3" y2="3" stroke="#10b981" strokeWidth="1" />
-                      <text y="-8" textAnchor="middle" className="text-[5px] fill-emerald-600 font-bold">±1 SEM ({sem2.toFixed(2)} units)</text>
-                    </g>
+                  {/* Shading */}
+                  {tails === 2 ? (
+                    <>
+                      <path d={`M ${mean + Math.abs(criticalValue) * stdDev},150 ` + points.filter(p => p[0] >= mean + Math.abs(criticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`} fill="#ef4444" opacity="0.2" />
+                      <path d={`M 0,150 ` + points.filter(p => p[0] <= mean - Math.abs(criticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean - Math.abs(criticalValue) * stdDev},150 Z`} fill="#ef4444" opacity="0.2" />
+                    </>
+                  ) : (
+                    h1Direction === 'greater'
+                      ? <path d={`M ${mean + criticalValue * stdDev},150 ` + points.filter(p => p[0] >= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`} fill="#ef4444" opacity="0.2" />
+                      : <path d={`M 0,150 ` + points.filter(p => p[0] <= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + criticalValue * stdDev},150 Z`} fill="#ef4444" opacity="0.2" />
                   )}
-                </g>
 
-                {/* Group 1 Mean & SEM */}
-                <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se)}, 150)`} className="cursor-grab active:cursor-grabbing" onPointerDown={(e) => { e.preventDefault(); setIsDragging(true); e.target.setPointerCapture(e.pointerId); }}>
-                  <circle r="4" fill="#6366f1" stroke="white" strokeWidth="1" />
-                  <text y="22" textAnchor="middle" className="text-[8px] font-black fill-indigo-500">{`x̄₁ = ${group1.xBar}`}</text>
-                  <line y1="-100" y2="0" stroke="#6366f1" strokeWidth="1" strokeDasharray="4,2" opacity="0.3" />
-                  {showWhiskers && (
-                    <g className="animate-in fade-in duration-500">
-                      <line x1={-sem1 * (stdDev / se)} x2={sem1 * (stdDev / se)} y1="0" y2="0" stroke="#6366f1" strokeWidth="2" />
-                      <line x1={-sem1 * (stdDev / se)} x2={-sem1 * (stdDev / se)} y1="-3" y2="3" stroke="#6366f1" strokeWidth="1" />
-                      <line x1={sem1 * (stdDev / se)} x2={sem1 * (stdDev / se)} y1="-3" y2="3" stroke="#6366f1" strokeWidth="1" />
-                      <text y="-8" textAnchor="middle" className="text-[5px] fill-indigo-600 font-bold">±1 SEM ({sem1.toFixed(2)} units)</text>
-                    </g>
+                  {/* Critical Boundaries */}
+                  {tails === 2 ? (
+                    <>
+                      <line x1={mean + Math.abs(criticalValue) * stdDev} y1="30" x2={mean + Math.abs(criticalValue) * stdDev} y2="150" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2" />
+                      <line x1={mean - Math.abs(criticalValue) * stdDev} y1="30" x2={mean - Math.abs(criticalValue) * stdDev} y2="150" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2" />
+                      <text x={mean + Math.abs(criticalValue) * stdDev} y="25" textAnchor="middle" className="text-[6px] fill-red-500 font-bold">{`tCrit = ${Math.abs(criticalValue).toFixed(3)}`}</text>
+                      <text x={mean - Math.abs(criticalValue) * stdDev} y="25" textAnchor="middle" className="text-[6px] fill-red-500 font-bold">{`tCrit = -${Math.abs(criticalValue).toFixed(3)}`}</text>
+                    </>
+                  ) : (
+                    <>
+                      <line x1={mean + criticalValue * stdDev} y1="30" x2={mean + criticalValue * stdDev} y2="150" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2" />
+                      <text x={mean + criticalValue * stdDev} y="25" textAnchor="middle" className="text-[6px] fill-red-500 font-bold">{`tCrit = ${criticalValue.toFixed(3)}`}</text>
+                    </>
                   )}
-                </g>
 
-                {/* GAP and SE_delta */}
-                <path d={`M ${mean},70 L ${mean + (group1.xBar - group2.xBar) * (stdDev / se)},70`} stroke="#4f46e5" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se) / 2}, 60)`}>
-                  <text textAnchor="middle" className="text-[9px] font-black fill-indigo-500">{`Δ = ${delta.toFixed(2)} units`}</text>
-                  <text y="10" textAnchor="middle" className="text-[8px] font-bold fill-indigo-400">{`d = ${cohenD.toFixed(2)}`}</text>
-                </g>
-
-                {showWhiskers && (
-                  <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se) / 2}, 85)`} className="animate-in fade-in duration-500">
-                    <path d={`M ${-(stdDev / 2)},0 L ${(stdDev / 2)},0`} stroke="#4f46e5" strokeWidth="1.5" strokeDasharray="2,1" />
-                    <line x1={-(stdDev / 2)} x2={-(stdDev / 2)} y1="-3" y2="3" stroke="#4f46e5" strokeWidth="1" />
-                    <line x1={(stdDev / 2)} x2={(stdDev / 2)} y1="-3" y2="3" stroke="#4f46e5" strokeWidth="1" />
-                    <text y="10" textAnchor="middle" className="text-[6px] fill-indigo-500 font-black uppercase tracking-tighter">SE₍Δ₎</text>
+                  <g className="cursor-grab active:cursor-grabbing marker-group" onPointerDown={(e) => { e.preventDefault(); setIsDragging(true); e.target.setPointerCapture(e.pointerId); }}>
+                    <line x1={mean + tScore * stdDev} y1="30" x2={mean + tScore * stdDev} y2="150" stroke="#4f46e5" strokeWidth="2" strokeDasharray="4,2" opacity="0.5" />
+                    <circle cx={mean + tScore * stdDev} cy="148" r="7" fill="#4f46e5" stroke="white" strokeWidth="2" />
+                    <g transform={`translate(${mean + tScore * stdDev}, 165)`}>
+                      <text textAnchor="middle" className="text-[10px] font-black fill-indigo-500">{`Δ = ${delta.toFixed(2)}`}</text>
+                      <text y="12" textAnchor="middle" className="text-[9px] font-bold fill-indigo-400">{`t(${df.toFixed(0)}) = ${tScore.toFixed(3)}`}</text>
+                    </g>
                   </g>
-                )}
-
-                {/* Critical Gap Overlay */}
-                {showCritGap && (
-                  <g className="animate-in slide-in-from-top-2 duration-500">
-                    {/* Reference Zone(s) */}
-                    {tails === 2 ? (
-                      <>
-                        {/* Left side */}
-                        <rect transform={`translate(${mean}, 110)`} x={-deltaCrit * (stdDev / se)} y="-5" width={deltaCrit * (stdDev / se)} height="10" fill={delta <= -deltaCrit ? "#10b981" : "#ef4444"} opacity="0.1" rx="2" />
-                        <line transform={`translate(${mean}, 110)`} x1={-deltaCrit * (stdDev / se)} x2={-deltaCrit * (stdDev / se)} y1="-10" y2="10" stroke={delta <= -deltaCrit ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeDasharray="3,1" />
-
-                        {/* Right side */}
-                        <rect transform={`translate(${mean}, 110)`} x="0" width={deltaCrit * (stdDev / se)} height="10" fill={delta >= deltaCrit ? "#10b981" : "#ef4444"} opacity="0.1" rx="2" />
-                        <line transform={`translate(${mean}, 110)`} x1={deltaCrit * (stdDev / se)} x2={deltaCrit * (stdDev / se)} y1="-10" y2="10" stroke={delta >= deltaCrit ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeDasharray="3,1" />
-
-                        <text x={mean} y="105" textAnchor="middle" className={`text-[6px] font-black fill-slate-500 uppercase tracking-tighter`}>Significance Thresholds</text>
-                        <text x={mean + deltaCrit * (stdDev / se) + 3} y="113" textAnchor="start" className={`text-[7px] font-black ${delta >= deltaCrit ? 'fill-emerald-500' : 'fill-red-500'}`}>{`+${deltaCrit.toFixed(2)}`}</text>
-                        <text x={mean - deltaCrit * (stdDev / se) - 3} y="113" textAnchor="end" className={`text-[7px] font-black ${delta <= -deltaCrit ? 'fill-emerald-500' : 'fill-red-500'}`}>{`-${deltaCrit.toFixed(2)}`}</text>
-                      </>
-                    ) : (
-                      <g transform={`translate(${mean}, 110)`}>
-                        <rect x={h1Direction === 'greater' ? 0 : -deltaCrit * (stdDev / se)} y="-5" width={deltaCrit * (stdDev / se)} height="10" fill={isSignificant ? "#10b981" : "#ef4444"} opacity="0.1" rx="2" />
-                        <line x1={h1Direction === 'greater' ? deltaCrit * (stdDev / se) : -deltaCrit * (stdDev / se)} x2={h1Direction === 'greater' ? deltaCrit * (stdDev / se) : -deltaCrit * (stdDev / se)} y1="-10" y2="10" stroke={isSignificant ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeDasharray="3,1" />
-                        <text x={h1Direction === 'greater' ? deltaCrit * (stdDev / se) + 5 : -deltaCrit * (stdDev / se) - 5} y="3" textAnchor={h1Direction === 'greater' ? "start" : "end"} className={`text-[7px] font-black ${isSignificant ? 'fill-emerald-500' : 'fill-red-500'}`}>
-                          {`Need |Δ| ≥ ${deltaCrit.toFixed(2)} units`}
+                </>
+              ) : (
+                <>
+                  {/* X-Axis and Ticks */}
+                  <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
+                  {[-2, -1, 0, 1, 2].map(tick => {
+                    const tickVal = tick * 50 * (se / stdDev);
+                    return (
+                      <g key={tick} transform={`translate(${mean + tick * 50}, 150)`}>
+                        <line y2="4" stroke={darkMode ? "#475569" : "#cbd5e1"} strokeWidth="1" />
+                        <text y="12" textAnchor="middle" className="text-[6px] fill-slate-500 font-bold">
+                          {tick === 0 ? "0 REF" : tickVal.toFixed(1)}
                         </text>
+                      </g>
+                    );
+                  })}
+
+                  <path d={g1Path} fill="url(#g1Gradient)" stroke="#6366f1" strokeWidth="2" />
+                  <path d={g2Path} fill="url(#g2Gradient)" stroke="#10b981" strokeWidth="2" />
+
+                  {/* Group 2 Mean & SEM */}
+                  <g transform={`translate(${mean}, 150)`}>
+                    <circle r="4" fill="#10b981" stroke="white" strokeWidth="1" />
+                    <text y="22" textAnchor="middle" className="text-[8px] font-black fill-emerald-500">{`x̄₂ = ${group2.xBar}`}</text>
+                    {showWhiskers && (
+                      <g className="animate-in fade-in duration-500">
+                        <line x1={-sem2 * (stdDev / se)} x2={sem2 * (stdDev / se)} y1="0" y2="0" stroke="#10b981" strokeWidth="2" />
+                        <line x1={-sem2 * (stdDev / se)} x2={-sem2 * (stdDev / se)} y1="-3" y2="3" stroke="#10b981" strokeWidth="1" />
+                        <line x1={sem2 * (stdDev / se)} x2={sem2 * (stdDev / se)} y1="-3" y2="3" stroke="#10b981" strokeWidth="1" />
+                        <text y="-8" textAnchor="middle" className="text-[5px] fill-emerald-600 font-bold">±1 SEM ({sem2.toFixed(2)} units)</text>
                       </g>
                     )}
                   </g>
-                )}
 
-                {/* Overlap Readout */}
-                <g transform="translate(280, 185)" className="cursor-help" title="Approximate overlap of the two raw-score curves (intuitive effect size cue).">
-                  <text textAnchor="end" className={`text-[7px] font-bold ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>
-                    {`Overlap ≈ ${overlapPct.toFixed(0)}%`}
-                  </text>
-                </g>
-              </>
-            )}
-          </svg>
+                  {/* Group 1 Mean & SEM */}
+                  <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se)}, 150)`} className="cursor-grab active:cursor-grabbing" onPointerDown={(e) => { e.preventDefault(); setIsDragging(true); e.target.setPointerCapture(e.pointerId); }}>
+                    <circle r="4" fill="#6366f1" stroke="white" strokeWidth="1" />
+                    <text y="22" textAnchor="middle" className="text-[8px] font-black fill-indigo-500">{`x̄₁ = ${group1.xBar}`}</text>
+                    <line y1="-100" y2="0" stroke="#6366f1" strokeWidth="1" strokeDasharray="4,2" opacity="0.3" />
+                    {showWhiskers && (
+                      <g className="animate-in fade-in duration-500">
+                        <line x1={-sem1 * (stdDev / se)} x2={sem1 * (stdDev / se)} y1="0" y2="0" stroke="#6366f1" strokeWidth="2" />
+                        <line x1={-sem1 * (stdDev / se)} x2={-sem1 * (stdDev / se)} y1="-3" y2="3" stroke="#6366f1" strokeWidth="1" />
+                        <line x1={sem1 * (stdDev / se)} x2={sem1 * (stdDev / se)} y1="-3" y2="3" stroke="#6366f1" strokeWidth="1" />
+                        <text y="-8" textAnchor="middle" className="text-[5px] fill-indigo-600 font-bold">±1 SEM ({sem1.toFixed(2)} units)</text>
+                      </g>
+                    )}
+                  </g>
+
+                  {/* GAP and SE_delta */}
+                  <path d={`M ${mean},70 L ${mean + (group1.xBar - group2.xBar) * (stdDev / se)},70`} stroke="#4f46e5" strokeWidth="2" markerEnd="url(#arrowhead)" />
+                  <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se) / 2}, 60)`}>
+                    <text textAnchor="middle" className="text-[9px] font-black fill-indigo-500">{`Δ = ${delta.toFixed(2)} units`}</text>
+                    <text y="10" textAnchor="middle" className="text-[8px] font-bold fill-indigo-400">{`d = ${cohenD.toFixed(2)}`}</text>
+                  </g>
+
+                  {showWhiskers && (
+                    <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se) / 2}, 85)`} className="animate-in fade-in duration-500">
+                      <path d={`M ${-(stdDev / 2)},0 L ${(stdDev / 2)},0`} stroke="#4f46e5" strokeWidth="1.5" strokeDasharray="2,1" />
+                      <line x1={-(stdDev / 2)} x2={-(stdDev / 2)} y1="-3" y2="3" stroke="#4f46e5" strokeWidth="1" />
+                      <line x1={(stdDev / 2)} x2={(stdDev / 2)} y1="-3" y2="3" stroke="#4f46e5" strokeWidth="1" />
+                      <text y="10" textAnchor="middle" className="text-[6px] fill-indigo-500 font-black uppercase tracking-tighter">SE₍Δ₎</text>
+                    </g>
+                  )}
+
+                  {/* Critical Gap Overlay */}
+                  {showCritGap && (
+                    <g className="animate-in slide-in-from-top-2 duration-500">
+                      {/* Reference Zone(s) */}
+                      {tails === 2 ? (
+                        <>
+                          {/* Left side */}
+                          <rect transform={`translate(${mean}, 110)`} x={-deltaCrit * (stdDev / se)} y="-5" width={deltaCrit * (stdDev / se)} height="10" fill={delta <= -deltaCrit ? "#10b981" : "#ef4444"} opacity="0.1" rx="2" />
+                          <line transform={`translate(${mean}, 110)`} x1={-deltaCrit * (stdDev / se)} x2={-deltaCrit * (stdDev / se)} y1="-10" y2="10" stroke={delta <= -deltaCrit ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeDasharray="3,1" />
+
+                          {/* Right side */}
+                          <rect transform={`translate(${mean}, 110)`} x="0" width={deltaCrit * (stdDev / se)} height="10" fill={delta >= deltaCrit ? "#10b981" : "#ef4444"} opacity="0.1" rx="2" />
+                          <line transform={`translate(${mean}, 110)`} x1={deltaCrit * (stdDev / se)} x2={deltaCrit * (stdDev / se)} y1="-10" y2="10" stroke={delta >= deltaCrit ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeDasharray="3,1" />
+
+                          <text x={mean} y="105" textAnchor="middle" className={`text-[6px] font-black fill-slate-500 uppercase tracking-tighter`}>Significance Thresholds</text>
+                          <text x={mean + deltaCrit * (stdDev / se) + 3} y="113" textAnchor="start" className={`text-[7px] font-black ${delta >= deltaCrit ? 'fill-emerald-500' : 'fill-red-500'}`}>{`+${deltaCrit.toFixed(2)}`}</text>
+                          <text x={mean - deltaCrit * (stdDev / se) - 3} y="113" textAnchor="end" className={`text-[7px] font-black ${delta <= -deltaCrit ? 'fill-emerald-500' : 'fill-red-500'}`}>{`-${deltaCrit.toFixed(2)}`}</text>
+                        </>
+                      ) : (
+                        <g transform={`translate(${mean}, 110)`}>
+                          <rect x={h1Direction === 'greater' ? 0 : -deltaCrit * (stdDev / se)} y="-5" width={deltaCrit * (stdDev / se)} height="10" fill={isSignificant ? "#10b981" : "#ef4444"} opacity="0.1" rx="2" />
+                          <line x1={h1Direction === 'greater' ? deltaCrit * (stdDev / se) : -deltaCrit * (stdDev / se)} x2={h1Direction === 'greater' ? deltaCrit * (stdDev / se) : -deltaCrit * (stdDev / se)} y1="-10" y2="10" stroke={isSignificant ? "#10b981" : "#ef4444"} strokeWidth="1.5" strokeDasharray="3,1" />
+                          <text x={h1Direction === 'greater' ? deltaCrit * (stdDev / se) + 5 : -deltaCrit * (stdDev / se) - 5} y="3" textAnchor={h1Direction === 'greater' ? "start" : "end"} className={`text-[7px] font-black ${isSignificant ? 'fill-emerald-500' : 'fill-red-500'}`}>
+                            {`Need |Δ| ≥ ${deltaCrit.toFixed(2)} units`}
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  )}
+
+                  {/* Overlap Readout */}
+                  <g transform="translate(280, 185)" className="cursor-help" title="Approximate overlap of the two raw-score curves (intuitive effect size cue).">
+                    <text textAnchor="end" className={`text-[7px] font-bold ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>
+                      {`Overlap ≈ ${overlapPct.toFixed(0)}%`}
+                    </text>
+                  </g>
+                </>
+              )}
+            </svg>
+          )}
 
           <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
             <div className={`px-3 py-1.5 rounded-lg border flex flex-col items-center min-w-[100px] ${isSignificant ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-500/10 border-slate-500/30'}`}>
@@ -422,6 +444,128 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
               )}
             </div>
           </div>
+
+          {displayVisual === 'plots' && (
+            <div className={`p-6 rounded-xl border-2 animate-in fade-in slide-in-from-top-4 duration-500 ${darkMode ? 'bg-slate-950 border-amber-500/20' : 'bg-white border-amber-100 shadow-lg'}`}>
+              <div className="flex items-center gap-2 mb-6">
+                <Settings2 size={16} className="text-amber-500" />
+                <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Plot Customization</h5>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div className="space-y-4">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Chart Type</span>
+                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+                    <button
+                      onClick={() => setPlotSettings({ ...plotSettings, type: 'bar' })}
+                      className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.type === 'bar' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500'}`}
+                    >
+                      Bar Chart
+                    </button>
+                    <button
+                      onClick={() => setPlotSettings({ ...plotSettings, type: 'line' })}
+                      className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.type === 'line' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500'}`}
+                    >
+                      Line Plot
+                    </button>
+                  </div>
+
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block pt-2">Error Bars</span>
+                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+                    {['none', 'se', 'sd'].map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setPlotSettings({ ...plotSettings, errorType: type })}
+                        className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.errorType === type ? 'bg-slate-500 text-white shadow-md' : 'text-slate-500'}`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Group Colors</span>
+                  <div className="flex gap-4">
+                    <div className="flex flex-col gap-2 flex-1">
+                      <label className="text-[8px] font-bold text-slate-400 uppercase">Group 1</label>
+                      <input
+                        type="color"
+                        value={plotSettings.g1Color}
+                        onChange={e => setPlotSettings({ ...plotSettings, g1Color: e.target.value })}
+                        className="w-full h-8 rounded border-none cursor-pointer bg-transparent"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2 flex-1">
+                      <label className="text-[8px] font-bold text-slate-400 uppercase">Group 2</label>
+                      <input
+                        type="color"
+                        value={plotSettings.g2Color}
+                        onChange={e => setPlotSettings({ ...plotSettings, g2Color: e.target.value })}
+                        className="w-full h-8 rounded border-none cursor-pointer bg-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Axis Labels</span>
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[8px] font-bold text-slate-400 uppercase">X Axis</label>
+                      <input
+                        type="text"
+                        value={plotSettings.xLabel}
+                        onChange={e => setPlotSettings({ ...plotSettings, xLabel: e.target.value })}
+                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[8px] font-bold text-slate-400 uppercase">Y Axis</label>
+                      <input
+                        type="text"
+                        value={plotSettings.yLabel}
+                        onChange={e => setPlotSettings({ ...plotSettings, yLabel: e.target.value })}
+                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Y-Axis Range</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[8px] font-bold text-slate-400 uppercase">Min</label>
+                      <input
+                        type="number"
+                        placeholder="Auto"
+                        value={plotSettings.yMin === null ? '' : plotSettings.yMin}
+                        onChange={e => setPlotSettings({ ...plotSettings, yMin: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[8px] font-bold text-slate-400 uppercase">Max</label>
+                      <input
+                        type="number"
+                        placeholder="Auto"
+                        value={plotSettings.yMax === null ? '' : plotSettings.yMax}
+                        onChange={e => setPlotSettings({ ...plotSettings, yMax: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setPlotSettings({ ...plotSettings, yMin: null, yMax: null })}
+                    className="w-full py-1 text-[8px] font-black text-slate-500 hover:text-amber-500 uppercase tracking-widest transition-colors"
+                  >
+                    Reset to Auto
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
