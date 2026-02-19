@@ -4,7 +4,8 @@ import { fCDF, fPPF, calculateFactorialAnova, calculatePostHocFactorial } from '
 import FactorialDatasetEditor from './FactorialDatasetEditor';
 import InteractionPlot from './InteractionPlot';
 import FSamplingDist from './FSamplingDist';
-import AnovaResults from './AnovaResults'; // We can reuse or extend this
+import SimpleEffectsExplorer from './SimpleEffectsExplorer';
+import { FACTORIAL_PRESETS } from '../../data/factorialPresets';
 
 const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor }) => {
     const [localShowValues, setLocalShowValues] = useState(propShowValues);
@@ -12,17 +13,22 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
 
     const [factorA, setFactorA] = useState({ label: 'Factor A', levels: [{ id: 'a1', label: 'A1' }, { id: 'a2', label: 'A2' }] });
     const [factorB, setFactorB] = useState({ label: 'Factor B', levels: [{ id: 'b1', label: 'B1' }, { id: 'b2', label: 'B2' }] });
+    const [outcomeLabel, setOutcomeLabel] = useState('Outcome');
     const [cellData, setCellData] = useState({
-        'a1_b1': { values: [10, 12, 11], summary: { mean: '11.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
-        'a1_b2': { values: [15, 14, 16], summary: { mean: '15.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
-        'a2_b1': { values: [20, 19, 21], summary: { mean: '20.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
-        'a2_b2': { values: [12, 11, 13], summary: { mean: '12.0', sd: '1.0', n: '3' }, inputMode: 'raw' }
+        'a1_b1': { values: [8, 9, 7], summary: { mean: '8.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
+        'a1_b2': { values: [12, 11, 13], summary: { mean: '12.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
+        'a2_b1': { values: [10, 11, 9], summary: { mean: '10.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
+        'a2_b2': { values: [6, 7, 5], summary: { mean: '6.0', sd: '1.0', n: '3' }, inputMode: 'raw' }
     });
 
-    const [activeTab, setActiveTab] = useState('table'); // 'data', 'plot', 'table', 'fdist', 'posthoc'
-    const [selectedEffect, setSelectedEffect] = useState('AxB'); // 'A', 'B', 'AxB'
+    const [activeTab, setActiveTab] = useState('table');
+    const [selectedEffect, setSelectedEffect] = useState('AxB');
     const [swapAxes, setSwapAxes] = useState(false);
     const [alpha, setAlpha] = useState(0.05);
+
+    // UI Toggles
+    const [showRawPoints, setShowRawPoints] = useState(false);
+    const [showMarginalMeans, setShowMarginalMeans] = useState(false);
 
     // --- CALCULATIONS ---
     const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData), [factorA, factorB, cellData]);
@@ -41,6 +47,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
     }, [results, selectedEffect, alpha]);
 
     // --- HANDLERS ---
+    const loadPreset = (presetId) => {
+        const preset = FACTORIAL_PRESETS.find(p => p.id === presetId);
+        if (!preset) return;
+
+        setFactorA(preset.factorA);
+        setFactorB(preset.factorB);
+        setOutcomeLabel(preset.outcome);
+        setCellData(preset.data);
+    };
+
     const addLevel = (factor) => {
         const target = factor === 'A' ? factorA : factorB;
         const setter = factor === 'A' ? setFactorA : setFactorB;
@@ -99,15 +115,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
     return (
         <div className="w-full flex flex-col gap-8 animate-in fade-in duration-700 relative">
             {/* Visualizer Frame */}
-            <div className={`w-full h-[600px] overflow-hidden border-2 rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className={`w-full h-[650px] overflow-hidden border-2 rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 {/* Tab Navigation */}
                 <div className="absolute top-6 left-6 flex gap-3 z-40">
                     {[
-                        { id: 'data', label: 'Data Input', icon: <Sigma size={12} /> },
-                        { id: 'plot', label: 'Interaction', icon: <Activity size={12} /> },
-                        { id: 'table', label: 'ANOVA Table', icon: <Layers size={12} /> },
+                        { id: 'data', label: 'Data', icon: <Sigma size={12} /> },
+                        { id: 'plot', label: 'Plot', icon: <Activity size={12} /> },
+                        { id: 'table', label: 'Table', icon: <Layers size={12} /> },
+                        { id: 'explorer', label: 'Explorer', icon: <Calculator size={12} />, hidden: results?.effects?.AxB?.p >= alpha },
                         { id: 'fdist', label: 'F-Dist', icon: <Percent size={12} /> }
-                    ].map(tab => (
+                    ].filter(t => !t.hidden).map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
@@ -118,7 +135,20 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
-                <div className="w-full h-full pt-16">
+                {/* Preset Selector */}
+                <div className="absolute top-6 right-6 z-40">
+                    <select
+                        onChange={(e) => loadPreset(e.target.value)}
+                        className={`bg-slate-900 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-2xl border border-slate-800 outline-none hover:text-indigo-400 transition-colors`}
+                    >
+                        <option value="">Choose a Story Preset...</option>
+                        {FACTORIAL_PRESETS.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="w-full h-full pt-20">
                     {activeTab === 'data' && (
                         <div className="w-full h-full overflow-y-auto p-8 custom-scrollbar">
                             <FactorialDatasetEditor
@@ -136,20 +166,38 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                         </div>
                     )}
                     {activeTab === 'plot' && (
-                        <div className="w-full h-full flex flex-col items-center justify-center">
+                        <div className="w-full h-full flex flex-col items-center justify-center p-8">
                             <InteractionPlot
                                 factorA={factorA}
                                 factorB={factorB}
                                 cellStats={results.cellStats}
+                                cellData={cellData}
                                 swapAxes={swapAxes}
+                                outcomeLabel={outcomeLabel}
+                                showRawPoints={showRawPoints}
+                                showMarginalMeans={showMarginalMeans}
                                 darkMode={darkMode}
                             />
-                            <button
-                                onClick={() => setSwapAxes(!swapAxes)}
-                                className="mb-8 px-6 py-2 bg-slate-900 border border-slate-700 rounded-full text-[10px] font-black text-indigo-400 hover:bg-slate-800 transition-all uppercase tracking-widest"
-                            >
-                                Swap Axes
-                            </button>
+                            <div className="flex gap-4 mt-4">
+                                <button
+                                    onClick={() => setSwapAxes(!swapAxes)}
+                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${swapAxes ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    Swap Axes
+                                </button>
+                                <button
+                                    onClick={() => setShowRawPoints(!showRawPoints)}
+                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showRawPoints ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    {showRawPoints ? 'Hide Points' : 'Show Points'}
+                                </button>
+                                <button
+                                    onClick={() => setShowMarginalMeans(!showMarginalMeans)}
+                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showMarginalMeans ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    Marginal Means
+                                </button>
+                            </div>
                         </div>
                     )}
                     {activeTab === 'fdist' && currentModel && (
@@ -160,42 +208,67 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                             df1={currentModel.df1}
                             df2={currentModel.df2}
                             darkMode={darkMode}
-                            setFVal={() => { }} // Disabled in data mode
+                            setFVal={() => { }}
                         />
                     )}
                     {activeTab === 'table' && results && (
                         <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
-                            <h2 className="text-[20px] font-black italic uppercase tracking-tighter mb-6 text-indigo-500">ANOVA Summary</h2>
+                            <div className="flex justify-between items-end mb-6">
+                                <h2 className="text-[20px] font-black italic uppercase tracking-tighter text-indigo-500">ANOVA Summary</h2>
+                                <span className="text-[10px] font-black text-slate-600 uppercase">df_Total = {results.effects.Total.df}</span>
+                            </div>
                             <div className="grid grid-cols-1 gap-4">
                                 {['A', 'B', 'AxB'].map(key => {
                                     const effect = results.effects[key];
                                     const isSig = effect.p < alpha;
+                                    const isSelected = selectedEffect === key;
                                     return (
                                         <div
                                             key={key}
-                                            onClick={() => setSelectedEffect(key)}
-                                            className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${selectedEffect === key ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 bg-slate-900/30'}`}
+                                            onClick={() => { setSelectedEffect(key); setActiveTab('fdist'); }}
+                                            className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-95 ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 bg-slate-900/30'}`}
                                         >
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Source</span>
+                                            <div className="grid grid-cols-5 items-center">
+                                                <div className="col-span-2">
+                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Effect</span>
                                                     <span className="text-[14px] font-black uppercase text-white">{effect.label}</span>
+                                                    <span className="text-[10px] font-bold text-slate-600 block mt-1">F({effect.df}, {results.effects.Error.df})</span>
                                                 </div>
-                                                <div className="text-right">
+                                                <div className="text-center">
                                                     <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">P-Value</span>
-                                                    <span className={`text-[14px] font-black ${isSig ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    <span className={`text-[14px] font-black ${isSig ? 'text-emerald-400' : 'text-slate-400'}`}>
                                                         {effect.p < 0.001 ? '< .001' : effect.p.toFixed(3)}
                                                     </span>
                                                 </div>
-                                                <div className="text-right">
+                                                <div className="text-center">
                                                     <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">F-Ratio</span>
                                                     <span className="text-[14px] font-black text-indigo-400">{effect.f.toFixed(2)}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Partial η²</span>
+                                                    <span className="text-[14px] font-black text-amber-500">{effect.pes.toFixed(3)}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
+                                {/* Error Row */}
+                                <div className="p-4 px-6 rounded-[1.5rem] border-2 border-dashed border-slate-800 opacity-50 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                    <span>Error (Residual)</span>
+                                    <span>SS={results.effects.Error.ss.toFixed(2)}  |  df={results.effects.Error.df}  |  MS={results.effects.Error.ms.toFixed(2)}</span>
+                                </div>
                             </div>
+                        </div>
+                    )}
+                    {activeTab === 'explorer' && results && (
+                        <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
+                            <SimpleEffectsExplorer
+                                factorA={factorA}
+                                factorB={factorB}
+                                cellStats={results.cellStats}
+                                results={results}
+                                darkMode={darkMode}
+                            />
                         </div>
                     )}
                 </div>
@@ -214,15 +287,26 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
 
                 {results && results.effects.AxB.p < alpha ? (
                     <div className="p-6 bg-amber-500/10 border-2 border-amber-500/20 rounded-[2rem]">
-                        <p className="text-[14px] font-bold text-amber-200">
-                            Warning: Significant Interaction Found! Main effects should be interpreted with caution.
-                            Consider simple effects analysis.
+                        <p className="text-[14px] font-bold text-amber-200 mb-2">
+                            Significant Interaction Found!
                         </p>
+                        <p className="text-[12px] text-amber-200/70 mb-4">
+                            The lines in your interaction plot are likely non-parallel or crossing. This means the effect of {factorA.label} depends on the level of {factorB.label}. Main effects alone are not the full story!
+                        </p>
+                        <button
+                            onClick={() => { setActiveTab('explorer'); }}
+                            className="bg-amber-600 text-amber-950 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all font-black"
+                        >
+                            Explore Simple Effects
+                        </button>
                     </div>
                 ) : (
-                    <div className="p-6 bg-indigo-500/10 border-2 border-indigo-500/20 rounded-[2rem]">
-                        <p className="text-[14px] font-bold text-indigo-200">
-                            No significant interaction. Main effects can be interpreted naively.
+                    <div className="p-6 bg-emerald-500/10 border-2 border-emerald-500/20 rounded-[2rem]">
+                        <p className="text-[14px] font-bold text-emerald-200 mb-2">
+                            No Significant Interaction.
+                        </p>
+                        <p className="text-[12px] text-emerald-200/70">
+                            The lines in your interaction plot are mostly parallel. You can confidently interpret the main effects of {factorA.label} and {factorB.label} individually.
                         </p>
                     </div>
                 )}

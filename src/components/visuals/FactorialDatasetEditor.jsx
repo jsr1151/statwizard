@@ -70,14 +70,28 @@ const FactorialDatasetEditor = ({
                 </div>
             </div>
 
+            {/* Utility Row */}
+            <div className={`flex flex-wrap gap-4 p-4 rounded-2xl border-2 ${darkMode ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600/20 transition-all border border-indigo-500/20">
+                    <Plus size={12} /> Add A
+                </button>
+                <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600/20 transition-all border border-emerald-500/20">
+                    <Plus size={12} /> Add B
+                </button>
+                <div className="flex-1" />
+                <button onClick={() => { if (confirm("Clear all data?")) Object.keys(cellData).forEach(k => parseCellRaw(k, "")); }} className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors">
+                    <Trash2 size={12} className="inline mr-1" /> Clear All
+                </button>
+            </div>
+
             {/* Cell Grid */}
-            <div className="overflow-x-auto pb-4">
-                <table className="w-full border-separate border-spacing-4">
-                    <thead>
-                        <tr>
-                            <th className="p-2"></th>
+            <div className="overflow-x-auto pb-4 max-h-[500px] custom-scrollbar rounded-2xl border-2 border-slate-800/50">
+                <table className="w-full border-separate border-spacing-4 min-w-[600px]">
+                    <thead className="sticky top-0 z-50">
+                        <tr className={darkMode ? 'bg-slate-900' : 'bg-white'}>
+                            <th className="p-2 w-20"></th>
                             {factorB.levels.map(b => (
-                                <th key={b.id} className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center pb-2">
+                                <th key={b.id} className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center py-4 border-b-2 border-slate-800/50">
                                     {b.label}
                                 </th>
                             ))}
@@ -86,7 +100,7 @@ const FactorialDatasetEditor = ({
                     <tbody>
                         {factorA.levels.map(a => (
                             <tr key={a.id}>
-                                <td className="text-[10px] font-black uppercase tracking-widest text-slate-500 pr-4 align-middle">
+                                <td className={`sticky left-0 z-40 text-[10px] font-black uppercase tracking-widest text-slate-500 pr-4 align-middle border-r-2 border-slate-800/20 ${darkMode ? 'bg-slate-900/90 backdrop-blur-sm' : 'bg-white/90 backdrop-blur-sm'}`}>
                                     {a.label}
                                 </td>
                                 {factorB.levels.map(b => {
@@ -99,6 +113,12 @@ const FactorialDatasetEditor = ({
                                             <div className={`p-4 rounded-[1.5rem] border-2 transition-all relative ${darkMode ? 'bg-slate-950 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
                                                 <div className="flex justify-between items-center mb-3">
                                                     <span className="text-[9px] font-black text-slate-500 uppercase">N={n}</span>
+                                                    {cell.inputMode === 'raw' && cell.summary && (
+                                                        <span className="text-[8px] font-black text-indigo-500/70 space-x-2">
+                                                            <span>M={cell.summary.mean}</span>
+                                                            <span>SD={cell.summary.sd}</span>
+                                                        </span>
+                                                    )}
                                                     <div className="flex gap-1 p-1 bg-slate-900 rounded-lg">
                                                         <button
                                                             onClick={() => updateCell(key, 'inputMode', 'raw')}
