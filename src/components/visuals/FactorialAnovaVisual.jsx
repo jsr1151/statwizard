@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Activity, LayoutGrid, PieChart, Plus, Sigma, X, GitCommit, Layers, Percent } from 'lucide-react';
+import { Activity, LayoutGrid, PieChart, Plus, Sigma, X, GitCommit, Layers, Percent, Calculator } from 'lucide-react';
 import { fCDF, fPPF, calculateFactorialAnova, calculatePostHocFactorial } from '../../utils/mathHelpers';
 import FactorialDatasetEditor from './FactorialDatasetEditor';
 import InteractionPlot from './InteractionPlot';
