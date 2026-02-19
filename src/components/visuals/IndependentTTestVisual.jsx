@@ -27,6 +27,9 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const [plotSettings, setPlotSettings] = useState({
     type: 'bar',
     errorType: 'se',
+    errorDirection: 'both',
+    showOutline: true,
+    pattern: 'none',
     g1Color: '#6366f1',
     g2Color: '#10b981',
     yMin: null,
@@ -415,6 +418,96 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
           </div>
         </div>
 
+        {
+          displayVisual === 'plots' && (
+            <div className={`w-full p-4 border-b animate-in fade-in slide-in-from-top-4 duration-500 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+              <div className="max-w-5xl mx-auto">
+                <div className="flex items-center gap-2 mb-6">
+                  <Settings2 size={16} className="text-amber-500" />
+                  <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Plot Customization</h5>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <div className="space-y-4">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Core Style</span>
+                    <div className="space-y-3">
+                      <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
+                        {['bar', 'line'].map(t => (
+                          <button key={t} onClick={() => setPlotSettings({ ...plotSettings, type: t })} className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.type === t ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500'}`}>{t}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[8px] font-bold text-slate-500 uppercase">Outline</span>
+                        <button onClick={() => setPlotSettings({ ...plotSettings, showOutline: !plotSettings.showOutline })} className={`w-8 h-4 rounded-full transition-all relative ${plotSettings.showOutline ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                          <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all ${plotSettings.showOutline ? 'left-5' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Error Bars</span>
+                    <div className="space-y-2">
+                      <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
+                        {['none', 'se', 'sd'].map(type => (
+                          <button key={type} onClick={() => setPlotSettings({ ...plotSettings, errorType: type })} className={`flex-1 py-1 text-[8px] font-black rounded uppercase transition-all ${plotSettings.errorType === type ? 'bg-slate-500 text-white' : 'text-slate-500'}`}>{type}</button>
+                        ))}
+                      </div>
+                      {plotSettings.errorType !== 'none' && (
+                        <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
+                          {['both', 'plus', 'minus'].map(dir => (
+                            <button key={dir} onClick={() => setPlotSettings({ ...plotSettings, errorDirection: dir })} className={`flex-1 py-1 text-[7px] font-black rounded uppercase transition-all ${plotSettings.errorDirection === dir ? 'bg-indigo-500 text-white' : 'text-slate-500'}`}>
+                              {dir === 'both' ? '±1' : dir === 'plus' ? '+1' : '-1'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Fill Pattern</span>
+                    <div className="grid grid-cols-1 gap-1">
+                      {['none', 'diagonal', 'dots'].map(p => (
+                        <button key={p} onClick={() => setPlotSettings({ ...plotSettings, pattern: p })} className={`py-1.5 text-[8px] font-black rounded uppercase border transition-all ${plotSettings.pattern === p ? 'bg-slate-700 border-slate-600 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>{p}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Group Colors</span>
+                    <div className="flex gap-2">
+                      {['g1Color', 'g2Color'].map((key, i) => (
+                        <div key={key} className="flex-1 flex flex-col gap-1">
+                          <label className="text-[7px] font-bold text-slate-500 uppercase">G{i + 1}</label>
+                          <input type="color" value={plotSettings[key]} onChange={e => setPlotSettings({ ...plotSettings, [key]: e.target.value })} className="w-full h-8 rounded cursor-pointer bg-transparent border-none" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Labels & Range</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="X Label" value={plotSettings.xLabel} onChange={e => setPlotSettings({ ...plotSettings, xLabel: e.target.value })} className={`p-1.5 rounded text-[9px] font-bold border ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50'}`} />
+                      <input type="text" placeholder="Y Label" value={plotSettings.yLabel} onChange={e => setPlotSettings({ ...plotSettings, yLabel: e.target.value })} className={`p-1.5 rounded text-[9px] font-bold border ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50'}`} />
+                      <input type="number" placeholder="Y Min" value={plotSettings.yMin ?? ''} onChange={e => setPlotSettings({ ...plotSettings, yMin: e.target.value === '' ? null : parseFloat(e.target.value) })} className={`p-1.5 rounded text-[9px] font-bold border ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50'}`} />
+                      <input type="number" placeholder="Y Max" value={plotSettings.yMax ?? ''} onChange={e => setPlotSettings({ ...plotSettings, yMax: e.target.value === '' ? null : parseFloat(e.target.value) })} className={`p-1.5 rounded text-[9px] font-bold border ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50'}`} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-800/50 flex justify-between items-center">
+                  <button onClick={() => setPlotSettings({ ...plotSettings, yMin: null, yMax: null })} className="text-[8px] font-black text-slate-500 hover:text-amber-500 uppercase tracking-widest transition-colors">Reset Range</button>
+                  <button onClick={copyPlotToClipboard} className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center gap-2">
+                    <FileText size={12} /> Copy Plot
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
         <div className={`w-full p-6 space-y-8 transition-colors ${darkMode ? 'bg-slate-900 shadow-inner' : 'bg-slate-50'}`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
@@ -482,136 +575,6 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
             </div>
           </div>
 
-          {displayVisual === 'plots' && (
-            <div className={`p-6 rounded-xl border-2 animate-in fade-in slide-in-from-top-4 duration-500 ${darkMode ? 'bg-slate-950 border-amber-500/20' : 'bg-white border-amber-100 shadow-lg'}`}>
-              <div className="flex items-center gap-2 mb-6">
-                <Settings2 size={16} className="text-amber-500" />
-                <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-widest">Plot Customization</h5>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div className="space-y-4">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Chart Type</span>
-                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
-                    <button
-                      onClick={() => setPlotSettings({ ...plotSettings, type: 'bar' })}
-                      className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.type === 'bar' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500'}`}
-                    >
-                      Bar Chart
-                    </button>
-                    <button
-                      onClick={() => setPlotSettings({ ...plotSettings, type: 'line' })}
-                      className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.type === 'line' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-500'}`}
-                    >
-                      Line Plot
-                    </button>
-                  </div>
-
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block pt-2">Error Bars</span>
-                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
-                    {['none', 'se', 'sd'].map(type => (
-                      <button
-                        key={type}
-                        onClick={() => setPlotSettings({ ...plotSettings, errorType: type })}
-                        className={`flex-1 py-1.5 text-[9px] font-black rounded uppercase transition-all ${plotSettings.errorType === type ? 'bg-slate-500 text-white shadow-md' : 'text-slate-500'}`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Group Colors</span>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col gap-2 flex-1">
-                      <label className="text-[8px] font-bold text-slate-400 uppercase">Group 1</label>
-                      <input
-                        type="color"
-                        value={plotSettings.g1Color}
-                        onChange={e => setPlotSettings({ ...plotSettings, g1Color: e.target.value })}
-                        className="w-full h-8 rounded border-none cursor-pointer bg-transparent"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2 flex-1">
-                      <label className="text-[8px] font-bold text-slate-400 uppercase">Group 2</label>
-                      <input
-                        type="color"
-                        value={plotSettings.g2Color}
-                        onChange={e => setPlotSettings({ ...plotSettings, g2Color: e.target.value })}
-                        className="w-full h-8 rounded border-none cursor-pointer bg-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Axis Labels</span>
-                  <div className="space-y-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-bold text-slate-400 uppercase">X Axis</label>
-                      <input
-                        type="text"
-                        value={plotSettings.xLabel}
-                        onChange={e => setPlotSettings({ ...plotSettings, xLabel: e.target.value })}
-                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-bold text-slate-400 uppercase">Y Axis</label>
-                      <input
-                        type="text"
-                        value={plotSettings.yLabel}
-                        onChange={e => setPlotSettings({ ...plotSettings, yLabel: e.target.value })}
-                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Y-Axis Range</span>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-bold text-slate-400 uppercase">Min</label>
-                      <input
-                        type="number"
-                        placeholder="Auto"
-                        value={plotSettings.yMin === null ? '' : plotSettings.yMin}
-                        onChange={e => setPlotSettings({ ...plotSettings, yMin: e.target.value === '' ? null : parseFloat(e.target.value) })}
-                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-bold text-slate-400 uppercase">Max</label>
-                      <input
-                        type="number"
-                        placeholder="Auto"
-                        value={plotSettings.yMax === null ? '' : plotSettings.yMax}
-                        onChange={e => setPlotSettings({ ...plotSettings, yMax: e.target.value === '' ? null : parseFloat(e.target.value) })}
-                        className={`p-2 rounded text-[10px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setPlotSettings({ ...plotSettings, yMin: null, yMax: null })}
-                    className="w-full py-1 text-[8px] font-black text-slate-500 hover:text-amber-500 uppercase tracking-widest transition-colors"
-                  >
-                    Reset to Auto
-                  </button>
-                </div>
-              </div>
-              <div className="mt-8 pt-6 border-t border-slate-800 flex justify-end">
-                <button
-                  onClick={copyPlotToClipboard}
-                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
-                >
-                  <FileText size={14} />
-                  Copy Plot to Clipboard
-                </button>
-              </div>
-            </div>
-          )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
