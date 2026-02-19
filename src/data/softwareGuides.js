@@ -53,15 +53,15 @@ export const SOFTWARE_GUIDES = {
         spss: "Analyze > Compare Means > One-Way ANOVA.\nPost-Hoc: Click 'Post Hoc' > Check 'Tukey'.",
         jasp: "ANOVA > ANOVA.\nFixed Factors: grouping variable.",
         r: "summary(aov(outcome ~ group, data = df))",
-        excel: "1. Data Tab > Data Analysis > ANOVA: Single Factor.\n2. Note: Requires 'Data Analysis Toolpak' add-in.",
-        google_sheets: "1. Install 'Analysis ToolPak' add-on.\n2. Use ANOVA: Single Factor tool.\n(No native single-cell formula exists for ANOVA)."
+        excel: "Path A (Toolpak): Data > Data Analysis > ANOVA: Single Factor.\nPath B (Manual): \n1. Within SS: =SUM(DEVSQ(group1_range), DEVSQ(group2_range)...)\n2. Total SS: =DEVSQ(all_data_range)\n3. Between SS: =Total_SS - Within_SS\n4. P-Value: =F.DIST.RT(F_stat, df_between, df_within)",
+        google_sheets: "Path A (Add-on): Install 'Analysis ToolPak' > ANOVA: Single Factor.\nPath B (Manual): Calculate SS-Within using =DEVSQ(range) for each group, then =F.DIST.RT(F, df1, df2) for the p-value."
     },
     rm_anova: {
         spss: "Analyze > General Linear Model > Repeated Measures.",
         jasp: "ANOVA > Repeated Measures ANOVA.",
         r: "aov(y ~ time + Error(sub/time))",
-        excel: "1. Data Analysis > ANOVA: Two-Factor Without Replication.\n2. (This is the spreadsheet equivalent for RM-ANOVA).",
-        google_sheets: "1. Use 'Analysis ToolPak' add-on.\n2. Select ANOVA: Two-Factor Without Replication."
+        excel: "Path A (Toolpak): Data Analysis > ANOVA: Two-Factor Without Replication.\nPath B (Manual): Calculate 'Difference' columns (T1-T2, T1-T3) and use =T.TEST or manual ANOVA on residuals using =DEVSQ().",
+        google_sheets: "Path A (Add-on): Use 'Analysis ToolPak' > ANOVA: Two-Factor Without Replication.\nPath B (Manual): Use =DEVSQ() on the differences between timepoints."
     },
     correlation: {
         spss: "Analyze > Correlate > Bivariate.",
