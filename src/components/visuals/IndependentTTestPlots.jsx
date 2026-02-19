@@ -31,8 +31,8 @@ const IndependentTTestPlots = ({
     const g2Error = errorType === 'se' ? group2.s / Math.sqrt(group2.n) : (errorType === 'sd' ? group2.s : 0);
 
     // Scaling logic
-    const margin = { top: 40, right: 40, bottom: 60, left: 60 };
-    const width = 400;
+    const margin = { top: 50, right: 40, bottom: 60, left: 80 }; // Increased left margin for labels
+    const width = 500; // Increased width for better proportions
     const height = 300;
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
@@ -41,9 +41,9 @@ const IndependentTTestPlots = ({
     const dataMin = Math.min(...allDataPoints);
     const dataMax = Math.max(...allDataPoints);
 
-    // Auto-scale with some padding, ensuring 0 is included if data is positive
-    const effectiveYMin = yMin !== null ? yMin : (dataMin > 0 ? 0 : dataMin * 1.1);
-    const effectiveYMax = yMax !== null ? yMax : dataMax * 1.1;
+    // Auto-scale with 20% padding at the top to avoid hitting the roof
+    const effectiveYMin = yMin !== null ? yMin : (dataMin > 0 ? 0 : dataMin * 1.2);
+    const effectiveYMax = yMax !== null ? yMax : (dataMax === 0 ? 10 : dataMax * 1.3); // More headroom
 
     const yToPos = (y) => margin.top + plotHeight - ((y - effectiveYMin) / (effectiveYMax - effectiveYMin || 1)) * plotHeight;
     const xPositions = [margin.left + plotWidth * 0.33, margin.left + plotWidth * 0.66];
@@ -52,7 +52,7 @@ const IndependentTTestPlots = ({
     const jitter = (points, centerX) => {
         return points.map((val, i) => ({
             y: yToPos(val),
-            x: centerX + (Math.sin(i * 13) * (plotWidth * 0.05)) // deterministic jitter
+            x: centerX + (Math.sin(i * 13) * (plotWidth * 0.08)) // deterministic jitter
         }));
     };
 
@@ -60,8 +60,8 @@ const IndependentTTestPlots = ({
     const g2Points = jitter(g2Raw, xPositions[1]);
 
     return (
-        <div className={`w-full flex items-center justify-center p-4 ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-w-xl overflow-visible font-sans">
+        <div className={`w-full h-full flex items-center justify-center p-4 ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
+            <svg id="ttest-plot-svg" viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-h-full overflow-visible font-sans">
                 {/* --- APA/ggplot Theme Elements --- */}
                 {/* Grid Lines (Subtle) */}
                 {[0, 0.25, 0.5, 0.75, 1].map(p => {
@@ -82,12 +82,12 @@ const IndependentTTestPlots = ({
                 <line x1={margin.left} y1={margin.top + plotHeight} x2={margin.left + plotWidth} y2={margin.top + plotHeight} stroke={darkMode ? "#cbd5e1" : "#000"} strokeWidth="1.5" />
 
                 {/* Labels */}
-                <text x={width / 2} y={height - 10} textAnchor="middle" fontSize="12" fontWeight="bold" fill={darkMode ? "#94a3b8" : "#000"}>{xLabel}</text>
+                <text x={margin.left + plotWidth / 2} y={height - 10} textAnchor="middle" fontSize="12" fontWeight="bold" fill={darkMode ? "#94a3b8" : "#000"}>{xLabel}</text>
                 <text
-                    x={20} y={margin.top + plotHeight / 2}
+                    x={25} y={margin.top + plotHeight / 2}
                     textAnchor="middle"
                     fontSize="12" fontWeight="bold"
-                    transform={`rotate(-90, 20, ${margin.top + plotHeight / 2})`}
+                    transform={`rotate(-90, 25, ${margin.top + plotHeight / 2})`}
                     fill={darkMode ? "#94a3b8" : "#000"}
                 >
                     {yLabel}

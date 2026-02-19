@@ -171,10 +171,47 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
     setGroup1(prev => ({ ...prev, xBar: parseFloat((newDelta + group2.xBar).toFixed(2)) }));
   };
 
+  const copyPlotToClipboard = async () => {
+    const svg = document.getElementById('ttest-plot-svg');
+    if (!svg) return;
+
+    try {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = async () => {
+        canvas.width = svg.viewBox.baseVal.width * 2; // High res
+        canvas.height = svg.viewBox.baseVal.height * 2;
+        ctx.fillStyle = darkMode ? '#0f172a' : '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(async (blob) => {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            alert('Plot copied to clipboard as image!');
+          } catch (err) {
+            console.error('Copy failed:', err);
+          }
+          URL.revokeObjectURL(url);
+        });
+      };
+      img.src = url;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="w-full flex">
       <div className="flex-1 flex flex-col items-center">
-        <div className={`w-full h-72 relative flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100 shadow-inner'}`}>
+        <div className={`w-full ${displayVisual === 'plots' ? 'h-96' : 'h-72'} relative flex items-end justify-center select-none border overflow-hidden px-4 transition-all duration-500 ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100 shadow-inner'}`}>
           <div className="absolute top-4 left-4 flex gap-2 z-10">
             <button onClick={() => setDisplayVisual('sampling')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayVisual === 'sampling' ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>Sampling dist.</button>
             <button onClick={() => setDisplayVisual('distribution')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayVisual === 'distribution' ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>Group curves</button>
@@ -563,6 +600,15 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                     Reset to Auto
                   </button>
                 </div>
+              </div>
+              <div className="mt-8 pt-6 border-t border-slate-800 flex justify-end">
+                <button
+                  onClick={copyPlotToClipboard}
+                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                >
+                  <FileText size={14} />
+                  Copy Plot to Clipboard
+                </button>
               </div>
             </div>
           )}
