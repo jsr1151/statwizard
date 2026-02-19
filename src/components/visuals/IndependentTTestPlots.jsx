@@ -9,9 +9,11 @@ const IndependentTTestPlots = ({
     const {
         type = 'bar',
         errorType = 'se',
-        errorDirection = 'both', // 'both', 'plus', 'minus'
+        errorDirection = 'both',
         showOutline = true,
-        pattern = 'none', // 'none', 'diagonal', 'dots'
+        showGrid = true,
+        g1Pattern = 'none',
+        g2Pattern = 'none',
         g1Color = '#6366f1',
         g2Color = '#10b981',
         yMin = null,
@@ -66,19 +68,26 @@ const IndependentTTestPlots = ({
         <div className={`w-full h-full flex items-center justify-center p-4 ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
             <svg id="ttest-plot-svg" viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-h-full overflow-visible font-sans">
                 <defs>
-                    {/* Diagonal Pattern */}
-                    <pattern id="diagonalPattern" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
-                        <line x1="0" y1="0" x2="0" y2="10" stroke="#000" strokeWidth="2" opacity="0.3" />
+                    <pattern id="diagonalPattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                        <line x1="0" y1="0" x2="0" y2="8" stroke="#000" strokeWidth="2" opacity="0.3" />
                     </pattern>
-                    {/* Dotted Pattern */}
-                    <pattern id="dottedPattern" patternUnits="userSpaceOnUse" width="10" height="10">
-                        <circle cx="5" cy="5" r="2" fill="#000" opacity="0.3" />
+                    <pattern id="dottedPattern" patternUnits="userSpaceOnUse" width="8" height="8">
+                        <circle cx="4" cy="4" r="1.5" fill="#000" opacity="0.3" />
+                    </pattern>
+                    <pattern id="verticalPattern" patternUnits="userSpaceOnUse" width="8" height="8">
+                        <line x1="4" y1="0" x2="4" y2="8" stroke="#000" strokeWidth="2" opacity="0.3" />
+                    </pattern>
+                    <pattern id="horizontalPattern" patternUnits="userSpaceOnUse" width="8" height="8">
+                        <line x1="0" y1="4" x2="8" y2="4" stroke="#000" strokeWidth="2" opacity="0.3" />
+                    </pattern>
+                    <pattern id="crosshatchPattern" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+                        <line x1="0" y1="0" x2="0" y2="10" stroke="#000" strokeWidth="1.5" opacity="0.3" />
+                        <line x1="0" y1="0" x2="10" y2="0" stroke="#000" strokeWidth="1.5" opacity="0.3" />
                     </pattern>
                 </defs>
 
-                {/* --- APA/ggplot Theme Elements --- */}
-                {/* Grid Lines (Subtle) */}
-                {[0, 0.25, 0.5, 0.75, 1].map(p => {
+                {/* Grid Lines (Conditional) */}
+                {showGrid && [0, 0.25, 0.5, 0.75, 1].map(p => {
                     const val = effectiveYMin + p * (effectiveYMax - effectiveYMin);
                     const y = yToPos(val);
                     return (
@@ -123,9 +132,7 @@ const IndependentTTestPlots = ({
                 <text x={xPositions[0]} y={margin.top + plotHeight + 20} textAnchor="middle" fontSize="11" fill={darkMode ? "#cbd4e1" : "#000"}>Group 1</text>
                 <text x={xPositions[1]} y={margin.top + plotHeight + 20} textAnchor="middle" fontSize="11" fill={darkMode ? "#cbd4e1" : "#000"}>Group 2</text>
 
-                {/* --- Data Plotting --- */}
-
-                {/* Raw Points (Geom Jitter) */}
+                {/* Raw Points */}
                 {g1Points.map((p, i) => (
                     <circle key={`g1-${i}`} cx={p.x} cy={p.y} r="3" fill={g1Color} opacity="0.4" />
                 ))}
@@ -144,11 +151,11 @@ const IndependentTTestPlots = ({
                                 fill={g1Color} opacity="0.7"
                                 stroke={showOutline ? (darkMode ? "#cbd5e1" : "#000") : "none"} strokeWidth="1"
                             />
-                            {pattern !== 'none' && (
+                            {g1Pattern !== 'none' && (
                                 <rect
                                     x={xPositions[0] - 30} y={yToPos(group1.xBar)}
                                     width="60" height={Math.abs(yToPos(group1.xBar) - yToPos(effectiveYMin))}
-                                    fill={pattern === 'diagonal' ? 'url(#diagonalPattern)' : 'url(#dottedPattern)'}
+                                    fill={`url(#${g1Pattern}Pattern)`}
                                     pointerEvents="none"
                                 />
                             )}
@@ -161,11 +168,11 @@ const IndependentTTestPlots = ({
                                 fill={g2Color} opacity="0.7"
                                 stroke={showOutline ? (darkMode ? "#cbd5e1" : "#000") : "none"} strokeWidth="1"
                             />
-                            {pattern !== 'none' && (
+                            {g2Pattern !== 'none' && (
                                 <rect
                                     x={xPositions[1] - 30} y={yToPos(group2.xBar)}
                                     width="60" height={Math.abs(yToPos(group2.xBar) - yToPos(effectiveYMin))}
-                                    fill={pattern === 'diagonal' ? 'url(#diagonalPattern)' : 'url(#dottedPattern)'}
+                                    fill={`url(#${g2Pattern}Pattern)`}
                                     pointerEvents="none"
                                 />
                             )}

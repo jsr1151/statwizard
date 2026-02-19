@@ -29,7 +29,9 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
     errorType: 'se',
     errorDirection: 'both',
     showOutline: true,
-    pattern: 'none',
+    showGrid: true,
+    g1Pattern: 'none',
+    g2Pattern: 'none',
     g1Color: '#6366f1',
     g2Color: '#10b981',
     yMin: null,
@@ -442,47 +444,69 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                           <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all ${plotSettings.showOutline ? 'left-5' : 'left-1'}`} />
                         </button>
                       </div>
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[8px] font-bold text-slate-500 uppercase">Grid Lines</span>
+                        <button onClick={() => setPlotSettings({ ...plotSettings, showGrid: !plotSettings.showGrid })} className={`w-8 h-4 rounded-full transition-all relative ${plotSettings.showGrid ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                          <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all ${plotSettings.showGrid ? 'left-5' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 col-span-1 md:col-span-2">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Fill Patterns</span>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <span className="text-[7px] font-bold text-indigo-400 uppercase">Group 1</span>
+                        <select
+                          value={plotSettings.g1Pattern}
+                          onChange={e => setPlotSettings({ ...plotSettings, g1Pattern: e.target.value })}
+                          className={`w-full p-1.5 rounded text-[8px] font-black uppercase border transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                        >
+                          {['none', 'diagonal', 'dots', 'horizontal', 'vertical', 'crosshatch'].map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-[7px] font-bold text-emerald-400 uppercase">Group 2</span>
+                        <select
+                          value={plotSettings.g2Pattern}
+                          onChange={e => setPlotSettings({ ...plotSettings, g2Pattern: e.target.value })}
+                          className={`w-full p-1.5 rounded text-[8px] font-black uppercase border transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
+                        >
+                          {['none', 'diagonal', 'dots', 'horizontal', 'vertical', 'crosshatch'].map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Error Bars</span>
-                    <div className="space-y-2">
-                      <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
-                        {['none', 'se', 'sd'].map(type => (
-                          <button key={type} onClick={() => setPlotSettings({ ...plotSettings, errorType: type })} className={`flex-1 py-1 text-[8px] font-black rounded uppercase transition-all ${plotSettings.errorType === type ? 'bg-slate-500 text-white' : 'text-slate-500'}`}>{type}</button>
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Group Details</span>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        {['g1Color', 'g2Color'].map((key, i) => (
+                          <div key={key} className="flex-1 flex flex-col gap-1">
+                            <label className="text-[7px] font-bold text-slate-500 uppercase">G{i + 1}</label>
+                            <input type="color" value={plotSettings[key]} onChange={e => setPlotSettings({ ...plotSettings, [key]: e.target.value })} className="w-full h-8 rounded cursor-pointer bg-transparent border-none" />
+                          </div>
                         ))}
                       </div>
-                      {plotSettings.errorType !== 'none' && (
+                      <div className="space-y-1">
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Error Bars</span>
                         <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
-                          {['both', 'plus', 'minus'].map(dir => (
-                            <button key={dir} onClick={() => setPlotSettings({ ...plotSettings, errorDirection: dir })} className={`flex-1 py-1 text-[7px] font-black rounded uppercase transition-all ${plotSettings.errorDirection === dir ? 'bg-indigo-500 text-white' : 'text-slate-500'}`}>
-                              {dir === 'both' ? '±1' : dir === 'plus' ? '+1' : '-1'}
-                            </button>
+                          {['none', 'se', 'sd'].map(type => (
+                            <button key={type} onClick={() => setPlotSettings({ ...plotSettings, errorType: type })} className={`flex-1 py-1 text-[8px] font-black rounded uppercase transition-all ${plotSettings.errorType === type ? 'bg-slate-500 text-white' : 'text-slate-500'}`}>{type}</button>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Fill Pattern</span>
-                    <div className="grid grid-cols-1 gap-1">
-                      {['none', 'diagonal', 'dots'].map(p => (
-                        <button key={p} onClick={() => setPlotSettings({ ...plotSettings, pattern: p })} className={`py-1.5 text-[8px] font-black rounded uppercase border transition-all ${plotSettings.pattern === p ? 'bg-slate-700 border-slate-600 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}>{p}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Group Colors</span>
-                    <div className="flex gap-2">
-                      {['g1Color', 'g2Color'].map((key, i) => (
-                        <div key={key} className="flex-1 flex flex-col gap-1">
-                          <label className="text-[7px] font-bold text-slate-500 uppercase">G{i + 1}</label>
-                          <input type="color" value={plotSettings[key]} onChange={e => setPlotSettings({ ...plotSettings, [key]: e.target.value })} className="w-full h-8 rounded cursor-pointer bg-transparent border-none" />
-                        </div>
-                      ))}
+                        {plotSettings.errorType !== 'none' && (
+                          <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-950' : 'bg-slate-100'} animate-in fade-in duration-300`}>
+                            {['both', 'plus', 'minus'].map(dir => (
+                              <button key={dir} onClick={() => setPlotSettings({ ...plotSettings, errorDirection: dir })} className={`flex-1 py-1 text-[7px] font-black rounded uppercase transition-all ${plotSettings.errorDirection === dir ? 'bg-indigo-500 text-white' : 'text-slate-500'}`}>
+                                {dir === 'both' ? '±1' : dir === 'plus' ? '+1' : '-1'}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
