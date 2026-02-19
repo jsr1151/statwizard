@@ -50,6 +50,18 @@ import IndependentTTestVisual from './components/visuals/IndependentTTestVisual'
 import PairedTTestVisual from './components/visuals/PairedTTestVisual';
 import AnovaVisual from './components/visuals/AnovaVisual';
 import FactorialAnovaVisual from './components/visuals/FactorialAnovaVisual';
+import VariabilityVisual from './components/visuals/VariabilityVisual';
+import FrequencyVisual from './components/visuals/FrequencyVisual';
+import ShapeVisual from './components/visuals/ShapeVisual';
+import QuartileVisual from './components/visuals/QuartileVisual';
+import ProbabilityVisual from './components/visuals/ProbabilityVisual';
+
+// --- Navigation ---
+import MainMenu from './components/navigation/MainMenu';
+import ModulesView from './components/navigation/ModulesView';
+import SearchView from './components/navigation/SearchView';
+import LessonsView from './components/navigation/LessonsView';
+import UpdateToast from './components/common/UpdateToast';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
