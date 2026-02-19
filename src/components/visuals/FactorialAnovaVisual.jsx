@@ -135,17 +135,20 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
-                {/* Preset Selector */}
-                <div className="absolute top-6 right-6 z-40">
-                    <select
-                        onChange={(e) => loadPreset(e.target.value)}
-                        className={`bg-slate-900 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-2xl border border-slate-800 outline-none hover:text-indigo-400 transition-colors`}
-                    >
-                        <option value="">Choose a Story Preset...</option>
-                        {FACTORIAL_PRESETS.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
+                {/* Study Themes (Relocated and Relabeled) */}
+                <div className="absolute top-[80px] left-6 z-40">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase text-indigo-500/60 tracking-widest px-1">Study Themes</span>
+                        <select
+                            onChange={(e) => loadPreset(e.target.value)}
+                            className={`bg-slate-900/60 backdrop-blur-xl text-slate-300 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-2xl border border-slate-700/50 outline-none hover:border-indigo-500/50 hover:text-white transition-all cursor-pointer shadow-lg`}
+                        >
+                            <option value="">Select a Theme...</option>
+                            {FACTORIAL_PRESETS.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <div className="w-full h-full pt-20">
@@ -167,17 +170,21 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     )}
                     {activeTab === 'plot' && (
                         <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                            <InteractionPlot
-                                factorA={factorA}
-                                factorB={factorB}
-                                cellStats={results.cellStats}
-                                cellData={cellData}
-                                swapAxes={swapAxes}
-                                outcomeLabel={outcomeLabel}
-                                showRawPoints={showRawPoints}
-                                showMarginalMeans={showMarginalMeans}
-                                darkMode={darkMode}
-                            />
+                            {results ? (
+                                <InteractionPlot
+                                    factorA={factorA}
+                                    factorB={factorB}
+                                    cellStats={results.cellStats}
+                                    cellData={cellData}
+                                    swapAxes={swapAxes}
+                                    outcomeLabel={outcomeLabel}
+                                    showRawPoints={showRawPoints}
+                                    showMarginalMeans={showMarginalMeans}
+                                    darkMode={darkMode}
+                                />
+                            ) : (
+                                <div className="text-slate-500 italic text-[14px]">Loading interaction plot...</div>
+                            )}
                             <div className="flex gap-4 mt-4">
                                 <button
                                     onClick={() => setSwapAxes(!swapAxes)}
@@ -210,6 +217,11 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                             darkMode={darkMode}
                             setFVal={() => { }}
                         />
+                    )}
+                    {activeTab === 'fdist' && !currentModel && (
+                        <div className="w-full h-full flex items-center justify-center p-8 text-slate-500 italic">
+                            Fill in all cells to view distribution.
+                        </div>
                     )}
                     {activeTab === 'table' && results && (
                         <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
