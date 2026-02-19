@@ -178,7 +178,7 @@ export const STEPS = {
         details: ["Range: Max - Min.", "SD: Spread around mean.", "IQR: Spread of middle 50%."],
         formulaId: 'sd',
         visualType: 'variability',
-        software: { spss: "", jasp: "", r: "" },
+        software: SOFTWARE_GUIDES.sd,
         assumptions: []
     },
 
@@ -247,7 +247,7 @@ export const STEPS = {
         details: ["Tests difference scores ($d_i$).", "High correlation increases power."],
         formulaId: 't_paired',
         visualType: 'paired_ttest',
-        software: { spss: "Analyze > Compare Means > Paired-Samples T Test.", jasp: "T-Tests > Paired Samples T-Test.", r: "t.test(t1, t2, paired=TRUE)" },
+        software: SOFTWARE_GUIDES.paired_ttest,
         assumptions: [
             {
                 label: "Continuous Dependent Variable",
@@ -286,7 +286,7 @@ export const STEPS = {
         content: "Non-parametric alternative to independent t-test.",
         details: ["Uses Ranks."],
         formulaId: 'mann_whitney',
-        software: { spss: "Analyze > Nonparametric > Independent Samples.", jasp: "T-Tests > Independent > Mann-Whitney.", r: "wilcox.test(y ~ x)" },
+        software: SOFTWARE_GUIDES.non_parametric,
         assumptions: [{ label: "Independence", failAdvice: "Wilcoxon if paired" }]
     },
     res_wilcoxon: {
@@ -296,7 +296,7 @@ export const STEPS = {
         content: "Non-parametric paired test.",
         details: ["Ranks differences."],
         formulaId: 'none',
-        software: { spss: "Analyze > Nonparametric > Related Samples", jasp: "T-Tests > Paired > Wilcoxon", r: "wilcox.test(paired=T)" },
+        software: SOFTWARE_GUIDES.non_parametric,
         assumptions: [{ label: "Symmetric Dist", failAdvice: "Sign Test", visual: "normality" }]
     },
     res_one_way_anova: {
@@ -368,7 +368,7 @@ export const STEPS = {
         details: ["Accounts for subject error."],
         formulaId: 'anova',
         visualType: 'anova',
-        software: { spss: "Analyze > GLM > Repeated Measures", jasp: "ANOVA > Repeated Measures", r: "aov(y ~ time + Error(sub/time))" },
+        software: SOFTWARE_GUIDES.rm_anova,
         assumptions: [
             {
                 label: "Sphericity",
@@ -399,7 +399,7 @@ export const STEPS = {
         content: "Measures linear relationship.",
         details: ["-1 to +1."],
         formulaId: 'correlation',
-        software: { spss: "Analyze > Correlate > Bivariate", jasp: "Regression > Correlation", r: "cor.test(x, y)" },
+        software: SOFTWARE_GUIDES.correlation,
         assumptions: [{ label: "Linearity", failAdvice: "Check plot" }, { label: "Normality", failAdvice: "Spearman", visual: "normality" }]
     },
     regression_result: {
@@ -409,7 +409,7 @@ export const STEPS = {
         content: "Predicts Y based on X.",
         details: ["Line of best fit."],
         formulaId: 'regression',
-        software: { spss: "Analyze > Regression > Linear", jasp: "Regression > Linear", r: "lm(y ~ x)" },
+        software: SOFTWARE_GUIDES.regression,
         assumptions: [{ label: "Homoscedasticity", failAdvice: "Transform" }, { label: "Normality of Res", failAdvice: "Bootstrapping", visual: "normality" }]
     },
     res_ztest: {

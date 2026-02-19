@@ -3,58 +3,99 @@ export const SOFTWARE_GUIDES = {
     sd: {
         spss: "Analyze > Descriptive Statistics > Descriptives.\nMove variables to 'Variable(s)'.\nClick Options > Check 'Std. deviation' and 'Variance'.",
         jasp: "Descriptives > Descriptive Statistics.\nMove variables to 'Variables' box.\nUnder 'Statistics', check 'Std. deviation' and 'Variance'.",
-        r: "# Calculate SD and Variance\nsd(data$variable)\nvar(data$variable)\n\n# Visual Check\nhist(data$variable)\nabline(v = mean(data$variable), col='red')",
-        excel: "1. Use formula: =STDEV.S(A1:A100) for Sample SD.\n2. Use formula: =VAR.S(A1:A100) for Sample Variance.\n3. (Optional) Use Data Analysis Toolpak > Descriptive Statistics."
+        r: "# Calculate SD and Variance\nsd(data$variable)\nvar(data$variable)",
+        excel: "Standard Deviation: =STDEV.S(range)\nVariance: =VAR.S(range)\n(Use .P for Populations)",
+        google_sheets: "Standard Deviation: =STDEV(range)\nVariance: =VAR(range)"
     },
     range: {
         spss: "Analyze > Descriptive Statistics > Frequencies.\nClick Statistics > Check Quartiles, Percentiles (enter values), Range, IQR.",
         jasp: "Descriptives > Descriptive Statistics.\nCheck 'Quartiles'.\nUnder 'Plots', check 'Boxplots'.",
-        r: "# Range and Quantiles\nrange(data$variable)\nIQR(data$variable)\nquantile(data$variable, probs = c(0.25, 0.5, 0.75))\n\n# Boxplot\nboxplot(data$variable)",
-        excel: "1. Range: =MAX(range) - MIN(range).\n2. Quartiles: =QUARTILE.EXC(range, 1) or 3.\n3. IQR: Calculate Q3 - Q1 manually."
-    },
-    shape: {
-        spss: "Analyze > Descriptive Statistics > Frequencies.\nClick Statistics > Check Skewness and Kurtosis.\nClick Charts > Histograms > Show normal curve.",
-        jasp: "Descriptives > Descriptive Statistics.\nCheck Skewness and Kurtosis.",
-        r: "# Shape Statistics\nlibrary(moments)\nskewness(data$variable)\nkurtosis(data$variable)\n\n# Visual\nplot(density(data$variable))",
-        excel: "1. Skewness: =SKEW(range).\n2. Kurtosis: =KURT(range).\n(Note: Excel reports 'Excess Kurtosis')."
-    },
-    frequency: {
-        spss: "Analyze > Descriptive Statistics > Frequencies.\nMove variable(s) to the right box.\nEnsure 'Display frequency tables' is checked.",
-        jasp: "Descriptives > Descriptive Statistics.\nCheck 'Frequency tables' (for categorical/discrete data).",
-        r: "# Absolute counts\ntable(data$variable)\n\n# Proportions (Relative)\nprop.table(table(data$variable))\n\n# Cumulative\ncumsum(table(data$variable))",
-        excel: "1. Select data range.\n2. Insert > PivotTable.\n3. Drag variable to 'Rows' AND 'Values'.\n4. For Relative Freq: Right-click value > Show Values As > % of Column Total."
+        r: "# Quantiles\nquantile(data$variable, probs = c(0.25, 0.5, 0.75))\nIQR(data$variable)",
+        excel: "1. Min: =MIN(range)\n2. Max: =MAX(range)\n3. Q1: =QUARTILE.INC(range, 1)\n4. Q3: =QUARTILE.INC(range, 3)\n5. IQR: =Q3 - Q1",
+        google_sheets: "1. Min: =MIN(range)\n2. Max: =MAX(range)\n3. Q1: =QUARTILE(range, 1)\n4. Q3: =QUARTILE(range, 3)\n5. IQR: =Q3 - Q1"
     },
     central_tendency: {
         spss: "Analyze > Descriptive Statistics > Frequencies.\nClick Statistics > Check Mean, Median, and Mode.",
         jasp: "Descriptives > Descriptive Statistics.\nUnder 'Statistics', check 'Mean', 'Median', and 'Mode'.",
-        r: "mean(data$variable)\nmedian(data$variable)\n# For mode, use table and sort\nsort(table(data$variable), decreasing=T)[1]",
+        r: "mean(data$variable)\nmedian(data$variable)",
         excel: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nMode: =MODE.SNGL(range)",
-        google_sheets: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nMode: =MODE(range)\n(Note: Google Sheets MODE returns the most frequent value similar to MODE.SNGL)."
+        google_sheets: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nMode: =MODE(range)"
     },
     z_test: {
-        spss: "Analyze > Compare Means > One-Sample T Test (Note: SPSS lacks a built-in Z-test).\nManual Calculation: z = (Mean - μ) / (σ / √n).",
-        jasp: "T-Tests > One-Sample T-Test.\nUnder 'Options', you can compare against a known mean.\n(Note: Usually reported as a t-test if SD is estimated).",
-        r: "# Z-Test (using BSDA package)\nlibrary(BSDA)\nz.test(data$variable, mu=50, sigma.x=10)",
-        excel: "1. Calculate Mean and SE manually.\n2. Z-Score: =(AVERAGE(range) - Mu) / (Sigma / SQRT(COUNT(range))).\n3. P-Value: =NORM.S.DIST(z, TRUE).",
-        google_sheets: "Same as Excel.\nUse =NORM.S.DIST(z, TRUE) for the p-value."
+        spss: "Manual Calculation: z = (Mean - μ) / (σ / √n).",
+        jasp: "T-Tests > One-Sample T-Test (Set known mean as 'Test Value').",
+        r: "pnorm(z_score, lower.tail = FALSE) * 2",
+        excel: "1. Calculate Z-score manually.\n2. P-Value: =2 * (1 - NORM.S.DIST(ABS(z), TRUE))",
+        google_sheets: "1. Calculate Z-score manually.\n2. P-Value: =2 * (1 - NORM.S.DIST(ABS(z), TRUE))"
     },
     oneway_ttest: {
-        spss: "Analyze > Compare Means > One-Sample T Test.\nMove variable to 'Test Variable(s)'.\nEnter population mean in 'Test Value'.",
-        jasp: "T-Tests > One-Sample T-Test.\nMove variable to variables box.\nEnter population mean in 'Test Value'.",
-        r: "# One-Sample t-test\nt.test(data$variable, mu=50)",
-        excel: "1. Data Analysis Toolpak > t-Test or use formula.\n2. T.TEST(range1, range2, tails, type).\n(Note: For 1-sample, use a dummy column of zeros or compare manually).",
-        google_sheets: "=T.TEST(range1, {val}, 2, 1)\n(Note: Google Sheets T.TEST is very similar to Excel's old version)."
+        spss: "Analyze > Compare Means > One-Sample T Test.\nEnter population mean in 'Test Value'.",
+        jasp: "T-Tests > One-Sample T-Test.\nEnter population mean in 'Test Value'.",
+        r: "t.test(data$variable, mu = 50)",
+        excel: "1. Calculate T-stat and df manually.\n2. P-Value: =T.DIST.2T(ABS(t), df)",
+        google_sheets: "=T.TEST(range, {hypothesized_mean_array}, 2, 1)\n(Note: Creating a dummy array of the target value allows T.TEST to work)."
     },
     indep_ttest: {
-        spss: "Analyze > Compare Means > Independent-Samples T Test.\nMove outcome to 'Test Variable(s)', grouping to 'Grouping Variable'.\nClick 'Define Groups' and enter values (e.g., 1 and 2).",
-        jasp: "T-Tests > Independent Samples T-Test.\nMove outcome to 'Variables', grouping to 'Grouping Variable'.\nUnder 'Assumption Checks', check 'Homogeneity tests'.",
-        r: "# Student's t-test (Equal Variances)\nt.test(y ~ x, data = df, var.equal = TRUE)\n\n# Welch's t-test (Unequal Variances)\nt.test(y ~ x, data = df, var.equal = FALSE)",
-        excel: "1. Data > Data Analysis > t-Test: Two-Sample Assuming Equal/Unequal Variances.\n2. Or formula: =T.TEST(range1, range2, tails, type).\nType: 2 = Equal Var, 3 = Unequal Var."
+        spss: "Analyze > Compare Means > Independent-Samples T Test.\nDefine Groups (e.g., 1 and 2).",
+        jasp: "T-Tests > Independent Samples T-Test.",
+        r: "t.test(y ~ x, data = df, var.equal = TRUE)",
+        excel: "=T.TEST(range1, range2, 2, 2)\n(Type 2 = Equal Variance, 3 = Unequal)",
+        google_sheets: "=T.TEST(range1, range2, 2, 2)\n(Type 2 = Equal Variance, 3 = Unequal)"
+    },
+    paired_ttest: {
+        spss: "Analyze > Compare Means > Paired-Samples T Test.",
+        jasp: "T-Tests > Paired Samples T-Test.",
+        r: "t.test(t1, t2, paired = TRUE)",
+        excel: "=T.TEST(range1, range2, 2, 1)\n(Type 1 = Paired)",
+        google_sheets: "=T.TEST(range1, range2, 2, 1)\n(Type 1 = Paired)"
     },
     anova: {
-        spss: "Analyze > Compare Means > One-Way ANOVA.\nMove outcome to 'Dependent List', grouping to 'Factor'.\nPost-Hoc: Click 'Post Hoc' > Check 'Tukey'.\nOptions: Check 'Descriptive' and 'Homogeneity of variance test'.",
-        jasp: "ANOVA > ANOVA.\nMove outcome to 'Dependent Variable', grouping to 'Fixed Factors'.\nPost-Hoc: Drag Factor to 'Post-Hoc Tests' > Check 'Tukey'.",
-        r: "# One-Way ANOVA\nres <- aov(outcome ~ group, data = df)\nsummary(res)\n\n# Post-Hoc\nTukeyHSD(res)",
-        excel: "1. Data > Data Analysis > ANOVA: Single Factor.\n2. Select data (columns should be groups).\n3. Check 'Labels in first row' if applicable."
+        spss: "Analyze > Compare Means > One-Way ANOVA.\nPost-Hoc: Click 'Post Hoc' > Check 'Tukey'.",
+        jasp: "ANOVA > ANOVA.\nFixed Factors: grouping variable.",
+        r: "summary(aov(outcome ~ group, data = df))",
+        excel: "1. Data Tab > Data Analysis > ANOVA: Single Factor.\n2. Note: Requires 'Data Analysis Toolpak' add-in.",
+        google_sheets: "1. Install 'Analysis ToolPak' add-on.\n2. Use ANOVA: Single Factor tool.\n(No native single-cell formula exists for ANOVA)."
+    },
+    rm_anova: {
+        spss: "Analyze > General Linear Model > Repeated Measures.",
+        jasp: "ANOVA > Repeated Measures ANOVA.",
+        r: "aov(y ~ time + Error(sub/time))",
+        excel: "1. Data Analysis > ANOVA: Two-Factor Without Replication.\n2. (This is the spreadsheet equivalent for RM-ANOVA).",
+        google_sheets: "1. Use 'Analysis ToolPak' add-on.\n2. Select ANOVA: Two-Factor Without Replication."
+    },
+    correlation: {
+        spss: "Analyze > Correlate > Bivariate.",
+        jasp: "Regression > Correlation Box.",
+        r: "cor.test(var1, var2)",
+        excel: "=CORREL(range1, range2)",
+        google_sheets: "=CORREL(range1, range2)"
+    },
+    regression: {
+        spss: "Analyze > Regression > Linear.",
+        jasp: "Regression > Linear Regression.",
+        r: "lm(y ~ x, data = df)",
+        excel: "1. Slope: =SLOPE(y_range, x_range)\n2. Intercept: =INTERCEPT(y_range, x_range)\n3. Full: =LINEST(y_range, x_range, TRUE, TRUE)",
+        google_sheets: "1. Slope: =SLOPE(y_range, x_range)\n2. Intercept: =INTERCEPT(y_range, x_range)\n3. Full: =LINEST(y_range, x_range, TRUE, TRUE)"
+    },
+    frequency: {
+        spss: "Analyze > Descriptive Statistics > Frequencies.\nMove variable(s) to the right box.",
+        jasp: "Descriptives > Descriptive Statistics.\nCheck 'Frequency tables'.",
+        r: "table(data$variable)",
+        excel: "1. Insert > PivotTable.\n2. Drag variable to Rows AND Values.",
+        google_sheets: "1. Insert > PivotTable.\n2. Drag variable to Rows AND Values."
+    },
+    shape: {
+        spss: "Analyze > Descriptive Statistics > Frequencies.\nStatistics > Check Skewness and Kurtosis.",
+        jasp: "Descriptives > Descriptive Statistics.\nCheck Skewness and Kurtosis.",
+        r: "library(moments)\nskewness(data$variable)",
+        excel: "Skewness: =SKEW(range)\nKurtosis: =KURT(range)",
+        google_sheets: "Skewness: =SKEW(range)\nKurtosis: =KURT(range)"
+    },
+    non_parametric: {
+        spss: "Analyze > Nonparametric Tests > Legacy Dialogs.",
+        jasp: "T-Tests > Check 'Mann-Whitney' or 'Wilcoxon'.",
+        r: "wilcox.test(y1, y2)",
+        excel: "1. Use =RANK.AVG(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns.",
+        google_sheets: "1. Use =RANK(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns."
     }
 };
