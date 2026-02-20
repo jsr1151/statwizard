@@ -1,5 +1,6 @@
 import React from 'react';
-import { Maximize2, Minimize2, Trash2, Plus } from 'lucide-react';
+import { Maximize2, Minimize2, Trash2, Plus, Info } from 'lucide-react';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
 
 const FactorialDatasetEditor = ({
     factorA,
@@ -20,9 +21,14 @@ const FactorialDatasetEditor = ({
                 {/* Factor A Levels */}
                 <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-500">Factor A: {factorA.label}</h4>
-                        <button onClick={() => addLevel('A')} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                            <Plus size={14} />
+                        <div className="flex flex-col">
+                            <ProgressiveTooltip term="Factor A" title="Independent Variable 1" desc="The first independent factor in your design." darkMode={darkMode}>
+                                <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-500 cursor-help">Factor A: {factorA.label}</h4>
+                            </ProgressiveTooltip>
+                            <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
+                        </div>
+                        <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-lg border border-indigo-500/20 text-[9px] font-black hover:bg-indigo-600/20 transition-all">
+                            <Plus size={12} /> ADD LEVEL
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -46,10 +52,17 @@ const FactorialDatasetEditor = ({
                 {/* Factor B Levels */}
                 <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-[12px] font-black uppercase tracking-widest text-emerald-500">Factor B: {factorB.label}</h4>
-                        <button onClick={() => addLevel('B')} className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
-                            <Plus size={14} />
-                        </button>
+                        <div className="flex flex-col">
+                            <ProgressiveTooltip term="Factor B" title="Independent Variable 2" desc="The second independent factor in your design." darkMode={darkMode}>
+                                <h4 className="text-[12px] font-black uppercase tracking-widest text-emerald-500 cursor-help">Factor B: {factorB.label}</h4>
+                            </ProgressiveTooltip>
+                            <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
+                        </div>
+                        <ProgressiveTooltip term="+ Level" title="Add Level" desc="Add a new category or condition to this factor." darkMode={darkMode}>
+                            <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-600/20 transition-all">
+                                <Plus size={12} /> ADD LEVEL
+                            </button>
+                        </ProgressiveTooltip>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {factorB.levels.map(level => (
@@ -71,15 +84,48 @@ const FactorialDatasetEditor = ({
             </div>
 
             {/* Utility Row */}
-            <div className={`flex flex-wrap gap-4 p-4 rounded-2xl border-2 ${darkMode ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600/20 transition-all border border-indigo-500/20">
-                    <Plus size={12} /> Add A
-                </button>
-                <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600/20 transition-all border border-emerald-500/20">
-                    <Plus size={12} /> Add B
-                </button>
-                <div className="flex-1" />
-                <button onClick={() => { if (confirm("Clear all data?")) Object.keys(cellData).forEach(k => parseCellRaw(k, "")); }} className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors">
+            <div className={`flex flex-wrap items-center gap-4 p-4 rounded-2xl border-2 ${darkMode ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600/20 transition-all border border-indigo-500/20">
+                        <Plus size={12} /> Add Factor A
+                    </button>
+                    <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600/20 transition-all border border-emerald-500/20">
+                        <Plus size={12} /> Add Factor B
+                    </button>
+                </div>
+
+                <div className="flex-1 px-4">
+                    {(() => {
+                        const ns = Object.values(cellData).map(c => c.inputMode === 'summary' ? (parseInt(c.summary?.n) || 0) : (c.values?.length || 0));
+                        const uniqueNs = [...new Set(ns)];
+                        const hasEmptyCell = ns.some(n => n === 0);
+                        const isUnbalanced = uniqueNs.length > 1 && ns.some(n => n > 0);
+
+                        if (hasEmptyCell) {
+                            return (
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-rose-500 animate-pulse">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50" />
+                                    <span>Critical: One or more cells are empty (Incomplete Factorial)</span>
+                                </div>
+                            );
+                        }
+
+                        if (isUnbalanced) {
+                            return (
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-amber-500">
+                                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                    <span>Note: Unequal n across cells (Unbalanced Design)</span>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })()}
+                </div>
+
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('factorialAnovaTutorSignal', { detail: 'clear_all_attempt' }))}
+                    className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors"
+                >
                     <Trash2 size={12} className="inline mr-1" /> Clear All
                 </button>
             </div>
@@ -105,29 +151,43 @@ const FactorialDatasetEditor = ({
                                 </td>
                                 {factorB.levels.map(b => {
                                     const key = `${a.id}_${b.id}`;
-                                    const cell = cellData[key] || { values: [], summary: { n: 0, mean: 0 }, inputMode: 'raw' };
-                                    const n = cell.inputMode === 'summary' ? (parseInt(cell.summary?.n) || 0) : (cell.values?.length || 0);
+                                    const cell = cellData[key] || { values: [], summary: { n: 0, mean: 0, sd: 0 }, inputMode: 'raw' };
+                                    const n = cell.inputMode === 'summary' ? (parseInt(cell.summary?.n || 0)) : (cell.values?.length || 0);
 
                                     return (
                                         <td key={b.id} className="min-w-[200px]">
                                             <div className={`p-4 rounded-[1.5rem] border-2 transition-all relative ${darkMode ? 'bg-slate-950 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <span className="text-[9px] font-black text-slate-500 uppercase">N={n}</span>
-                                                    {cell.inputMode === 'raw' && cell.summary && (
-                                                        <span className="text-[8px] font-black text-indigo-500/70 space-x-2">
-                                                            <span>M={cell.summary.mean}</span>
-                                                            <span>SD={cell.summary.sd}</span>
-                                                        </span>
-                                                    )}
+                                                    <ProgressiveTooltip term="Cell Stats" title="Descriptive Statistics" desc={`N=${n} observations. Mean=${parseFloat(cell.summary?.mean || 0).toFixed(1)}. SD=${parseFloat(cell.summary?.sd || 0).toFixed(1)}.`} darkMode={darkMode}>
+                                                        <div className="flex flex-col cursor-help">
+                                                            <ProgressiveTooltip term="N" title="Sample Size" desc="The number of observations in this group." darkMode={darkMode}>
+                                                                <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
+                                                            </ProgressiveTooltip>
+                                                            {cell.summary && (
+                                                                <span className="text-[8px] font-black text-indigo-400 flex gap-2">
+                                                                    <ProgressiveTooltip term="Mean" title="Average" desc="Sum of all values divided by N." darkMode={darkMode}>
+                                                                        <span className="cursor-help">M={parseFloat(cell.summary?.mean || 0).toFixed(1)}</span>
+                                                                    </ProgressiveTooltip>
+                                                                    <ProgressiveTooltip term="SD" title="Standard Deviation" desc="The spread of scores within this cell." darkMode={darkMode}>
+                                                                        <span className="cursor-help">SD={parseFloat(cell.summary?.sd || 0).toFixed(1)}</span>
+                                                                    </ProgressiveTooltip>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </ProgressiveTooltip>
                                                     <div className="flex gap-1 p-1 bg-slate-900 rounded-lg">
-                                                        <button
-                                                            onClick={() => updateCell(key, 'inputMode', 'raw')}
-                                                            className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
-                                                        >Raw</button>
-                                                        <button
-                                                            onClick={() => updateCell(key, 'inputMode', 'summary')}
-                                                            className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
-                                                        >Stats</button>
+                                                        <ProgressiveTooltip term="RAW" title="Individual Scores" desc="Enter participant scores directly." darkMode={darkMode}>
+                                                            <button
+                                                                onClick={() => updateCell(key, 'inputMode', 'raw')}
+                                                                className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                                                            >Raw</button>
+                                                        </ProgressiveTooltip>
+                                                        <ProgressiveTooltip term="STATS" title="Summary Input" desc="Enter group mean, SD, and N." darkMode={darkMode}>
+                                                            <button
+                                                                onClick={() => updateCell(key, 'inputMode', 'summary')}
+                                                                className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
+                                                            >Stats</button>
+                                                        </ProgressiveTooltip>
                                                     </div>
                                                 </div>
 
@@ -135,11 +195,24 @@ const FactorialDatasetEditor = ({
                                                     <div className="grid grid-cols-3 gap-2">
                                                         {['mean', 'sd', 'n'].map(field => (
                                                             <div key={field} className="flex flex-col gap-1">
-                                                                <label className="text-[7px] font-black uppercase text-slate-500">{field}</label>
+                                                                <ProgressiveTooltip
+                                                                    term={field.toUpperCase()}
+                                                                    title={field === 'mean' ? 'Average' : field === 'sd' ? 'Standard Deviation' : 'Sample Size'}
+                                                                    desc={field === 'mean' ? 'Center of the group.' : field === 'sd' ? 'Spread of the group.' : 'Count of observations.'}
+                                                                    darkMode={darkMode}
+                                                                >
+                                                                    <label className="text-[7px] font-black uppercase text-slate-500 cursor-help">{field}</label>
+                                                                </ProgressiveTooltip>
                                                                 <input
                                                                     type="text"
-                                                                    value={cell.summary[field]}
-                                                                    onChange={e => updateCellStats(key, field, e.target.value)}
+                                                                    value={cell.summary?.[field] || ""}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        updateCellStats(key, field, val);
+                                                                        if (val && isNaN(parseFloat(val)) && val !== '-' && val !== '.') {
+                                                                            window.dispatchEvent(new CustomEvent('factorialAnovaTutorSignal', { detail: 'input_parse_error' }));
+                                                                        }
+                                                                    }}
                                                                     className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-lg p-1.5 text-[12px] font-black text-indigo-400 outline-none"
                                                                 />
                                                             </div>

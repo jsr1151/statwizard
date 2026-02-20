@@ -317,6 +317,20 @@ export const calculatePostHoc = (groups, anovaResults) => {
     return comparisons;
 };
 
+// --- HELPER: Calculate 95% Confidence Interval ---
+export const calculate95CI = (mean, sd, n) => {
+    if (n < 2) return { lower: mean, upper: mean, margin: 0 };
+    const df = n - 1;
+    const tCrit = getTCrit(0.05, df);
+    const se = sd / Math.sqrt(n);
+    const margin = tCrit * se;
+    return {
+        lower: mean - margin,
+        upper: mean + margin,
+        margin
+    };
+};
+
 // --- HELPER: Factorial ANOVA Calculator (Two-Way Between-Subjects) ---
 export const calculateFactorialAnova = (factorA, factorB, cellData) => {
     // factorA: { label: string, levels: [{ id, label }] }
@@ -338,12 +352,12 @@ export const calculateFactorialAnova = (factorA, factorB, cellData) => {
             let n, mean, ss_cell = 0;
 
             if (cell.inputMode === 'summary') {
-                n = parseFloat(cell.summary.n || 0);
-                mean = parseFloat(cell.summary.mean || 0);
-                const sd = parseFloat(cell.summary.sd || 0);
+                n = parseFloat(cell.summary?.n || 0);
+                mean = parseFloat(cell.summary?.mean || 0);
+                const sd = parseFloat(cell.summary?.sd || 0);
                 ss_cell = (n > 1) ? (n - 1) * Math.pow(sd, 2) : 0;
             } else {
-                const vals = cell.values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+                const vals = (cell.values || []).map(v => parseFloat(v)).filter(v => !isNaN(v));
                 n = vals.length;
                 mean = n > 0 ? vals.reduce((s, v) => s + v, 0) / n : 0;
                 ss_cell = vals.reduce((s, v) => s + Math.pow(v - mean, 2), 0);

@@ -1,4 +1,7 @@
 import React from 'react';
+import { Edit2, Check, Info } from 'lucide-react';
+import { calculate95CI } from '../../utils/mathHelpers';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
 
 const InteractionPlot = ({
     factorA,
@@ -7,11 +10,16 @@ const InteractionPlot = ({
     cellData,
     swapAxes,
     outcomeLabel = "Outcome",
+    setOutcomeLabel,
     showRawPoints = false,
     showMarginalMeans = false,
+    showErrorBars = false,
+    focusMode = 'interaction', // 'interaction', 'A', 'B'
     darkMode
 }) => {
     const [hoveredLine, setHoveredLine] = React.useState(null);
+    const [isEditingOutcome, setIsEditingOutcome] = React.useState(false);
+    const [tempOutcome, setTempOutcome] = React.useState(outcomeLabel);
     const xFactor = swapAxes ? factorB : factorA;
     const lineFactor = swapAxes ? factorA : factorB;
 
@@ -40,13 +48,39 @@ const InteractionPlot = ({
 
     const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 
+    // Dynamic Interpretation Logic
+    const getInterpretation = () => {
+        // Calculate max diff in slopes to estimate interaction strength
+        const slopes = [];
+        lineLevels.forEach((ll, lineIdx) => {
+            const key1 = swapAxes ? `${ll.id}_${xLevels[0].id}` : `${xLevels[0].id}_${ll.id}`;
+            const key2 = swapAxes ? `${ll.id}_${xLevels[xLevels.length - 1].id}` : `${xLevels[xLevels.length - 1].id}_${ll.id}`;
+            const y1 = cellStats[key1]?.mean || 0;
+            const y2 = cellStats[key2]?.mean || 0;
+            slopes.push(y2 - y1);
+        });
+
+        const slopeDiff = Math.abs(slopes[0] - slopes[1]);
+        const maxVal = Math.max(...allPoints);
+        const relativeDiff = slopeDiff / (maxVal || 1);
+
+        if (relativeDiff < 0.05) return "Lines are nearly parallel → interaction likely small.";
+        if (relativeDiff > 0.2) return "Lines cross or diverge sharply → possible strong interaction.";
+        return "Lines are non-parallel → potential interaction detected.";
+    };
+
     return (
         <div className="w-full h-full flex flex-col items-center p-4">
-            <div className="w-full flex justify-between items-center mb-4 px-8">
-                <div className="flex flex-col">
+            <div className="w-full flex justify-between items-end mb-4 px-8">
+                <div className="flex flex-col gap-1">
                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                         {swapAxes ? `${factorB.label} on X, lines by ${factorA.label}` : `${factorA.label} on X, lines by ${factorB.label}`}
                     </h4>
+                    <ProgressiveTooltip term="Interpretation" title="Plot Analysis" desc="ANOVA plots help detect interactions visually." pedagogy="If the lines are parallel, there is likely no interaction. If they cross, the interaction is usually strong." darkMode={darkMode}>
+                        <p className={`text-[11px] font-medium ${darkMode ? 'text-indigo-400/80' : 'text-indigo-600/80'} cursor-help`}>
+                            {getInterpretation()}
+                        </p>
+                    </ProgressiveTooltip>
                 </div>
                 <div className="flex gap-4">
                     {lineLevels.map((l, i) => (
@@ -66,14 +100,6 @@ const InteractionPlot = ({
             <div className="relative w-full h-full flex flex-col items-center">
                 <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
                     {/* Y Axis Label */}
-                    <text
-                        x={-height / 2} y={15}
-                        transform="rotate(-90)"
-                        textAnchor="middle"
-                        className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-500' : 'fill-slate-400'}`}
-                    >
-                        {outcomeLabel}
-                    </text>
 
                     {/* Grid Lines */}
                     {[0, 0.25, 0.5, 0.75, 1].map(p => {
@@ -163,26 +189,81 @@ const InteractionPlot = ({
                                     onMouseEnter={() => setHoveredLine(lineIdx)}
                                     onMouseLeave={() => setHoveredLine(null)}
                                 />
-                                {points.map((p, i) => (
-                                    <g key={i}>
-                                        <circle
-                                            cx={p.x} cy={p.y} r={isActive && hoveredLine !== null ? "7" : "5"}
-                                            fill={colors[lineIdx % colors.length]}
-                                            stroke={darkMode ? "#020617" : "#fff"}
-                                            strokeWidth="2"
-                                        />
-                                        <text
-                                            x={p.x} y={p.y - 12}
-                                            textAnchor="middle"
-                                            className={`text-[8px] font-bold ${darkMode ? 'fill-indigo-300' : 'fill-indigo-600'}`}
-                                        >
-                                            {p.label}
-                                        </text>
-                                    </g>
-                                ))}
+                                {points.map((p, i) => {
+                                    // De-collision logic for labels: if points are too close, offset one
+                                    const otherLinesPoints = lineLevels.map((_, otherIdx) => {
+                                        if (otherIdx === lineIdx) return null;
+                                        const otherY = yToPos(cellStats[swapAxes ? `${lineLevels[otherIdx].id}_${xLevels[i].id}` : `${xLevels[i].id}_${lineLevels[otherIdx].id}`]?.mean || 0);
+                                        return otherY;
+                                    });
+                                    const isTooClose = otherLinesPoints.some(y => y !== null && Math.abs(y - p.y) < 15 && y < p.y);
+                                    const labelYOffset = isTooClose ? 15 : -12;
+
+                                    return (
+                                        <g key={i}>
+                                            {showErrorBars && (
+                                                <g>
+                                                    {(() => {
+                                                        const cell = cellData[swapAxes ? `${lineLevels[lineIdx].id}_${xLevels[i].id}` : `${xLevels[i].id}_${lineLevels[lineIdx].id}`];
+                                                        if (!cell) return null;
+                                                        const stats = cellStats[swapAxes ? `${lineLevels[lineIdx].id}_${xLevels[i].id}` : `${xLevels[i].id}_${lineLevels[lineIdx].id}`];
+
+                                                        // Fallback for stats input
+                                                        let n, sd, mean;
+                                                        if (cell.inputMode === 'summary') {
+                                                            n = parseFloat(cell.summary?.n || 0);
+                                                            sd = parseFloat(cell.summary?.sd || 0);
+                                                            mean = parseFloat(cell.summary?.mean || 0);
+                                                        } else {
+                                                            n = stats?.n || 0;
+                                                            mean = stats?.mean || 0;
+                                                            sd = n > 1 ? Math.sqrt((stats?.ss || 0) / (n - 1)) : 0;
+                                                        }
+
+                                                        const { upper, lower } = calculate95CI(mean, sd, n);
+                                                        const yUpper = yToPos(upper);
+                                                        const yLower = yToPos(lower);
+
+                                                        return (
+                                                            <g opacity="0.5">
+                                                                <line
+                                                                    x1={p.x} y1={yUpper} x2={p.x} y2={yLower}
+                                                                    stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                                                />
+                                                                <line
+                                                                    x1={p.x - 4} y1={yUpper} x2={p.x + 4} y2={yUpper}
+                                                                    stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                                                />
+                                                                <line
+                                                                    x1={p.x - 4} y1={yLower} x2={p.x + 4} y2={yLower}
+                                                                    stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                                                />
+                                                            </g>
+                                                        );
+                                                    })()}
+                                                </g>
+                                            )}
+                                            <circle
+                                                cx={p.x} cy={p.y} r={isActive && hoveredLine !== null ? "7" : "5"}
+                                                fill={colors[lineIdx % colors.length]}
+                                                stroke={darkMode ? "#020617" : "#fff"}
+                                                strokeWidth="2"
+                                            />
+                                            <text
+                                                x={p.x} y={p.y + labelYOffset}
+                                                textAnchor="middle"
+                                                className={`text-[8px] font-bold ${darkMode ? 'fill-indigo-300' : 'fill-indigo-600'} transition-opacity duration-300`}
+                                                opacity={showRawPoints || (isActive && hoveredLine !== null) ? "1" : "0"}
+                                            >
+                                                {p.label}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
                             </g>
                         );
                     })}
+
 
                     {/* Marginal Means */}
                     {showMarginalMeans && (
@@ -211,6 +292,44 @@ const InteractionPlot = ({
                             })}
                         </g>
                     )}
+
+                    {/* Y Axis Label (Rotated) - Integrated into SVG for zero-collision */}
+                    <g transform={`translate(20, ${height / 2}) rotate(-90)`}>
+                        <foreignObject x="-75" y="-15" width="150" height="30" className="overflow-visible">
+                            <div
+                                className="w-full h-full flex items-center justify-center gap-2 group cursor-pointer"
+                                onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
+                            >
+                                {isEditingOutcome ? (
+                                    <div className="flex items-center gap-1 bg-slate-900 border border-indigo-500/50 rounded-md px-2 py-1" onClick={e => e.stopPropagation()}>
+                                        <input
+                                            autoFocus
+                                            value={tempOutcome}
+                                            onChange={e => setTempOutcome(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    setOutcomeLabel(tempOutcome);
+                                                    setIsEditingOutcome(false);
+                                                }
+                                            }}
+                                            className="bg-transparent text-[10px] font-black text-white outline-none w-24 uppercase tracking-widest text-center"
+                                        />
+                                        <button
+                                            onClick={() => { setOutcomeLabel(tempOutcome); setIsEditingOutcome(false); }}
+                                            className="text-emerald-500 hover:text-emerald-400"
+                                        >
+                                            <Check size={10} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{outcomeLabel}</span>
+                                        <Edit2 size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </>
+                                )}
+                            </div>
+                        </foreignObject>
+                    </g>
                 </svg>
 
                 {/* Educational Overlay / Key */}
