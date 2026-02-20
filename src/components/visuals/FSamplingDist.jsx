@@ -130,13 +130,13 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
         <g transform={`translate(${width - 160}, 60)`} className="select-none">
           <rect x="0" y="0" width="130" height="50" rx="8" fill={darkMode ? "#0f172a" : "#fff"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
           <g transform="translate(10, 15)">
-            <ProgressiveTooltip term="Alpha Region" title="The Rejection Zone" desc="The area under the curve that represents the alpha level (e.g., 5%)." pedagogy="If your F-ratio falls in this red area, we reject the null hypothesis." darkMode={darkMode}>
+            <ProgressiveTooltip as="g" term="Alpha Region" title="The Rejection Zone" desc="The area under the curve that represents the alpha level (e.g., 5%)." pedagogy="If your F-ratio falls in this red area, we reject the null hypothesis." darkMode={darkMode}>
               <rect width="8" height="8" rx="2" fill="#ef4444" opacity="0.6" className="cursor-help" />
             </ProgressiveTooltip>
             <text x="14" y="8" className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>α region</text>
           </g>
           <g transform="translate(10, 32)">
-            <ProgressiveTooltip term="P-Value" title="Observed Tail" desc="The probability of getting a result as extreme as yours by random chance." pedagogy="Area = p. If this area is smaller than alpha, we have a significant finding." darkMode={darkMode}>
+            <ProgressiveTooltip as="g" term="P-Value" title="Observed Tail" desc="The probability of getting a result as extreme as yours by random chance." pedagogy="Area = p. If this area is smaller than alpha, we have a significant finding." darkMode={darkMode}>
               <rect width="8" height="8" rx="2" fill="#6366f1" opacity="0.6" className="cursor-help" />
             </ProgressiveTooltip>
             <text x="14" y="8" className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>p-value tail</text>
@@ -145,7 +145,7 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
 
         {/* ALPHA BOUNDARY */}
         <line x1={fToX(safeFCrit)} y1="60" x2={fToX(safeFCrit)} y2={baselineY + 15} stroke="#ef4444" strokeWidth="3" strokeDasharray="8,5" />
-        <ProgressiveTooltip term="F-Critical" title="Significance Threshold" desc={`For df1=${df1} and df2=${df2}, F must be > ${safeFCrit.toFixed(2)} to be significant.`} darkMode={darkMode}>
+        <ProgressiveTooltip as="g" term="F-Critical" title="Significance Threshold" desc={`For df1=${df1} and df2=${df2}, F must be > ${safeFCrit.toFixed(2)} to be significant.`} darkMode={darkMode}>
           <g transform={`translate(${fToX(safeFCrit)}, 45)`} className="cursor-help">
             <rect x="-40" y="-12" width="80" height="20" rx="4" fill={darkMode ? "#7f1d1d" : "#fee2e2"} className="opacity-80" />
             <text x="0" y="3" textAnchor="middle" className="text-[11px] font-black fill-rose-500 uppercase tracking-widest">Fcrit = {safeFCrit.toFixed(2)}</text>
@@ -156,7 +156,7 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
         <path d={path} fill="none" stroke="#6366f1" strokeWidth="4" strokeLinejoin="round" filter="url(#glow)" />
 
         {/* DRAGGABLE MARKER */}
-        <ProgressiveTooltip term="F-Ratio" title="Your Result" desc="This is the ratio of treatment variability to error variability calculated from your data." darkMode={darkMode}>
+        <ProgressiveTooltip as="g" term="F-Ratio" title="Your Result" desc="This is the ratio of treatment variability to error variability calculated from your data." darkMode={darkMode}>
           <g transform={`translate(${fToX(safeFVal)}, ${Math.max(60, yVal)})`} className="cursor-grab active:cursor-grabbing group">
             <circle r="16" fill={darkMode ? "#0f172a" : "#fff"} stroke="#6366f1" strokeWidth="5" className="shadow-2xl" />
             <line y1="16" y2={baselineY - Math.max(60, yVal)} stroke="#6366f1" strokeWidth="2.5" strokeDasharray="4,4" className="opacity-50" />

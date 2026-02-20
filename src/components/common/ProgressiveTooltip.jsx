@@ -1,35 +1,42 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import ReactDOM from 'react-dom';
+import { createPortal } from 'react-dom';
 import { Info, ChevronRight, ChevronDown } from 'lucide-react';
 
-const ProgressiveTooltip = ({ term, title, desc, pedagogy, example, children, darkMode }) => {
+const ProgressiveTooltip = ({
+    term,
+    title,
+    desc,
+    pedagogy,
+    example,
+    children,
+    darkMode,
+    as: Wrapper = 'div'
+}) => {
     const [expanded, setExpanded] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0 });
-    const [mounted, setMounted] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
     const triggerRef = useRef(null);
     const tooltipRef = useRef(null);
     const hoverTimeout = useRef(null);
 
     useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
+        setIsMounted(true);
+        return () => setIsMounted(false);
     }, []);
 
     const updatePosition = () => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            // Position above the element, centered horizontally
-            setPosition({
-                top: rect.top,
-                left: rect.left + rect.width / 2
-            });
-        }
+        if (!triggerRef.current) return;
+        const rect = triggerRef.current.getBoundingClientRect();
+        setPosition({
+            top: rect.top,
+            left: rect.left + rect.width / 2
+        });
     };
 
     useLayoutEffect(() => {
-        if (isVisible && mounted) {
+        if (isVisible && isMounted) {
             updatePosition();
             window.addEventListener('scroll', updatePosition, true);
             window.addEventListener('resize', updatePosition);
@@ -38,7 +45,7 @@ const ProgressiveTooltip = ({ term, title, desc, pedagogy, example, children, da
             window.removeEventListener('scroll', updatePosition, true);
             window.removeEventListener('resize', updatePosition);
         };
-    }, [isVisible, mounted]);
+    }, [isVisible, isMounted]);
 
     const handleMouseEnter = () => {
         if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
@@ -51,10 +58,9 @@ const ProgressiveTooltip = ({ term, title, desc, pedagogy, example, children, da
         }, 100);
     };
 
-    const renderTooltip = () => {
-        if (!mounted || !isVisible || typeof document === 'undefined' || !document.body) return null;
-
-        return ReactDOM.createPortal(
+    // Construct tooltip content as a separate variable to keep render clean
+    const tooltipNode = (isMounted && isVisible && typeof document !== 'undefined') ? (
+        createPortal(
             <div
                 ref={tooltipRef}
                 onMouseEnter={handleMouseEnter}
@@ -112,24 +118,23 @@ const ProgressiveTooltip = ({ term, title, desc, pedagogy, example, children, da
                     )}
                 </div>
 
-                {/* Triangle arrow */}
                 <div className={`absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent ${darkMode ? 'border-t-slate-900' : 'border-t-white'
                     }`} />
             </div>,
             document.body
-        );
-    };
+        )
+    ) : null;
 
     return (
-        <div
+        <Wrapper
             ref={triggerRef}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className="relative inline-block tooltip-trigger"
+            className={`${Wrapper === 'div' ? 'relative inline-block' : ''} tooltip-trigger cursor-help`}
         >
             {children}
-            {renderTooltip()}
-        </div>
+            {tooltipNode}
+        </Wrapper>
     );
 };
 
