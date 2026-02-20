@@ -20,9 +20,12 @@ const FactorialDatasetEditor = ({
                 {/* Factor A Levels */}
                 <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-500">Factor A: {factorA.label}</h4>
-                        <button onClick={() => addLevel('A')} className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                            <Plus size={14} />
+                        <div className="flex flex-col">
+                            <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-500">Factor A: {factorA.label}</h4>
+                            <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
+                        </div>
+                        <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-lg border border-indigo-500/20 text-[9px] font-black hover:bg-indigo-600/20 transition-all">
+                            <Plus size={12} /> ADD LEVEL
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -46,9 +49,12 @@ const FactorialDatasetEditor = ({
                 {/* Factor B Levels */}
                 <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-[12px] font-black uppercase tracking-widest text-emerald-500">Factor B: {factorB.label}</h4>
-                        <button onClick={() => addLevel('B')} className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
-                            <Plus size={14} />
+                        <div className="flex flex-col">
+                            <h4 className="text-[12px] font-black uppercase tracking-widest text-emerald-500">Factor B: {factorB.label}</h4>
+                            <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
+                        </div>
+                        <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-600/20 transition-all">
+                            <Plus size={12} /> ADD LEVEL
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -71,14 +77,32 @@ const FactorialDatasetEditor = ({
             </div>
 
             {/* Utility Row */}
-            <div className={`flex flex-wrap gap-4 p-4 rounded-2xl border-2 ${darkMode ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600/20 transition-all border border-indigo-500/20">
-                    <Plus size={12} /> Add A
-                </button>
-                <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600/20 transition-all border border-emerald-500/20">
-                    <Plus size={12} /> Add B
-                </button>
-                <div className="flex-1" />
+            <div className={`flex flex-wrap items-center gap-4 p-4 rounded-2xl border-2 ${darkMode ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600/20 transition-all border border-indigo-500/20">
+                        <Plus size={12} /> Add Factor A
+                    </button>
+                    <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600/20 transition-all border border-emerald-500/20">
+                        <Plus size={12} /> Add Factor B
+                    </button>
+                </div>
+
+                <div className="flex-1 px-4">
+                    {(() => {
+                        const ns = Object.values(cellData).map(c => c.inputMode === 'summary' ? (parseInt(c.summary?.n) || 0) : (c.values?.length || 0));
+                        const uniqueNs = [...new Set(ns)];
+                        if (uniqueNs.length > 1 && ns.some(n => n > 0)) {
+                            return (
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-amber-500 animate-pulse">
+                                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                    <span>Warning: Unequal n across cells (Unbalanced Design)</span>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })()}
+                </div>
+
                 <button onClick={() => { if (confirm("Clear all data?")) Object.keys(cellData).forEach(k => parseCellRaw(k, "")); }} className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors">
                     <Trash2 size={12} className="inline mr-1" /> Clear All
                 </button>
@@ -112,13 +136,15 @@ const FactorialDatasetEditor = ({
                                         <td key={b.id} className="min-w-[200px]">
                                             <div className={`p-4 rounded-[1.5rem] border-2 transition-all relative ${darkMode ? 'bg-slate-950 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <span className="text-[9px] font-black text-slate-500 uppercase">N={n}</span>
-                                                    {cell.inputMode === 'raw' && cell.summary && (
-                                                        <span className="text-[8px] font-black text-indigo-500/70 space-x-2">
-                                                            <span>M={cell.summary.mean}</span>
-                                                            <span>SD={cell.summary.sd}</span>
-                                                        </span>
-                                                    )}
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
+                                                        {cell.summary && (
+                                                            <span className="text-[8px] font-black text-indigo-400 flex gap-2">
+                                                                <span>M={parseFloat(cell.summary.mean || 0).toFixed(1)}</span>
+                                                                <span>SD={parseFloat(cell.summary.sd || 0).toFixed(1)}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex gap-1 p-1 bg-slate-900 rounded-lg">
                                                         <button
                                                             onClick={() => updateCell(key, 'inputMode', 'raw')}

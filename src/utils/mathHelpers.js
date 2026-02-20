@@ -317,6 +317,20 @@ export const calculatePostHoc = (groups, anovaResults) => {
     return comparisons;
 };
 
+// --- HELPER: Calculate 95% Confidence Interval ---
+export const calculate95CI = (mean, sd, n) => {
+    if (n < 2) return { lower: mean, upper: mean, margin: 0 };
+    const df = n - 1;
+    const tCrit = getTCrit(0.05, df);
+    const se = sd / Math.sqrt(n);
+    const margin = tCrit * se;
+    return {
+        lower: mean - margin,
+        upper: mean + margin,
+        margin
+    };
+};
+
 // --- HELPER: Factorial ANOVA Calculator (Two-Way Between-Subjects) ---
 export const calculateFactorialAnova = (factorA, factorB, cellData) => {
     // factorA: { label: string, levels: [{ id, label }] }

@@ -7,13 +7,16 @@ import FSamplingDist from './FSamplingDist';
 import SimpleEffectsExplorer from './SimpleEffectsExplorer';
 import { FACTORIAL_PRESETS } from '../../data/factorialPresets';
 
+import { ChevronRight, Info, AlertTriangle, HelpCircle } from 'lucide-react';
+
 const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor }) => {
     const [localShowValues, setLocalShowValues] = useState(propShowValues);
     useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
-    const [factorA, setFactorA] = useState({ label: 'Factor A', levels: [{ id: 'a1', label: 'A1' }, { id: 'a2', label: 'A2' }] });
-    const [factorB, setFactorB] = useState({ label: 'Factor B', levels: [{ id: 'b1', label: 'B1' }, { id: 'b2', label: 'B2' }] });
-    const [outcomeLabel, setOutcomeLabel] = useState('Outcome');
+    const [activeTab, setActiveTab] = useState('data');
+    const [factorA, setFactorA] = useState({ label: "Factor A", levels: [{ id: 'a1', label: "A1" }, { id: 'a2', label: "A2" }] });
+    const [factorB, setFactorB] = useState({ label: "Factor B", levels: [{ id: 'b1', label: "B1" }, { id: 'b2', label: "B2" }] });
+    const [outcomeLabel, setOutcomeLabel] = useState("Outcome Variable");
     const [cellData, setCellData] = useState({
         'a1_b1': { values: [8, 9, 7], summary: { mean: '8.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
         'a1_b2': { values: [12, 11, 13], summary: { mean: '12.0', sd: '1.0', n: '3' }, inputMode: 'raw' },
@@ -21,7 +24,6 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
         'a2_b2': { values: [6, 7, 5], summary: { mean: '6.0', sd: '1.0', n: '3' }, inputMode: 'raw' }
     });
 
-    const [activeTab, setActiveTab] = useState('table');
     const [selectedEffect, setSelectedEffect] = useState('AxB');
     const [swapAxes, setSwapAxes] = useState(false);
     const [alpha, setAlpha] = useState(0.05);
@@ -29,6 +31,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
     // UI Toggles
     const [showRawPoints, setShowRawPoints] = useState(false);
     const [showMarginalMeans, setShowMarginalMeans] = useState(false);
+    const [showErrorBars, setShowErrorBars] = useState(true);
+    const [plotFocus, setPlotFocus] = useState('interaction'); // 'interaction', 'A', 'B'
+    const [expandedEffect, setExpandedEffect] = useState(null);
 
     // --- CALCULATIONS ---
     const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData), [factorA, factorB, cellData]);
@@ -135,6 +140,14 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
+                {/* Header Labels (New Orientation) */}
+                <div className="absolute top-6 right-8 text-right z-40">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest px-1">Design Model</span>
+                        <span className={`text-[9px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
+                    </div>
+                </div>
+
                 {/* Study Themes (Positioned below tabs, above content) */}
                 <div className="absolute top-[85px] left-6 z-40">
                     <div className="flex flex-col gap-1.5">
@@ -180,7 +193,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                     swapAxes={swapAxes}
                                     outcomeLabel={outcomeLabel}
                                     showRawPoints={showRawPoints}
-                                    showMarginalMeans={showMarginalMeans}
+                                    showMarginalMeans={showMarginalMeans || plotFocus === 'A' || plotFocus === 'B'}
+                                    showErrorBars={showErrorBars}
+                                    focusMode={plotFocus}
                                     darkMode={darkMode}
                                 />
                             ) : (
@@ -205,6 +220,12 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                 >
                                     Marginal Means
                                 </button>
+                                <button
+                                    onClick={() => setShowErrorBars(!showErrorBars)}
+                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    {showErrorBars ? 'Hide Error Bars' : 'Show 95% CI'}
+                                </button>
                             </div>
                         </div>
                     )}
@@ -227,48 +248,100 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     {activeTab === 'table' && results && (
                         <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
                             <div className="flex justify-between items-end mb-6">
-                                <h2 className="text-[20px] font-black italic uppercase tracking-tighter text-indigo-500">ANOVA Summary</h2>
-                                <span className="text-[10px] font-black text-slate-600 uppercase">df_Total = {results.effects.Total.df}</span>
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-[14px] font-black uppercase text-indigo-500">ANOVA Summary Table</h3>
+                                    <p className={`text-[10px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                        Teaching Tip: Check interaction first. If p {'<'} .05, interpret simple effects.
+                                    </p>
+                                </div>
+                                <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                                    Partial Eta Squared (ηp²)
+                                </div>
                             </div>
-                            <div className="grid grid-cols-1 gap-4">
-                                {['A', 'B', 'AxB'].map(key => {
-                                    const effect = results.effects[key];
-                                    const isSig = effect.p < alpha;
-                                    const isSelected = selectedEffect === key;
+
+                            <div className="flex flex-col gap-4">
+                                {Object.entries(results.effects).map(([key, effect]) => {
+                                    if (key === 'Error' || key === 'Total') return null;
+                                    const isExpanded = expandedEffect === key;
+                                    const isInteraction = key === 'AxB';
+
                                     return (
                                         <div
                                             key={key}
-                                            onClick={() => { setSelectedEffect(key); setActiveTab('fdist'); }}
-                                            className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-95 ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 bg-slate-900/30'}`}
+                                            onClick={() => {
+                                                setExpandedEffect(isExpanded ? null : key);
+                                                if (key === 'A') setPlotFocus('A');
+                                                else if (key === 'B') setPlotFocus('B');
+                                                else setPlotFocus('interaction');
+                                            }}
+                                            className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer group hover:scale-[1.01] ${isExpanded ? 'bg-indigo-600/10 border-indigo-500/50 shadow-2xl scale-[1.01]' : (darkMode ? 'bg-slate-900/40 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg')}`}
                                         >
-                                            <div className="grid grid-cols-5 items-center">
-                                                <div className="col-span-2">
-                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Effect</span>
-                                                    <span className="text-[14px] font-black uppercase text-white">{effect.label}</span>
-                                                    <span className="text-[10px] font-bold text-slate-600 block mt-1">F({effect.df}, {results.effects.Error.df})</span>
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isInteraction ? 'bg-rose-500/10 text-rose-500' : 'bg-indigo-500/10 text-indigo-500'}`}>
+                                                        {isInteraction ? <Layers size={20} /> : <GitCommit size={20} />}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className={`text-[12px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                            {effect.label}
+                                                        </h4>
+                                                        <span className="text-[9px] font-black text-slate-500 uppercase">df({effect.df}, {results.effects.Error.df})</span>
+                                                    </div>
                                                 </div>
-                                                <div className="text-center">
-                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">P-Value</span>
-                                                    <span className={`text-[14px] font-black ${isSig ? 'text-emerald-400' : 'text-slate-400'}`}>
-                                                        {effect.p < 0.001 ? '< .001' : effect.p.toFixed(3)}
-                                                    </span>
-                                                </div>
-                                                <div className="text-center">
-                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">F-Ratio</span>
-                                                    <span className="text-[14px] font-black text-indigo-400">{effect.f.toFixed(2)}</span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Partial η²</span>
-                                                    <span className="text-[14px] font-black text-amber-500">{effect.pes.toFixed(3)}</span>
+
+                                                <div className="flex items-center gap-12">
+                                                    <div className="text-center">
+                                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">p-value</span>
+                                                        <span className={`text-[16px] font-black ${effect.p < 0.05 ? 'text-emerald-500' : 'text-slate-500'}`}>
+                                                            {effect.p < 0.001 ? '< .001' : effect.p.toFixed(3)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">F-Ratio</span>
+                                                        <span className={`text-[16px] font-black ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                            {effect.f.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-center min-w-[60px]">
+                                                        <span className="text-[9px] font-black uppercase text-indigo-500 tracking-widest block mb-1">ηp²</span>
+                                                        <span className="text-[16px] font-black text-indigo-400">
+                                                            {effect.pes.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                    <ChevronRight size={16} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                                 </div>
                                             </div>
+
+                                            {isExpanded && (
+                                                <div className="mt-6 pt-6 border-t border-slate-700/30 grid grid-cols-4 gap-4 animate-in slide-in-from-top-2">
+                                                    <div>
+                                                        <label className="text-[8px] font-black uppercase text-slate-500">Sum of Squares</label>
+                                                        <div className="text-[12px] font-bold text-slate-300">{effect.ss.toFixed(2)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-black uppercase text-slate-500">Mean Square</label>
+                                                        <div className="text-[12px] font-bold text-slate-300">{effect.ms.toFixed(2)}</div>
+                                                    </div>
+                                                    <div className="col-span-2 bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10">
+                                                        <label className="text-[8px] font-black uppercase text-indigo-400">Educational Connection</label>
+                                                        <div className="text-[10px] text-slate-400 leading-tight mt-1">
+                                                            {key === 'A' || key === 'B' ?
+                                                                `Main effect of ${effect.label} ignores the other factor and looks at the averages across it.` :
+                                                                "Interaction effect tests if the impact of one factor changes depending on the level of the other factor."
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
-                                {/* Error Row */}
-                                <div className="p-4 px-6 rounded-[1.5rem] border-2 border-dashed border-slate-800 opacity-50 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                    <span>Error (Residual)</span>
-                                    <span>SS={results.effects.Error.ss.toFixed(2)}  |  df={results.effects.Error.df}  |  MS={results.effects.Error.ms.toFixed(2)}</span>
+
+                                <div className={`mt-4 p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-slate-900/20 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className="flex justify-between items-center opacity-60">
+                                        <span className="text-[10px] font-black uppercase text-slate-500">Residual (Error)</span>
+                                        <span className="text-[10px] font-bold text-slate-500">SS={results.effects.Error.ss.toFixed(2)} | df={results.effects.Error.df} | MS={results.effects.Error.ms.toFixed(2)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import { calculate95CI } from '../../utils/mathHelpers';
 
 const InteractionPlot = ({
     factorA,
@@ -9,6 +9,8 @@ const InteractionPlot = ({
     outcomeLabel = "Outcome",
     showRawPoints = false,
     showMarginalMeans = false,
+    showErrorBars = false,
+    focusMode = 'interaction', // 'interaction', 'A', 'B'
     darkMode
 }) => {
     const [hoveredLine, setHoveredLine] = React.useState(null);
@@ -40,13 +42,35 @@ const InteractionPlot = ({
 
     const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 
+    // Dynamic Interpretation Logic
+    const getInterpretation = () => {
+        // Calculate max diff in slopes to estimate interaction strength
+        const slopes = [];
+        lineLevels.forEach((ll, lineIdx) => {
+            const y1 = cellStats[swapAxes ? `${ll.id}_${xLevels[0].id}` : `${xLevels[0].id}_${ll.id}`]?.mean || 0;
+            const y2 = cellStats[swapAxes ? `${ll.id}_${xLevels[xLevels.length - 1].id}` : `${xLevels[xLevels.length - 1].id}_${ll.id}`]?.mean || 0;
+            slopes.push(y2 - y1);
+        });
+
+        const slopeDiff = Math.abs(slopes[0] - slopes[1]);
+        const maxVal = Math.max(...allPoints);
+        const relativeDiff = slopeDiff / (maxVal || 1);
+
+        if (relativeDiff < 0.05) return "Lines are nearly parallel → interaction likely small.";
+        if (relativeDiff > 0.2) return "Lines cross or diverge sharply → possible strong interaction.";
+        return "Lines are non-parallel → potential interaction detected.";
+    };
+
     return (
         <div className="w-full h-full flex flex-col items-center p-4">
-            <div className="w-full flex justify-between items-center mb-4 px-8">
-                <div className="flex flex-col">
+            <div className="w-full flex justify-between items-end mb-4 px-8">
+                <div className="flex flex-col gap-1">
                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                         {swapAxes ? `${factorB.label} on X, lines by ${factorA.label}` : `${factorA.label} on X, lines by ${factorB.label}`}
                     </h4>
+                    <p className={`text-[11px] font-medium ${darkMode ? 'text-indigo-400/80' : 'text-indigo-600/80'}`}>
+                        {getInterpretation()}
+                    </p>
                 </div>
                 <div className="flex gap-4">
                     {lineLevels.map((l, i) => (
@@ -163,23 +187,76 @@ const InteractionPlot = ({
                                     onMouseEnter={() => setHoveredLine(lineIdx)}
                                     onMouseLeave={() => setHoveredLine(null)}
                                 />
-                                {points.map((p, i) => (
-                                    <g key={i}>
-                                        <circle
-                                            cx={p.x} cy={p.y} r={isActive && hoveredLine !== null ? "7" : "5"}
-                                            fill={colors[lineIdx % colors.length]}
-                                            stroke={darkMode ? "#020617" : "#fff"}
-                                            strokeWidth="2"
-                                        />
-                                        <text
-                                            x={p.x} y={p.y - 12}
-                                            textAnchor="middle"
-                                            className={`text-[8px] font-bold ${darkMode ? 'fill-indigo-300' : 'fill-indigo-600'}`}
-                                        >
-                                            {p.label}
-                                        </text>
-                                    </g>
-                                ))}
+                                {points.map((p, i) => {
+                                    // De-collision logic for labels: if points are too close, offset one
+                                    const otherLinesPoints = lineLevels.map((_, otherIdx) => {
+                                        if (otherIdx === lineIdx) return null;
+                                        const otherY = yToPos(cellStats[swapAxes ? `${lineLevels[otherIdx].id}_${xLevels[i].id}` : `${xLevels[i].id}_${lineLevels[otherIdx].id}`]?.mean || 0);
+                                        return otherY;
+                                    });
+                                    const isTooClose = otherLinesPoints.some(y => y !== null && Math.abs(y - p.y) < 15 && y < p.y);
+                                    const labelYOffset = isTooClose ? 15 : -12;
+
+                                    return (
+                                        <g key={i}>
+                                            {showErrorBars && (
+                                                <g>
+                                                    {(() => {
+                                                        const cell = cellData[swapAxes ? `${lineLevels[lineIdx].id}_${xLevels[i].id}` : `${xLevels[i].id}_${lineLevels[lineIdx].id}`];
+                                                        if (!cell) return null;
+                                                        const stats = cellStats[swapAxes ? `${lineLevels[lineIdx].id}_${xLevels[i].id}` : `${xLevels[i].id}_${lineLevels[lineIdx].id}`];
+
+                                                        // Fallback for stats input
+                                                        let n, sd, mean;
+                                                        if (cell.inputMode === 'summary') {
+                                                            n = parseFloat(cell.summary.n);
+                                                            sd = parseFloat(cell.summary.sd);
+                                                            mean = parseFloat(cell.summary.mean);
+                                                        } else {
+                                                            n = stats.n;
+                                                            mean = stats.mean;
+                                                            sd = Math.sqrt(stats.ss / (n - 1 || 1));
+                                                        }
+
+                                                        const { upper, lower } = calculate95CI(mean, sd, n);
+                                                        const yUpper = yToPos(upper);
+                                                        const yLower = yToPos(lower);
+
+                                                        return (
+                                                            <g opacity="0.5">
+                                                                <line
+                                                                    x1={p.x} y1={yUpper} x2={p.x} y2={yLower}
+                                                                    stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                                                />
+                                                                <line
+                                                                    x1={p.x - 4} y1={yUpper} x2={p.x + 4} y2={yUpper}
+                                                                    stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                                                />
+                                                                <line
+                                                                    x1={p.x - 4} y1={yLower} x2={p.x + 4} y2={yLower}
+                                                                    stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                                                />
+                                                            </g>
+                                                        );
+                                                    })()}
+                                                </g>
+                                            )}
+                                            <circle
+                                                cx={p.x} cy={p.y} r={isActive && hoveredLine !== null ? "7" : "5"}
+                                                fill={colors[lineIdx % colors.length]}
+                                                stroke={darkMode ? "#020617" : "#fff"}
+                                                strokeWidth="2"
+                                            />
+                                            <text
+                                                x={p.x} y={p.y + labelYOffset}
+                                                textAnchor="middle"
+                                                className={`text-[8px] font-bold ${darkMode ? 'fill-indigo-300' : 'fill-indigo-600'}`}
+                                            >
+                                                {p.label}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
                             </g>
                         );
                     })}
