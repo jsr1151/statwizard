@@ -7,7 +7,7 @@ const ProgressiveTooltip = ({ term, title, desc, pedagogy, example, children, da
     return (
         <div className="relative inline-block group/tt tooltip-trigger">
             {children}
-            <div className={`tooltip-content absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-3xl shadow-2xl border transition-all duration-300 z-[9999] pointer-events-none group-hover/tt:pointer-events-auto ${darkMode ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
+            <div className={`tooltip-content absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-3xl shadow-2xl border transition-all duration-300 z-[9999] opacity-0 scale-95 invisible group-hover/tt:opacity-100 group-hover/tt:scale-100 group-hover/tt:visible pointer-events-none group-hover/tt:pointer-events-auto ${darkMode ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
                 }`}>
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
