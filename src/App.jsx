@@ -78,7 +78,11 @@ const generateAIResponse = async (prompt) => {
 
 // --- MAIN APP ---
 export default function App() {
-    const { updateAvailable, countdown } = useAutoReload();
+    // --- 1. CORE REFS (Top priority to avoid TDZ/hoisting issues) ---
+    const isPopStateRef = useRef(false);
+    const isFirstMountRef = useRef(true);
+
+    // --- 2. STANDARD STATE ---
     const [appMode, setAppMode] = useState('menu');
     const [searchQuery, setSearchQuery] = useState('');
     const [history, setHistory] = useState(['start']);
@@ -101,11 +105,17 @@ export default function App() {
     const [activeExplanation, setActiveExplanation] = useState(null);
     const [showHistory, setShowHistory] = useState(false);
 
-    // --- SHARED ANOVA TUTOR STATE ---
-    const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => !localStorage.getItem('anova_tutor_onboarded'));
+    // --- 3. STATE WITH INITIALIZERS / SIDE EFFECTS ---
+    const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => {
+        try {
+            return !localStorage.getItem('anova_tutor_onboarded');
+        } catch (e) {
+            return true;
+        }
+    });
 
-    const isPopStateRef = useRef(false);
-    const isFirstMountRef = useRef(true);
+    // --- 4. CUSTOM HOOKS ---
+    const { updateAvailable, countdown } = useAutoReload();
 
     // --- BROWSER HISTORY SYNC ---
     useEffect(() => {

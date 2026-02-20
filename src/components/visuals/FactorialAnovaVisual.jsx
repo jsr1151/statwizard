@@ -227,21 +227,6 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
         tutor.triggerEvent({ signal: 'change_alpha' });
     }, [alpha]);
 
-    useEffect(() => {
-        const handleAction = (e) => {
-            if (e.detail) handleTutorAction(e.detail);
-        };
-        const handleSignal = (e) => {
-            if (e.detail) tutor.triggerEvent({ signal: e.detail });
-        };
-        window.addEventListener('factorialAnovaTutorAction', handleAction);
-        window.addEventListener('factorialAnovaTutorSignal', handleSignal);
-        return () => {
-            window.removeEventListener('factorialAnovaTutorAction', handleAction);
-            window.removeEventListener('factorialAnovaTutorSignal', handleSignal);
-        };
-    }, [handleTutorAction, tutor]);
-
     const handleTutorAction = (action) => {
         switch (action) {
             case 'open_themes':
@@ -256,6 +241,21 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
             default: console.log("Factorial Tutor Action:", action);
         }
     };
+
+    useEffect(() => {
+        const handleAction = (e) => {
+            if (e.detail) handleTutorAction(e.detail);
+        };
+        const handleSignal = (e) => {
+            if (e.detail) tutor.triggerEvent({ signal: e.detail });
+        };
+        window.addEventListener('factorialAnovaTutorAction', handleAction);
+        window.addEventListener('factorialAnovaTutorSignal', handleSignal);
+        return () => {
+            window.removeEventListener('factorialAnovaTutorAction', handleAction);
+            window.removeEventListener('factorialAnovaTutorSignal', handleSignal);
+        };
+    }, [handleTutorAction, tutor]);
 
     const handleLevelAdd = (factorId) => {
         addLevel(factorId);
