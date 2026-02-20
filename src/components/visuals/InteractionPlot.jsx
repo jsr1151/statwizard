@@ -288,44 +288,45 @@ const InteractionPlot = ({
                     )}
                 </svg>
 
+                {/* Y Axis Label (Rotated) - Moved here for proper centering relative to the SVG area */}
+                <div
+                    className="absolute left-[30px] top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-2 group cursor-pointer z-50"
+                    onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
+                >
+                    {isEditingOutcome ? (
+                        <div className="flex items-center gap-1 bg-slate-900 border border-indigo-500/50 rounded-md px-2 py-1" onClick={e => e.stopPropagation()}>
+                            <input
+                                autoFocus
+                                value={tempOutcome}
+                                onChange={e => setTempOutcome(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        setOutcomeLabel(tempOutcome);
+                                        setIsEditingOutcome(false);
+                                    }
+                                }}
+                                className="bg-transparent text-[10px] font-black text-white outline-none w-24 uppercase tracking-widest"
+                            />
+                            <button
+                                onClick={() => { setOutcomeLabel(tempOutcome); setIsEditingOutcome(false); }}
+                                className="text-emerald-500 hover:text-emerald-400"
+                            >
+                                <Check size={10} />
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{outcomeLabel}</span>
+                            <Edit2 size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </>
+                    )}
+                </div>
+
                 {/* Educational Overlay / Key */}
                 <div className={`mt-6 grid grid-cols-3 gap-4 w-full p-4 rounded-xl border ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                     <div className="flex flex-col gap-1">
                         <span className="text-[8px] font-black uppercase text-indigo-500">Parallel Lines</span>
                         <span className={`text-[9px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Little to no interaction effect.</span>
-                    </div>
-                    {/* Y Axis Label (Rotated) */}
-                    <div
-                        className="absolute left-[-20px] top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-2 group cursor-pointer"
-                        onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
-                    >
-                        {isEditingOutcome ? (
-                            <div className="flex items-center gap-1 bg-slate-900 border border-indigo-500/50 rounded-md px-2 py-1" onClick={e => e.stopPropagation()}>
-                                <input
-                                    autoFocus
-                                    value={tempOutcome}
-                                    onChange={e => setTempOutcome(e.target.value)}
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') {
-                                            setOutcomeLabel(tempOutcome);
-                                            setIsEditingOutcome(false);
-                                        }
-                                    }}
-                                    className="bg-transparent text-[10px] font-black text-white outline-none w-24 uppercase tracking-widest"
-                                />
-                                <button
-                                    onClick={() => { setOutcomeLabel(tempOutcome); setIsEditingOutcome(false); }}
-                                    className="text-emerald-500 hover:text-emerald-400"
-                                >
-                                    <Check size={10} />
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{outcomeLabel}</span>
-                                <Edit2 size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </>
-                        )}
                     </div>
                     <div className="flex flex-col gap-1">
                         <span className="text-[8px] font-black uppercase text-emerald-500">Non-Parallel</span>
