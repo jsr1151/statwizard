@@ -122,7 +122,10 @@ const FactorialDatasetEditor = ({
                     })()}
                 </div>
 
-                <button onClick={() => { if (confirm("Clear all data?")) Object.keys(cellData).forEach(k => parseCellRaw(k, "")); }} className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors">
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('factorialAnovaTutorSignal', { detail: 'clear_all_attempt' }))}
+                    className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors"
+                >
                     <Trash2 size={12} className="inline mr-1" /> Clear All
                 </button>
             </div>
@@ -157,38 +160,59 @@ const FactorialDatasetEditor = ({
                                                 <div className="flex justify-between items-center mb-3">
                                                     <ProgressiveTooltip term="Cell Stats" title="Descriptive Statistics" desc={`N=${n} observations. Mean=${parseFloat(cell.summary?.mean || 0).toFixed(1)}. SD=${parseFloat(cell.summary?.sd || 0).toFixed(1)}.`} darkMode={darkMode}>
                                                         <div className="flex flex-col cursor-help">
-                                                            <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
+                                                            <ProgressiveTooltip term="N" title="Sample Size" desc="The number of observations in this group." darkMode={darkMode}>
+                                                                <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
+                                                            </ProgressiveTooltip>
                                                             {cell.summary && (
                                                                 <span className="text-[8px] font-black text-indigo-400 flex gap-2">
-                                                                    <span>M={parseFloat(cell.summary?.mean || 0).toFixed(1)}</span>
-                                                                    <span>SD={parseFloat(cell.summary?.sd || 0).toFixed(1)}</span>
+                                                                    <ProgressiveTooltip term="Mean" title="Average" desc="Sum of all values divided by N." darkMode={darkMode}>
+                                                                        <span className="cursor-help">M={parseFloat(cell.summary?.mean || 0).toFixed(1)}</span>
+                                                                    </ProgressiveTooltip>
+                                                                    <ProgressiveTooltip term="SD" title="Standard Deviation" desc="The spread of scores within this cell." darkMode={darkMode}>
+                                                                        <span className="cursor-help">SD={parseFloat(cell.summary?.sd || 0).toFixed(1)}</span>
+                                                                    </ProgressiveTooltip>
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </ProgressiveTooltip>
-                                                    <ProgressiveTooltip term="Toggle" title="Input Mode" desc="Switch between entering individual scores (RAW) or aggregate group stats (STATS)." darkMode={darkMode}>
-                                                        <div className="flex gap-1 p-1 bg-slate-900 rounded-lg cursor-pointer">
+                                                    <div className="flex gap-1 p-1 bg-slate-900 rounded-lg">
+                                                        <ProgressiveTooltip term="RAW" title="Individual Scores" desc="Enter participant scores directly." darkMode={darkMode}>
                                                             <button
                                                                 onClick={() => updateCell(key, 'inputMode', 'raw')}
                                                                 className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
                                                             >Raw</button>
+                                                        </ProgressiveTooltip>
+                                                        <ProgressiveTooltip term="STATS" title="Summary Input" desc="Enter group mean, SD, and N." darkMode={darkMode}>
                                                             <button
                                                                 onClick={() => updateCell(key, 'inputMode', 'summary')}
                                                                 className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
                                                             >Stats</button>
-                                                        </div>
-                                                    </ProgressiveTooltip>
+                                                        </ProgressiveTooltip>
+                                                    </div>
                                                 </div>
 
                                                 {cell.inputMode === 'summary' ? (
                                                     <div className="grid grid-cols-3 gap-2">
                                                         {['mean', 'sd', 'n'].map(field => (
                                                             <div key={field} className="flex flex-col gap-1">
-                                                                <label className="text-[7px] font-black uppercase text-slate-500">{field}</label>
+                                                                <ProgressiveTooltip
+                                                                    term={field.toUpperCase()}
+                                                                    title={field === 'mean' ? 'Average' : field === 'sd' ? 'Standard Deviation' : 'Sample Size'}
+                                                                    desc={field === 'mean' ? 'Center of the group.' : field === 'sd' ? 'Spread of the group.' : 'Count of observations.'}
+                                                                    darkMode={darkMode}
+                                                                >
+                                                                    <label className="text-[7px] font-black uppercase text-slate-500 cursor-help">{field}</label>
+                                                                </ProgressiveTooltip>
                                                                 <input
                                                                     type="text"
                                                                     value={cell.summary?.[field] || ""}
-                                                                    onChange={e => updateCellStats(key, field, e.target.value)}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        updateCellStats(key, field, val);
+                                                                        if (val && isNaN(parseFloat(val)) && val !== '-' && val !== '.') {
+                                                                            window.dispatchEvent(new CustomEvent('factorialAnovaTutorSignal', { detail: 'input_parse_error' }));
+                                                                        }
+                                                                    }}
                                                                     className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-lg p-1.5 text-[12px] font-black text-indigo-400 outline-none"
                                                                 />
                                                             </div>

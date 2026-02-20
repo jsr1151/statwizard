@@ -143,26 +143,72 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
     }, [cellData]);
 
     const tutorContext = useMemo(() => {
-        const ns = Object.values(cellStats || {}).map(c => c.n);
+        const stats = Object.values(cellStats || {});
+        const ns = stats.map(c => c.n);
+        const means = stats.map(c => Math.abs(c.mean));
+        const sds = stats.map(c => Math.sqrt(c.ss / (c.n - 1 || 1)));
+
         const anyCellN = ns.length > 0 ? Math.min(...ns) : 0;
+        const totalN = ns.reduce((a, b) => a + b, 0);
         const nRange = ns.length > 0 ? Math.max(...ns) - Math.min(...ns) : 0;
+
+        const maxMean = means.length > 0 ? Math.max(...means) : 0;
+        const sortedMeans = [...means].sort((a, b) => a - b);
+        const medianMean = sortedMeans.length > 0 ? sortedMeans[Math.floor(sortedMeans.length / 2)] : 0;
+
+        const validSDs = sds.filter(s => s > 0 && !isNaN(s));
+        const maxSD = validSDs.length > 0 ? Math.max(...validSDs) : 0;
+        const minSD = validSDs.length > 0 ? Math.min(...validSDs) : 0;
+        const sdRatio = minSD > 0 ? maxSD / minSD : 0;
+
+        // Interaction Type Logic
+        let interactionType = 'parallel';
+        if (stats.length >= 4) {
+            const slopes = [];
+            const bLevels = factors[1]?.levels || [];
+            const aLevels = factors[0]?.levels || [];
+            if (aLevels.length >= 2) {
+                bLevels.forEach(b => {
+                    const m1 = cellStats[`${aLevels[0].id}_${b.id}`]?.mean || 0;
+                    const m2 = cellStats[`${aLevels[aLevels.length - 1].id}_${b.id}`]?.mean || 0;
+                    slopes.push(m2 - m1);
+                });
+            }
+
+            if (slopes.length >= 2) {
+                const diff = Math.abs(slopes[0] - slopes[1]);
+                const signChange = Math.sign(slopes[0]) !== Math.sign(slopes[1]) && Math.abs(slopes[0]) > 0.1 && Math.abs(slopes[1]) > 0.1;
+
+                if (signChange) interactionType = 'crossing';
+                else if (diff > 0.5) interactionType = 'non-parallel';
+            }
+        }
 
         return {
             activeTab,
             alpha,
+            interactionType,
             factorCount: factors.length,
             factorALabel: factors[0]?.label,
             factorBLabel: factors[1]?.label,
             totalCells: factors.reduce((acc, f) => acc * f.levels.length, 1),
             allCellsEmpty,
+            totalN,
             anyCellN,
             nRange,
+            maxMean,
+            medianMean,
+            sdRatio,
+            pA: results?.effects?.A?.p || 1,
+            pB: results?.effects?.B?.p || 1,
+            pAxB: results?.effects?.AxB?.p || 1,
+            pesA: results?.effects?.A?.pes || 0,
+            pesB: results?.effects?.B?.pes || 0,
+            pesAxB: results?.effects?.AxB?.pes || 0,
             hasEmptyCells: factors[0]?.levels.some(a => factors[1]?.levels.some(b => {
                 const cell = cellData[`${a.id}_${b.id}`];
-                return cell?.inputMode === 'raw' ? cell.values.length === 0 : !cell?.summary?.n;
+                return cell?.inputMode === 'raw' ? (cell.values?.length || 0) === 0 : !cell?.summary?.n;
             })),
-            pInteraction: results?.effects?.AxB?.p || 1,
-            interactionType: results?.effects?.AxB?.p < alpha ? 'crossing' : 'parallel', // Simple proxy
             themeSelected: factors[0]?.label !== 'Factor A' || factors[1]?.label !== 'Factor B',
             hasViewedExplorer: activeTab === 'explorer',
             highlightPooledMS: activeTab === 'explorer'
@@ -185,9 +231,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
         const handleAction = (e) => {
             if (e.detail) handleTutorAction(e.detail);
         };
+        const handleSignal = (e) => {
+            if (e.detail) tutor.triggerEvent({ signal: e.detail });
+        };
         window.addEventListener('factorialAnovaTutorAction', handleAction);
-        return () => window.removeEventListener('factorialAnovaTutorAction', handleAction);
-    }, []);
+        window.addEventListener('factorialAnovaTutorSignal', handleSignal);
+        return () => {
+            window.removeEventListener('factorialAnovaTutorAction', handleAction);
+            window.removeEventListener('factorialAnovaTutorSignal', handleSignal);
+        };
+    }, [handleTutorAction, tutor]);
 
     const handleTutorAction = (action) => {
         switch (action) {
@@ -347,7 +400,10 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                             <div className="flex gap-4 mt-12 pb-12">
                                 <ProgressiveTooltip term="Axes" title="Swap Axes" desc="Switch which factor is on the x-axis." pedagogy="The interaction is the same, but one view may be easier to interpret than the other." darkMode={darkMode}>
                                     <button
-                                        onClick={() => setSwapAxes(!swapAxes)}
+                                        onClick={() => {
+                                            setSwapAxes(!swapAxes);
+                                            tutor.triggerEvent({ signal: 'swap_axes' });
+                                        }}
                                         className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${swapAxes ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
                                     >
                                         Swap Axes
@@ -355,7 +411,10 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                 </ProgressiveTooltip>
                                 <ProgressiveTooltip term="Points" title="Show Points" desc="Show cell means as points on the interaction plot." darkMode={darkMode}>
                                     <button
-                                        onClick={() => setShowRawPoints(!showRawPoints)}
+                                        onClick={() => {
+                                            setShowRawPoints(!showRawPoints);
+                                            tutor.triggerEvent({ signal: 'toggle_show_points' });
+                                        }}
                                         className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showRawPoints ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
                                     >
                                         {showRawPoints ? 'Hide Points' : 'Show Points'}
@@ -363,7 +422,10 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                 </ProgressiveTooltip>
                                 <ProgressiveTooltip term="Marginal" title="Marginal Means" desc="Collapse across the other factor to show main effect means." pedagogy="Caution: Main effects can be misleading if the interaction is significant." darkMode={darkMode}>
                                     <button
-                                        onClick={() => setShowMarginalMeans(!showMarginalMeans)}
+                                        onClick={() => {
+                                            setShowMarginalMeans(!showMarginalMeans);
+                                            tutor.triggerEvent({ signal: 'toggle_marginal_means' });
+                                        }}
                                         className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showMarginalMeans ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
                                     >
                                         Marginal Means
@@ -371,7 +433,10 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                 </ProgressiveTooltip>
                                 <ProgressiveTooltip term="Error" title="Error Bars" desc="Show uncertainty (95% CI) around the cell means." pedagogy="Error bars help you visualize if differences are statistically robust." darkMode={darkMode}>
                                     <button
-                                        onClick={() => setShowErrorBars(!showErrorBars)}
+                                        onClick={() => {
+                                            setShowErrorBars(!showErrorBars);
+                                            tutor.triggerEvent({ signal: 'toggle_error_bars' });
+                                        }}
                                         className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
                                     >
                                         {showErrorBars ? 'Hide 95% CI Bars' : 'Show 95% CI Bars'}
@@ -405,9 +470,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                         Teaching Tip: Check interaction first. If p {'<'} .05, interpret simple effects.
                                     </p>
                                 </div>
-                                <div className="text-[11px] font-black text-slate-500 tracking-widest flex items-baseline gap-1">
-                                    <span className="uppercase text-[10px]">Partial</span> <span className="text-indigo-400" style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '12px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
-                                </div>
+                                <ProgressiveTooltip
+                                    term="Effect Size"
+                                    title="Partial Eta Squared"
+                                    desc="Proportion of variance explained by the effect."
+                                    darkMode={darkMode}
+                                >
+                                    <div className="text-[11px] font-black text-slate-500 tracking-widest flex items-baseline gap-1 cursor-help">
+                                        <span className="uppercase text-[10px]">Partial</span> <span className="text-indigo-400" style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '12px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
+                                    </div>
+                                </ProgressiveTooltip>
                             </div>
 
                             <div className="flex flex-col gap-4">
@@ -434,10 +506,17 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                                 key={key}
                                                 onClick={() => {
                                                     setExpandedEffect(isExpanded ? null : key);
-                                                    if (key === 'A') setPlotFocus('A');
-                                                    else if (key === 'B') setPlotFocus('B');
+                                                    if (key === 'A') {
+                                                        setPlotFocus('A');
+                                                        tutor.triggerEvent({ signal: 'expand_card_A' });
+                                                    }
+                                                    else if (key === 'B') {
+                                                        setPlotFocus('B');
+                                                        tutor.triggerEvent({ signal: 'expand_card_B' });
+                                                    }
                                                     else {
                                                         setPlotFocus('interaction');
+                                                        tutor.triggerEvent({ signal: 'expand_card_AxB' });
                                                         if (interactionSig) setActiveTab('explorer');
                                                     }
                                                 }}
@@ -458,9 +537,17 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                                                 )}
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-[11px] font-mono font-bold text-indigo-400">
-                                                                    F({effect.df}, {results.effects.Error.df}) = {effect.f.toFixed(2)}, p {effect.p < .001 ? '< .001' : `= ${effect.p.toFixed(3)}`}
-                                                                </span>
+                                                                <ProgressiveTooltip
+                                                                    term="F-ratio"
+                                                                    title="Variance Ratio"
+                                                                    desc="The ratio of variability explained by this effect relative to the unexplained error variability."
+                                                                    pedagogy="F = MS(effect) / MS(error). A larger F means the effect stands out more from the noise."
+                                                                    darkMode={darkMode}
+                                                                >
+                                                                    <span className="text-[11px] font-mono font-bold text-indigo-400 cursor-help">
+                                                                        F({effect.df}, {results.effects.Error.df}) = {effect.f.toFixed(2)}, p {effect.p < .001 ? '< .001' : `= ${effect.p.toFixed(3)}`}
+                                                                    </span>
+                                                                </ProgressiveTooltip>
                                                                 {!isInteraction && interactionSig && (
                                                                     <div className="flex items-center gap-1 mt-1 text-amber-500">
                                                                         <AlertTriangle size={8} />
@@ -475,9 +562,17 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                                         <div className="text-center">
                                                             <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Effect Size</span>
                                                             <div className="flex items-baseline justify-center gap-1">
-                                                                <span className="text-[16px] font-black text-indigo-400">
-                                                                    {effect.pes.toFixed(2)}
-                                                                </span>
+                                                                <ProgressiveTooltip
+                                                                    term="Effect Size"
+                                                                    title="Partial Eta Squared"
+                                                                    desc="The proportion of total variance explained by this specific factor, after removing other main effects."
+                                                                    pedagogy="Unlike p-values (which tell you if it's real), effect sizes tell you how much it matters."
+                                                                    darkMode={darkMode}
+                                                                >
+                                                                    <span className="text-[16px] font-black text-indigo-400 cursor-help">
+                                                                        {effect.pes.toFixed(2)}
+                                                                    </span>
+                                                                </ProgressiveTooltip>
                                                                 <span className="text-[10px] font-black text-indigo-300">
                                                                     <span style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
                                                                 </span>
@@ -520,8 +615,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
 
                                 <div className={`mt-4 p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-slate-900/20 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                     <div className="flex justify-between items-center opacity-60">
-                                        <span className="text-[10px] font-black uppercase text-slate-500">Residual (Error)</span>
-                                        <span className="text-[10px] font-bold text-slate-500">SS={results.effects.Error.ss.toFixed(2)} | df={results.effects.Error.df} | MS={results.effects.Error.ms.toFixed(2)}</span>
+                                        <ProgressiveTooltip term="Residual" title="Error Variance" desc="The 'noise' or unexplained variability within each group." pedagogy="This variability is used as the denominator (MS error) for all F-tests in this ANOVA." darkMode={darkMode}>
+                                            <span className="text-[10px] font-black uppercase text-slate-500 cursor-help">Residual (Error)</span>
+                                        </ProgressiveTooltip>
+                                        <span className="text-[10px] font-bold text-slate-500">
+                                            SS={results.effects.Error.ss.toFixed(2)} |
+                                            <ProgressiveTooltip term="df" title="Degrees of Freedom" desc={`Numerator df=${results.effects.AxB.df}, Denominator df=${results.effects.Error.df}.`} darkMode={darkMode}>
+                                                <span className="cursor-help"> df={results.effects.Error.df} </span>
+                                            </ProgressiveTooltip>
+                                            | MS={results.effects.Error.ms.toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
                             </div>

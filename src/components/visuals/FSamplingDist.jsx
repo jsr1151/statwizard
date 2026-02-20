@@ -130,13 +130,13 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
         <g transform={`translate(${width - 160}, 60)`} className="select-none">
           <rect x="0" y="0" width="130" height="50" rx="8" fill={darkMode ? "#0f172a" : "#fff"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
           <g transform="translate(10, 15)">
-            <ProgressiveTooltip term="Alpha Region" title="The Rejection Zone" desc="The area under the curve that represents the alpha level (e.g., 5%). If F falls here, we reject the null." darkMode={darkMode}>
+            <ProgressiveTooltip term="Alpha Region" title="The Rejection Zone" desc="The area under the curve that represents the alpha level (e.g., 5%)." pedagogy="If your F-ratio falls in this red area, we reject the null hypothesis." darkMode={darkMode}>
               <rect width="8" height="8" rx="2" fill="#ef4444" opacity="0.6" className="cursor-help" />
             </ProgressiveTooltip>
             <text x="14" y="8" className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>α region</text>
           </g>
           <g transform="translate(10, 32)">
-            <ProgressiveTooltip term="P-Value" title="Observed Tail" desc="The area to the right of your calculated F-ratio. This is the probability of getting your result by chance." darkMode={darkMode}>
+            <ProgressiveTooltip term="P-Value" title="Observed Tail" desc="The probability of getting a result as extreme as yours by random chance." pedagogy="Area = p. If this area is smaller than alpha, we have a significant finding." darkMode={darkMode}>
               <rect width="8" height="8" rx="2" fill="#6366f1" opacity="0.6" className="cursor-help" />
             </ProgressiveTooltip>
             <text x="14" y="8" className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>p-value tail</text>
