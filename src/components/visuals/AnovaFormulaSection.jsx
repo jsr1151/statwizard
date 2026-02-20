@@ -1,7 +1,42 @@
 import React, { useState } from 'react';
-import { Sigma, Calculator, Info, InfoIcon, InfoIcon as MathIcon, ToggleLeft, ToggleRight, ArrowRight, Table, Binary } from 'lucide-react';
+import { Sigma, Calculator, Info, Table } from 'lucide-react';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import { MATH_TERMS } from '../../data/mathTerms';
+
+const getT = (key) => {
+    const term = MATH_TERMS[key];
+    if (!term) return { title: key, desc: '', pedagogy: '' };
+    return term;
+};
+
+const Term = ({ id, label, colorClass, children, darkMode, hoveredTerm, setHoveredTerm, showPills }) => {
+    const info = getT(id);
+    return (
+        <div className="flex flex-col items-center">
+            <ProgressiveTooltip
+                term={id}
+                title={info.title}
+                desc={info.desc}
+                pedagogy={info.pedagogy}
+                example={info.example}
+                darkMode={darkMode}
+            >
+                <span
+                    className={`font-serif cursor-help transition-all duration-300 ${colorClass} ${hoveredTerm === id ? 'scale-110 font-black underline decoration-2' : ''}`}
+                    onMouseEnter={() => setHoveredTerm(id)}
+                    onMouseLeave={() => setHoveredTerm(null)}
+                >
+                    {children}
+                </span>
+            </ProgressiveTooltip>
+            {showPills && label && (
+                <span className={`pill-label ${colorClass} bg-opacity-10 border ${darkMode ? 'border-white/5 bg-white/5' : 'border-black/5 bg-black/5'}`}>
+                    {label}
+                </span>
+            )}
+        </div>
+    );
+};
 
 const AnovaFormulaSection = ({
     stats,
@@ -16,44 +51,8 @@ const AnovaFormulaSection = ({
     const [sswMode, setSswMode] = useState('raw'); // 'raw' | 'summary'
     const [showExample, setShowExample] = useState(false);
 
-    const getT = (key) => {
-        const term = MATH_TERMS[key];
-        if (!term) return { title: key, desc: '', pedagogy: '' };
-        return term;
-    };
-
-    const Term = ({ id, label, colorClass, children }) => {
-        const info = getT(id);
-        return (
-            <div className="flex flex-col items-center">
-                <ProgressiveTooltip
-                    term={id}
-                    title={info.title}
-                    desc={info.desc}
-                    pedagogy={info.pedagogy}
-                    example={info.example}
-                    darkMode={darkMode}
-                >
-                    <span
-                        className={`font-serif cursor-help transition-all duration-300 ${colorClass} ${hoveredTerm === id ? 'scale-110 font-black underline decoration-2' : ''}`}
-                        onMouseEnter={() => setHoveredTerm(id)}
-                        onMouseLeave={() => setHoveredTerm(null)}
-                    >
-                        {children}
-                    </span>
-                </ProgressiveTooltip>
-                {showPills && label && (
-                    <span className={`pill-label ${colorClass} bg-opacity-10 border ${darkMode ? 'border-white/5 bg-white/5' : 'border-black/5 bg-black/5'}`}>
-                        {label}
-                    </span>
-                )}
-            </div>
-        );
-    };
-
     return (
         <div className="flex flex-col gap-8 w-full">
-            {/* Toggles */}
             <div className="flex flex-wrap items-center gap-4 px-2">
                 <div className={`flex p-1 rounded-xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                     <button
@@ -86,7 +85,6 @@ const AnovaFormulaSection = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* SS BETWEEN (SIGNAL) */}
                 <div className={`p-6 rounded-3xl border-2 transition-all ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
                     <div className="flex justify-between items-start mb-6">
                         <div>
@@ -103,28 +101,28 @@ const AnovaFormulaSection = ({
                     <div className="flex flex-wrap items-center justify-center gap-2 py-4 mb-4 text-xl">
                         <span className="font-serif">SS<sub>B</sub> =</span>
                         {notationMode === 'words' && <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter">Sum of all [</span>}
-                        <Term id="nj" label="group size" colorClass="color-group">
+                        <Term id="nj" label="group size" colorClass="color-group" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                             {notationMode === 'words' ? 'Group Size' : 'nⱼ'}
                         </Term>
                         <span className="text-slate-400">×</span>
                         <div className="flex items-center group/parentheses">
                             <span className="text-3xl text-slate-300">(</span>
-                            <Term id="x̄j" label="group mean" colorClass="color-group">
+                            <Term id="x̄j" label="group mean" colorClass="color-group" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                 {notationMode === 'words' ? 'Group Average' : 'x̄ⱼ'}
                             </Term>
                             <span className="text-slate-400 mx-1">−</span>
-                            <Term id="x̄_grand" label="grand mean" colorClass="color-grand">
+                            <Term id="x̄_grand" label="grand mean" colorClass="color-grand" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                 {notationMode === 'words' ? 'Total Average' : 'x̄_grand'}
                             </Term>
                             <span className="text-3xl text-slate-300">)</span>
-                            <Term id="squared" label="penalize gap" colorClass="text-slate-400">
+                            <Term id="squared" label="penalize gap" colorClass="text-slate-400" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                 <sup>2</sup>
                             </Term>
                         </div>
                         {notationMode === 'words' && <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter">] across levels</span>}
                         {notationMode === 'advanced' && (
                             <div className="ml-4 flex items-center opacity-40 hover:opacity-100 transition-opacity">
-                                <ProgressiveTooltip term="Σ" title="Summation" desc="Loop over groups (j = 1 to k) and add them up.">
+                                <ProgressiveTooltip term="Σ" title="Summation" desc="Loop over groups (j = 1 to k) and add them up." darkMode={darkMode}>
                                     <span className="text-2xl cursor-help">∑</span>
                                 </ProgressiveTooltip>
                             </div>
@@ -155,7 +153,6 @@ const AnovaFormulaSection = ({
                     )}
                 </div>
 
-                {/* SS WITHIN (NOISE) */}
                 <div className={`p-6 rounded-3xl border-2 transition-all ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
                     <div className="flex justify-between items-start mb-6">
                         <div>
@@ -182,15 +179,15 @@ const AnovaFormulaSection = ({
                                 {notationMode === 'words' && <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter">Sum of every [</span>}
                                 <div className="flex items-center group/parentheses">
                                     <span className="text-3xl text-slate-300">(</span>
-                                    <Term id="xij" label="person score" colorClass="color-individual">
+                                    <Term id="xij" label="person score" colorClass="color-individual" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                         {notationMode === 'words' ? 'Actual Score' : 'xᵢⱼ'}
                                     </Term>
                                     <span className="text-slate-400 mx-1">−</span>
-                                    <Term id="x̄j" label="group mean" colorClass="color-group">
+                                    <Term id="x̄j" label="group mean" colorClass="color-group" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                         {notationMode === 'words' ? 'Group Average' : 'x̄ⱼ'}
                                     </Term>
                                     <span className="text-3xl text-slate-300">)</span>
-                                    <Term id="squared" label="penalize gap" colorClass="text-slate-400">
+                                    <Term id="squared" label="penalize gap" colorClass="text-slate-400" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                         <sup>2</sup>
                                     </Term>
                                 </div>
@@ -198,11 +195,11 @@ const AnovaFormulaSection = ({
                             </>
                         ) : (
                             <>
-                                <Term id="nj" label="group size" colorClass="color-group">
+                                <Term id="nj" label="group size" colorClass="color-group" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                     ( {notationMode === 'words' ? 'size' : 'nⱼ'} − 1 )
                                 </Term>
                                 <span className="text-slate-400">×</span>
-                                <Term id="sj" label="variance" colorClass="color-individual">
+                                <Term id="sj" label="variance" colorClass="color-individual" darkMode={darkMode} hoveredTerm={hoveredTerm} setHoveredTerm={setHoveredTerm} showPills={showPills}>
                                     {notationMode === 'words' ? 'varianceⱼ' : 'sⱼ²'}
                                 </Term>
                             </>
@@ -210,7 +207,7 @@ const AnovaFormulaSection = ({
 
                         {notationMode === 'advanced' && (
                             <div className="ml-4 flex items-center opacity-40 hover:opacity-100 transition-opacity">
-                                <ProgressiveTooltip term="ΣΣ" title="Double Summation" desc="Loop over groups (j) and then people (i) within those groups.">
+                                <ProgressiveTooltip term="ΣΣ" title="Double Summation" desc="Loop over groups (j) and then people (i) within those groups." darkMode={darkMode}>
                                     <span className="text-2xl cursor-help">∑∑</span>
                                 </ProgressiveTooltip>
                             </div>
