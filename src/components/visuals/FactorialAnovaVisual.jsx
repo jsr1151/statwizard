@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Activity, LayoutGrid, PieChart, Plus, Sigma, X, GitCommit, Layers, Percent, Calculator } from 'lucide-react';
-import { fCDF, fPPF, calculateFactorialAnova, calculatePostHocFactorial } from '../../utils/mathHelpers';
+import { fCDF, fPPF } from '../../utils/mathHelpers';
+import FactorialAnovaTutorPanel from '../tutor/FactorialAnovaTutorPanel';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
+import useFactorialAnovaTutor from '../../hooks/useFactorialAnovaTutor';
 import FactorialDatasetEditor from './FactorialDatasetEditor';
+import { calculateFactorialAnova, calculateSimpleEffect } from '../../utils/factorialAnovaMath';
 import InteractionPlot from './InteractionPlot';
 import FSamplingDist from './FSamplingDist';
 import SimpleEffectsExplorer from './SimpleEffectsExplorer';
@@ -9,7 +13,7 @@ import { FACTORIAL_PRESETS } from '../../data/factorialPresets';
 
 import { ChevronRight, Info, AlertTriangle, HelpCircle } from 'lucide-react';
 
-const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor }) => {
+const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
     const [localShowValues, setLocalShowValues] = useState(propShowValues);
     useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
@@ -34,6 +38,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
     const [showErrorBars, setShowErrorBars] = useState(true);
     const [plotFocus, setPlotFocus] = useState('interaction'); // 'interaction', 'A', 'B'
     const [expandedEffect, setExpandedEffect] = useState(null);
+
+    const factors = useMemo(() => [factorA, factorB], [factorA, factorB]);
 
     // --- CALCULATIONS ---
     const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData), [factorA, factorB, cellData]);
@@ -117,43 +123,161 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
         }));
     };
 
+    const clearAll = () => {
+        setCellData(prev => {
+            const newCellData = {};
+            for (const key in prev) {
+                newCellData[key] = {
+                    ...prev[key],
+                    values: [],
+                    summary: { mean: '0.0', sd: '0.0', n: '0' }
+                };
+            }
+            return newCellData;
+        });
+    };
+
+    // --- Tutor Logic ---
+    const allCellsEmpty = useMemo(() => {
+        return Object.values(cellData).every(c => (c.inputMode === 'raw' && c.values.length === 0) || (c.inputMode === 'summary' && !c.summary.n));
+    }, [cellData]);
+
+    const tutorContext = useMemo(() => ({
+        activeTab,
+        alpha,
+        factorCount: factors.length,
+        factorALabel: factors[0]?.label,
+        factorBLabel: factors[1]?.label,
+        totalCells: factors.reduce((acc, f) => acc * f.levels.length, 1),
+        allCellsEmpty,
+        hasEmptyCells: factors[0]?.levels.some(a => factors[1]?.levels.some(b => {
+            const cell = cellData[`${a.id}_${b.id}`];
+            return cell?.inputMode === 'raw' ? cell.values.length === 0 : !cell?.summary?.n;
+        })),
+        pInteraction: results?.effects?.AxB?.p || 1,
+        themeSelected: factors[0]?.label !== 'Factor A' || factors[1]?.label !== 'Factor B', // Simple proxy
+    }), [activeTab, alpha, factors, allCellsEmpty, cellData, results]);
+
+    const tutor = useFactorialAnovaTutor(results, tutorContext);
+
+    // Tab Change Signal
+    useEffect(() => {
+        tutor.triggerEvent({ signal: `change_tab_${activeTab}` });
+    }, [activeTab]);
+
+    // Alpha Change Signal
+    useEffect(() => {
+        tutor.triggerEvent({ signal: 'change_alpha' });
+    }, [alpha]);
+
+    const handleTutorAction = (action) => {
+        switch (action) {
+            case 'open_themes':
+                // Could open a dropdown or prompt
+                break;
+            case 'focus_grid':
+                setActiveTab('data');
+                break;
+            case 'go_to_explorer':
+                setActiveTab('explorer');
+                break;
+            default: console.log("Tutor Action:", action);
+        }
+    };
+
+    const handleLevelAdd = (factorId) => {
+        addLevel(factorId);
+        tutor.triggerEvent({ signal: 'add_level' });
+    };
+
+    const handleClearAll = () => {
+        if (!allCellsEmpty) {
+            tutor.triggerEvent({ signal: 'clear_all_attempt' });
+        }
+        clearAll();
+    };
+
     return (
-        <div className="w-full flex flex-col gap-8 animate-in fade-in duration-700 relative">
+        <div
+            className="w-full flex flex-col gap-8 animate-in fade-in duration-700 relative"
+            onMouseMove={() => tutor.resetIdle()}
+        >
+            <FactorialAnovaTutorPanel
+                tip={tutor.activeTip}
+                onDismiss={tutor.dismissTip}
+                onAction={handleTutorAction}
+                darkMode={darkMode}
+            />
+
             {/* Visualizer Frame - Increased height for more breathing room */}
             <div className={`w-full h-[800px] overflow-hidden border-2 rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 {/* Tab Navigation */}
                 <div className="absolute top-6 left-6 flex gap-3 z-40">
-                    {[
-                        { id: 'data', label: 'Data', icon: <Sigma size={12} /> },
-                        { id: 'plot', label: 'Plot', icon: <Activity size={12} /> },
-                        { id: 'table', label: 'Table', icon: <Layers size={12} /> },
-                        { id: 'explorer', label: 'Explorer', icon: <Calculator size={12} />, hidden: results?.effects?.AxB?.p >= alpha },
-                        { id: 'fdist', label: 'F-Dist', icon: <Percent size={12} /> }
-                    ].filter(t => !t.hidden).map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-xl' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}
-                        >
-                            {tab.icon} {tab.label}
-                        </button>
-                    ))}
+                    <div className="flex gap-2">
+                        {[
+                            { id: 'data', label: 'Data', tt: 'Enter your factorial data groups.' },
+                            { id: 'plot', label: 'Plot', tt: 'Visualize main effects and interactions.' },
+                            { id: 'table', label: 'Table', tt: 'View the ANOVA summary results.' },
+                            { id: 'explorer', label: 'Explorer', tt: 'Drill down into simple effects.' },
+                            { id: 'fdist', label: 'F-Dist', tt: 'See the probability distribution.' }
+                        ].map(tab => (
+                            <ProgressiveTooltip
+                                key={tab.id}
+                                term={tab.label}
+                                title={`${tab.label} View`}
+                                desc={tab.tt}
+                                darkMode={darkMode}
+                            >
+                                <button
+                                    onClick={() => {
+                                        if (tab.id !== 'data' && !results) {
+                                            tutor.triggerEvent({ signal: 'try_unlock_results' });
+                                            return;
+                                        }
+                                        setActiveTab(tab.id);
+                                    }}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    {tab.label}
+                                </button>
+                            </ProgressiveTooltip>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Header Labels - Integrated into Themes area to avoid tab collision */}
                 <div className="absolute top-[85px] right-8 text-right z-40 pointer-events-none">
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] font-black uppercase text-indigo-500/60 tracking-widest px-1">Design Model</span>
-                        <span className={`text-[9px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
-                    </div>
+                    <ProgressiveTooltip
+                        term="Design Model"
+                        title="Between-Subjects"
+                        desc="Between-subjects means each person contributes data to only one cell."
+                        pedagogy="This design assumes that scores in different cells are independent because they come from different people."
+                        darkMode={darkMode}
+                    >
+                        <div className="flex flex-col gap-0.5 pointer-events-auto cursor-help">
+                            <span className="text-[10px] font-black uppercase text-indigo-500/60 tracking-widest px-1">Design Model</span>
+                            <span className={`text-[9px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
+                        </div>
+                    </ProgressiveTooltip>
                 </div>
 
                 {/* Study Themes (Positioned below tabs, above content) */}
                 <div className="absolute top-[85px] left-6 z-40">
                     <div className="flex flex-col gap-1.5">
-                        <span className="text-[10px] font-black uppercase text-indigo-500/50 tracking-[0.2em] px-1">Study Themes</span>
+                        <ProgressiveTooltip
+                            term="Themes"
+                            title="Study Themes"
+                            desc="Study Themes pre-fill common factorial designs and example datasets."
+                            pedagogy="Themes help you see how typical research questions map to factors and levels."
+                            darkMode={darkMode}
+                        >
+                            <span className="text-[10px] font-black uppercase text-indigo-500/50 tracking-[0.2em] px-1 cursor-help">Study Themes</span>
+                        </ProgressiveTooltip>
                         <select
-                            onChange={(e) => loadPreset(e.target.value)}
+                            onChange={(e) => {
+                                loadPreset(e.target.value);
+                                tutor.triggerEvent({ signal: 'theme_selected' });
+                            }}
                             className={`bg-slate-900/40 backdrop-blur-2xl text-slate-300 text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-2xl border border-white/5 outline-none hover:border-indigo-500/30 hover:text-white transition-all cursor-pointer shadow-2xl min-w-[220px]`}
                         >
                             <option value="">Select a Theme...</option>
@@ -202,30 +326,38 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                 <div className="text-slate-500 italic text-[14px]">Loading interaction plot...</div>
                             )}
                             <div className="flex gap-4 mt-12 pb-12">
-                                <button
-                                    onClick={() => setSwapAxes(!swapAxes)}
-                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${swapAxes ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                                >
-                                    Swap Axes
-                                </button>
-                                <button
-                                    onClick={() => setShowRawPoints(!showRawPoints)}
-                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showRawPoints ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                                >
-                                    {showRawPoints ? 'Hide Points' : 'Show Points'}
-                                </button>
-                                <button
-                                    onClick={() => setShowMarginalMeans(!showMarginalMeans)}
-                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showMarginalMeans ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                                >
-                                    Marginal Means
-                                </button>
-                                <button
-                                    onClick={() => setShowErrorBars(!showErrorBars)}
-                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                                >
-                                    {showErrorBars ? 'Hide 95% CI Bars' : 'Show 95% CI Bars'}
-                                </button>
+                                <ProgressiveTooltip term="Axes" title="Swap Axes" desc="Switch which factor is on the x-axis." pedagogy="The interaction is the same, but one view may be easier to interpret than the other." darkMode={darkMode}>
+                                    <button
+                                        onClick={() => setSwapAxes(!swapAxes)}
+                                        className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${swapAxes ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        Swap Axes
+                                    </button>
+                                </ProgressiveTooltip>
+                                <ProgressiveTooltip term="Points" title="Show Points" desc="Show cell means as points on the interaction plot." darkMode={darkMode}>
+                                    <button
+                                        onClick={() => setShowRawPoints(!showRawPoints)}
+                                        className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showRawPoints ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        {showRawPoints ? 'Hide Points' : 'Show Points'}
+                                    </button>
+                                </ProgressiveTooltip>
+                                <ProgressiveTooltip term="Marginal" title="Marginal Means" desc="Collapse across the other factor to show main effect means." pedagogy="Caution: Main effects can be misleading if the interaction is significant." darkMode={darkMode}>
+                                    <button
+                                        onClick={() => setShowMarginalMeans(!showMarginalMeans)}
+                                        className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showMarginalMeans ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        Marginal Means
+                                    </button>
+                                </ProgressiveTooltip>
+                                <ProgressiveTooltip term="Error" title="Error Bars" desc="Show uncertainty (95% CI) around the cell means." pedagogy="Error bars help you visualize if differences are statistically robust." darkMode={darkMode}>
+                                    <button
+                                        onClick={() => setShowErrorBars(!showErrorBars)}
+                                        className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        {showErrorBars ? 'Hide 95% CI Bars' : 'Show 95% CI Bars'}
+                                    </button>
+                                </ProgressiveTooltip>
                             </div>
                         </div>
                     )}

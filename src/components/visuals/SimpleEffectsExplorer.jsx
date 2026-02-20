@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronRight, ArrowRight, Calculator, Info, GitCompare } from 'lucide-react';
+import { ChevronRight, ArrowRight, Calculator, Info, GitCompare, HelpCircle } from 'lucide-react';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import { calculate95CI, fCDF } from '../../utils/mathHelpers';
 
 const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode }) => {
@@ -100,27 +101,31 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
                     <h3 className="text-[16px] font-black text-white mb-6 uppercase italic">I want to see the effect of...</h3>
 
                     <div className="flex flex-col gap-3">
-                        <button
-                            onClick={() => { setSliceFactor('B'); setSelectedLevel(null); }}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all ${sliceFactor === 'B' ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 hover:border-slate-700'}`}
-                        >
-                            <div className="flex justify-between items-center">
-                                <span className="text-[12px] font-black text-white uppercase">{factorA.label}</span>
-                                <ChevronRight size={14} className="text-slate-600" />
-                            </div>
-                            <span className="text-[10px] text-slate-500">at each level of {factorB.label}</span>
-                        </button>
+                        <ProgressiveTooltip term="Perspective A" title="Slice by Factor B" desc={`See if ${factorA.label} matters within each level of ${factorB.label}.`} darkMode={darkMode}>
+                            <button
+                                onClick={() => { setSliceFactor('B'); setSelectedLevel(null); }}
+                                className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${sliceFactor === 'B' ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 hover:border-slate-700'}`}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[12px] font-black text-white uppercase">{factorA.label}</span>
+                                    <ChevronRight size={14} className="text-slate-600" />
+                                </div>
+                                <span className="text-[10px] text-slate-500">at each level of {factorB.label}</span>
+                            </button>
+                        </ProgressiveTooltip>
 
-                        <button
-                            onClick={() => { setSliceFactor('A'); setSelectedLevel(null); }}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all ${sliceFactor === 'A' ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 hover:border-slate-700'}`}
-                        >
-                            <div className="flex justify-between items-center">
-                                <span className="text-[12px] font-black text-white uppercase">{factorB.label}</span>
-                                <ChevronRight size={14} className="text-slate-600" />
-                            </div>
-                            <span className="text-[10px] text-slate-500">at each level of {factorA.label}</span>
-                        </button>
+                        <ProgressiveTooltip term="Perspective B" title="Slice by Factor A" desc={`See if ${factorB.label} matters within each level of ${factorA.label}.`} darkMode={darkMode}>
+                            <button
+                                onClick={() => { setSliceFactor('A'); setSelectedLevel(null); }}
+                                className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${sliceFactor === 'A' ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 hover:border-slate-700'}`}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[12px] font-black text-white uppercase">{factorB.label}</span>
+                                    <ChevronRight size={14} className="text-slate-600" />
+                                </div>
+                                <span className="text-[10px] text-slate-500">at each level of {factorA.label}</span>
+                            </button>
+                        </ProgressiveTooltip>
                     </div>
                 </div>
 
@@ -131,13 +136,14 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
 
                     <div className="grid grid-cols-1 gap-2">
                         {constantFactor.levels.map(l => (
-                            <button
-                                key={l.id}
-                                onClick={() => setSelectedLevel(l.id)}
-                                className={`p-3 rounded-xl border-2 text-[11px] font-black uppercase transition-all ${selectedLevel === l.id ? 'bg-emerald-600 border-emerald-500 text-white' : 'border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                            >
-                                {l.label}
-                            </button>
+                            <ProgressiveTooltip key={l.id} term={l.label} title="Select Level" desc={`Analyze the target factor specifically for the ${l.label} condition.`} darkMode={darkMode}>
+                                <button
+                                    onClick={() => setSelectedLevel(l.id)}
+                                    className={`w-full p-3 rounded-xl border-2 text-[11px] font-black uppercase transition-all ${selectedLevel === l.id ? 'bg-emerald-600 border-emerald-500 text-white' : 'border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                    {l.label}
+                                </button>
+                            </ProgressiveTooltip>
                         ))}
                     </div>
                 </div>
@@ -199,10 +205,12 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
                                         </div>
                                     </div>
 
-                                    <p className="text-[10px] text-slate-500 mt-6 italic flex items-center gap-2">
-                                        <Info size={10} />
-                                        <span>Analysis uses pooled Error Variance ({results.effects.Error.ms.toFixed(2)}) for higher sensitivity.</span>
-                                    </p>
+                                    <ProgressiveTooltip term="Pooled MS" title="Why pooled error?" desc="Simple effects often use the error term from the main ANOVA (Pooled MS error) because it is based on more degrees of freedom and provides a more stable estimate of population variance." darkMode={darkMode}>
+                                        <p className="text-[10px] text-slate-500 mt-6 italic flex items-center gap-2 cursor-help">
+                                            <Info size={10} />
+                                            <span>Analysis uses pooled Error Variance ({results.effects.Error.ms.toFixed(2)}) for higher sensitivity.</span>
+                                        </p>
+                                    </ProgressiveTooltip>
                                 </div>
                                 <div className={`p-6 rounded-[2.5rem] border-2 flex flex-col items-center justify-center ${darkMode ? 'bg-slate-950 border-slate-800 shadow-2xl' : 'bg-white border-slate-100 shadow-xl'}`}>
                                     <span className="text-[9px] font-black uppercase text-slate-500 mb-2 tracking-[0.2em]">F-Ratio</span>

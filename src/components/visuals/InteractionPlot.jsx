@@ -1,6 +1,7 @@
 import React from 'react';
-import { Edit2, Check } from 'lucide-react';
+import { Edit2, Check, Info } from 'lucide-react';
 import { calculate95CI } from '../../utils/mathHelpers';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
 
 const InteractionPlot = ({
     factorA,
@@ -73,9 +74,11 @@ const InteractionPlot = ({
                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                         {swapAxes ? `${factorB.label} on X, lines by ${factorA.label}` : `${factorA.label} on X, lines by ${factorB.label}`}
                     </h4>
-                    <p className={`text-[11px] font-medium ${darkMode ? 'text-indigo-400/80' : 'text-indigo-600/80'}`}>
-                        {getInterpretation()}
-                    </p>
+                    <ProgressiveTooltip term="Interpretation" title="Plot Analysis" desc="ANOVA plots help detect interactions visually." pedagogy="If the lines are parallel, there is likely no interaction. If they cross, the interaction is usually strong." darkMode={darkMode}>
+                        <p className={`text-[11px] font-medium ${darkMode ? 'text-indigo-400/80' : 'text-indigo-600/80'} cursor-help`}>
+                            {getInterpretation()}
+                        </p>
+                    </ProgressiveTooltip>
                 </div>
                 <div className="flex gap-4">
                     {lineLevels.map((l, i) => (

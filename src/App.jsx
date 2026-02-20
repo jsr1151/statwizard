@@ -65,6 +65,7 @@ import UpdateToast from './components/common/UpdateToast';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
+import FactorialAnovaTutorPanel from './components/tutor/FactorialAnovaTutorPanel';
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -752,6 +753,46 @@ export default function App() {
                             }
 
                             window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: action }));
+                        }}
+                        darkMode={darkMode}
+                    />
+                )}
+
+                {currentStepId === 'res_factorial_anova' && factorialAnovaTutor.activeTip && (
+                    <FactorialAnovaTutorPanel
+                        tip={factorialAnovaTutor.activeTip}
+                        onDismiss={factorialAnovaTutor.dismissTip}
+                        onShowHistory={() => setShowHistory(true)}
+                        onAction={(action) => {
+                            if (action === 'dismiss_permanent') factorialAnovaTutor.dismissTip(factorialAnovaTutor.activeTip.id, true);
+                            if (action === 'dismiss_session') factorialAnovaTutor.dismissTip(factorialAnovaTutor.activeTip.id, false);
+
+                            const factorialExplanations = {
+                                'explain_balanced': {
+                                    title: "Why Balance Matters",
+                                    body: "When every cell has the same number of people, the factors are perfectly independent (orthogonal). If Ns are unequal, the factors 'overlap' and sums of squares are harder to calculate and interpret.",
+                                },
+                                'explain_simple_effects': {
+                                    title: "What are Simple Effects?",
+                                    body: "Simple effects are one-way ANOVAs conducted within a single level of the other factor. For example, 'Does Factor A matter *only* when Factor B is at Level 1?'",
+                                },
+                                'explain_interaction': {
+                                    title: "Visualizing Interaction",
+                                    body: "If lines are parallel, the effect of Factor A is the same regardless of Factor B. If they cross or diverge, the effect changes—which we call an interaction.",
+                                }
+                            };
+
+                            if (factorialExplanations[action]) {
+                                setActiveExplanation(factorialExplanations[action]);
+                            }
+
+                            // Signal down to the visualizer for UI-specific actions
+                            window.dispatchEvent(new CustomEvent('factorialAnovaTutorAction', { detail: action }));
+
+                            // Auto-dismiss after action if needed (helps keep UI clean)
+                            if (factorialAnovaTutor.activeTip) {
+                                factorialAnovaTutor.dismissTip(factorialAnovaTutor.activeTip.id, false);
+                            }
                         }}
                         darkMode={darkMode}
                     />

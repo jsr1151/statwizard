@@ -1,5 +1,6 @@
 import React from 'react';
-import { Maximize2, Minimize2, Trash2, Plus } from 'lucide-react';
+import { Maximize2, Minimize2, Trash2, Plus, Info } from 'lucide-react';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
 
 const FactorialDatasetEditor = ({
     factorA,
@@ -21,7 +22,9 @@ const FactorialDatasetEditor = ({
                 <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex justify-between items-center mb-4">
                         <div className="flex flex-col">
-                            <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-500">Factor A: {factorA.label}</h4>
+                            <ProgressiveTooltip term="Factor A" title="Independent Variable 1" desc="The first independent factor in your design." darkMode={darkMode}>
+                                <h4 className="text-[12px] font-black uppercase tracking-widest text-indigo-500 cursor-help">Factor A: {factorA.label}</h4>
+                            </ProgressiveTooltip>
                             <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
                         </div>
                         <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-lg border border-indigo-500/20 text-[9px] font-black hover:bg-indigo-600/20 transition-all">
@@ -50,12 +53,16 @@ const FactorialDatasetEditor = ({
                 <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-100'}`}>
                     <div className="flex justify-between items-center mb-4">
                         <div className="flex flex-col">
-                            <h4 className="text-[12px] font-black uppercase tracking-widest text-emerald-500">Factor B: {factorB.label}</h4>
+                            <ProgressiveTooltip term="Factor B" title="Independent Variable 2" desc="The second independent factor in your design." darkMode={darkMode}>
+                                <h4 className="text-[12px] font-black uppercase tracking-widest text-emerald-500 cursor-help">Factor B: {factorB.label}</h4>
+                            </ProgressiveTooltip>
                             <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
                         </div>
-                        <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-600/20 transition-all">
-                            <Plus size={12} /> ADD LEVEL
-                        </button>
+                        <ProgressiveTooltip term="+ Level" title="Add Level" desc="Add a new category or condition to this factor." darkMode={darkMode}>
+                            <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-600/20 transition-all">
+                                <Plus size={12} /> ADD LEVEL
+                            </button>
+                        </ProgressiveTooltip>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {factorB.levels.map(level => (
@@ -148,25 +155,29 @@ const FactorialDatasetEditor = ({
                                         <td key={b.id} className="min-w-[200px]">
                                             <div className={`p-4 rounded-[1.5rem] border-2 transition-all relative ${darkMode ? 'bg-slate-950 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
-                                                        {cell.summary && (
-                                                            <span className="text-[8px] font-black text-indigo-400 flex gap-2">
-                                                                <span>M={parseFloat(cell.summary.mean || 0).toFixed(1)}</span>
-                                                                <span>SD={parseFloat(cell.summary.sd || 0).toFixed(1)}</span>
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex gap-1 p-1 bg-slate-900 rounded-lg">
-                                                        <button
-                                                            onClick={() => updateCell(key, 'inputMode', 'raw')}
-                                                            className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
-                                                        >Raw</button>
-                                                        <button
-                                                            onClick={() => updateCell(key, 'inputMode', 'summary')}
-                                                            className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
-                                                        >Stats</button>
-                                                    </div>
+                                                    <ProgressiveTooltip term="Cell Stats" title="Descriptive Statistics" desc={`N=${n} observations. Mean=${parseFloat(cell.summary.mean || 0).toFixed(1)}. SD=${parseFloat(cell.summary.sd || 0).toFixed(1)}.`} darkMode={darkMode}>
+                                                        <div className="flex flex-col cursor-help">
+                                                            <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
+                                                            {cell.summary && (
+                                                                <span className="text-[8px] font-black text-indigo-400 flex gap-2">
+                                                                    <span>M={parseFloat(cell.summary.mean || 0).toFixed(1)}</span>
+                                                                    <span>SD={parseFloat(cell.summary.sd || 0).toFixed(1)}</span>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </ProgressiveTooltip>
+                                                    <ProgressiveTooltip term="Toggle" title="Input Mode" desc="Switch between entering individual scores (RAW) or aggregate group stats (STATS)." darkMode={darkMode}>
+                                                        <div className="flex gap-1 p-1 bg-slate-900 rounded-lg cursor-pointer">
+                                                            <button
+                                                                onClick={() => updateCell(key, 'inputMode', 'raw')}
+                                                                className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                                                            >Raw</button>
+                                                            <button
+                                                                onClick={() => updateCell(key, 'inputMode', 'summary')}
+                                                                className={`text-[8px] px-2 py-1 rounded-md font-black uppercase transition-all ${cell.inputMode === 'summary' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
+                                                            >Stats</button>
+                                                        </div>
+                                                    </ProgressiveTooltip>
                                                 </div>
 
                                                 {cell.inputMode === 'summary' ? (
