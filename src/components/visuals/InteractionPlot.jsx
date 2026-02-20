@@ -1,4 +1,5 @@
 import React from 'react';
+import { Edit2, Check } from 'lucide-react';
 import { calculate95CI } from '../../utils/mathHelpers';
 
 const InteractionPlot = ({
@@ -8,6 +9,7 @@ const InteractionPlot = ({
     cellData,
     swapAxes,
     outcomeLabel = "Outcome",
+    setOutcomeLabel,
     showRawPoints = false,
     showMarginalMeans = false,
     showErrorBars = false,
@@ -15,6 +17,8 @@ const InteractionPlot = ({
     darkMode
 }) => {
     const [hoveredLine, setHoveredLine] = React.useState(null);
+    const [isEditingOutcome, setIsEditingOutcome] = React.useState(false);
+    const [tempOutcome, setTempOutcome] = React.useState(outcomeLabel);
     const xFactor = swapAxes ? factorB : factorA;
     const lineFactor = swapAxes ? factorA : factorB;
 
@@ -251,7 +255,8 @@ const InteractionPlot = ({
                                             <text
                                                 x={p.x} y={p.y + labelYOffset}
                                                 textAnchor="middle"
-                                                className={`text-[8px] font-bold ${darkMode ? 'fill-indigo-300' : 'fill-indigo-600'}`}
+                                                className={`text-[8px] font-bold ${darkMode ? 'fill-indigo-300' : 'fill-indigo-600'} transition-opacity duration-300`}
+                                                opacity={showRawPoints || (isActive && hoveredLine !== null) ? "1" : "0"}
                                             >
                                                 {p.label}
                                             </text>
@@ -296,6 +301,39 @@ const InteractionPlot = ({
                     <div className="flex flex-col gap-1">
                         <span className="text-[8px] font-black uppercase text-indigo-500">Parallel Lines</span>
                         <span className={`text-[9px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Little to no interaction effect.</span>
+                    </div>
+                    {/* Y Axis Label (Rotated) */}
+                    <div
+                        className="absolute left-[-20px] top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-2 group cursor-pointer"
+                        onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
+                    >
+                        {isEditingOutcome ? (
+                            <div className="flex items-center gap-1 bg-slate-900 border border-indigo-500/50 rounded-md px-2 py-1" onClick={e => e.stopPropagation()}>
+                                <input
+                                    autoFocus
+                                    value={tempOutcome}
+                                    onChange={e => setTempOutcome(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            setOutcomeLabel(tempOutcome);
+                                            setIsEditingOutcome(false);
+                                        }
+                                    }}
+                                    className="bg-transparent text-[10px] font-black text-white outline-none w-24 uppercase tracking-widest"
+                                />
+                                <button
+                                    onClick={() => { setOutcomeLabel(tempOutcome); setIsEditingOutcome(false); }}
+                                    className="text-emerald-500 hover:text-emerald-400"
+                                >
+                                    <Check size={10} />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{outcomeLabel}</span>
+                                <Edit2 size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </>
+                        )}
                     </div>
                     <div className="flex flex-col gap-1">
                         <span className="text-[8px] font-black uppercase text-emerald-500">Non-Parallel</span>

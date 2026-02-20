@@ -260,82 +260,110 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                {Object.entries(results.effects).map(([key, effect]) => {
-                                    if (key === 'Error' || key === 'Total') return null;
-                                    const isExpanded = expandedEffect === key;
-                                    const isInteraction = key === 'AxB';
+                                {(() => {
+                                    const effects = Object.entries(results.effects).filter(([k]) => k !== 'Error' && k !== 'Total');
+                                    const interactionSig = results.effects.AxB.p < alpha;
 
-                                    return (
-                                        <div
-                                            key={key}
-                                            onClick={() => {
-                                                setExpandedEffect(isExpanded ? null : key);
-                                                if (key === 'A') setPlotFocus('A');
-                                                else if (key === 'B') setPlotFocus('B');
-                                                else setPlotFocus('interaction');
-                                            }}
-                                            className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer group hover:scale-[1.01] ${isExpanded ? 'bg-indigo-600/10 border-indigo-500/50 shadow-2xl scale-[1.01]' : (darkMode ? 'bg-slate-900/40 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg')}`}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isInteraction ? 'bg-rose-500/10 text-rose-500' : 'bg-indigo-500/10 text-indigo-500'}`}>
-                                                        {isInteraction ? <Layers size={20} /> : <GitCommit size={20} />}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className={`text-[12px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                                                            {effect.label}
-                                                        </h4>
-                                                        <span className="text-[9px] font-black text-slate-500 uppercase">df({effect.df}, {results.effects.Error.df})</span>
-                                                    </div>
-                                                </div>
+                                    // Sort interactions to the top if significant
+                                    const sortedEffects = [...effects].sort((a, b) => {
+                                        if (interactionSig) {
+                                            if (a[0] === 'AxB') return -1;
+                                            if (b[0] === 'AxB') return 1;
+                                        }
+                                        return 0; // Keep original (A, B, AxB) if not sig
+                                    });
 
-                                                <div className="flex items-center gap-12">
-                                                    <div className="text-center">
-                                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">p-value</span>
-                                                        <span className={`text-[16px] font-black ${effect.p < 0.05 ? 'text-emerald-500' : 'text-slate-500'}`}>
-                                                            {effect.p < 0.001 ? '< .001' : effect.p.toFixed(3)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">F-Ratio</span>
-                                                        <span className={`text-[16px] font-black ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                                            {effect.f.toFixed(2)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-center min-w-[60px]">
-                                                        <span className="text-[9px] font-black uppercase text-indigo-500 tracking-widest block mb-1">ηp²</span>
-                                                        <span className="text-[16px] font-black text-indigo-400">
-                                                            {effect.pes.toFixed(2)}
-                                                        </span>
-                                                    </div>
-                                                    <ChevronRight size={16} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                                                </div>
-                                            </div>
+                                    return sortedEffects.map(([key, effect]) => {
+                                        const isExpanded = expandedEffect === key;
+                                        const isInteraction = key === 'AxB';
+                                        const isSig = effect.p < alpha;
 
-                                            {isExpanded && (
-                                                <div className="mt-6 pt-6 border-t border-slate-700/30 grid grid-cols-4 gap-4 animate-in slide-in-from-top-2">
-                                                    <div>
-                                                        <label className="text-[8px] font-black uppercase text-slate-500">Sum of Squares</label>
-                                                        <div className="text-[12px] font-bold text-slate-300">{effect.ss.toFixed(2)}</div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[8px] font-black uppercase text-slate-500">Mean Square</label>
-                                                        <div className="text-[12px] font-bold text-slate-300">{effect.ms.toFixed(2)}</div>
-                                                    </div>
-                                                    <div className="col-span-2 bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10">
-                                                        <label className="text-[8px] font-black uppercase text-indigo-400">Educational Connection</label>
-                                                        <div className="text-[10px] text-slate-400 leading-tight mt-1">
-                                                            {key === 'A' || key === 'B' ?
-                                                                `Main effect of ${effect.label} ignores the other factor and looks at the averages across it.` :
-                                                                "Interaction effect tests if the impact of one factor changes depending on the level of the other factor."
-                                                            }
+                                        return (
+                                            <div
+                                                key={key}
+                                                onClick={() => {
+                                                    setExpandedEffect(isExpanded ? null : key);
+                                                    if (key === 'A') setPlotFocus('A');
+                                                    else if (key === 'B') setPlotFocus('B');
+                                                    else {
+                                                        setPlotFocus('interaction');
+                                                        if (interactionSig) setActiveTab('explorer');
+                                                    }
+                                                }}
+                                                className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer group hover:scale-[1.01] ${isExpanded ? 'bg-indigo-600/10 border-indigo-500/50 shadow-2xl scale-[1.01]' : (darkMode ? 'bg-slate-900/40 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg')} ${isInteraction && interactionSig ? 'ring-2 ring-indigo-500/30' : ''}`}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isInteraction ? 'bg-rose-500/10 text-rose-500' : 'bg-indigo-500/10 text-indigo-500'}`}>
+                                                            {isInteraction ? <Layers size={20} /> : <GitCommit size={20} />}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className={`text-[12px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                                    {effect.label}
+                                                                </h4>
+                                                                {isInteraction && interactionSig && (
+                                                                    <span className="bg-rose-500 text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">SIGNIFICANT</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[11px] font-mono font-bold text-indigo-400">
+                                                                    F({effect.df}, {results.effects.Error.df}) = {effect.f.toFixed(2)}, p {effect.p < .001 ? '< .001' : `= ${effect.p.toFixed(3)}`}
+                                                                </span>
+                                                                {!isInteraction && interactionSig && (
+                                                                    <div className="flex items-center gap-1 mt-1 text-amber-500">
+                                                                        <AlertTriangle size={8} />
+                                                                        <span className="text-[8px] font-bold uppercase">Interpret cautiously (Interaction is sig)</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
+
+                                                    <div className="flex items-center gap-12">
+                                                        <div className="text-center">
+                                                            <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-1">Effect Size</span>
+                                                            <div className="flex items-baseline justify-center gap-1">
+                                                                <span className="text-[16px] font-black text-indigo-400">
+                                                                    {effect.pes.toFixed(2)}
+                                                                </span>
+                                                                <span className="text-[10px] font-black text-indigo-300">η<sub className="text-[8px]">p</sub>²</span>
+                                                            </div>
+                                                        </div>
+                                                        <ChevronRight size={16} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+
+                                                {isExpanded && (
+                                                    <div className="mt-6 pt-6 border-t border-slate-700/30 grid grid-cols-4 gap-4 animate-in slide-in-from-top-2">
+                                                        <div>
+                                                            <label className="text-[8px] font-black uppercase text-slate-500">Sum of Squares</label>
+                                                            <div className="text-[12px] font-bold text-slate-300">{effect.ss.toFixed(2)}</div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[8px] font-black uppercase text-slate-500">Mean Square</label>
+                                                            <div className="text-[12px] font-bold text-slate-300">{effect.ms.toFixed(2)}</div>
+                                                        </div>
+                                                        <div className="col-span-2 bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10">
+                                                            <div className="flex items-center gap-1.5 mb-1 text-indigo-400">
+                                                                <span className="text-[8px] font-black uppercase">Educational Insight</span>
+                                                                {isInteraction && interactionSig && (
+                                                                    <span className="text-[8px] font-bold text-rose-400 italic">Click card to open Explorer</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 leading-tight">
+                                                                {key === 'A' || key === 'B' ?
+                                                                    `Factor ${key} looks at differences across all levels of the other factor combined.` :
+                                                                    "A significant interaction means 'it depends'—the effect of one factor changes based on the other factor."
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    });
+                                })()}
 
                                 <div className={`mt-4 p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-slate-900/20 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                     <div className="flex justify-between items-center opacity-60">
