@@ -98,7 +98,7 @@ const useFactorialAnovaTutor = (results, context) => {
         }
 
         const now = Date.now();
-        const cooldown = (highestPriority.priority >= 100) ? 500 : 20000;
+        const cooldown = (highestPriority.priority >= 100) ? 500 : 10000;
         if (now - lastTipTimeRef.current < cooldown && !shouldOverride) return;
 
         setActiveTip(highestPriority);

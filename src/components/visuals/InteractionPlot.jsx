@@ -53,8 +53,10 @@ const InteractionPlot = ({
         // Calculate max diff in slopes to estimate interaction strength
         const slopes = [];
         lineLevels.forEach((ll, lineIdx) => {
-            const y1 = cellStats[swapAxes ? `${ll.id}_${xLevels[0].id}` : `${xLevels[0].id}_${ll.id}`]?.mean || 0;
-            const y2 = cellStats[swapAxes ? `${ll.id}_${xLevels[xLevels.length - 1].id}` : `${xLevels[xLevels.length - 1].id}_${ll.id}`]?.mean || 0;
+            const key1 = swapAxes ? `${ll.id}_${xLevels[0].id}` : `${xLevels[0].id}_${ll.id}`;
+            const key2 = swapAxes ? `${ll.id}_${xLevels[xLevels.length - 1].id}` : `${xLevels[xLevels.length - 1].id}_${ll.id}`;
+            const y1 = cellStats[key1]?.mean || 0;
+            const y2 = cellStats[key2]?.mean || 0;
             slopes.push(y2 - y1);
         });
 
@@ -209,13 +211,13 @@ const InteractionPlot = ({
                                                         // Fallback for stats input
                                                         let n, sd, mean;
                                                         if (cell.inputMode === 'summary') {
-                                                            n = parseFloat(cell.summary.n);
-                                                            sd = parseFloat(cell.summary.sd);
-                                                            mean = parseFloat(cell.summary.mean);
+                                                            n = parseFloat(cell.summary?.n || 0);
+                                                            sd = parseFloat(cell.summary?.sd || 0);
+                                                            mean = parseFloat(cell.summary?.mean || 0);
                                                         } else {
-                                                            n = stats.n;
-                                                            mean = stats.mean;
-                                                            sd = Math.sqrt(stats.ss / (n - 1 || 1));
+                                                            n = stats?.n || 0;
+                                                            mean = stats?.mean || 0;
+                                                            sd = n > 1 ? Math.sqrt((stats?.ss || 0) / (n - 1)) : 0;
                                                         }
 
                                                         const { upper, lower } = calculate95CI(mean, sd, n);

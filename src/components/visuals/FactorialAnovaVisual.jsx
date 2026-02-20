@@ -42,6 +42,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
 
     // --- CALCULATIONS ---
     const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData), [factorA, factorB, cellData]);
+    const cellStats = useMemo(() => results?.cellStats || {}, [results]);
 
     const currentModel = useMemo(() => {
         if (!results) return null;
@@ -141,21 +142,32 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
         return Object.values(cellData).every(c => (c.inputMode === 'raw' && c.values.length === 0) || (c.inputMode === 'summary' && !c.summary.n));
     }, [cellData]);
 
-    const tutorContext = useMemo(() => ({
-        activeTab,
-        alpha,
-        factorCount: factors.length,
-        factorALabel: factors[0]?.label,
-        factorBLabel: factors[1]?.label,
-        totalCells: factors.reduce((acc, f) => acc * f.levels.length, 1),
-        allCellsEmpty,
-        hasEmptyCells: factors[0]?.levels.some(a => factors[1]?.levels.some(b => {
-            const cell = cellData[`${a.id}_${b.id}`];
-            return cell?.inputMode === 'raw' ? cell.values.length === 0 : !cell?.summary?.n;
-        })),
-        pInteraction: results?.effects?.AxB?.p || 1,
-        themeSelected: factors[0]?.label !== 'Factor A' || factors[1]?.label !== 'Factor B', // Simple proxy
-    }), [activeTab, alpha, factors, allCellsEmpty, cellData, results]);
+    const tutorContext = useMemo(() => {
+        const ns = Object.values(cellStats || {}).map(c => c.n);
+        const anyCellN = ns.length > 0 ? Math.min(...ns) : 0;
+        const nRange = ns.length > 0 ? Math.max(...ns) - Math.min(...ns) : 0;
+
+        return {
+            activeTab,
+            alpha,
+            factorCount: factors.length,
+            factorALabel: factors[0]?.label,
+            factorBLabel: factors[1]?.label,
+            totalCells: factors.reduce((acc, f) => acc * f.levels.length, 1),
+            allCellsEmpty,
+            anyCellN,
+            nRange,
+            hasEmptyCells: factors[0]?.levels.some(a => factors[1]?.levels.some(b => {
+                const cell = cellData[`${a.id}_${b.id}`];
+                return cell?.inputMode === 'raw' ? cell.values.length === 0 : !cell?.summary?.n;
+            })),
+            pInteraction: results?.effects?.AxB?.p || 1,
+            interactionType: results?.effects?.AxB?.p < alpha ? 'crossing' : 'parallel', // Simple proxy
+            themeSelected: factors[0]?.label !== 'Factor A' || factors[1]?.label !== 'Factor B',
+            hasViewedExplorer: activeTab === 'explorer',
+            highlightPooledMS: activeTab === 'explorer'
+        };
+    }, [activeTab, alpha, factors, allCellsEmpty, cellData, results, cellStats]);
 
     const tutor = useFactorialAnovaTutor(results, tutorContext);
 

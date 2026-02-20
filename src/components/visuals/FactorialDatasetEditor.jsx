@@ -148,20 +148,20 @@ const FactorialDatasetEditor = ({
                                 </td>
                                 {factorB.levels.map(b => {
                                     const key = `${a.id}_${b.id}`;
-                                    const cell = cellData[key] || { values: [], summary: { n: 0, mean: 0 }, inputMode: 'raw' };
-                                    const n = cell.inputMode === 'summary' ? (parseInt(cell.summary?.n) || 0) : (cell.values?.length || 0);
+                                    const cell = cellData[key] || { values: [], summary: { n: 0, mean: 0, sd: 0 }, inputMode: 'raw' };
+                                    const n = cell.inputMode === 'summary' ? (parseInt(cell.summary?.n || 0)) : (cell.values?.length || 0);
 
                                     return (
                                         <td key={b.id} className="min-w-[200px]">
                                             <div className={`p-4 rounded-[1.5rem] border-2 transition-all relative ${darkMode ? 'bg-slate-950 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
                                                 <div className="flex justify-between items-center mb-3">
-                                                    <ProgressiveTooltip term="Cell Stats" title="Descriptive Statistics" desc={`N=${n} observations. Mean=${parseFloat(cell.summary.mean || 0).toFixed(1)}. SD=${parseFloat(cell.summary.sd || 0).toFixed(1)}.`} darkMode={darkMode}>
+                                                    <ProgressiveTooltip term="Cell Stats" title="Descriptive Statistics" desc={`N=${n} observations. Mean=${parseFloat(cell.summary?.mean || 0).toFixed(1)}. SD=${parseFloat(cell.summary?.sd || 0).toFixed(1)}.`} darkMode={darkMode}>
                                                         <div className="flex flex-col cursor-help">
                                                             <span className="text-[9px] font-black text-slate-500 uppercase">n={n}</span>
                                                             {cell.summary && (
                                                                 <span className="text-[8px] font-black text-indigo-400 flex gap-2">
-                                                                    <span>M={parseFloat(cell.summary.mean || 0).toFixed(1)}</span>
-                                                                    <span>SD={parseFloat(cell.summary.sd || 0).toFixed(1)}</span>
+                                                                    <span>M={parseFloat(cell.summary?.mean || 0).toFixed(1)}</span>
+                                                                    <span>SD={parseFloat(cell.summary?.sd || 0).toFixed(1)}</span>
                                                                 </span>
                                                             )}
                                                         </div>
@@ -187,7 +187,7 @@ const FactorialDatasetEditor = ({
                                                                 <label className="text-[7px] font-black uppercase text-slate-500">{field}</label>
                                                                 <input
                                                                     type="text"
-                                                                    value={cell.summary[field]}
+                                                                    value={cell.summary?.[field] || ""}
                                                                     onChange={e => updateCellStats(key, field, e.target.value)}
                                                                     className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-lg p-1.5 text-[12px] font-black text-indigo-400 outline-none"
                                                                 />
