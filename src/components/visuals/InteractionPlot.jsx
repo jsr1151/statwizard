@@ -1,3 +1,4 @@
+import React from 'react';
 import { calculate95CI } from '../../utils/mathHelpers';
 
 const InteractionPlot = ({
