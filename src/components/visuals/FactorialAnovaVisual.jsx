@@ -170,10 +170,18 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
         tutor.triggerEvent({ signal: 'change_alpha' });
     }, [alpha]);
 
+    useEffect(() => {
+        const handleAction = (e) => {
+            if (e.detail) handleTutorAction(e.detail);
+        };
+        window.addEventListener('factorialAnovaTutorAction', handleAction);
+        return () => window.removeEventListener('factorialAnovaTutorAction', handleAction);
+    }, []);
+
     const handleTutorAction = (action) => {
         switch (action) {
             case 'open_themes':
-                // Could open a dropdown or prompt
+                // The dropdown is usually auto-open or can be focused
                 break;
             case 'focus_grid':
                 setActiveTab('data');
@@ -181,7 +189,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
             case 'go_to_explorer':
                 setActiveTab('explorer');
                 break;
-            default: console.log("Tutor Action:", action);
+            default: console.log("Factorial Tutor Action:", action);
         }
     };
 
