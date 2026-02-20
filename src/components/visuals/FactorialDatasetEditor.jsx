@@ -91,11 +91,23 @@ const FactorialDatasetEditor = ({
                     {(() => {
                         const ns = Object.values(cellData).map(c => c.inputMode === 'summary' ? (parseInt(c.summary?.n) || 0) : (c.values?.length || 0));
                         const uniqueNs = [...new Set(ns)];
-                        if (uniqueNs.length > 1 && ns.some(n => n > 0)) {
+                        const hasEmptyCell = ns.some(n => n === 0);
+                        const isUnbalanced = uniqueNs.length > 1 && ns.some(n => n > 0);
+
+                        if (hasEmptyCell) {
                             return (
-                                <div className="flex items-center gap-2 text-[10px] font-bold text-amber-500 animate-pulse">
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-rose-500 animate-pulse">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50" />
+                                    <span>Critical: One or more cells are empty (Incomplete Factorial)</span>
+                                </div>
+                            );
+                        }
+
+                        if (isUnbalanced) {
+                            return (
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-amber-500">
                                     <div className="w-2 h-2 rounded-full bg-amber-500" />
-                                    <span>Warning: Unequal n across cells (Unbalanced Design)</span>
+                                    <span>Note: Unequal n across cells (Unbalanced Design)</span>
                                 </div>
                             );
                         }

@@ -140,11 +140,11 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
-                {/* Header Labels - Moved slightly to avoid tab collision */}
-                <div className="absolute top-4 right-8 text-right z-40">
-                    <div className="flex flex-col gap-0.5 pointer-events-none">
-                        <span className="text-[9px] font-black uppercase text-indigo-500/80 tracking-widest px-1">Design Model</span>
-                        <span className={`text-[8px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
+                {/* Header Labels - Integrated into Themes area to avoid tab collision */}
+                <div className="absolute top-[85px] right-8 text-right z-40 pointer-events-none">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-black uppercase text-indigo-500/60 tracking-widest px-1">Design Model</span>
+                        <span className={`text-[9px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
                     </div>
                 </div>
 
@@ -222,9 +222,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                 </button>
                                 <button
                                     onClick={() => setShowErrorBars(!showErrorBars)}
-                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                    className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
                                 >
-                                    {showErrorBars ? 'Hide Error Bars' : 'Show 95% CI'}
+                                    {showErrorBars ? 'Hide 95% CI Bars' : 'Show 95% CI Bars'}
                                 </button>
                             </div>
                         </div>
@@ -255,7 +255,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                     </p>
                                 </div>
                                 <div className="text-[11px] font-black text-slate-500 tracking-widest flex items-baseline gap-1">
-                                    <span className="uppercase">Partial Eta Squared</span> (<span className="lowercase font-serif italic text-indigo-400">η</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²)
+                                    <span className="uppercase text-[10px]">Partial η<sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²</span>
                                 </div>
                             </div>
 
@@ -290,7 +290,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                                         if (interactionSig) setActiveTab('explorer');
                                                     }
                                                 }}
-                                                className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer group hover:scale-[1.01] ${isExpanded ? 'bg-indigo-600/10 border-indigo-500/50 shadow-2xl scale-[1.01]' : (darkMode ? 'bg-slate-900/40 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg')} ${isInteraction && interactionSig ? 'ring-2 ring-indigo-500/30' : ''}`}
+                                                className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer group hover:scale-[1.01] ${isExpanded ? 'bg-indigo-600/10 border-indigo-500/50 shadow-2xl scale-[1.01]' : (darkMode ? 'bg-slate-900/40 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg')} ${isInteraction && interactionSig ? 'ring-2 ring-indigo-500/30' : ''} ${!isInteraction && interactionSig ? 'opacity-50 grayscale-[0.3] scale-[0.98] hover:opacity-100 hover:grayscale-0 hover:scale-[1.01]' : ''}`}
                                             >
                                                 <div className="flex justify-between items-center">
                                                     <div className="flex items-center gap-4">

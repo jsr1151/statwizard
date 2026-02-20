@@ -95,14 +95,6 @@ const InteractionPlot = ({
             <div className="relative w-full h-full flex flex-col items-center">
                 <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
                     {/* Y Axis Label */}
-                    <text
-                        x={-height / 2} y={15}
-                        transform="rotate(-90)"
-                        textAnchor="middle"
-                        className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-500' : 'fill-slate-400'}`}
-                    >
-                        {outcomeLabel}
-                    </text>
 
                     {/* Grid Lines */}
                     {[0, 0.25, 0.5, 0.75, 1].map(p => {

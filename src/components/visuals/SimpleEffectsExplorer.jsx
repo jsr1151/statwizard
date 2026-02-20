@@ -163,6 +163,13 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
                                             </span>.
                                         </p>
 
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Focus:</span>
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10 border border-slate-500/20 text-[9px] font-bold text-slate-400">
+                                                Comparing <span className="text-indigo-400">{currentEffect.cellInfo[0].label}</span> vs <span className="text-indigo-400">{currentEffect.cellInfo[1].label}</span>
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-4">
                                             {currentEffect.cellInfo.map((cell, idx) => (
                                                 <div key={idx} className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
