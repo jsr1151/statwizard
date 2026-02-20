@@ -288,9 +288,9 @@ const InteractionPlot = ({
                     )}
                 </svg>
 
-                {/* Y Axis Label (Rotated) - Moved here for proper centering relative to the SVG area */}
+                {/* Y Axis Label (Rotated) - Moved further left to avoid graph overlap */}
                 <div
-                    className="absolute left-[30px] top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-2 group cursor-pointer z-50"
+                    className="absolute left-[-20px] top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-2 group cursor-pointer z-50"
                     onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
                 >
                     {isEditingOutcome ? (
