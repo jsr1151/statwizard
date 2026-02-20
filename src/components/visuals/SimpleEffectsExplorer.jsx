@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { ChevronRight, ArrowRight, Calculator, Info, GitCompare } from 'lucide-react';
 import { calculate95CI, fCDF } from '../../utils/mathHelpers';
 
