@@ -255,7 +255,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                     </p>
                                 </div>
                                 <div className="text-[11px] font-black text-slate-500 tracking-widest flex items-baseline gap-1">
-                                    <span className="uppercase text-[10px]">Partial</span> <span className="lowercase font-serif italic text-indigo-400">η</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
+                                    <span className="uppercase text-[10px]">Partial</span> <span className="text-indigo-400" style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '12px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
                                 </div>
                             </div>
 
@@ -328,7 +328,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                                                     {effect.pes.toFixed(2)}
                                                                 </span>
                                                                 <span className="text-[10px] font-black text-indigo-300">
-                                                                    <span className="lowercase font-serif italic">η</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
+                                                                    <span style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
                                                                 </span>
                                                             </div>
                                                         </div>

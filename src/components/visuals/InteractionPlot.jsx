@@ -259,6 +259,7 @@ const InteractionPlot = ({
                         );
                     })}
 
+
                     {/* Marginal Means */}
                     {showMarginalMeans && (
                         <g opacity="0.6">
@@ -286,41 +287,45 @@ const InteractionPlot = ({
                             })}
                         </g>
                     )}
-                </svg>
 
-                {/* Y Axis Label (Rotated) - Moved further left to avoid graph overlap */}
-                <div
-                    className="absolute left-[-20px] top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-2 group cursor-pointer z-50"
-                    onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
-                >
-                    {isEditingOutcome ? (
-                        <div className="flex items-center gap-1 bg-slate-900 border border-indigo-500/50 rounded-md px-2 py-1" onClick={e => e.stopPropagation()}>
-                            <input
-                                autoFocus
-                                value={tempOutcome}
-                                onChange={e => setTempOutcome(e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        setOutcomeLabel(tempOutcome);
-                                        setIsEditingOutcome(false);
-                                    }
-                                }}
-                                className="bg-transparent text-[10px] font-black text-white outline-none w-24 uppercase tracking-widest"
-                            />
-                            <button
-                                onClick={() => { setOutcomeLabel(tempOutcome); setIsEditingOutcome(false); }}
-                                className="text-emerald-500 hover:text-emerald-400"
+                    {/* Y Axis Label (Rotated) - Integrated into SVG for zero-collision */}
+                    <g transform={`translate(20, ${height / 2}) rotate(-90)`}>
+                        <foreignObject x="-75" y="-15" width="150" height="30" className="overflow-visible">
+                            <div
+                                className="w-full h-full flex items-center justify-center gap-2 group cursor-pointer"
+                                onClick={() => { if (!isEditingOutcome) setIsEditingOutcome(true); }}
                             >
-                                <Check size={10} />
-                            </button>
-                        </div>
-                    ) : (
-                        <>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{outcomeLabel}</span>
-                            <Edit2 size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </>
-                    )}
-                </div>
+                                {isEditingOutcome ? (
+                                    <div className="flex items-center gap-1 bg-slate-900 border border-indigo-500/50 rounded-md px-2 py-1" onClick={e => e.stopPropagation()}>
+                                        <input
+                                            autoFocus
+                                            value={tempOutcome}
+                                            onChange={e => setTempOutcome(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    setOutcomeLabel(tempOutcome);
+                                                    setIsEditingOutcome(false);
+                                                }
+                                            }}
+                                            className="bg-transparent text-[10px] font-black text-white outline-none w-24 uppercase tracking-widest text-center"
+                                        />
+                                        <button
+                                            onClick={() => { setOutcomeLabel(tempOutcome); setIsEditingOutcome(false); }}
+                                            className="text-emerald-500 hover:text-emerald-400"
+                                        >
+                                            <Check size={10} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{outcomeLabel}</span>
+                                        <Edit2 size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </>
+                                )}
+                            </div>
+                        </foreignObject>
+                    </g>
+                </svg>
 
                 {/* Educational Overlay / Key */}
                 <div className={`mt-6 grid grid-cols-3 gap-4 w-full p-4 rounded-xl border ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
