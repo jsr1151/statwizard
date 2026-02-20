@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Activity, LayoutGrid, PieChart, Plus, Sigma, X, GitCommit, Layers, Percent, Calculator } from 'lucide-react';
-import { fCDF, fPPF } from '../../utils/mathHelpers';
+import { fCDF, fPPF, calculateFactorialAnova } from '../../utils/mathHelpers';
 import FactorialAnovaTutorPanel from '../tutor/FactorialAnovaTutorPanel';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import useFactorialAnovaTutor from '../../hooks/useFactorialAnovaTutor';
 import FactorialDatasetEditor from './FactorialDatasetEditor';
-import { calculateFactorialAnova, calculateSimpleEffect } from '../../utils/factorialAnovaMath';
 import InteractionPlot from './InteractionPlot';
 import FSamplingDist from './FSamplingDist';
 import SimpleEffectsExplorer from './SimpleEffectsExplorer';
