@@ -28,12 +28,12 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
       raw2 = group2.raw.replace(/,/g, ' ').split(/\s+/).map(v => parseFloat(v)).filter(v => !isNaN(v));
       n1 = raw1.length; n2 = raw2.length;
       n = Math.min(n1, n2);
-      if (n >= 2) {
+      if (n >= 1) {
         const d = [];
         for (let i = 0; i < n; i++) d.push(raw1[i] - raw2[i]);
         diffs = d;
         dBar = d.reduce((a, b) => a + b, 0) / n;
-        sd = Math.sqrt(d.reduce((a, b) => a + Math.pow(b - dBar, 2), 0) / (n - 1));
+        sd = n > 1 ? Math.sqrt(d.reduce((a, b) => a + Math.pow(b - dBar, 2), 0) / (n - 1)) : 0;
         const m1 = raw1.slice(0, n).reduce((a, b) => a + b, 0) / n;
         const m2 = raw2.slice(0, n).reduce((a, b) => a + b, 0) / n;
         const num = raw1.slice(0, n).reduce((acc, v, i) => acc + (v - m1) * (raw2[i] - m2), 0);
@@ -246,7 +246,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               <div className={`p-3 rounded-xl border transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex flex-col gap-1">
                   <label className="text-[8px] font-bold text-slate-500 uppercase">Number of Pairs (n)</label>
-                  <input type="number" step="1" min="2" value={summaryData.n} onChange={e => setSummaryData({ ...summaryData, n: Math.max(2, parseInt(e.target.value) || 2) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                  <input type="number" step="1" min="1" value={summaryData.n} onChange={e => setSummaryData({ ...summaryData, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                 </div>
               </div>
               <div className={`p-3 rounded-xl border transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>

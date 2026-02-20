@@ -45,7 +45,9 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const delta = group1.xBar - group2.xBar;
 
   // Pooled Variance & SE
-  const pooledVar = ((group1.n - 1) * Math.pow(group1.s, 2) + (group2.n - 1) * Math.pow(group2.s, 2)) / (group1.n + group2.n - 2);
+  const pooledVarNum = ((group1.n - 1) * Math.pow(group1.s, 2) + (group2.n - 1) * Math.pow(group2.s, 2));
+  const pooledVarDen = (group1.n + group2.n - 2);
+  const pooledVar = pooledVarDen > 0 ? pooledVarNum / pooledVarDen : 0;
   const sePooled = Math.sqrt(pooledVar * (1 / group1.n + 1 / group2.n));
 
   // Welch SE
@@ -57,8 +59,8 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   // df calculation
   const dfStudent = group1.n + group2.n - 2;
   const dfWelchNum = Math.pow(Math.pow(group1.s, 2) / group1.n + Math.pow(group2.s, 2) / group2.n, 2);
-  const dfWelchDen = Math.pow(Math.pow(group1.s, 2) / group1.n, 2) / (group1.n - 1) + Math.pow(Math.pow(group2.s, 2) / group2.n, 2) / (group2.n - 1);
-  const dfWelch = dfWelchNum / dfWelchDen;
+  const dfWelchDen = (group1.n > 1 ? Math.pow(Math.pow(group1.s, 2) / group1.n, 2) / (group1.n - 1) : 0) + (group2.n > 1 ? Math.pow(Math.pow(group2.s, 2) / group2.n, 2) / (group2.n - 1) : 0);
+  const dfWelch = dfWelchDen > 0 ? dfWelchNum / dfWelchDen : 1;
 
   const df = testType === 'student' ? dfStudent : dfWelch;
 
@@ -565,7 +567,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Size ($n_1$)</label>
-                    <input type="number" step="1" min="2" value={group1.n} onChange={e => setGroup1({ ...group1, n: Math.max(2, parseInt(e.target.value)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input type="number" step="1" min="1" value={group1.n} onChange={e => setGroup1({ ...group1, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                 </div>
               ) : (
@@ -590,7 +592,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Size ($n_2$)</label>
-                    <input type="number" step="1" min="2" value={group2.n} onChange={e => setGroup2({ ...group2, n: Math.max(2, parseInt(e.target.value)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input type="number" step="1" min="1" value={group2.n} onChange={e => setGroup2({ ...group2, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                 </div>
               ) : (
