@@ -140,11 +140,11 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                     ))}
                 </div>
 
-                {/* Header Labels (New Orientation) */}
-                <div className="absolute top-6 right-8 text-right z-40">
-                    <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest px-1">Design Model</span>
-                        <span className={`text-[9px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
+                {/* Header Labels - Moved slightly to avoid tab collision */}
+                <div className="absolute top-4 right-8 text-right z-40">
+                    <div className="flex flex-col gap-0.5 pointer-events-none">
+                        <span className="text-[9px] font-black uppercase text-indigo-500/80 tracking-widest px-1">Design Model</span>
+                        <span className={`text-[8px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-400'} italic`}>Between-subjects (Independent Groups)</span>
                     </div>
                 </div>
 
@@ -254,8 +254,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                         Teaching Tip: Check interaction first. If p {'<'} .05, interpret simple effects.
                                     </p>
                                 </div>
-                                <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-baseline gap-1">
-                                    Partial Eta Squared (η<sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²)
+                                <div className="text-[11px] font-black text-slate-500 tracking-widest flex items-baseline gap-1">
+                                    <span className="uppercase">Partial Eta Squared</span> (<span className="lowercase font-serif italic text-indigo-400">η</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²)
                                 </div>
                             </div>
 
@@ -327,7 +327,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                                                                 <span className="text-[16px] font-black text-indigo-400">
                                                                     {effect.pes.toFixed(2)}
                                                                 </span>
-                                                                <span className="text-[10px] font-black text-indigo-300">η<sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²</span>
+                                                                <span className="text-[10px] font-black text-indigo-300">
+                                                                    <span className="lowercase font-serif italic">η</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
+                                                                </span>
                                                             </div>
                                                         </div>
                                                         <ChevronRight size={16} className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
