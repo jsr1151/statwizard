@@ -114,8 +114,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
 
     return (
         <div className="w-full flex flex-col gap-8 animate-in fade-in duration-700 relative">
-            {/* Visualizer Frame */}
-            <div className={`w-full h-[650px] overflow-hidden border-2 rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+            {/* Visualizer Frame - Increased height for more breathing room */}
+            <div className={`w-full h-[800px] overflow-hidden border-2 rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 {/* Tab Navigation */}
                 <div className="absolute top-6 left-6 flex gap-3 z-40">
                     {[
@@ -170,7 +170,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                         </div>
                     )}
                     {activeTab === 'plot' && (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-8">
+                        <div className="w-full h-full flex flex-col items-center justify-start p-8">
                             {results ? (
                                 <InteractionPlot
                                     factorA={factorA}
@@ -186,7 +186,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onTutorUpd
                             ) : (
                                 <div className="text-slate-500 italic text-[14px]">Loading interaction plot...</div>
                             )}
-                            <div className="flex gap-4 mt-4">
+                            <div className="flex gap-4 mt-12 pb-12">
                                 <button
                                     onClick={() => setSwapAxes(!swapAxes)}
                                     className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${swapAxes ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
