@@ -62,6 +62,7 @@ import ModulesView from './components/navigation/ModulesView';
 import SearchView from './components/navigation/SearchView';
 import LessonsView from './components/navigation/LessonsView';
 import UpdateToast from './components/common/UpdateToast';
+import JeopardyHub from './components/jeopardy/JeopardyHub';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -329,6 +330,8 @@ export default function App() {
                         {appMode === 'search' && <SearchView searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSelect={(id) => { setCurrentStepId(id); setAppMode('wizard'); }} darkMode={darkMode} />}
 
                         {appMode === 'lessons' && <LessonsView darkMode={darkMode} />}
+
+                        {appMode === 'jeopardy' && <JeopardyHub darkMode={darkMode} />}
 
                         {appMode === 'wizard' && (
                             <div className={`rounded-2xl shadow-xl border overflow-hidden transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 shadow-2xl shadow-black/50' : 'bg-white border-slate-200'} ${isHelp ? (darkMode ? 'border-amber-500/30 ring-4 ring-amber-500/10' : 'border-amber-200 shadow-amber-100 ring-4 ring-amber-50') : ''}`}>
