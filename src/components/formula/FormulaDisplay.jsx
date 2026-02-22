@@ -471,7 +471,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all duration-300 ${darkMode ? 'bg-indigo-900/10 border-indigo-500/20 shadow-lg shadow-indigo-900/10' : 'bg-indigo-50/50 border-indigo-200 shadow-lg shadow-indigo-100/30'}`}
             >
               <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500`}>Mean Square ({effectItem.label || 'Effect'})</div>
-              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[180px]`}>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 px-2`}>
                 Estimates variation due to <span className="font-bold text-indigo-400">{effectItem.label}</span>.
               </div>
               <div className="eq-wrap overflow-visible">
@@ -497,7 +497,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
             >
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Error (Residual)</div>
-              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[180px]`}>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 px-4`}>
                 Estimates the typical unexplained variability (noise).
               </div>
               <div className="eq-wrap overflow-visible">
@@ -522,8 +522,8 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <div
             className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
           >
-            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center`}>The SS Total identity for Factorial ANOVA</div>
-            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center px-4`}>The SS Total identity for Factorial ANOVA</div>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight mb-1 px-4`}>
               Total variability is partitioned into main effects, the interaction, and error.
             </div>
 
@@ -557,7 +557,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 (Partial <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px', marginLeft: '3px' }}>&eta;</span><sub className="text-[7px] ml-[1px]">p</sub><sup>2</sup>)
               </span>
             </div>
-            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight mb-1 px-6`}>
               Proportion of variance associated with {effectItem.label}, after excluding other effects.
             </div>
             <div className="eq-wrap mt-2">

@@ -309,7 +309,7 @@ export default function App() {
                 <Header onBack={handleBack} onHome={handleRestart} canGoBack={appMode !== 'menu'} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
                 {appMode === 'wizard' && !isHelp && <div className="w-full bg-slate-200 h-1.5"><div className="bg-indigo-600 h-1.5 transition-all duration-700 ease-out" style={{ width: `${Math.min((history.length / 5) * 100, 100)}%` }} /></div>}
 
-                <main className="max-w-6xl mx-auto p-4 md:p-8">
+                <main className="max-w-[1400px] mx-auto p-4 md:p-8">
                     <div className="mb-12">
                         {appMode === 'menu' && (
                             <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
@@ -393,7 +393,7 @@ export default function App() {
                                             )}
 
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
-                                                <div className="lg:col-span-6 flex flex-col gap-6">
+                                                <div className="lg:col-span-5 flex flex-col gap-6">
                                                     {displayFormulaId && displayFormulaId !== 'none' && (
                                                         <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[250px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                             <div className={`px-4 py-2 border-b flex justify-between items-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -473,7 +473,7 @@ export default function App() {
                                                     )}
                                                 </div>
 
-                                                <div className="lg:col-span-6">
+                                                <div className="lg:col-span-7">
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
                                                         <div className={`flex-1 flex items-start justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
