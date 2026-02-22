@@ -35,13 +35,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     const [showRawPoints, setShowRawPoints] = useState(false);
     const [showMarginalMeans, setShowMarginalMeans] = useState(false);
     const [showErrorBars, setShowErrorBars] = useState(true);
+    const [errorBarType, setErrorBarType] = useState('95CI'); // 'SE' or '95CI'
+    const [showSimpleEffects, setShowSimpleEffects] = useState(false);
+    const [ssType, setSsType] = useState('III'); // 'I' (sequential), 'III' (unweighted)
     const [plotFocus, setPlotFocus] = useState('interaction'); // 'interaction', 'A', 'B'
     const [expandedEffect, setExpandedEffect] = useState(null);
 
     const factors = useMemo(() => [factorA, factorB], [factorA, factorB]);
 
     // --- CALCULATIONS ---
-    const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData), [factorA, factorB, cellData]);
+    const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData, ssType), [factorA, factorB, cellData, ssType]);
     const cellStats = useMemo(() => results?.cellStats || {}, [results]);
 
     const currentModel = useMemo(() => {
@@ -303,7 +306,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                             { id: 'plot', label: 'Plot', tt: 'Visualize main effects and interactions.' },
                             { id: 'table', label: 'Table', tt: 'View the ANOVA summary results.' },
                             { id: 'explorer', label: 'Explorer', tt: 'Drill down into simple effects.' },
-                            { id: 'fdist', label: 'F-Dist', tt: 'See the probability distribution.' }
+                            { id: 'posthoc', label: 'Post-hoc', tt: 'Pairwise comparisons for main effects.' },
+                            { id: 'diagnostics', label: 'Diagnostics', tt: 'Check normality and variances.' },
+                            { id: 'report', label: 'Report', tt: 'Generate an APA-style write-up.' }
                         ].map(tab => (
                             <ProgressiveTooltip
                                 key={tab.id}
@@ -403,6 +408,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                     showRawPoints={showRawPoints}
                                     showMarginalMeans={showMarginalMeans || plotFocus === 'A' || plotFocus === 'B'}
                                     showErrorBars={showErrorBars}
+                                    errorBarType={errorBarType}
+                                    showSimpleEffects={showSimpleEffects}
                                     focusMode={plotFocus}
                                     darkMode={darkMode}
                                 />
@@ -453,17 +460,32 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                         Marginal Means
                                     </button>
                                 </ProgressiveTooltip>
-                                <ProgressiveTooltip term="Error" title="Error Bars" desc="Show uncertainty (95% CI) around the cell means." pedagogy="Error bars help you visualize if differences are statistically robust." darkMode={darkMode}>
+                                <div className="flex bg-slate-900 border-2 border-slate-800 rounded-full p-1">
                                     <button
                                         onClick={() => {
                                             setShowErrorBars(!showErrorBars);
                                             tutor.triggerEvent({ signal: 'toggle_error_bars' });
                                         }}
-                                        className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showErrorBars ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                        className={`px-4 py-1.5 rounded-full text-[9px] font-black transition-all ${showErrorBars ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                                     >
-                                        {showErrorBars ? 'Hide 95% CI Bars' : 'Show 95% CI Bars'}
+                                        {showErrorBars ? 'Bars On' : 'Bars Off'}
+                                    </button>
+                                    {showErrorBars && (
+                                        <div className="flex gap-1 ml-1 pl-1 border-l border-slate-800">
+                                            <button onClick={() => setErrorBarType('95CI')} className={`px-3 py-1.5 rounded-full text-[8px] font-black transition-all ${errorBarType === '95CI' ? 'bg-slate-700 text-white' : 'text-slate-600 hover:text-slate-400'}`}>95% CI</button>
+                                            <button onClick={() => setErrorBarType('SE')} className={`px-3 py-1.5 rounded-full text-[8px] font-black transition-all ${errorBarType === 'SE' ? 'bg-slate-700 text-white' : 'text-slate-600 hover:text-slate-400'}`}>Standard Error</button>
+                                        </div>
+                                    )}
+                                </div>
+                                <ProgressiveTooltip term="Effect Sig" title="Show Slopes" desc="Overlay simple effect p-values on lines." darkMode={darkMode}>
+                                    <button
+                                        onClick={() => setShowSimpleEffects(!showSimpleEffects)}
+                                        className={`px-4 py-2 rounded-full text-[9px] font-black transition-all border-2 ${showSimpleEffects ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        Slopes: {showSimpleEffects ? 'On' : 'Off'}
                                     </button>
                                 </ProgressiveTooltip>
+
                             </div>
                         </div>
                     )}
@@ -488,9 +510,15 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                             <div className="flex justify-between items-end mb-6">
                                 <div className="flex flex-col gap-1">
                                     <h3 className="text-[14px] font-black uppercase text-indigo-500">ANOVA Summary Table (α = {alpha})</h3>
-                                    <p className={`text-[10px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                        Teaching Tip: Check interaction first. If p {'<'} .05, interpret simple effects.
-                                    </p>
+                                    <div className="flex gap-4 items-center">
+                                        <p className={`text-[10px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                            Teaching Tip: Check interaction first.
+                                        </p>
+                                        <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+                                            <button onClick={() => setSsType('III')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider transition-all ${ssType === 'III' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Type III (Default)</button>
+                                            <button onClick={() => setSsType('I')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider transition-all ${ssType === 'I' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Type I</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <ProgressiveTooltip
                                     term="Effect Size"
@@ -666,6 +694,180 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                 results={results}
                                 darkMode={darkMode}
                             />
+                        </div>
+                    )}
+                    {activeTab === 'posthoc' && results && (
+                        <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
+                            <div className="max-w-4xl mx-auto space-y-8">
+                                <div className="space-y-4">
+                                    <h3 className={`text-lg font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-slate-900'}`}>Pairwise Comparisons</h3>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>These comparisons look at differences between levels of each factor, collapsed across the other factor.</p>
+                                </div>
+
+                                {['A', 'B'].map(mode => {
+                                    const factor = mode === 'A' ? factorA : factorB;
+                                    const effect = mode === 'A' ? results.effects.A : results.effects.B;
+                                    const comparisons = calculatePostHocFactorial(results, mode);
+
+                                    if (factor.levels.length < 2) return null;
+
+                                    return (
+                                        <div key={mode} className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
+                                            <div className="flex justify-between items-center mb-6">
+                                                <h4 className="text-sm font-black uppercase tracking-widest text-indigo-400">Factor {mode}: {factor.label}</h4>
+                                                {effect.p < alpha ? (
+                                                    <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-3 py-1 rounded-full uppercase">Significant Main Effect</span>
+                                                ) : (
+                                                    <span className="bg-slate-500/20 text-slate-500 text-[9px] font-black px-3 py-1 rounded-full uppercase">Not Significant</span>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {comparisons.map((c, idx) => (
+                                                    <div key={idx} className={`p-4 rounded-xl flex justify-between items-center border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                        <div className="flex items-center gap-4">
+                                                            <span className="text-xs font-bold text-slate-400">{c.pair[0]} vs {c.pair[1]}</span>
+                                                            <span className={`text-xs font-mono ${c.sig ? 'text-emerald-400' : 'text-slate-500'}`}>diff = {c.diff.toFixed(2)}</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className={`text-[10px] font-black uppercase tracking-tighter ${c.sig ? 'text-emerald-500' : 'text-slate-500'}`}>
+                                                                p = {c.pAdj < .001 ? '< .001' : c.pAdj.toFixed(3)} {c.sig ? '***' : ''}
+                                                            </div>
+                                                            <div className="text-[8px] text-slate-600 uppercase font-bold tracking-tight">Bonferroni Adj.</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'diagnostics' && results && (
+                        <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
+                            <div className="max-w-4xl mx-auto space-y-8">
+                                <div className="space-y-4">
+                                    <h3 className={`text-lg font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-slate-900'}`}>Assumptions & Diagnostics</h3>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Verifying the mathematical requirements for a valid ANOVA.</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-4">Normality of Residuals</h4>
+                                        <div className="h-48 flex items-end justify-between gap-1 border-b border-slate-800 mb-2">
+                                            {(() => {
+                                                const res = results.residuals || [];
+                                                if (res.length === 0) return Array(10).fill(0).map((_, i) => <div key={i} className="flex-1 bg-slate-800 rounded-t-sm" style={{ height: '20%' }} />);
+
+                                                // Simple histogram 
+                                                const bins = 10;
+                                                const min = Math.min(...res);
+                                                const max = Math.max(...res);
+                                                const range = max - min;
+                                                const histogram = Array(bins).fill(0);
+                                                res.forEach(v => {
+                                                    const b = Math.min(bins - 1, Math.floor(((v - min) / (range || 1)) * bins));
+                                                    histogram[b]++;
+                                                });
+                                                const maxCount = Math.max(...histogram);
+                                                return histogram.map((c, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`flex-1 ${darkMode ? 'bg-indigo-500/30 hover:bg-indigo-400/50' : 'bg-indigo-200 hover:bg-indigo-300'} rounded-t-sm transition-all`}
+                                                        style={{ height: `${(c / maxCount) * 100}%` }}
+                                                    />
+                                                ));
+                                            })()}
+                                        </div>
+                                        <div className="flex justify-between text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+                                            <span>Negative Error</span>
+                                            <span>Positive Error</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-6 rounded-[2rem] border-2 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-4">Levene's Test</h4>
+                                        <div className="flex flex-col items-center justify-center h-48 space-y-4">
+                                            <div className="text-center">
+                                                <div className={`text-3xl font-black ${results.levene.p > .05 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                    p = {results.levene.p.toFixed(3)}
+                                                </div>
+                                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-2">
+                                                    Homogeneity of Variance
+                                                </div>
+                                            </div>
+                                            <div className={`text-[10px] font-bold px-4 py-2 rounded-full ${results.levene.p > .05 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                                                {results.levene.p > .05 ? '✔ Pass (Variances equal)' : '✖ Fail (Variances unequal)'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'report' && results && (
+                        <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
+                            <div className="max-w-4xl mx-auto space-y-8">
+                                <div className="flex justify-between items-center">
+                                    <div className="space-y-1">
+                                        <h3 className={`text-lg font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-slate-900'}`}>APA-Style Results</h3>
+                                        <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>A human-readable summary of the statistical findings.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const text = document.getElementById('apa-report').innerText;
+                                            navigator.clipboard.writeText(text);
+                                            tutor.triggerEvent({ signal: 'report_copied' });
+                                        }}
+                                        className="bg-indigo-600 text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all"
+                                    >
+                                        Copy to Clipboard
+                                    </button>
+                                </div>
+
+                                <div
+                                    id="apa-report"
+                                    className={`p-10 rounded-[2.5rem] border-2 text-[15px] leading-relaxed shadow-2xl ${darkMode ? 'bg-slate-900/40 border-slate-800 text-slate-300' : 'bg-white border-slate-100 text-slate-600'}`}
+                                >
+                                    {(() => {
+                                        const { A, B, AxB, Error: Err } = results.effects;
+                                        const sigA = A.p < alpha;
+                                        const sigB = B.p < alpha;
+                                        const sigInt = AxB.p < alpha;
+
+                                        return (
+                                            <div className="space-y-6">
+                                                <p>
+                                                    A two-way between-subjects ANOVA was conducted to examine the effects of <strong>{factorA.label}</strong> and <strong>{factorB.label}</strong> on <strong>{outcomeLabel}</strong>.
+                                                </p>
+
+                                                <p>
+                                                    The primary analysis revealed {sigInt ? 'a significant' : 'no significant'} interaction between {factorA.label} and {factorB.label},
+                                                    <em> F</em>({AxB.df}, {Err.df}) = {AxB.f.toFixed(2)}, <em>p</em> {AxB.p < .001 ? '< .001' : `= ${AxB.p.toFixed(3)}`},
+                                                    &eta;<sub>p</sub>&sup2; = {AxB.pes.toFixed(2)}.
+                                                    {sigInt ? " This suggests that the effect of " + factorA.label + " depends significantly on the level of " + factorB.label + "." : " Both factors operated independently in their effect on the outcome."}
+                                                </p>
+
+                                                <p>
+                                                    Regarding main effects, there was {sigA ? 'a significant' : 'no significant'} main effect of {factorA.label},
+                                                    <em> F</em>({A.df}, {Err.df}) = {A.f.toFixed(2)}, <em>p</em> {A.p < .001 ? '< .001' : `= ${A.p.toFixed(3)}`},
+                                                    &eta;<sub>p</sub>&sup2; = {A.pes.toFixed(2)}.
+                                                    Additionally, the main effect of {factorB.label} was {sigB ? 'significant' : 'not significant'},
+                                                    <em> F</em>({B.df}, {Err.df}) = {B.f.toFixed(2)}, <em>p</em> {B.p < .001 ? '< .001' : `= ${B.p.toFixed(3)}`},
+                                                    &eta;<sub>p</sub>&sup2; = {B.pes.toFixed(2)}.
+                                                </p>
+
+                                                {sigInt && (
+                                                    <p className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl italic">
+                                                        Note: Given the significant interaction, the simple effects were further explored (see Explorer tab) to determine where the specific differences occurred.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

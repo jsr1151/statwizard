@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronRight, ArrowRight, Calculator, Info, GitCompare, HelpCircle } from 'lucide-react';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
-import { calculate95CI, fCDF } from '../../utils/mathHelpers';
+import { calculate95CI, fCDF, adjustPValues } from '../../utils/mathHelpers';
 
 const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode }) => {
     const [sliceFactor, setSliceFactor] = useState('A'); // Factor to "hold constant"
     const [selectedLevel, setSelectedLevel] = useState(null);
+    const [adjMethod, setAdjMethod] = useState('bonferroni'); // 'none', 'bonferroni', 'holm'
 
     const targetFactor = sliceFactor === 'A' ? factorB : factorA;
     const constantFactor = sliceFactor === 'A' ? factorA : factorB;
@@ -80,10 +81,34 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
         };
     };
 
-    const currentEffect = calculateSimpleEffect(selectedLevel);
+    // Calculate simple effects for ALL levels to allow for proper p-value adjustment
+    const allSimpleEffects = useMemo(() => {
+        return constantFactor.levels.map(l => calculateSimpleEffect(l.id));
+    }, [constantFactor.levels, sliceFactor, cellStats, results]);
+
+    const adjustedPValues = useMemo(() => {
+        const pVals = allSimpleEffects.filter(e => e !== null).map(e => e.p);
+        return adjustPValues(pVals, adjMethod);
+    }, [allSimpleEffects, adjMethod]);
+
+    const currentEffectIndex = constantFactor.levels.findIndex(l => l.id === selectedLevel);
+    const currentEffect = currentEffectIndex !== -1 ? allSimpleEffects[currentEffectIndex] : null;
+    const currentAdjustedP = currentEffectIndex !== -1 ? adjustedPValues[allSimpleEffects.slice(0, currentEffectIndex).filter(e => e !== null).length] : null;
 
     return (
         <div className="w-full flex flex-col gap-6 animate-in slide-in-from-bottom duration-500">
+            <div className="flex justify-between items-center">
+                <div className="flex flex-col">
+                    <h3 className={`text-lg font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-slate-900'}`}>Simple Effects Explorer</h3>
+                    <p className={`text-[10px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Drilling down into the interaction.</p>
+                </div>
+                <div className="flex bg-slate-900 border-2 border-slate-800 rounded-xl p-1 items-center gap-2">
+                    <span className="text-[8px] font-black uppercase text-slate-500 px-2">Correction:</span>
+                    <button onClick={() => setAdjMethod('bonferroni')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all ${adjMethod === 'bonferroni' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Bonferroni</button>
+                    <button onClick={() => setAdjMethod('holm')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all ${adjMethod === 'holm' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Holm</button>
+                    <button onClick={() => setAdjMethod('none')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all ${adjMethod === 'none' ? 'bg-rose-600/20 text-rose-500' : 'text-slate-500 hover:text-slate-300'}`}>None</button>
+                </div>
+            </div>
             {isInteractionSignificant ? (
                 <div className="flex items-start gap-4 p-6 rounded-[2rem] bg-indigo-500/5 border-2 border-indigo-500/10">
                     <div className="p-3 bg-indigo-500 rounded-2xl text-white">
@@ -235,10 +260,15 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
                                         {currentEffect.f.toFixed(2)}
                                     </span>
                                     <div className="mt-3 text-center">
-                                        <span className={`text-[12px] font-black uppercase block ${currentEffect.p < 0.05 ? 'text-emerald-500' : 'text-slate-500'}`}>
-                                            p {currentEffect.p < 0.001 ? '< .001' : `= ${currentEffect.p.toFixed(3)}`}
+                                        <span className={`text-[12px] font-black uppercase block ${currentAdjustedP < 0.05 ? 'text-emerald-500' : 'text-slate-500'}`}>
+                                            p {currentAdjustedP < 0.001 ? '< .001' : `= ${currentAdjustedP.toFixed(3)}`}
                                         </span>
-                                        <span className="text-[9px] font-bold text-slate-600 uppercase mt-1 block">df({currentEffect.df}, {results.effects.Error.df})</span>
+                                        <div className="flex flex-col mt-1">
+                                            <span className="text-[9px] font-bold text-slate-600 uppercase">df({currentEffect.df}, {results.effects.Error.df})</span>
+                                            {adjMethod !== 'none' && (
+                                                <span className="text-[7px] font-black text-indigo-500 uppercase tracking-tighter">({adjMethod} adjusted)</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

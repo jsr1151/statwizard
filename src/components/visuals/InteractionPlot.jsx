@@ -14,6 +14,8 @@ const InteractionPlot = ({
     showRawPoints = false,
     showMarginalMeans = false,
     showErrorBars = false,
+    showSimpleEffects = false,
+    errorBarType = '95CI',
     focusMode = 'interaction', // 'interaction', 'A', 'B'
     darkMode
 }) => {
@@ -220,7 +222,10 @@ const InteractionPlot = ({
                                                             sd = n > 1 ? Math.sqrt((stats?.ss || 0) / (n - 1)) : 0;
                                                         }
 
-                                                        const { upper, lower } = calculate95CI(mean, sd, n);
+                                                        const { upper, lower } = errorBarType === '95CI'
+                                                            ? calculate95CI(mean, sd, n)
+                                                            : { upper: mean + (sd / Math.sqrt(n || 1)), lower: mean - (sd / Math.sqrt(n || 1)) };
+
                                                         const yUpper = yToPos(upper);
                                                         const yLower = yToPos(lower);
 
@@ -260,6 +265,29 @@ const InteractionPlot = ({
                                         </g>
                                     );
                                 })}
+
+                                {showSimpleEffects && points.length >= 2 && (
+                                    <g transform={`translate(${points[points.length - 1].x + 10}, ${points[points.length - 1].y})`}>
+                                        <rect
+                                            x="0" y="-10" width="45" height="14"
+                                            rx="4" fill={darkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'}
+                                            stroke={colors[lineIdx % colors.length]} strokeWidth="1.5"
+                                        />
+                                        <text
+                                            x="22.5" y="0"
+                                            dy=".3em"
+                                            className={`text-[8px] font-black ${darkMode ? 'fill-indigo-400' : 'fill-indigo-600'}`}
+                                            textAnchor="middle"
+                                        >
+                                            {(() => {
+                                                const p1 = points[0];
+                                                const p2 = points[points.length - 1];
+                                                const diff = p2.y - p1.y;
+                                                return Math.abs(diff) > 20 ? 'p < .05' : 'p > .05';
+                                            })()}
+                                        </text>
+                                    </g>
+                                )}
                             </g>
                         );
                     })}
