@@ -22,7 +22,7 @@ const AnovaResults = ({
                         <MathTerm term="F" showValue={false} darkMode={darkMode} onInfo={() => { }} />
                         <span className="text-3xl md:text-4xl" onMouseEnter={() => window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: 'indices' }))}>
                             (<MathTerm term="df_between" value={renderModel.df1.toString()} showValue={true} darkMode={darkMode} onInfo={() => { }} />,
-                            <MathTerm term="df_within" value={renderModel.df2.toString()} showValue={true} darkMode={darkMode} onInfo={() => { }} />)
+                            <MathTerm term="df_error" value={renderModel.df2.toString()} showValue={true} darkMode={darkMode} onInfo={() => { }} />)
                         </span>
                         <span className="mx-1 md:mx-2">=</span>
                         <span className="truncate">{renderModel.F?.toFixed(2)}</span>

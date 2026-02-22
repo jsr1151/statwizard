@@ -8,9 +8,9 @@ const CalculationText = ({ text, onInfo, onHover, darkMode, showValues, stats })
         // Paired
         sd_diff: 'sd', n_pairs: 'n', SE_paired: 'se', dz: 'dz', dBar: 'dBar', r_corr: 'r',
         // ANOVA
-        SS_between: 'ssB', SS_within: 'ssW', SS_total: 'ssT',
-        df_between: 'dfB', df_within: 'dfW',
-        MS_between: 'msB', MS_within: 'msW',
+        SS_between: 'ssB', SS_within: 'ssW', SS_error: 'ssW', SS_total: 'ssT',
+        df_between: 'dfB', df_within: 'dfW', df_error: 'dfW',
+        MS_between: 'msB', MS_within: 'msW', MS_error: 'msW',
         F: 'fVal', eta2: 'eta2',
         k: 'k', N: 'N'
     };

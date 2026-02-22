@@ -174,7 +174,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 {calc("MS_between", getV('msB'))}
               </div>
               <div className="pt-1 px-4 group relative">
-                {calc("MS_within", getV('msW'))}
+                {calc("MS_error", getV('msW'))}
               </div>
             </div>
           </div>
@@ -216,22 +216,22 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               onMouseEnter={() => onHover && onHover('ms_within')}
               onMouseLeave={() => onHover && onHover(null)}
             >
-              <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Within</div>
+              <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Error (Residual)</div>
               <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
-                Turns SS_within into an average by dividing by its degrees of freedom. MS_within estimates the typical within-group variability (noise).
+                Turns SS_error into an average by dividing by its degrees of freedom. MS_error estimates the typical unexplained variability (noise).
               </div>
               <div className="eq-wrap">
                 <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
                   <div className="flex items-center gap-2">
-                    <span>{calc("MS_within", getV('msW'))}</span>
+                    <span>{calc("MS_error", getV('msW'))}</span>
                     <span className="opacity-50">=</span>
                     <div className="flex flex-col items-center">
-                      <span className={`border-b ${borderCol} px-3 pb-0.5 mb-0.5`}>{calc("SS_within", getV('ssW'))}</span>
-                      <span className="text-[0.9em]">{calc("df_within", getV('dfW'))}</span>
+                      <span className={`border-b ${borderCol} px-3 pb-0.5 mb-0.5`}>{calc("SS_error", getV('ssW'))}</span>
+                      <span className="text-[0.9em]">{calc("df_error", getV('dfW'))}</span>
                     </div>
                   </div>
                   <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex flex-col items-center gap-1 italic`}>
-                    <span>{calc("df_within", getV('dfW'))} = {calc("N", undefined)} - {calc("k", undefined)}</span>
+                    <span>{calc("df_error", getV('dfW'))} = {calc("N", undefined)} - {calc("k", undefined)}</span>
                     <span className="flex items-center gap-1 text-indigo-400 font-bold">
                       {calc("N", undefined)} = <SigmaWithLimits top="k" bottom="j=1" term="Sigma_k" className="scale-75 origin-center mx-0.5" /> {calc("nj", undefined)} = total sample size
                     </span>
@@ -458,7 +458,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 {calc(effectTerm, effectItem.ms)}
               </div>
               <div className="pt-1 px-4 group relative text-center">
-                {calc("MS_within", errorItem.ms)}
+                {calc("MS_error", errorItem.ms)}
               </div>
             </div>
           </div>
@@ -496,22 +496,22 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             <div
               className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
             >
-              <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Within (Error)</div>
+              <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Error (Residual)</div>
               <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
-                Estimates the typical within-group variability (noise).
+                Estimates the typical unexplained variability (noise).
               </div>
               <div className="eq-wrap">
                 <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
                   <div className="flex items-center gap-2">
-                    <span>{calc("MS_within", errorItem.ms)}</span>
+                    <span>{calc("MS_error", errorItem.ms)}</span>
                     <span className="opacity-50">=</span>
                     <div className="flex flex-col items-center">
-                      <span className={`border-b ${borderCol} px-3 pb-0.5 mb-0.5`}>{calc("SS_within", errorItem.ss)}</span>
-                      <span className="text-[0.9em]">{calc("df_within", errorItem.df)}</span>
+                      <span className={`border-b ${borderCol} px-3 pb-0.5 mb-0.5`}>{calc("SS_error", errorItem.ss)}</span>
+                      <span className="text-[0.9em]">{calc("df_error", errorItem.df)}</span>
                     </div>
                   </div>
-                  <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex items-center gap-2 italic`}>
-                    <span>{calc("df_within", errorItem.df)} = N - (a × b)</span>
+                  <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex items-center gap-2 italic text-center leading-tight px-4`}>
+                    <span>{calc("df_error", errorItem.df)} = N - (a × b)<br />(requires all a × b cells populated)</span>
                   </div>
                 </div>
               </div>
@@ -538,7 +538,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                   <span className="mx-2 opacity-30">+</span>
                   <span>{calc("SS_AxB", effects.AxB?.ss)}</span>
                   <span className="mx-2 opacity-30">+</span>
-                  <span>{calc("SS_within", errorItem.ss)}</span>
+                  <span>{calc("SS_error", errorItem.ss)}</span>
                 </div>
               </div>
             </div>
@@ -566,7 +566,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                 <span className="mx-4 font-light opacity-50">=</span>
                 <div className="flex flex-col items-center">
                   <span className={`border-b-2 ${borderCol} px-4 pb-0.5 mb-0.5`}>{calc(ssTerm, effectItem.ss)}</span>
-                  <span className="text-[0.9em]">{calc(ssTerm, effectItem.ss)} + {calc("SS_within", errorItem.ss)}</span>
+                  <span className="text-[0.9em]">{calc(ssTerm, effectItem.ss)} + {calc("SS_error", errorItem.ss)}</span>
                 </div>
               </div>
             </div>
