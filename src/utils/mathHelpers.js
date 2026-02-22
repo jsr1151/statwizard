@@ -519,6 +519,8 @@ export const calculateFactorialAnova = (factorA, factorB, cellData, ssType = 'II
             Total: { ss: ssTotal, df: dfTotal }
         },
         cellStats,
+        aLevels,
+        bLevels,
         marginalA: aLevels.map((a, i) => ({ label: a.label, mean: marginalA_unweighted[i].mean })),
         marginalB: bLevels.map((b, i) => ({ label: b.label, mean: marginalB_unweighted[i].mean }))
     };
