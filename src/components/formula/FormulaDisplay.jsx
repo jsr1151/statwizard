@@ -522,14 +522,14 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <div
             className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
           >
-            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center max-w-[200px]`}>The SS Total identity for Factorial ANOVA</div>
-            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-[200px] mb-1`}>
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center`}>The SS Total identity for Factorial ANOVA</div>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
               Total variability is partitioned into main effects, the interaction, and error.
             </div>
 
             <div className={`flex flex-col items-center gap-2 w-full mt-2 overflow-visible`}>
-              <div className="eq-wrap overflow-x-auto w-full pb-2 scrollbar-thin scrollbar-thumb-slate-700">
-                <div className={`eq-text font-serif ${textCol} flex items-center justify-center min-w-max whitespace-nowrap mx-auto px-4`}>
+              <div className="eq-wrap overflow-x-auto w-full pb-2 scrollbar-thin scrollbar-thumb-slate-700 no-scrollbar">
+                <div className={`eq-text font-serif ${textCol} flex items-center justify-center min-w-max whitespace-nowrap mx-auto px-6`}>
                   <span>{calc("SS_total", totalItem.ss)}</span>
                   <span className="mx-2 opacity-50">=</span>
                   <span>{calc("SS_A", effects.A?.ss)}</span>
