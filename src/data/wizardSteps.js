@@ -371,9 +371,55 @@ export const STEPS = {
         visualType: 'factorial_anova',
         software: SOFTWARE_GUIDES.factorial_anova,
         assumptions: [
-            { id: 'independence', label: "Independence", whatItMeans: "Observations are independent." },
-            { id: 'normality', label: "Normality", whatItMeans: "Residuals follow a normal distribution." },
-            { id: 'homogeneity', label: "Homogeneity", whatItMeans: "Variances are equal across cells." }
+            {
+                id: 'independence',
+                label: "Independence",
+                whatItMeans: "Observations are unrelated. In a between-subjects factorial design, each participant contributes to one cell only, and participants are not influencing each other.",
+                howToTest: [
+                    { name: "Study Design", desc: "Mostly by study design: random assignment, no repeated measurements from the same person, and no clustering (siblings, school groups) unless modeled." },
+                    { name: "Red Flags", desc: "Same participant in multiple conditions, data collected in groups where people influence each other, or nested structures (students within classrooms)." }
+                ],
+                ifItFails: "If repeated measures: use RM-ANOVA or Mixed ANOVA. If clustered: use a multilevel model or cluster-robust SEs. If mild: acknowledge as a limitation."
+            },
+            {
+                id: 'normality',
+                label: "Normality (of Residuals)",
+                whatItMeans: "Within each cell, the outcome residuals are approximately normally distributed. ANOVA is robust with moderate/balanced n, but sensitive with small n and outliers.",
+                howToTest: [
+                    { name: "Residual Analysis", desc: "Prefer residuals over raw scores. Check Histogram or Q–Q plots of residuals for strong skew or extreme outliers." },
+                    { name: "Diagnostic Checks", desc: "For small n, check each cell distribution. Shapiro-Wilk is formal but can be over/underpowered based on sample size.", examples: true }
+                ],
+                ifItFails: "Check for entries errors first. If mild skew and decent n: often OK to proceed. If strong skew/outliers: consider transformations (log/sqrt), robust ANOVA, or a generalized linear model.",
+                visual: "normality"
+            },
+            {
+                id: 'homogeneity',
+                label: "Homogeneity of Variances",
+                whatItMeans: "Population variances are similar across all cells (not just for individual factors).",
+                howToTest: [
+                    { name: "Visual Checks", desc: "Side-by-side boxplots by cell or Residuals vs. Fitted plots (look for changing spread/fan shapes)." },
+                    { name: "Statistical Tests", desc: "Levene’s test or Brown–Forsythe across cells. Rule of thumb: Largest SD > 3x smallest SD is a red flag with unequal n." }
+                ],
+                ifItFails: "ANOVA is robust if n is equal. If n is unequal: consider Welch-type approaches, DV transformations, or heteroskedasticity-robust standard errors in a linear model context."
+            },
+            {
+                id: 'balanced',
+                label: "Balanced Design",
+                whatItMeans: "Ideally, you need data in every A×B cell. Unequal n affects Sum of Squares (SS) types and interpretation.",
+                howToTest: [
+                    { name: "Cell Counting", desc: "Check cell counts table. Look for empty cells (which break interaction models) or massive n differences between groups." }
+                ],
+                ifItFails: "Aim for balanced n. Avoid empty cells. If unbalanced, interpret cautiously and consider modeling choices (Type III SS, robust methods)."
+            },
+            {
+                id: 'additivity',
+                label: "Additivity / Linearity",
+                whatItMeans: "ANOVA is a linear model: Outcome = Effect A + Effect B + Interaction + Error.",
+                howToTest: [
+                    { name: "Theoretical Fit", desc: "If the outcome is bounded or has non-linear relationships by nature, simple additivity may not apply." }
+                ],
+                ifItFails: "Consider DV transformation or a generalized linear model if the linear combination of effects doesn't match the nature of the outcome."
+            }
         ]
     },
     res_rm_anova: {
