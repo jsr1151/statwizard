@@ -439,7 +439,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
     }
 
     return (
-      <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-hidden px-1 animate-in fade-in duration-300">
+      <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-visible px-2 pb-4 animate-in fade-in duration-300">
         {/* Main F-Ratio Card */}
         <div
           className="flex flex-col items-center w-full group cursor-help"
@@ -450,14 +450,14 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             <span>The F-Ratio</span>
             <span className="text-indigo-500 bg-indigo-500/10 px-2 rounded-full py-0.5 ml-2 font-bold">Showing: {effectItem.label || 'Interaction'}</span>
           </div>
-          <div className={`flex items-center text-2xl md:text-3xl font-serif ${textCol} whitespace-nowrap bg-slate-500/5 p-4 rounded-2xl border ${borderCol} w-full max-w-sm justify-center transition-all duration-300`}>
+          <div className={`flex items-center text-2xl md:text-3xl font-serif ${textCol} whitespace-nowrap bg-slate-500/5 p-4 rounded-2xl border ${borderCol} w-full max-w-sm justify-center transition-all duration-300 overflow-visible`}>
             <span className="font-bold mr-3 italic">F</span>
             <span className="mr-3">=</span>
             <div className="flex flex-col items-center">
-              <div className={`border-b-2 px-4 pb-1 w-full text-center group relative ${borderCol}`}>
+              <div className={`border-b-2 px-4 pb-1 w-full text-center group relative ${borderCol} overflow-visible`}>
                 {calc(effectTerm, effectItem.ms)}
               </div>
-              <div className="pt-1 px-4 group relative text-center">
+              <div className="pt-1 px-4 group relative text-center overflow-visible">
                 {calc("MS_error", errorItem.ms)}
               </div>
             </div>
@@ -466,16 +466,16 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
 
         <div className={`w-full flex flex-col gap-6 border-t border-dashed ${darkMode ? 'border-slate-800' : 'border-slate-200'} pt-6 overflow-visible`}>
           {/* Mean Square Components */}
-          <div className="ms-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="ms-grid grid grid-cols-1 md:grid-cols-2 gap-4 overflow-visible">
             <div
               className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all duration-300 ${darkMode ? 'bg-indigo-900/10 border-indigo-500/20 shadow-lg shadow-indigo-900/10' : 'bg-indigo-50/50 border-indigo-200 shadow-lg shadow-indigo-100/30'}`}
             >
               <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500`}>Mean Square ({effectItem.label || 'Effect'})</div>
-              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[180px]`}>
                 Estimates variation due to <span className="font-bold text-indigo-400">{effectItem.label}</span>.
               </div>
-              <div className="eq-wrap">
-                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
+              <div className="eq-wrap overflow-visible">
+                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap overflow-visible`}>
                   <div className="flex items-center gap-2">
                     <span>{calc(effectTerm, effectItem.ms)}</span>
                     <span className="opacity-50">=</span>
@@ -484,7 +484,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
                       <span className="text-[0.9em]">{calc(dfTerm, effectItem.df)}</span>
                     </div>
                   </div>
-                  <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex items-center gap-2 italic`}>
+                  <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex items-center gap-2 italic text-center`}>
                     {effectKey === 'A' && <span>{calc('df_A', effectItem.df)} = a - 1</span>}
                     {effectKey === 'B' && <span>{calc('df_B', effectItem.df)} = b - 1</span>}
                     {effectKey === 'AxB' && <span>{calc('df_AxB', effectItem.df)} = (a-1)(b-1)</span>}
@@ -497,11 +497,11 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
             >
               <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Error (Residual)</div>
-              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[180px]`}>
                 Estimates the typical unexplained variability (noise).
               </div>
-              <div className="eq-wrap">
-                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
+              <div className="eq-wrap overflow-visible">
+                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap overflow-visible`}>
                   <div className="flex items-center gap-2">
                     <span>{calc("MS_error", errorItem.ms)}</span>
                     <span className="opacity-50">=</span>
@@ -522,14 +522,14 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <div
             className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
           >
-            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>The SS Total identity for Factorial ANOVA</div>
-            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center max-w-[200px]`}>The SS Total identity for Factorial ANOVA</div>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-[200px] mb-1`}>
               Total variability is partitioned into main effects, the interaction, and error.
             </div>
 
-            <div className={`flex flex-col items-center gap-2 w-full mt-2`}>
+            <div className={`flex flex-col items-center gap-2 w-full mt-2 overflow-visible`}>
               <div className="eq-wrap overflow-x-auto w-full pb-2 scrollbar-thin scrollbar-thumb-slate-700">
-                <div className={`eq-text font-serif ${textCol} flex items-center justify-center min-w-max whitespace-nowrap mx-auto`}>
+                <div className={`eq-text font-serif ${textCol} flex items-center justify-center min-w-max whitespace-nowrap mx-auto px-4`}>
                   <span>{calc("SS_total", totalItem.ss)}</span>
                   <span className="mx-2 opacity-50">=</span>
                   <span>{calc("SS_A", effects.A?.ss)}</span>
@@ -554,7 +554,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500 text-center flex items-center justify-center gap-1`}>
               <span>Partial Effect Size</span>
               <span className="text-indigo-500 flex items-baseline normal-case tracking-normal" style={{ textTransform: 'none' }}>
-                (Partial <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px', marginLeft: '3px' }}>&eta;</span><sub className="text-[7px] ml-[1px]">p</sub>²)
+                (Partial <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px', marginLeft: '3px' }}>&eta;</span><sub className="text-[7px] ml-[1px]">p</sub><sup>2</sup>)
               </span>
             </div>
             <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
