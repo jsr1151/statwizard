@@ -367,7 +367,7 @@ export const STEPS = {
         title: "Factorial ANOVA",
         content: "Examines the effects of two or more independent categorical variables on a continuous outcome.",
         details: ["Main Effect A", "Main Effect B", "Interaction (AxB)"],
-        formulaId: 'anova',
+        formulaId: 'factorial_anova',
         visualType: 'factorial_anova',
         software: SOFTWARE_GUIDES.factorial_anova,
         assumptions: [

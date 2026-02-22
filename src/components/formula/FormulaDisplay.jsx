@@ -410,6 +410,172 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
       </div>
     );
   }
+
+  if (type === 'factorial_anova') {
+    const effectKey = getV('expandedEffect') || 'AxB';
+    const effects = getV('effects') || {};
+    const factors = getV('factors') || [];
+
+    const effectItem = effects[effectKey] || {};
+    const errorItem = effects.Error || {};
+    const totalItem = effects.Total || {};
+
+    // Determine which effect to show based on expandedEffect
+    let effectTerm = 'MS_AxB';
+    let dfTerm = 'df_AxB';
+    let ssTerm = 'SS_AxB';
+    let fTerm = 'F_AxB';
+
+    if (effectKey === 'A') {
+      effectTerm = 'MS_A';
+      dfTerm = 'df_A';
+      ssTerm = 'SS_A';
+      fTerm = 'F_A';
+    } else if (effectKey === 'B') {
+      effectTerm = 'MS_B';
+      dfTerm = 'df_B';
+      ssTerm = 'SS_B';
+      fTerm = 'F_B';
+    }
+
+    return (
+      <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-hidden px-1 animate-in fade-in duration-300">
+        {/* Main F-Ratio Card */}
+        <div
+          className="flex flex-col items-center w-full group cursor-help"
+          onMouseEnter={() => onHover && onHover('f_ratio')}
+          onMouseLeave={() => onHover && onHover(null)}
+        >
+          <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1 flex items-center justify-between w-full max-w-sm`}>
+            <span>The F-Ratio</span>
+            <span className="text-indigo-500 bg-indigo-500/10 px-2 rounded-full py-0.5 ml-2 font-bold">Showing: {effectItem.label || 'Interaction'}</span>
+          </div>
+          <div className={`flex items-center text-2xl md:text-3xl font-serif ${textCol} whitespace-nowrap bg-slate-500/5 p-4 rounded-2xl border ${borderCol} w-full max-w-sm justify-center transition-all duration-300`}>
+            <span className="font-bold mr-3 italic">F</span>
+            <span className="mr-3">=</span>
+            <div className="flex flex-col items-center">
+              <div className={`border-b-2 px-4 pb-1 w-full text-center group relative ${borderCol}`}>
+                {calc(effectTerm, effectItem.ms)}
+              </div>
+              <div className="pt-1 px-4 group relative text-center">
+                {calc("MS_within", errorItem.ms)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={`w-full flex flex-col gap-6 border-t border-dashed ${darkMode ? 'border-slate-800' : 'border-slate-200'} pt-6 overflow-visible`}>
+          {/* Mean Square Components */}
+          <div className="ms-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all duration-300 ${darkMode ? 'bg-indigo-900/10 border-indigo-500/20 shadow-lg shadow-indigo-900/10' : 'bg-indigo-50/50 border-indigo-200 shadow-lg shadow-indigo-100/30'}`}
+            >
+              <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500`}>Mean Square ({effectItem.label || 'Effect'})</div>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
+                Estimates variation due to <span className="font-bold text-indigo-400">{effectItem.label}</span>.
+              </div>
+              <div className="eq-wrap">
+                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
+                  <div className="flex items-center gap-2">
+                    <span>{calc(effectTerm, effectItem.ms)}</span>
+                    <span className="opacity-50">=</span>
+                    <div className="flex flex-col items-center">
+                      <span className={`border-b ${borderCol} px-3 pb-0.5 mb-0.5`}>{calc(ssTerm, effectItem.ss)}</span>
+                      <span className="text-[0.9em]">{calc(dfTerm, effectItem.df)}</span>
+                    </div>
+                  </div>
+                  <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex items-center gap-2 italic`}>
+                    {effectKey === 'A' && <span>{calc('df_A', effectItem.df)} = a - 1</span>}
+                    {effectKey === 'B' && <span>{calc('df_B', effectItem.df)} = b - 1</span>}
+                    {effectKey === 'AxB' && <span>{calc('df_AxB', effectItem.df)} = (a-1)(b-1)</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
+            >
+              <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Square Within (Error)</div>
+              <div className={`text-[10px] ${labelCol} text-center leading-tight mb-2 max-w-[200px]`}>
+                Estimates the typical within-group variability (noise).
+              </div>
+              <div className="eq-wrap">
+                <div className={`flex flex-col items-center eq-text font-serif ${textCol} whitespace-nowrap`}>
+                  <div className="flex items-center gap-2">
+                    <span>{calc("MS_within", errorItem.ms)}</span>
+                    <span className="opacity-50">=</span>
+                    <div className="flex flex-col items-center">
+                      <span className={`border-b ${borderCol} px-3 pb-0.5 mb-0.5`}>{calc("SS_within", errorItem.ss)}</span>
+                      <span className="text-[0.9em]">{calc("df_within", errorItem.df)}</span>
+                    </div>
+                  </div>
+                  <div className={`mt-2 text-[0.6em] ${labelCol} opacity-80 flex items-center gap-2 italic`}>
+                    <span>{calc("df_within", errorItem.df)} = N - (a × b)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SS Total Identity Card */}
+          <div
+            className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
+          >
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>The SS Total identity for Factorial ANOVA</div>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+              Total variability is partitioned into main effects, the interaction, and error.
+            </div>
+
+            <div className={`flex flex-col items-center gap-2 w-full mt-2`}>
+              <div className="eq-wrap overflow-x-auto w-full pb-2 scrollbar-thin scrollbar-thumb-slate-700">
+                <div className={`eq-text font-serif ${textCol} flex items-center justify-center min-w-max whitespace-nowrap mx-auto`}>
+                  <span>{calc("SS_total", totalItem.ss)}</span>
+                  <span className="mx-2 opacity-50">=</span>
+                  <span>{calc("SS_A", effects.A?.ss)}</span>
+                  <span className="mx-2 opacity-30">+</span>
+                  <span>{calc("SS_B", effects.B?.ss)}</span>
+                  <span className="mx-2 opacity-30">+</span>
+                  <span>{calc("SS_AxB", effects.AxB?.ss)}</span>
+                  <span className="mx-2 opacity-30">+</span>
+                  <span>{calc("SS_within", errorItem.ss)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Effect Size Card */}
+          <div
+            className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100 hover:border-indigo-200'} transition-all cursor-link`}
+            onClick={() => onInfo && onInfo('eta2')}
+            onMouseEnter={() => onHover && onHover('eta_squared')}
+            onMouseLeave={() => onHover && onHover(null)}
+          >
+            <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500 text-center flex items-center justify-center gap-1`}>
+              <span>Partial Effect Size</span>
+              <span className="text-indigo-500 flex items-baseline normal-case tracking-normal" style={{ textTransform: 'none' }}>
+                (Partial <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px', marginLeft: '3px' }}>&eta;</span><sub className="text-[7px] ml-[1px]">p</sub>²)
+              </span>
+            </div>
+            <div className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-1`}>
+              Proportion of variance associated with {effectItem.label}, after excluding other effects.
+            </div>
+            <div className="eq-wrap mt-2">
+              <div className={`eq-text font-serif ${textCol} flex items-center whitespace-nowrap`}>
+                {calc("eta2_partial", effectItem.pes)}
+                <span className="mx-4 font-light opacity-50">=</span>
+                <div className="flex flex-col items-center">
+                  <span className={`border-b-2 ${borderCol} px-4 pb-0.5 mb-0.5`}>{calc(ssTerm, effectItem.ss)}</span>
+                  <span className="text-[0.9em]">{calc(ssTerm, effectItem.ss)} + {calc("SS_within", errorItem.ss)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (type === 'correlation') return <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span className="font-bold mr-3 italic">r</span><span className="mr-3">=</span><div className="flex flex-col items-center"><div className={`border-b-2 px-2 pb-1 mb-1 w-full text-center ${borderCol}`}>{calc("Covariance", undefined)}</div><div className="pt-1">( {calc("s", undefined)}x * {calc("s", undefined)}y )</div></div></div>;
   if (type === 'regression') return <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span className="font-bold italic mr-2">Y</span><span>=</span><span className="mx-2">Intercept</span><span>+</span><span className="mx-2">{calc("Beta", undefined)}(X)</span><span>+</span><span className="mx-2">Error</span></div>;
   return <div className="text-slate-500">Formula not rendered</div>;

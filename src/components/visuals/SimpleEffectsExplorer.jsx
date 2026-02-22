@@ -10,6 +10,8 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
     const targetFactor = sliceFactor === 'A' ? factorB : factorA;
     const constantFactor = sliceFactor === 'A' ? factorA : factorB;
 
+    const isInteractionSignificant = results?.effects?.AxB?.p < 0.05;
+
     // Perform a quick simple effects calculation for the selected slice
     const calculateSimpleEffect = (levelId) => {
         if (!levelId) return null;
@@ -82,17 +84,32 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
 
     return (
         <div className="w-full flex flex-col gap-6 animate-in slide-in-from-bottom duration-500">
-            <div className="flex items-start gap-4 p-6 rounded-[2rem] bg-indigo-500/5 border-2 border-indigo-500/10">
-                <div className="p-3 bg-indigo-500 rounded-2xl text-white">
-                    <Info size={20} />
+            {isInteractionSignificant ? (
+                <div className="flex items-start gap-4 p-6 rounded-[2rem] bg-indigo-500/5 border-2 border-indigo-500/10">
+                    <div className="p-3 bg-indigo-500 rounded-2xl text-white">
+                        <Info size={20} />
+                    </div>
+                    <div>
+                        <h4 className="text-[14px] font-black uppercase text-indigo-400 mb-1">Guided Explorer</h4>
+                        <p className={`text-[12px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Since the interaction is significant, we should examine the effect of one factor **separately** at each level of the other.
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <h4 className="text-[14px] font-black uppercase text-indigo-400 mb-1">Guided Explorer</h4>
-                    <p className={`text-[12px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                        Since the interaction is significant, we should examine the effect of one factor **separately** at each level of the other.
-                    </p>
+            ) : (
+                <div className="flex items-start gap-4 p-6 rounded-[2rem] bg-amber-500/5 border-2 border-amber-500/20">
+                    <div className="p-3 bg-amber-500 rounded-2xl text-white">
+                        <HelpCircle size={20} />
+                    </div>
+                    <div>
+                        <h4 className="text-[14px] font-black uppercase text-amber-500 mb-1">Interaction is Not Significant</h4>
+                        <p className={`text-[12px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Simple effects are optional and mostly reflect the main effect.
+                            Use mainly for exploration or planned comparisons.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-2 gap-8">
                 {/* Step 1: Choose Slice */}
@@ -231,6 +248,15 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
                             </div>
                         )}
                     </div>
+
+                    <ProgressiveTooltip term="Multiple Comparisons" title="Beware Type I Error" desc="Running multiple simple effects increases the chance of finding a false positive. In a formal analysis, you might apply a correction (like Bonferroni) to these p-values." darkMode={darkMode}>
+                        <div className={`mt-4 p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'} flex items-center gap-3 cursor-help`}>
+                            <HelpCircle size={16} className={darkMode ? 'text-slate-500' : 'text-slate-400'} />
+                            <p className={`text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                Note: These raw p-values are uncorrected. Running many simple effects increases your risk of false positives.
+                            </p>
+                        </div>
+                    </ProgressiveTooltip>
                 </div>
             )}
         </div>

@@ -12,7 +12,7 @@ import { FACTORIAL_PRESETS } from '../../data/factorialPresets';
 
 import { ChevronRight, Info, AlertTriangle, HelpCircle } from 'lucide-react';
 
-const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
+const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpdate }) => {
     const [localShowValues, setLocalShowValues] = useState(propShowValues);
     useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
@@ -56,6 +56,18 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
             alpha
         };
     }, [results, selectedEffect, alpha]);
+
+    // Update stats for the equation panel
+    useEffect(() => {
+        if (!results || !onStatsUpdate) return;
+
+        // Pass the entire results object along with the currently expanded effect
+        onStatsUpdate({
+            ...results,
+            factors,
+            expandedEffect: expandedEffect || 'AxB' // Default to interaction if none selected
+        });
+    }, [results, factors, expandedEffect, onStatsUpdate]);
 
     // --- HANDLERS ---
     const loadPreset = (presetId) => {
@@ -397,7 +409,17 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                             ) : (
                                 <div className="text-slate-500 italic text-[14px]">Loading interaction plot...</div>
                             )}
-                            <div className="flex gap-4 mt-12 pb-12">
+
+                            {results && results.effects.AxB.p >= alpha && (
+                                <div className={`w-full max-w-2xl mt-8 p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'} flex items-center justify-center`}>
+                                    <p className={`text-[12px] font-bold text-center ${darkMode ? 'text-indigo-300' : 'text-indigo-700'} flex items-center gap-2`}>
+                                        <Info size={16} />
+                                        <span><span className="uppercase tracking-wider font-black text-[10px] mr-2">Main takeaway:</span>Because the lines are relatively parallel (interaction not significant), focus on interpreting the main effects.</span>
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="flex gap-4 mt-8 pb-12">
                                 <ProgressiveTooltip term="Axes" title="Swap Axes" desc="Switch which factor is on the x-axis." pedagogy="The interaction is the same, but one view may be easier to interpret than the other." darkMode={darkMode}>
                                     <button
                                         onClick={() => {
@@ -465,7 +487,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                         <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar">
                             <div className="flex justify-between items-end mb-6">
                                 <div className="flex flex-col gap-1">
-                                    <h3 className="text-[14px] font-black uppercase text-indigo-500">ANOVA Summary Table</h3>
+                                    <h3 className="text-[14px] font-black uppercase text-indigo-500">ANOVA Summary Table (α = {alpha})</h3>
                                     <p className={`text-[10px] font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                         Teaching Tip: Check interaction first. If p {'<'} .05, interpret simple effects.
                                     </p>
@@ -477,7 +499,11 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                     darkMode={darkMode}
                                 >
                                     <div className="text-[11px] font-black text-slate-500 tracking-widest flex items-baseline gap-1 cursor-help">
-                                        <span className="uppercase text-[10px]">Partial</span> <span className="text-indigo-400" style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '12px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
+                                        <span className="uppercase text-[10px]">Partial</span>
+                                        <span className="text-indigo-400 flex items-baseline" style={{ textTransform: 'none' }}>
+                                            <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '13px' }}>&eta;</span>
+                                            <sub className="text-[8px] ml-[1px]">p</sub>²
+                                        </span>
                                     </div>
                                 </ProgressiveTooltip>
                             </div>
@@ -573,8 +599,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues }) => {
                                                                         {effect.pes.toFixed(2)}
                                                                     </span>
                                                                 </ProgressiveTooltip>
-                                                                <span className="text-[10px] font-black text-indigo-300">
-                                                                    <span style={{ textTransform: 'none', fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px' }}>&eta;</span><sub className="lowercase text-[8px] translate-y-[-1px]">p</sub>²
+                                                                <span className="text-[10px] font-black text-indigo-300 flex items-baseline" style={{ textTransform: 'none' }}>
+                                                                    <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '13px' }}>&eta;</span>
+                                                                    <sub className="text-[8px] ml-[1px]">p</sub>²
                                                                 </span>
                                                             </div>
                                                         </div>

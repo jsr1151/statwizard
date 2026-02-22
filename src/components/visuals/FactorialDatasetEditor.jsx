@@ -118,6 +118,16 @@ const FactorialDatasetEditor = ({
                                 </div>
                             );
                         }
+
+                        if (!hasEmptyCell && !isUnbalanced) {
+                            return (
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    <span>Balanced Design: Yes</span>
+                                </div>
+                            );
+                        }
+
                         return null;
                     })()}
                 </div>
