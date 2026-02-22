@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Activity, LayoutGrid, PieChart, Plus, Sigma, X, GitCommit, Layers, Percent, Calculator } from 'lucide-react';
-import { fCDF, fPPF, calculateFactorialAnova } from '../../utils/mathHelpers';
+import { fCDF, fPPF, calculateFactorialAnova, calculatePostHocFactorial } from '../../utils/mathHelpers';
 import FactorialAnovaTutorPanel from '../tutor/FactorialAnovaTutorPanel';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import useFactorialAnovaTutor from '../../hooks/useFactorialAnovaTutor';

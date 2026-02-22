@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronRight, ArrowRight, Calculator, Info, GitCompare, HelpCircle } from 'lucide-react';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import { calculate95CI, fCDF, adjustPValues } from '../../utils/mathHelpers';
