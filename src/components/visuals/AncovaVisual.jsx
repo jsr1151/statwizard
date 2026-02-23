@@ -182,7 +182,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
         // Set covariate adjust slider default if null
         const adjustX = covariateAdjust === null ? grandMeanX : covariateAdjust;
 
-        // ANCOVA Common Slope Model
+        // ANCOVA Common Slope Model (Y ~ Group + X)
         const SSE_common = SSw_y - (SSw_x > 0 ? (SP_w * SP_w) / SSw_x : 0);
         const dfE_common = nTotal - k - 1;
         const MSE_common = dfE_common > 0 ? SSE_common / dfE_common : 0;
@@ -193,16 +193,18 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
         const MScov = SScov / dfCov;
         const Fcov = MSE_common > 0 ? MScov / MSE_common : 0;
         const pCov = dfE_common > 0 ? 1 - fCDF(Fcov, dfCov, dfE_common) : 1;
+        const pes_cov = SScov / (SScov + SSE_common);
 
         // Group Effect (Adjusted)
         const SSE_reduced_cov_only = SSt_y - (SSt_x > 0 ? (SP_t * SP_t) / SSt_x : 0);
-        const SSgrp = SSE_reduced_cov_only - SSE_common;
+        const SSgrp_adj = SSE_reduced_cov_only - SSE_common;
         const dfGrp = k - 1;
-        const MSgrp = dfGrp > 0 ? SSgrp / dfGrp : 0;
-        const Fgrp = MSE_common > 0 ? MSgrp / MSE_common : 0;
-        const pGrp = dfE_common > 0 ? 1 - fCDF(Fgrp, dfGrp, dfE_common) : 1;
+        const MSgrp_adj = dfGrp > 0 ? SSgrp_adj / dfGrp : 0;
+        const Fgrp_adj = MSE_common > 0 ? MSgrp_adj / MSE_common : 0;
+        const pGrp_adj = dfE_common > 0 ? 1 - fCDF(Fgrp_adj, dfGrp, dfE_common) : 1;
+        const pes_grp = SSgrp_adj / (SSgrp_adj + SSE_common);
 
-        // Interaction Effect (Homogeneity of Slopes)
+        // Interaction Effect (Homogeneity of Slopes) - (Y ~ Group * X)
         const SSint = SSE_common - SSE_separate;
         const dfInt = k - 1;
         const MSint = dfInt > 0 ? SSint / dfInt : 0;
@@ -210,6 +212,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
         const MSE_separate = dfE_separate > 0 ? SSE_separate / dfE_separate : 0;
         const Fint = MSE_separate > 0 ? MSint / MSE_separate : 0;
         const pInt = dfE_separate > 0 ? 1 - fCDF(Fint, dfInt, dfE_separate) : 1;
+        const pes_int = SSint / (SSint + SSE_separate);
 
         // Plot Scales
         const padX = (maxX - minX) * 0.1 || 1;
@@ -222,25 +225,26 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
         const scaleX = (x) => ((x - pMinX) / (pMaxX - pMinX)) * 800;
         const scaleY = (y) => 400 - ((y - pMinY) / (pMaxY - pMinY)) * 400;
 
-        // Adjusted Means
-        const adjustedMeans = validGroups.map(g => ({
-            id: g.id,
-            label: g.label,
-            color: g.color,
-            mx: g.mx,
-            my: g.my,
-            // Calculate adjM based on the current slider value (adjustX)
-            adjM: g.my - b_w * (g.mx - adjustX),
-            b_j: g.b_j
-        }));
+        // Adjusted Means & Simple Effects at adjustX
+        // SE for adjusted means: sqrt(MSE_common * [1/n_j + (X_j - X_grand)^2 / SSw_x])
+        const adjustedMeans = validGroups.map(g => {
+            const se = Math.sqrt(MSE_common * (1 / g.n + Math.pow(g.mx - grandMeanX, 2) / SSw_x));
+            const adjM = g.my - b_w * (g.mx - adjustX);
+            return {
+                id: g.id, label: g.label, color: g.color, mx: g.mx, my: g.my,
+                adjM, b_j: g.b_j, se,
+                ciLow: adjM - 1.96 * se, ciHigh: adjM + 1.96 * se
+            };
+        });
 
         return {
             ready: true,
             nTotal, k, grandMeanX, grandMeanY, b_w,
-            SSgrp, dfGrp, MSgrp, Fgrp, pGrp,
-            SScov, dfCov, MScov, Fcov, pCov,
-            SSint, dfInt, MSint, Fint, pInt,
+            SSgrp: SSgrp_adj, dfGrp, MSgrp: MSgrp_adj, Fgrp: Fgrp_adj, pGrp: pGrp_adj, pes_grp,
+            SScov, dfCov, MScov, Fcov, pCov, pes_cov,
+            SSint, dfInt, MSint, Fint, pInt, pes_int,
             SSE_common, dfE_common, MSE_common,
+            SSE_separate, dfE_separate, MSE_separate,
             adjustedMeans,
             validGroups,
             alpha,
@@ -248,12 +252,14 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
             scaleX, scaleY, adjustX,
             dfB: dfGrp,
             dfW: dfE_common,
-            msB: MSgrp,
+            msB: MSgrp_adj,
             msW: MSE_common,
-            ssB: SSgrp,
+            ssB: SSgrp_adj,
             ssW: SSE_common,
-            fVal: manualF ?? Fgrp,
-            F: manualF ?? Fgrp
+            ssT_y: SSt_y,
+            ssW_x: SSw_x,
+            fVal: manualF ?? Fgrp_adj,
+            F: manualF ?? Fgrp_adj
         };
     }, [groups, alpha, covariateAdjust, manualF]);
 
@@ -356,19 +362,25 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                     )}
 
                     {activeTab === 'TABLE' && stats.ready && (
-                        <div className="max-w-4xl mx-auto">
-                            <h3 className={`text-xl font-bold mb-4 font-mono ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>ANCOVA Summary Table</h3>
+                        <div className="max-w-4xl mx-auto space-y-8">
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <h3 className={`text-xl font-bold font-mono ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>ANCOVA Summary Table</h3>
+                                    <p className={`text-[10px] uppercase font-bold tracking-widest mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Model Spec: Y ~ Group + Covariate (Type III SS)</p>
+                                </div>
+                            </div>
 
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className={`border-b-2 text-xs uppercase tracking-widest ${darkMode ? 'border-slate-700 text-slate-500' : 'border-slate-300 text-slate-500'}`}>
+                                        <tr className={`border-b-2 text-[10px] uppercase tracking-widest ${darkMode ? 'border-slate-700 text-slate-500' : 'border-slate-300 text-slate-500'}`}>
                                             <th className="py-3 px-4 font-bold">Source</th>
                                             <th className="py-3 px-4 font-bold text-right">SS</th>
                                             <th className="py-3 px-4 font-bold text-right">df</th>
                                             <th className="py-3 px-4 font-bold text-right">MS</th>
                                             <th className="py-3 px-4 font-bold text-right">F</th>
                                             <th className="py-3 px-4 font-bold text-right">p</th>
+                                            <th className="py-3 px-4 font-bold text-right">Partial η²</th>
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm cursor-pointer">
@@ -379,6 +391,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                             <td className="py-3 px-4 text-right font-mono">{stats.MScov.toFixed(2)}</td>
                                             <td className="py-3 px-4 text-right font-mono font-bold text-emerald-500">{stats.Fcov.toFixed(2)}</td>
                                             <td className={`py-3 px-4 text-right font-mono font-bold ${stats.pCov < alpha ? 'text-rose-500' : ''}`}>{stats.pCov < 0.001 ? '< .001' : stats.pCov.toFixed(3).replace(/^0/, '')}</td>
+                                            <td className="py-3 px-4 text-right font-mono">{stats.pes_cov.toFixed(3)}</td>
                                         </tr>
                                         <tr onClick={() => setActiveEq('group')} className={`border-b transition-colors ${activeEq === 'group' ? (darkMode ? 'bg-indigo-950/30' : 'bg-indigo-50') : 'hover:bg-slate-500/5'} ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
                                             <td className="py-3 px-4 font-bold text-indigo-500">Group (Adjusted)</td>
@@ -387,6 +400,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                             <td className="py-3 px-4 text-right font-mono">{stats.MSgrp.toFixed(2)}</td>
                                             <td className="py-3 px-4 text-right font-mono font-bold text-indigo-500">{stats.Fgrp.toFixed(2)}</td>
                                             <td className={`py-3 px-4 text-right font-mono font-bold ${stats.pGrp < alpha ? 'text-rose-500' : ''}`}>{stats.pGrp < 0.001 ? '< .001' : stats.pGrp.toFixed(3).replace(/^0/, '')}</td>
+                                            <td className="py-3 px-4 text-right font-mono">{stats.pes_grp.toFixed(3)}</td>
                                         </tr>
                                         <tr className={`border-b transition-colors hover:bg-slate-500/5 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
                                             <td className="py-3 px-4 text-slate-500">Residual (Error)</td>
@@ -395,20 +409,56 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                             <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.MSE_common.toFixed(2)}</td>
                                             <td className="py-3 px-4 text-right">-</td>
                                             <td className="py-3 px-4 text-right">-</td>
-                                        </tr>
-                                        <tr onClick={() => setActiveEq('interaction')} className={`border-t-2 ${activeEq === 'interaction' ? (darkMode ? 'bg-slate-800/80' : 'bg-slate-200/50') : 'bg-slate-500/5'} ${darkMode ? 'border-slate-700' : 'border-slate-300'}`}>
-                                            <td className="py-3 px-4 font-bold text-slate-500">Interaction (Slopes Check)</td>
-                                            <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.SSint.toFixed(2)}</td>
-                                            <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.dfInt}</td>
-                                            <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.MSint.toFixed(2)}</td>
-                                            <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.Fint.toFixed(2)}</td>
-                                            <td className={`py-3 px-4 text-right font-mono font-bold ${stats.pInt < alpha ? 'text-rose-500' : 'text-slate-500'}`}>
-                                                {stats.pInt < 0.001 ? '< .001' : stats.pInt.toFixed(3).replace(/^0/, '')}
-                                            </td>
+                                            <td className="py-3 px-4 text-right">-</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
+
+                            <div className="space-y-4 pt-4 border-t border-dashed border-slate-700/30">
+                                <div>
+                                    <h4 className={`text-xs font-bold uppercase tracking-widest ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assumption Check: Homogeneity of Slopes</h4>
+                                    <p className={`text-[9px] font-medium leading-relaxed mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Tests if the relationship between X and Y is the same for all groups (Model: Y ~ Group * X)</p>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className={`border-b text-[9px] uppercase tracking-widest ${darkMode ? 'border-slate-800 text-slate-600' : 'border-slate-200 text-slate-400'}`}>
+                                                <th className="py-2 px-4">Source</th>
+                                                <th className="py-2 px-4 text-right">SS</th>
+                                                <th className="py-2 px-4 text-right">df</th>
+                                                <th className="py-2 px-4 text-right">MS</th>
+                                                <th className="py-2 px-4 text-right">F</th>
+                                                <th className="py-2 px-4 text-right">p</th>
+                                                <th className="py-2 px-4 text-right">Partial η²</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr onClick={() => setActiveEq('interaction')} className={`border-b transition-colors ${activeEq === 'interaction' ? (darkMode ? 'bg-slate-800/80' : 'bg-slate-100') : 'hover:bg-slate-500/5'} ${darkMode ? 'border-slate-800/50' : 'border-slate-100'}`}>
+                                                <td className="py-3 px-4 font-bold text-slate-400">Group × {covariateName}</td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.SSint.toFixed(2)}</td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.dfInt}</td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.MSint.toFixed(2)}</td>
+                                                <td className={`py-3 px-4 text-right font-mono font-bold ${stats.pInt < alpha ? 'text-rose-500' : 'text-slate-500'}`}>{stats.Fint.toFixed(2)}</td>
+                                                <td className={`py-3 px-4 text-right font-mono font-bold ${stats.pInt < alpha ? 'text-rose-500' : 'text-slate-500'}`}>
+                                                    {stats.pInt < 0.001 ? '< .001' : stats.pInt.toFixed(3).replace(/^0/, '')}
+                                                </td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-500">{stats.pes_int.toFixed(3)}</td>
+                                            </tr>
+                                            <tr className="border-b border-transparent">
+                                                <td className="py-3 px-4 text-slate-600 text-[11px] italic">Residual (Separate Slopes Error)</td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-600 text-[11px]">{stats.SSE_separate.toFixed(2)}</td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-600 text-[11px]">{stats.dfE_separate}</td>
+                                                <td className="py-3 px-4 text-right font-mono text-slate-600 text-[11px]">{stats.MSE_separate.toFixed(2)}</td>
+                                                <td className="py-3 px-4 text-right">-</td>
+                                                <td className="py-3 px-4 text-right">-</td>
+                                                <td className="py-3 px-4 text-right">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             {stats.pInt < alpha && (
                                 <div className="mt-4 p-4 rounded-xl border border-rose-500/40 bg-rose-500/10 flex gap-3 text-rose-500">
                                     <AlertCircle className="shrink-0 mt-0.5" size={18} />
@@ -542,6 +592,24 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                     <line x1="0" y1="400" x2="800" y2="400" stroke={darkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"} strokeWidth="2" />
                                     <line x1="0" y1="0" x2="0" y2="400" stroke={darkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"} strokeWidth="2" />
 
+                                    {/* Rug Plot (X-Overlap) */}
+                                    {stats.validGroups.map(g => (
+                                        <g key={`rug-${g.id}`}>
+                                            {g.xVals.map((vx, i) => (
+                                                <line
+                                                    key={i}
+                                                    x1={stats.scaleX(vx)}
+                                                    y1="400"
+                                                    x2={stats.scaleX(vx)}
+                                                    y2="410"
+                                                    stroke={g.color}
+                                                    strokeWidth="1"
+                                                    opacity="0.4"
+                                                />
+                                            ))}
+                                        </g>
+                                    ))}
+
                                     {/* Axis Labels */}
                                     <text x="400" y="435" textAnchor="middle" className={`text-xs uppercase font-bold tracking-widest ${darkMode ? 'fill-emerald-400' : 'fill-emerald-600'}`}>Covariate: {covariateName}</text>
                                     <text transform="translate(-30, 200) rotate(-90)" textAnchor="middle" className={`text-xs uppercase font-bold tracking-widest ${darkMode ? 'fill-indigo-400' : 'fill-indigo-600'}`}>Outcome Variable</text>
@@ -551,6 +619,15 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                         <g>
                                             <line x1={stats.scaleX(stats.adjustX)} y1="0" x2={stats.scaleX(stats.adjustX)} y2="400" stroke="#8b5cf6" strokeWidth="2" strokeDasharray="5,5" opacity="0.5" />
                                             <text x={stats.scaleX(stats.adjustX)} y="-5" textAnchor="middle" className="text-[10px] font-bold fill-purple-500 uppercase tracking-widest">Adjust X = {stats.adjustX.toFixed(2)}</text>
+
+                                            {/* Extrapolation Warning */}
+                                            {stats.validGroups.some(g => stats.adjustX < Math.min(...g.xVals) || stats.adjustX > Math.max(...g.xVals)) && (
+                                                <g transform={`translate(${stats.scaleX(stats.adjustX)}, 20)`}>
+                                                    <rect x="-60" y="-12" width="120" height="24" rx="4" fill="#ef4444" />
+                                                    <AlertCircle size={10} x="-54" y="-5" fill="white" className="stroke-white" />
+                                                    <text x="0" y="4" textAnchor="middle" className="text-[9px] font-black fill-white uppercase">EXTRAPOLATION WARNING</text>
+                                                </g>
+                                            )}
                                         </g>
                                     )}
 
@@ -641,12 +718,20 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                     )}
 
                     {activeTab === 'EXPLORER' && stats.ready && (
-                        <div className="max-w-4xl mx-auto p-4 sm:p-8">
-                            <h3 className={`text-2xl font-black uppercase tracking-widest mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Simple Slopes & Adjustments</h3>
+                        <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
+                            <div className="flex justify-between items-center">
+                                <h3 className={`text-2xl font-black uppercase tracking-widest ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Simple Effects & Slopes</h3>
+                                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${stats.pInt < alpha ? 'border-rose-500/50 bg-rose-500/10 text-rose-500' : 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'}`}>
+                                    {stats.pInt < alpha ? 'Interaction Sig' : 'Parallel Slopes'}
+                                </div>
+                            </div>
 
-                            <div className="grid md:grid-cols-2 gap-6 mb-8">
+                            <div className="grid md:grid-cols-2 gap-6">
                                 <div className={`p-6 rounded-2xl border-2 shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                    <h4 className={`text-sm font-bold uppercase tracking-widest mb-4 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Adjusted Means at X = {stats.adjustX.toFixed(2)}</h4>
+                                    <h4 className={`text-[10px] font-black uppercase tracking-widest mb-4 flex gap-2 items-center ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                        <Sparkles size={14} />
+                                        {stats.pInt < alpha ? 'Predicted' : 'Adjusted'} Means (at X = {stats.adjustX.toFixed(2)})
+                                    </h4>
                                     <div className="space-y-3">
                                         {stats.adjustedMeans.map(adj => (
                                             <div key={adj.id} className="flex items-center justify-between">
@@ -654,18 +739,19 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: adj.color }}></div>
                                                     <span className={`text-[11px] font-black uppercase ${darkMode ? 'text-white' : 'text-slate-800'}`}>{adj.label}</span>
                                                 </div>
-                                                <span className="text-sm font-black font-mono" style={{ color: adj.color }}>{adj.adjM.toFixed(2)}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-sm font-black font-mono" style={{ color: adj.color }}>{adj.adjM.toFixed(2)}</span>
+                                                    <span className="text-[9px] text-slate-500 font-mono">SE = {adj.se.toFixed(2)}</span>
+                                                </div>
                                             </div>
                                         ))}
-                                    </div>
-                                    <div className={`mt-4 pt-4 border-t text-[10px] uppercase font-bold ${darkMode ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
-                                        Common Slope (b_w) = {stats.b_w.toFixed(2)}
                                     </div>
                                 </div>
 
                                 <div className={`p-6 rounded-2xl border-2 shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                    <h4 className={`text-sm font-bold uppercase tracking-widest mb-4 flex items-center justify-between ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                                        Separate Slopes <span className={`text-[9px] px-2 py-0.5 rounded border ${stats.pInt < alpha ? 'border-rose-500 text-rose-500' : 'border-emerald-500 text-emerald-500'}`}>{stats.pInt < alpha ? 'Sig Diff' : 'Parallel'}</span>
+                                    <h4 className={`text-[10px] font-black uppercase tracking-widest mb-4 flex gap-2 items-center ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                        <TrendingUp size={14} />
+                                        Indiv. Regression Slopes
                                     </h4>
                                     <div className="space-y-3">
                                         {stats.adjustedMeans.map(adj => (
@@ -680,6 +766,85 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                     </div>
                                 </div>
                             </div>
+
+                            <div className={`p-6 rounded-2xl border-2 shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-indigo-500">
+                                    Pairwise Comparisons (at X = {stats.adjustX.toFixed(2)})
+                                </h4>
+                                <div className="space-y-2">
+                                    {stats.adjustedMeans.map((g1, i) =>
+                                        stats.adjustedMeans.slice(i + 1).map((g2, j) => {
+                                            const realJ = i + 1 + j;
+                                            const diff = g1.adjM - g2.adjM;
+                                            // SE_diff = sqrt(MSE * [1/n1 + 1/n2 + (x1-x2)^2 / SSW_x])
+                                            const se_diff = Math.sqrt(stats.MSE_common * (1 / stats.validGroups[i].n + 1 / stats.validGroups[realJ].n + Math.pow(stats.validGroups[i].mx - stats.validGroups[realJ].mx, 2) / stats.ssW));
+                                            const t = diff / se_diff;
+                                            const f = t * t;
+                                            const p = 1 - fCDF(f, 1, stats.dfE_common);
+                                            return (
+                                                <div key={`${g1.id}-${g2.id}`} className={`p-4 rounded-xl border flex flex-col sm:flex-row justify-between gap-4 transition-colors ${darkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] font-black uppercase text-slate-500">{g1.label} vs {g2.label}</span>
+                                                        <span className={`text-lg font-black font-mono ${diff > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                            {diff > 0 ? '+' : ''}{diff.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col sm:items-end justify-center">
+                                                        <div className="flex gap-4 text-xs font-mono">
+                                                            <span>t = {t.toFixed(2)}</span>
+                                                            <span className={`font-bold ${p < alpha ? 'text-rose-500' : 'text-slate-500'}`}>p = {p < .001 ? '< .001' : p.toFixed(3).replace(/^0/, '')}</span>
+                                                        </div>
+                                                        <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${p < alpha ? 'text-rose-500' : 'text-slate-400'}`}>
+                                                            {p < alpha ? 'Significant Diff' : 'Not Significant'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+
+                            <details className="group border-t border-slate-700/30 pt-4">
+                                <summary className={`flex items-center gap-2 cursor-pointer list-none text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500 hover:text-white' : 'text-slate-400 hover:text-indigo-600'}`}>
+                                    <div className="w-5 h-5 rounded-full border border-current flex items-center justify-center transition-transform group-open:rotate-180">
+                                        <ArrowDown size={12} />
+                                    </div>
+                                    Assumption Diagnostics
+                                </summary>
+                                <div className="mt-8 grid md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="space-y-4">
+                                        <h5 className="text-[10px] font-black uppercase text-indigo-500 tracking-tighter">Residual Variance (Equality)</h5>
+                                        <div className="space-y-2">
+                                            {stats.validGroups.map(g => {
+                                                const s2 = g.yValues.slice(0, g.n).reduce((acc, y, k) => {
+                                                    const resid = y - (g.my + stats.b_w * (g.xVals[k] - g.mx));
+                                                    return acc + resid * resid;
+                                                }, 0) / (g.n - 1);
+                                                return (
+                                                    <div key={g.id} className="flex justify-between items-center text-xs">
+                                                        <span className="text-slate-500 uppercase text-[9px] font-bold">{g.label} Var(Error):</span>
+                                                        <span className="font-mono font-bold text-slate-400">{s2.toFixed(3)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <h5 className="text-[10px] font-black uppercase text-indigo-500 tracking-tighter">Model Fit (R²)</h5>
+                                        <div className="p-4 rounded-xl bg-slate-950/20 border border-slate-800">
+                                            <div className="flex justify-between items-center text-xs mb-1">
+                                                <span className="text-slate-500">Overall R-Squared:</span>
+                                                <span className="font-mono font-bold text-emerald-500">{(1 - stats.SSE_common / stats.ssT_y).toFixed(3)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-slate-500">Mean Square Error (MSE):</span>
+                                                <span className="font-mono font-bold text-slate-400">{stats.MSE_common.toFixed(3)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     )}
 

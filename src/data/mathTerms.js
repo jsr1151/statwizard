@@ -100,6 +100,11 @@ export const MATH_TERMS = {
     "SS_Group": { title: "Sum of Squares (Group)", desc: "Variation due to differences among adjusted group means.", calc: "Calculated via modeling" },
     "SS_X": { title: "Sum of Squares (Covariate)", desc: "Variation explained by the continuous predictor.", calc: "Calculated via modeling" },
     "SS_GroupxX": { title: "Sum of Squares (Interaction)", desc: "Interaction effect sum of squares.", calc: "Calculated via modeling" },
+    "Ȳ_adj": { title: "Adjusted Mean (Ȳ_adj)", desc: "The group outcome mean (Y), adjusted for its difference from the grand mean of the covariate (X).", calc: "Ȳⱼ - b_w(X̄ⱼ - X̄_grand)" },
+    "Ȳ": { title: "Outcome Mean (Ȳ)", desc: "Average outcome (Y) for a group before adjustment.", calc: "ΣY / nⱼ" },
+    "X̄": { title: "Covariate Mean (X̄)", desc: "Average covariate (X) value for a group.", calc: "ΣX / nⱼ" },
+    "X̄_grand": { title: "Grand Mean of Covariate (X̄..)", desc: "Average covariate value across all observations in all groups.", calc: "ΣΣX / N" },
+    "b_w": { title: "Within-group Slope (b_w)", desc: "The common relationship between X and Y calculated across all groups.", calc: "SP_within / SS_within_x" },
     // Correlation
     "r": { title: "Pearson's r", desc: "Correlation.", calc: "Cov / SDs" },
     "Beta": { title: "Beta", desc: "Slope.", calc: "Rise/Run" },

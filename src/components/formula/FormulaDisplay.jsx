@@ -582,13 +582,13 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
     return (
       <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-hidden px-1">
         <div className="flex flex-col items-center w-full group cursor-help">
-          <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1`}>The F-Ratio (Adjusted)</div>
+          <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1`}>F for Group (controlling for X)</div>
           <div className={`flex items-center text-2xl md:text-3xl font-serif ${textCol} whitespace-nowrap`}>
             <span className="font-bold mr-3 italic text-indigo-500">F<sub>adj</sub></span>
             <span className="mr-3">=</span>
             <div className="flex flex-col items-center">
               <div className={`border-b-2 px-4 pb-1 mb-1 w-full text-center group relative ${borderCol}`}>
-                {calc("MS_between", getV('msB'))}
+                {calc("MS_Group", getV('msB'))}
               </div>
               <div className="pt-1 px-4 group relative">
                 {calc("MS_error", getV('msW'))}
@@ -596,7 +596,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             </div>
           </div>
           <div className={`mt-2 text-[10px] uppercase tracking-widest font-bold ${labelCol}`}>
-            Adjusted for {calc("Covariate", undefined)}
+            Model: Y ~ Group + X
           </div>
         </div>
 
@@ -604,9 +604,9 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100'} flex flex-col items-center gap-2`}>
             <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Mean Adjustment</div>
             <div className={`text-center font-serif ${textCol} whitespace-nowrap`}>
-              <span>{calc("x̄_adj", undefined)}</span>
+              <span>{calc("Ȳ_adj", undefined)}</span>
               <span className="mx-2">=</span>
-              <span>{calc("x̄", undefined)} - {calc("b_w", getV('b_w'))}({calc("Z", undefined)} - {calc("Z̄", undefined)})</span>
+              <span>{calc("Ȳ", undefined)} - {calc("b_w", getV('b_w'))}({calc("X̄", undefined)} - {calc("X̄_grand", undefined)})</span>
             </div>
           </div>
         </div>
