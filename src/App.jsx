@@ -43,6 +43,7 @@ import AssumptionItem from './components/formula/AssumptionItem';
 import useAutoReload from './hooks/useAutoReload';
 import useAnovaTutor from './hooks/useAnovaTutor';
 import useFactorialAnovaTutor from './hooks/useFactorialAnovaTutor';
+import useAncovaTutor from './hooks/useAncovaTutor';
 
 // --- Visualizers ---
 import NormalDistributionVisual from './components/visuals/NormalDistributionVisual';
@@ -50,6 +51,7 @@ import IndependentTTestVisual from './components/visuals/IndependentTTestVisual'
 import PairedTTestVisual from './components/visuals/PairedTTestVisual';
 import AnovaVisual from './components/visuals/AnovaVisual';
 import FactorialAnovaVisual from './components/visuals/FactorialAnovaVisual';
+import AncovaVisual from './components/visuals/AncovaVisual';
 import VariabilityVisual from './components/visuals/VariabilityVisual';
 import FrequencyVisual from './components/visuals/FrequencyVisual';
 import ShapeVisual from './components/visuals/ShapeVisual';
@@ -66,6 +68,7 @@ import UpdateToast from './components/common/UpdateToast';
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
 import FactorialAnovaTutorPanel from './components/tutor/FactorialAnovaTutorPanel';
+import AncovaTutorPanel from './components/tutor/AncovaTutorPanel';
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -247,8 +250,9 @@ export default function App() {
 
     const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
     const factorialAnovaTutor = useFactorialAnovaTutor(currentStats, anovaTutorContext);
+    const ancovaTutor = useAncovaTutor(currentStats, anovaTutorContext);
 
-    const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStep?.visualType === 'anova';
+    const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStepId === 'res_ancova' || currentStep?.visualType === 'anova' || currentStep?.visualType === 'ancova';
     const isAnovaActive = isAnovaTrulyActive;
 
     // The tutor logic itself handles its own onboarded/dismissed state via anovaTutorScripts
@@ -476,7 +480,7 @@ export default function App() {
                                                 <div className="lg:col-span-8">
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
-                                                        <div className={`flex-1 flex items-start justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
+                                                        <div className={`flex-1 flex items-stretch justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
                                                             {displayVisualType === 'anova' ? (
                                                                 <ErrorBoundary>
                                                                     <AnovaVisual
@@ -496,6 +500,15 @@ export default function App() {
                                                                         onTutorUpdate={setActiveTutorScript}
                                                                         onStatsUpdate={setCurrentStats}
                                                                         tutor={factorialAnovaTutor}
+                                                                    />
+                                                                </ErrorBoundary>
+                                                            ) : displayVisualType === 'ancova' ? (
+                                                                <ErrorBoundary>
+                                                                    <AncovaVisual
+                                                                        darkMode={darkMode}
+                                                                        showValues={showEquationValues}
+                                                                        onStatsUpdate={setCurrentStats}
+                                                                        tutor={ancovaTutor}
                                                                     />
                                                                 </ErrorBoundary>
                                                             ) : displayVisualType === 'indep_ttest' ? (
@@ -803,6 +816,20 @@ export default function App() {
                             if (factorialAnovaTutor.activeTip) {
                                 factorialAnovaTutor.dismissTip(factorialAnovaTutor.activeTip.id, false);
                             }
+                        }}
+                        darkMode={darkMode}
+                    />
+                )}
+
+                {currentStepId === 'res_ancova' && ancovaTutor.activeTip && (
+                    <AncovaTutorPanel
+                        tip={ancovaTutor.activeTip}
+                        onDismiss={ancovaTutor.dismissTip}
+                        onShowHistory={() => setShowHistory(true)}
+                        onAction={(action) => {
+                            if (action === 'dismiss_permanent') ancovaTutor.dismissTip(ancovaTutor.activeTip.id, true);
+                            if (action === 'dismiss_session') ancovaTutor.dismissTip(ancovaTutor.activeTip.id, false);
+                            window.dispatchEvent(new CustomEvent('ancovaTutorAction', { detail: action }));
                         }}
                         darkMode={darkMode}
                     />

@@ -153,7 +153,8 @@ export const STEPS = {
         options: [
             { label: "One-Way (1 Factor, 3+ Groups)", value: 'indep', next: 'res_one_way_anova' },
             { label: "Factorial (2+ Factors, e.g., 2x2)", value: 'factorial', next: 'res_factorial_anova' },
-            { label: "Repeated Measures (Same people)", value: 'repeated', next: 'res_rm_anova' }
+            { label: "Repeated Measures (Same people)", value: 'repeated', next: 'res_rm_anova' },
+            { label: "ANCOVA (Groups + Continuous Covariate)", value: 'ancova', next: 'res_ancova' }
         ]
     },
 
@@ -454,6 +455,54 @@ export const STEPS = {
             }
         ]
     },
+    res_ancova: {
+        id: 'res_ancova',
+        type: 'result',
+        title: "ANCOVA (Analysis of Covariance)",
+        content: "Examines the effect of a categorical independent variable on a continuous outcome, adjusting for a continuous covariate.",
+        details: ["Adjusted Means", "Covariate Effect", "Slopes Check"],
+        formulaId: 'ancova',
+        visualType: 'ancova',
+        software: SOFTWARE_GUIDES.ancova,
+        assumptions: [
+            {
+                id: 'linearity_covariate',
+                label: "Linearity of the Covariate",
+                whatItMeans: "The relationship between the covariate and the outcome should be roughly linear within each group.",
+                howToTest: [
+                    { name: "Scatterplot", desc: "Plot Covariate vs Outcome and fit a line. Check for obvious curves." }
+                ],
+                ifItFails: "Consider transforming the covariate/outcome, adding a polynomial term, or using a non-linear model."
+            },
+            {
+                id: 'homogeneity_slopes',
+                label: "Homogeneity of Regression Slopes",
+                whatItMeans: "The relationship between the covariate and the outcome must be the same across all groups (parallel lines).",
+                howToTest: [
+                    { name: "Interaction Test", desc: "Test the Group × Covariate interaction. If p < .05, slopes differ significantly." }
+                ],
+                ifItFails: "Do not interpret standard ANCOVA main effects. Instead, treat it as moderation and report simple slopes or predicted differences at specific covariate values."
+            },
+            {
+                id: 'covariate_reliability',
+                label: "Covariate Measured Reliably",
+                whatItMeans: "The covariate should be measured with minimal error.",
+                howToTest: [
+                    { name: "Design Check", desc: "Ensure reliable instruments are used for the covariate (e.g., highly reliable scale or objective measure)." }
+                ],
+                ifItFails: "Measurement error in the covariate weakens the adjustment and reduces statistical power. Interpret adjusted means cautiously."
+            },
+            {
+                id: 'covariate_independence',
+                label: "Covariate Independent of Treatment",
+                whatItMeans: "The covariate should not be affected by the grouping variable (e.g., measure it *before* the intervention).",
+                howToTest: [
+                    { name: "Design Check", desc: "Review study design. If measured after, run an ANOVA on the covariate itself to ensure no group differences." }
+                ],
+                ifItFails: "ANCOVA will 'adjust away' real treatment effects. Consider alternative designs or mediation."
+            }
+        ]
+    },
     correlation_result: {
         id: 'correlation_result',
         type: 'result',
@@ -585,6 +634,7 @@ export const STAT_PAGE_LIST = [
     { id: 'res_indep_ttest', title: 'Independent Samples T-Test', category: 'Mean Comparisons', family: 'T-Tests' },
     { id: 'res_paired_ttest', title: 'Paired Samples T-Test', category: 'Mean Comparisons', family: 'T-Tests' },
     { id: 'res_one_way_anova', title: 'One-Way ANOVA', category: 'Mean Comparisons', family: 'ANOVA' },
+    { id: 'res_ancova', title: 'ANCOVA (Analysis of Covariance)', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'res_factorial_anova', title: 'Factorial ANOVA (Two-Way)', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'res_rm_anova', title: 'Repeated Measures ANOVA', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'correlation_result', title: 'Pearson Correlation', category: 'Linear Modeling' },

@@ -104,5 +104,12 @@ export const SOFTWARE_GUIDES = {
         r: "summary(aov(outcome ~ factorA * factorB, data = df))",
         excel: "Path A (Toolpak): Data Analysis > ANOVA: Two-Factor With Replication.\nPath B (Manual): SS for A, B, and Interaction require advanced =SUMPRODUCT calculations.",
         google_sheets: "Path A (Add-on): 'Analysis ToolPak' > ANOVA: Two-Factor With Replication.\nPath B (Manual): Use =SUMPRODUCT results to partition variance manually."
+    },
+    ancova: {
+        spss: "Analyze > General Linear Model > Univariate.\nFixed Factor(s): Grouping variable.\nCovariate(s): Continuous predictor.\nOptions: Move Group to 'Display Means for' and check 'Compare main effects' for adjusted means.",
+        jasp: "ANOVA > ANCOVA.\nFixed Factors: Grouping variable.\nCovariates: Continuous predictor.\nEstimated Marginal Means: Add grouping variable to see adjusted means.",
+        r: "library(car)\nmodel <- aov(outcome ~ covariate + group, data = df)\nAnova(model, type=\"III\")",
+        excel: "Not supported in Data Analysis Toolpak natively. Requires multiple linear regression using dummy coding for the groups and the covariate.",
+        google_sheets: "Not supported natively. Requires multiple linear regression with dummy variables using =LINEST()."
     }
 };

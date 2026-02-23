@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TabButton = ({ active, onClick, icon: Icon, label, darkMode }) => (
+const TabButton = ({ active, onClick, icon: Icon, label, children, darkMode }) => (
     <button
         onClick={onClick}
         className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all border-t-2 ${active
@@ -8,8 +8,8 @@ const TabButton = ({ active, onClick, icon: Icon, label, darkMode }) => (
             : (darkMode ? 'bg-slate-950/50 text-slate-500 border-transparent hover:bg-slate-900 hover:text-slate-300' : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200 hover:text-slate-700')
             }`}
     >
-        <Icon className={`w-3.5 h-3.5 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />
-        {label}
+        {Icon && <Icon className={`w-3.5 h-3.5 ${active ? 'text-indigo-500' : 'text-slate-400'}`} />}
+        {label || children}
     </button>
 );
 

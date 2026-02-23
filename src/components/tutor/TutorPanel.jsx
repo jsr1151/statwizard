@@ -56,13 +56,13 @@ const TutorPanel = ({ script, level, onClose, darkMode, inline = false }) => {
                                 <div className={`p-2 rounded-lg border ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                                     <div className={`text-[7px] font-bold uppercase mb-1 italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Why?</div>
                                     <div className={`text-[10px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                        <CalculationText text={script.content.why} darkMode={darkMode} onInfo={() => { }} />
+                                        <CalculationText text={script.content?.why} darkMode={darkMode} onInfo={() => { }} />
                                     </div>
                                 </div>
                                 <div className={`p-2 rounded-lg border ${darkMode ? 'bg-indigo-900/20 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
                                     <div className="text-[7px] font-bold text-indigo-400 uppercase mb-1">The Math</div>
                                     <div className={`text-[10px] font-mono text-center py-1 ${darkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                                        <CalculationText text={script.content.math} darkMode={darkMode} onInfo={() => { }} />
+                                        <CalculationText text={script.content?.math} darkMode={darkMode} onInfo={() => { }} />
                                     </div>
                                 </div>
                             </div>
@@ -70,12 +70,14 @@ const TutorPanel = ({ script, level, onClose, darkMode, inline = false }) => {
                     </div>
                 )}
 
-                <div className={`p-3 rounded-xl border mt-4 space-y-1 animate-in fade-in slide-in-from-bottom-1 duration-500 delay-500 ${darkMode ? 'bg-indigo-600/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
-                    <div className="text-[8px] font-bold text-indigo-400 uppercase">Try This Next</div>
-                    <p className={`text-[10px] font-medium leading-relaxed flex items-center gap-2 ${darkMode ? 'text-indigo-200' : 'text-indigo-700'}`}>
-                        <Sparkles size={10} /> {script.content.tryNext}
-                    </p>
-                </div>
+                {script.content?.tryNext && (
+                    <div className={`p-3 rounded-xl border mt-4 space-y-1 animate-in fade-in slide-in-from-bottom-1 duration-500 delay-500 ${darkMode ? 'bg-indigo-600/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                        <div className="text-[8px] font-bold text-indigo-400 uppercase">Try This Next</div>
+                        <p className={`text-[10px] font-medium leading-relaxed flex items-center gap-2 ${darkMode ? 'text-indigo-200' : 'text-indigo-700'}`}>
+                            <Sparkles size={10} /> {script.content.tryNext}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
