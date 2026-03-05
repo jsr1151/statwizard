@@ -8,6 +8,8 @@ export const MATH_TERMS = {
 
     // Descriptive
     "x̄": { title: "Arithmetic Mean", desc: "The average value.", calc: "Σx / {n}" },
+    "Median": { title: "Median", desc: "The middle value in a sorted dataset.", calc: "Middle value" },
+    "Mode": { title: "Mode", desc: "The most frequent value in a dataset.", calc: "Most frequent" },
     "n": { title: "Sample Size", desc: "Total observations.", calc: "Count." },
     "s": { title: "Sample Standard Deviation (SD)", desc: "Average spread.", calc: "√ {s2}" },
     "x": { title: "Individual Score", desc: "A single data point.", calc: "Raw value." },
