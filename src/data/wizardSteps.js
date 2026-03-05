@@ -652,6 +652,7 @@ export const STAT_PAGE_LIST = [
     { id: 'res_variability', title: 'Variability (SD, Range, Skew)', category: 'Descriptive' },
     { id: 'res_frequency', title: 'Frequency Distributions', category: 'Descriptive' },
     { id: 'res_probability', title: 'Probability Basics & Demos', category: 'Descriptive' },
+    { id: 'res_nhst', title: 'Testing Logic (NHST)', category: 'Descriptive' },
     { id: 'res_ztest', title: 'One-Sample Z-Test', category: 'Mean Comparisons' },
     { id: 'res_onesample_ttest', title: 'One-Sample T-Test', category: 'Mean Comparisons', family: 'T-Tests' },
     { id: 'res_indep_ttest', title: 'Independent Samples T-Test', category: 'Mean Comparisons', family: 'T-Tests' },
