@@ -98,6 +98,14 @@ export const MATH_TERMS = {
     "df_Group": { title: "Degrees of Freedom (Group)", desc: "Number of groups minus 1.", calc: "{g} - 1" },
     "df_X": { title: "Degrees of Freedom (Covariate)", desc: "Usually 1 for a single continuous covariate.", calc: "1" },
     "df_GroupxX": { title: "Degrees of Freedom (Interaction)", desc: "Interaction degrees of freedom.", calc: "{g} - 1" },
+
+    // NHST
+    "H0": { title: "Null Hypothesis (H₀)", desc: "The claim that there is no effect or no difference in the population.", calc: "Parameter = Value." },
+    "H1": { title: "Alternative Hypothesis (H₁)", desc: "The claim that there is a real effect or difference in the population.", calc: "Parameter ≠ Value." },
+    "alpha": { title: "Alpha (α)", desc: "The significance level. The probability of making a Type I Error (False Positive).", calc: "Typically 0.05." },
+    "beta": { title: "Beta (β)", desc: "The probability of making a Type II Error (False Negative).", calc: "P(Fail to Reject H₀ | H₁ is true)." },
+    "Power": { title: "Statistical Power", desc: "The probability of correctly rejecting a false null hypothesis.", calc: "1 - {beta}" },
+    "p_value": { title: "P-Value (p)", desc: "The probability of seeing data as extreme as yours if H₀ were true.", calc: "P(Data | H₀)" },
     "g": { title: "Number of Groups (g)", desc: "Total number of categories in the grouping factor.", calc: "Count." },
     "SS_Group": { title: "Sum of Squares (Group)", desc: "Variation due to differences among adjusted group means.", calc: "Calculated via modeling" },
     "SS_X": { title: "Sum of Squares (Covariate)", desc: "Variation explained by the continuous predictor.", calc: "Calculated via modeling" },

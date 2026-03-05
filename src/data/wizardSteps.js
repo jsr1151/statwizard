@@ -37,7 +37,8 @@ export const STEPS = {
             { label: "Center of the data (Central Tendency)", value: 'center', next: 'res_central_tendency' },
             { label: "Spread/Diversity of the data (Variability)", value: 'spread', next: 'res_variability' },
             { label: "Counts/Distribution (Frequency)", value: 'frequency', next: 'res_frequency' },
-            { label: "Likelihood & Chance (Probability)", value: 'probability', next: 'res_probability' }
+            { label: "Likelihood & Chance (Probability)", value: 'probability', next: 'res_probability' },
+            { label: "Testing Logic (NHST)", value: 'nhst', next: 'res_nhst' }
         ]
     },
 
@@ -197,6 +198,28 @@ export const STEPS = {
         formulaId: 'percentage',
         visualType: 'frequency',
         software: SOFTWARE_GUIDES.frequency,
+        assumptions: []
+    },
+
+    res_nhst: {
+        id: 'res_nhst',
+        type: 'result',
+        title: "Null Hypothesis Significance Testing (NHST)",
+        subtitle: "p-values, confidence intervals, and what 'significant' really means.",
+        content: "NHST is the formal process of using data to choose between two competing claims (hypotheses) about a population.",
+        takeaways: [
+            "NHST tests how compatible the data are with a null model.",
+            "A p-value is NOT the probability that the null is true.",
+            "Statistical significance does not always mean practical importance."
+        ],
+        steps: [
+            { title: "State H₀ and H₁", desc: "Define the Null Hypothesis (no effect) and Alternative Hypothesis (real effect)." },
+            { title: "Choose Test", desc: "Select the appropriate statistical test based on your data and assumptions." },
+            { title: "Compute Statistic", desc: "Calculate a test statistic (like z, t, or F) that measures the signal in your data." },
+            { title: "Get P-Value", desc: "Determine the probability of seeing your results if the Null Hypothesis were true." },
+            { title: "Report Results", desc: "Report the estimate, confidence interval, and exact p-value (don't just say 'significant')." }
+        ],
+        visualType: 'nhst',
         assumptions: []
     },
 

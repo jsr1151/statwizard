@@ -57,6 +57,7 @@ import FrequencyVisual from './components/visuals/FrequencyVisual';
 import ShapeVisual from './components/visuals/ShapeVisual';
 import QuartileVisual from './components/visuals/QuartileVisual';
 import ProbabilityVisual from './components/visuals/ProbabilityVisual';
+import NhstVisual from './components/visuals/NhstVisual';
 
 // --- Navigation ---
 import MainMenu from './components/navigation/MainMenu';
@@ -397,7 +398,7 @@ export default function App() {
                                             )}
 
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
-                                                {currentStepId !== 'res_probability' && (
+                                                {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && (
                                                     <div className="lg:col-span-4 flex flex-col gap-6">
                                                         {displayFormulaId && displayFormulaId !== 'none' && (
                                                             <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[250px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
@@ -479,7 +480,7 @@ export default function App() {
                                                     </div>
                                                 )}
 
-                                                <div className={currentStepId === 'res_probability' ? 'lg:col-span-12' : 'lg:col-span-8'}>
+                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst') ? 'lg:col-span-12' : 'lg:col-span-8'}>
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
                                                         <div className={`flex-1 flex items-stretch justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
@@ -529,6 +530,21 @@ export default function App() {
                                                                         onStatsUpdate={setCurrentStats}
                                                                     />
                                                                 </ErrorBoundary>
+                                                            ) : displayVisualType === 'probability' ? (
+                                                                <ErrorBoundary>
+                                                                    <ProbabilityVisual
+                                                                        mode={probabilityTab}
+                                                                        darkMode={darkMode}
+                                                                        onTutorUpdate={setActiveTutorScript}
+                                                                        onStatsUpdate={setCurrentStats}
+                                                                    />
+                                                                </ErrorBoundary>
+                                                            ) : displayVisualType === 'nhst' ? (
+                                                                <ErrorBoundary>
+                                                                    <NhstVisual
+                                                                        darkMode={darkMode}
+                                                                    />
+                                                                </ErrorBoundary>
                                                             ) : displayVisualType === 'ttest' ? (
                                                                 <NormalDistributionVisual
                                                                     type={displayFormulaId === 'z_test' ? 'z' : 't'}
@@ -547,8 +563,6 @@ export default function App() {
                                                                 <ShapeVisual darkMode={darkMode} />
                                                             ) : displayVisualType === 'quartile' ? (
                                                                 <QuartileVisual darkMode={darkMode} />
-                                                            ) : displayVisualType === 'probability' ? (
-                                                                <ProbabilityVisual mode={probabilityTab} darkMode={darkMode} />
                                                             ) : null}
                                                         </div>
                                                     </div>
