@@ -548,6 +548,7 @@ const ProbabilityVisual = ({ mode = 'basics', darkMode }) => {
                   <div
                     className={`w-full h-full relative transition-all duration-1000 [transform-style:preserve-3d]`}
                     style={{ transform: `rotateY(${coinFlipState.angle || 0}deg)`, transitionTimingFunction: 'cubic-bezier(0.15, 0, 0.15, 1)' }}
+                    onTransitionEnd={() => setCoinFlipState(prev => ({ ...prev, flipping: false }))}
                   >
                     <div className={`absolute inset-0 rounded-full border-4 border-amber-600 bg-amber-500 flex items-center justify-center text-amber-100 font-black text-4xl shadow-xl [backface-visibility:hidden]`}>H</div>
                     <div className={`absolute inset-0 rounded-full border-4 border-slate-400 bg-slate-600 flex items-center justify-center text-slate-100 font-black text-4xl shadow-xl [backface-visibility:hidden] [transform:rotateY(180deg)]`}>T</div>
