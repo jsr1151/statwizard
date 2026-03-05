@@ -6,8 +6,9 @@ import {
     Ban, ShieldCheck, Target, Layers
 } from 'lucide-react';
 import {
-    getGaussianPoints, normalCDF, erf, pointsToPath
+    getGaussianPoints, normalCDF, erf
 } from '../../utils/mathHelpers';
+import { pointsToPath } from '../../utils/svgHelpers';
 import TabButton from '../common/TabButton';
 
 // --- SUB-COMPONENT: P-Value Widget ---
@@ -277,8 +278,8 @@ const NhstVisual = ({ darkMode }) => {
                             key={idx}
                             onClick={() => setActiveStep(idx)}
                             className={`p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden group hover:scale-[1.02] active:scale-95 ${activeStep === idx
-                                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg z-10'
-                                    : (darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100')
+                                ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg z-10'
+                                : (darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100')
                                 }`}
                         >
                             <div className={`text-[10px] font-black mb-1 flex items-center gap-2 ${activeStep === idx ? 'text-indigo-200' : 'text-slate-500'}`}>
