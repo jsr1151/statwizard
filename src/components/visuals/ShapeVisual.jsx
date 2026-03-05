@@ -9,6 +9,7 @@ import TabButton from '../common/TabButton';
 const ShapeVisual = ({ darkMode }) => {
   const [skew, setSkew] = useState(0);
   const [kurtosis, setKurtosis] = useState(0);
+  const [showMarkers, setShowMarkers] = useState(false);
   const stdDev = 40;
   const mean = 150;
 
@@ -29,17 +30,84 @@ const ShapeVisual = ({ darkMode }) => {
     }
     return pts;
   };
+
   const points = getSkewKurtPoints();
   const path = pointsToPath(points);
+
+  const markers = useMemo(() => {
+    if (!showMarkers) return [];
+
+    const alpha = skew * 5;
+    const delta = alpha / Math.sqrt(1 + alpha * alpha);
+    const effectiveSD = stdDev * (1 - (kurtosis * 0.4));
+
+    // Theoretical Skew Normal properties (approx)
+    const theoreticalMean = mean + effectiveSD * delta * Math.sqrt(2 / Math.PI);
+
+    // Mode calculation (approximate peak finder)
+    let maxVal = -1;
+    let modeX = mean;
+    points.forEach(([px, py]) => {
+      const val = 150 - py;
+      if (val > maxVal) {
+        maxVal = val;
+        modeX = px;
+      }
+    });
+
+    // Median approx: roughly between mean and mode
+    const theoreticalMedian = theoreticalMean - (effectiveSD * delta * 0.2);
+
+    return [
+      { label: 'Mode', x: modeX, color: '#f59e0b' },
+      { label: 'Median', x: theoreticalMedian, color: '#10b981' },
+      { label: 'Mean', x: theoreticalMean, color: '#6366f1' }
+    ];
+  }, [showMarkers, skew, kurtosis, points, mean, stdDev]);
 
   return (
     <div className="w-full flex flex-col items-center">
       <div className={`w-full h-64 relative border rounded-lg p-4 select-none flex items-center justify-center overflow-hidden transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
         <h4 className={`absolute top-2 text-[10px] font-bold text-center uppercase tracking-widest transition-colors ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Shape Simulator</h4>
+
+        <div className="absolute top-2 right-2 z-10">
+          <button
+            onClick={() => setShowMarkers(!showMarkers)}
+            className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${showMarkers ? 'bg-indigo-600 text-white' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600')}`}
+          >
+            <Activity className="w-3 h-3" /> {showMarkers ? 'Hide Markers' : 'Show Central Tendency'}
+          </button>
+        </div>
+
         <svg viewBox="0 0 300 160" className="w-full h-full overflow-visible mt-2">
           <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
-          <path d={path} fill={darkMode ? "rgba(99, 102, 241, 0.05)" : "rgba(99, 102, 241, 0.1)"} stroke="#4f46e5" strokeWidth="3" className="transition-all duration-100 ease-out" />
+
+          {/* Normal Curve Reference */}
           <path d={pointsToPath(getGaussianPoints(150, 40, 120))} fill="none" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="1" strokeDasharray="4" opacity="0.3" />
+
+          {/* Actual Distribution */}
+          <path d={path} fill={darkMode ? "rgba(99, 102, 241, 0.05)" : "rgba(99, 102, 241, 0.1)"} stroke="#4f46e5" strokeWidth="3" className="transition-all duration-100 ease-out" />
+
+          {/* Markers */}
+          {markers.map((m, i) => (
+            <g key={i} className="transition-all duration-300">
+              <line
+                x1={m.x} y1="150" x2={m.x} y2="10"
+                stroke={m.color}
+                strokeWidth="2"
+                strokeDasharray="4 2"
+                className="opacity-60"
+              />
+              <text
+                x={m.x} y="8"
+                textAnchor="middle"
+                fill={m.color}
+                className="text-[7px] font-black uppercase tracking-tighter"
+              >
+                {m.label}
+              </text>
+            </g>
+          ))}
         </svg>
       </div>
       <div className={`w-full p-4 rounded-b-lg border-x border-b space-y-4 transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 shadow-indigo-500/5' : 'bg-slate-50 border-slate-200'}`}>
@@ -57,6 +125,7 @@ const ShapeVisual = ({ darkMode }) => {
         </div>
         <div className={`p-3 rounded text-xs border transition-colors ${darkMode ? 'bg-amber-950/20 border-amber-900/30 text-amber-200/70' : 'bg-amber-50 text-amber-900 border-amber-100'}`}>
           <strong className={darkMode ? 'text-amber-500' : ''}>Rules of Thumb:</strong><br />
+          • <strong>Central Tendency:</strong> In a normal curve, Mean = Median = Mode. As skew increases, the Mean is pulled furthest toward the tail.<br />
           • <strong>Skewness:</strong> &gt; ±1.0 is considered highly skewed. ±0.5 is moderately skewed.<br />
           • <strong>Kurtosis:</strong> Excess kurtosis &gt; 1.0 (Leptokurtic/Tall) or &lt; -1.0 (Platykurtic/Flat) indicates non-normality.
         </div>
