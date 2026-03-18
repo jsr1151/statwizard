@@ -1,4 +1,6 @@
-import { normalCDF } from '../utils/mathHelpers';
+import { normalCDF } from '../utils/mathHelpers.js';
+
+export { normalCDF };
 
 // Acklam inverse normal approximation.
 export const inverseNormalCDF = (p) => {
@@ -60,6 +62,113 @@ export const inverseNormalCDF = (p) => {
 export const roundTo = (value, decimals = 3) => {
     const factor = 10 ** decimals;
     return Math.round(value * factor) / factor;
+};
+
+export const clampProbability = (value) => Math.min(1, Math.max(0, value));
+
+export const logGamma = (z) => {
+    if (z < 0.5) {
+        return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - logGamma(1 - z);
+    }
+
+    const coefficients = [
+        0.9999999999998099,
+        676.5203681218851,
+        -1259.1392167224028,
+        771.3234287776531,
+        -176.6150291621406,
+        12.507343278686905,
+        -0.13857109526572012,
+        9.984369578019572e-6,
+        1.5056327351493116e-7,
+    ];
+
+    let x = coefficients[0];
+    const shifted = z - 1;
+
+    for (let i = 1; i < coefficients.length; i += 1) {
+        x += coefficients[i] / (shifted + i);
+    }
+
+    const t = shifted + coefficients.length - 1.5;
+    return 0.5 * Math.log(2 * Math.PI) + (shifted + 0.5) * Math.log(t) - t + Math.log(x);
+};
+
+const betaContinuedFraction = (x, a, b) => {
+    const maxIterations = 200;
+    const epsilon = 3e-7;
+    const minimum = 1e-30;
+    const qab = a + b;
+    const qap = a + 1;
+    const qam = a - 1;
+    let c = 1;
+    let d = 1 - (qab * x) / qap;
+
+    if (Math.abs(d) < minimum) {
+        d = minimum;
+    }
+
+    d = 1 / d;
+    let h = d;
+
+    for (let m = 1; m <= maxIterations; m += 1) {
+        const m2 = 2 * m;
+        let aa = (m * (b - m) * x) / ((qam + m2) * (a + m2));
+        d = 1 + aa * d;
+
+        if (Math.abs(d) < minimum) {
+            d = minimum;
+        }
+
+        c = 1 + aa / c;
+        if (Math.abs(c) < minimum) {
+            c = minimum;
+        }
+
+        d = 1 / d;
+        h *= d * c;
+
+        aa = -((a + m) * (qab + m) * x) / ((a + m2) * (qap + m2));
+        d = 1 + aa * d;
+
+        if (Math.abs(d) < minimum) {
+            d = minimum;
+        }
+
+        c = 1 + aa / c;
+        if (Math.abs(c) < minimum) {
+            c = minimum;
+        }
+
+        d = 1 / d;
+        const delta = d * c;
+        h *= delta;
+
+        if (Math.abs(delta - 1) < epsilon) {
+            break;
+        }
+    }
+
+    return h;
+};
+
+export const regularizedIncompleteBeta = (x, a, b) => {
+    if (x <= 0) {
+        return 0;
+    }
+
+    if (x >= 1) {
+        return 1;
+    }
+
+    const logBeta = logGamma(a) + logGamma(b) - logGamma(a + b);
+    const front = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - logBeta);
+
+    if (x < (a + 1) / (a + b + 2)) {
+        return front * betaContinuedFraction(x, a, b) / a;
+    }
+
+    return 1 - front * betaContinuedFraction(1 - x, b, a) / b;
 };
 
 export const solveByBinarySearch = ({ low, high, tolerance = 1e-6, maxIterations = 80, predicate }) => {

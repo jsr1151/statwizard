@@ -1,0 +1,70 @@
+{
+  "formatVersion": 1,
+  "testId": "one_sample_z",
+  "reference": {
+    "source": "statwizard_baseline_2026_03_18",
+    "notes": "Replace or augment with pinned G*Power values as parity fixtures mature."
+  },
+  "defaultTolerances": {
+    "actualPower": 0.000001,
+    "criticalValue": 0.000001,
+    "noncentrality": 0.000001,
+    "effectSize": 0.000001
+  },
+  "cases": [
+    {
+      "id": "a_priori_two_tailed_alpha_005_d_05_power_08",
+      "inputs": {
+        "mode": "a_priori",
+        "alpha": 0.05,
+        "tails": 2,
+        "direction": "greater",
+        "effectSize": 0.5,
+        "powerTarget": 0.8
+      },
+      "expected": {
+        "sampleSize": 32,
+        "actualPower": 0.8074304605724381,
+        "criticalValue": 1.959963986120195,
+        "noncentrality": 2.8284271247461903,
+        "effectSize": 0.5
+      }
+    },
+    {
+      "id": "post_hoc_one_tailed_alpha_005_d_05_n_30",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.05,
+        "tails": 1,
+        "direction": "greater",
+        "effectSize": 0.5,
+        "sampleSize": 30
+      },
+      "expected": {
+        "sampleSize": 30,
+        "actualPower": 0.8629696480045002,
+        "criticalValue": 1.644853625133699,
+        "noncentrality": 2.7386127875258306,
+        "effectSize": 0.5
+      }
+    },
+    {
+      "id": "sensitivity_two_tailed_alpha_005_power_08_n_30",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.05,
+        "tails": 2,
+        "direction": "greater",
+        "powerTarget": 0.8,
+        "sampleSize": 30
+      },
+      "expected": {
+        "sampleSize": 30,
+        "actualPower": 0.7999992185569231,
+        "criticalValue": 1.959963986120195,
+        "noncentrality": 2.801578817619884,
+        "effectSize": 0.5114959716796874
+      }
+    }
+  ]
+}

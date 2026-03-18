@@ -11,8 +11,11 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
             result.tails,
             result.direction,
             result.sampleSize,
+            result.group1SampleSize,
+            result.group2SampleSize,
             result.effectSize,
             result.criticalValue,
+            result.df,
             result.noncentrality,
             result.actualPower,
         ].join(':')

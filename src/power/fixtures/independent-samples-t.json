@@ -1,0 +1,83 @@
+{
+  "formatVersion": 1,
+  "testId": "independent_t",
+  "reference": {
+    "source": "statwizard_baseline_2026_03_18",
+    "notes": "Replace or augment with pinned G*Power values as parity fixtures mature."
+  },
+  "defaultTolerances": {
+    "actualPower": 0.000001,
+    "criticalValue": 0.000001,
+    "df": 0.000001,
+    "noncentrality": 0.000001,
+    "effectSize": 0.000001
+  },
+  "cases": [
+    {
+      "id": "a_priori_two_tailed_alpha_005_d_05_power_08_ratio_1",
+      "inputs": {
+        "mode": "a_priori",
+        "alpha": 0.05,
+        "tails": 2,
+        "direction": "greater",
+        "effectSize": 0.5,
+        "powerTarget": 0.8,
+        "allocationRatio": 1
+      },
+      "expected": {
+        "sampleSize": 128,
+        "group1SampleSize": 64,
+        "group2SampleSize": 64,
+        "actualPower": 0.8014595783187215,
+        "criticalValue": 1.978970526341935,
+        "df": 126,
+        "noncentrality": 2.8284271247461903,
+        "effectSize": 0.5
+      }
+    },
+    {
+      "id": "post_hoc_one_tailed_alpha_005_d_05_n_90_ratio_15",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.05,
+        "tails": 1,
+        "direction": "greater",
+        "effectSize": 0.5,
+        "sampleSize": 90,
+        "allocationRatio": 1.5
+      },
+      "expected": {
+        "sampleSize": 90,
+        "group1SampleSize": 36,
+        "group2SampleSize": 54,
+        "actualPower": 0.745697436487847,
+        "criticalValue": 1.6623539776661556,
+        "df": 88,
+        "noncentrality": 2.32379000772445,
+        "effectSize": 0.5
+      }
+    },
+    {
+      "id": "sensitivity_two_tailed_alpha_005_power_08_n_80_ratio_1",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.05,
+        "tails": 2,
+        "direction": "greater",
+        "powerTarget": 0.8,
+        "sampleSize": 80,
+        "allocationRatio": 1
+      },
+      "expected": {
+        "sampleSize": 80,
+        "group1SampleSize": 40,
+        "group2SampleSize": 40,
+        "actualPower": 0.8000002260394982,
+        "criticalValue": 1.990847040224748,
+        "df": 78,
+        "noncentrality": 2.836670049556878,
+        "effectSize": 0.6342987060546876
+      }
+    }
+  ]
+}

@@ -1,6 +1,54 @@
-import { solveOneSampleZPower } from './solvers/oneSampleZ';
+import { solveOneSampleZPower } from './solvers/oneSampleZ.js';
+import { solveIndependentTPower } from './solvers/independentT.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
+
+const buildTailFields = () => ([
+    {
+        id: 'tails',
+        label: 'Tails',
+        type: 'select',
+        options: [
+            { label: 'Two-Tailed', value: 2 },
+            { label: 'One-Tailed', value: 1 },
+        ],
+    },
+    {
+        id: 'direction',
+        label: 'Direction',
+        type: 'select',
+        hidden: (inputs) => Number(inputs?.tails) !== 1,
+        options: [
+            { label: 'Greater Than', value: 'greater' },
+            { label: 'Less Than', value: 'less' },
+        ],
+    },
+]);
+
+const pooledSDFromIndependentStats = (stats = {}) => {
+    if (Number.isFinite(stats?.pooledVar) && stats.pooledVar > 0) {
+        return Math.sqrt(stats.pooledVar);
+    }
+
+    const n1 = Number(stats?.n1);
+    const n2 = Number(stats?.n2);
+    const s1 = Math.abs(Number(stats?.s1));
+    const s2 = Math.abs(Number(stats?.s2));
+
+    if (n1 > 1 && n2 > 1 && s1 > 0 && s2 > 0) {
+        const numerator = ((n1 - 1) * (s1 ** 2)) + ((n2 - 1) * (s2 ** 2));
+        const denominator = n1 + n2 - 2;
+        if (denominator > 0) {
+            return Math.sqrt(numerator / denominator);
+        }
+    }
+
+    if (s1 > 0 && s2 > 0) {
+        return Math.sqrt(((s1 ** 2) + (s2 ** 2)) / 2);
+    }
+
+    return 1;
+};
 
 const buildZDefaults = (stats = {}, mode = 'a_priori') => {
     const meanDifference = Math.abs((stats?.xBar ?? 0) - (stats?.mu ?? 0));
@@ -16,6 +64,26 @@ const buildZDefaults = (stats = {}, mode = 'a_priori') => {
         powerTarget: 0.8,
         effectSize: Number(effectSize.toFixed(3)),
         sampleSize,
+    };
+};
+
+const buildIndependentTDefaults = (stats = {}, mode = 'a_priori') => {
+    const group1SampleSize = Math.max(2, Math.round(stats?.n1 ?? 30));
+    const group2SampleSize = Math.max(2, Math.round(stats?.n2 ?? 30));
+    const pooledSD = pooledSDFromIndependentStats(stats);
+    const meanDifference = Math.abs(stats?.delta ?? ((stats?.x1 ?? 0) - (stats?.x2 ?? 0)));
+    const effectSize = Math.abs(stats?.d ?? (pooledSD > 0 ? meanDifference / pooledSD : 0.5)) || 0.5;
+    const direction = (stats?.delta ?? ((stats?.x1 ?? 0) - (stats?.x2 ?? 0))) < 0 ? 'less' : 'greater';
+
+    return {
+        mode,
+        alpha: 0.05,
+        tails: 2,
+        direction,
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        sampleSize: group1SampleSize + group2SampleSize,
+        allocationRatio: Number((group2SampleSize / group1SampleSize).toFixed(3)),
     };
 };
 
@@ -73,6 +141,60 @@ const oneSampleZEffectTransform = {
     },
 };
 
+const independentTEffectTransform = {
+    primaryMetricLabel: "Cohen's d",
+    description: "For the independent-samples t test, Cohen's d is the mean difference divided by the pooled within-group SD.",
+    fields: [
+        {
+            id: 'meanDifference',
+            label: 'Mean Difference',
+            type: 'number',
+            step: 0.1,
+            min: 0,
+        },
+        {
+            id: 'pooledSD',
+            label: 'Pooled SD',
+            type: 'number',
+            step: 0.1,
+            min: 0.01,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        meanDifference: Number(Math.abs(stats?.delta ?? ((stats?.x1 ?? 0) - (stats?.x2 ?? 0))).toFixed(3)),
+        pooledSD: Number(pooledSDFromIndependentStats(stats).toFixed(3)),
+    }),
+    compute: ({ meanDifference, pooledSD }) => {
+        const diff = Number(meanDifference);
+        const pooled = Number(pooledSD);
+
+        if (!(pooled > 0)) {
+            return {
+                ok: false,
+                error: 'Pooled SD must be greater than 0.',
+            };
+        }
+
+        const effectSize = diff / pooled;
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: "Cohen's d",
+            summary: `d = diff / pooled SD = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Mean Difference',
+                    value: diff.toFixed(4),
+                },
+                {
+                    label: 'Pooled SD',
+                    value: pooled.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
 const createPlannedTest = ({ id, family, slug, label, stepId, gpowerTest }) => ({
     id,
     family,
@@ -118,25 +240,7 @@ export const POWER_TEST_REGISTRY = [
             defaultPowerMode: 'a_priori',
             inputSchema: {
                 a_priori: [
-                    {
-                        id: 'tails',
-                        label: 'Tails',
-                        type: 'select',
-                        options: [
-                            { label: 'Two-Tailed', value: 2 },
-                            { label: 'One-Tailed', value: 1 },
-                        ],
-                    },
-                    {
-                        id: 'direction',
-                        label: 'Direction',
-                        type: 'select',
-                        hidden: (inputs) => Number(inputs?.tails) !== 1,
-                        options: [
-                            { label: 'Greater Than', value: 'greater' },
-                            { label: 'Less Than', value: 'less' },
-                        ],
-                    },
+                    ...buildTailFields(),
                     {
                         id: 'alpha',
                         label: 'Alpha',
@@ -163,25 +267,7 @@ export const POWER_TEST_REGISTRY = [
                     },
                 ],
                 post_hoc: [
-                    {
-                        id: 'tails',
-                        label: 'Tails',
-                        type: 'select',
-                        options: [
-                            { label: 'Two-Tailed', value: 2 },
-                            { label: 'One-Tailed', value: 1 },
-                        ],
-                    },
-                    {
-                        id: 'direction',
-                        label: 'Direction',
-                        type: 'select',
-                        hidden: (inputs) => Number(inputs?.tails) !== 1,
-                        options: [
-                            { label: 'Greater Than', value: 'greater' },
-                            { label: 'Less Than', value: 'less' },
-                        ],
-                    },
+                    ...buildTailFields(),
                     {
                         id: 'alpha',
                         label: 'Alpha',
@@ -208,25 +294,7 @@ export const POWER_TEST_REGISTRY = [
                     },
                 ],
                 sensitivity: [
-                    {
-                        id: 'tails',
-                        label: 'Tails',
-                        type: 'select',
-                        options: [
-                            { label: 'Two-Tailed', value: 2 },
-                            { label: 'One-Tailed', value: 1 },
-                        ],
-                    },
-                    {
-                        id: 'direction',
-                        label: 'Direction',
-                        type: 'select',
-                        hidden: (inputs) => Number(inputs?.tails) !== 1,
-                        options: [
-                            { label: 'Greater Than', value: 'greater' },
-                            { label: 'Less Than', value: 'less' },
-                        ],
-                    },
+                    ...buildTailFields(),
                     {
                         id: 'alpha',
                         label: 'Alpha',
@@ -275,14 +343,132 @@ export const POWER_TEST_REGISTRY = [
         stepId: 'res_paired_ttest',
         gpowerTest: 'Means: Difference between two dependent means (matched pairs)',
     }),
-    createPlannedTest({
+    {
         id: 'independent_t',
         family: 't_tests',
         slug: 'independent-samples-t',
         label: 'Independent Samples T-Test',
         stepId: 'res_indep_ttest',
-        gpowerTest: 'Means: Difference between two independent means (two groups)',
-    }),
+        power: {
+            status: 'available',
+            gpowerFamily: 't tests',
+            gpowerTest: 'Means: Difference between two independent means (two groups)',
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: "Effect Size (d)",
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                    },
+                    {
+                        id: 'allocationRatio',
+                        label: 'Allocation Ratio (n2 / n1)',
+                        type: 'number',
+                        step: 0.1,
+                        min: 0.05,
+                        max: 20,
+                    },
+                ],
+                post_hoc: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'allocationRatio',
+                        label: 'Allocation Ratio (n2 / n1)',
+                        type: 'number',
+                        step: 0.1,
+                        min: 0.05,
+                        max: 20,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: "Effect Size (d)",
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                    },
+                ],
+                sensitivity: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'allocationRatio',
+                        label: 'Allocation Ratio (n2 / n1)',
+                        type: 'number',
+                        step: 0.1,
+                        min: 0.05,
+                        max: 20,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: independentTEffectTransform,
+            solver: solveIndependentTPower,
+            availableVisualizerModes: ['test', 'power'],
+            buildInitialInputs: buildIndependentTDefaults,
+        },
+    },
     createPlannedTest({
         id: 'one_way_anova',
         family: 'anova',

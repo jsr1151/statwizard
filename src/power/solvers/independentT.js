@@ -1,53 +1,86 @@
-import { inverseNormalCDF, normalPowerFromShift, roundTo, solveByBinarySearch } from '../math.js';
+import { roundTo, solveByBinarySearch } from '../math.js';
+import {
+    independentTDegreesOfFreedom,
+    independentTNoncentrality,
+    normalizeAllocationRatio,
+    splitTotalSampleSize,
+    studentTCriticalValue,
+    tPowerFromNoncentrality,
+} from '../tMath.js';
 
-const MIN_SAMPLE_SIZE = 2;
+const MIN_TOTAL_SAMPLE_SIZE = 4;
 
 const cleanNumber = (value, fallback) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const getCriticalValue = (alpha, tails) => {
-    if (tails === 2) {
-        return inverseNormalCDF(1 - alpha / 2);
-    }
-
-    return inverseNormalCDF(1 - alpha);
-};
-
-const getPostHocPower = ({ sampleSize, alpha, effectSize, tails, direction }) => {
-    const criticalValue = getCriticalValue(alpha, tails);
-    const noncentrality = Math.abs(effectSize) * Math.sqrt(sampleSize);
-    const power = normalPowerFromShift({
+const evaluateIndependentTPower = ({
+    alpha,
+    effectSize,
+    sampleSize,
+    allocationRatio,
+    tails,
+    direction,
+}) => {
+    const samplePlan = splitTotalSampleSize({
+        sampleSize,
+        allocationRatio,
+    });
+    const df = independentTDegreesOfFreedom(samplePlan);
+    const criticalMagnitude = studentTCriticalValue({ alpha, tails, df });
+    const criticalValue = tails === 2
+        ? criticalMagnitude
+        : (direction === 'less' ? -criticalMagnitude : criticalMagnitude);
+    const noncentrality = independentTNoncentrality({
+        effectSize,
+        group1SampleSize: samplePlan.group1SampleSize,
+        group2SampleSize: samplePlan.group2SampleSize,
+        tails,
+        direction,
+    });
+    const power = tPowerFromNoncentrality({
         criticalValue,
+        df,
         noncentrality,
         tails,
         direction,
     });
 
     return {
+        ...samplePlan,
+        df,
         power,
         criticalValue,
         noncentrality,
     };
 };
 
-const solveRequiredSampleSize = ({ alpha, effectSize, powerTarget, tails, direction }) => {
-    let upper = MIN_SAMPLE_SIZE;
-    let trial = getPostHocPower({
-        sampleSize: upper,
+const solveRequiredSampleSize = ({
+    alpha,
+    effectSize,
+    powerTarget,
+    allocationRatio,
+    tails,
+    direction,
+}) => {
+    let upper = MIN_TOTAL_SAMPLE_SIZE;
+    let trial = evaluateIndependentTPower({
         alpha,
         effectSize,
+        sampleSize: upper,
+        allocationRatio,
         tails,
         direction,
     });
 
     while (trial.power < powerTarget && upper < 100000) {
         upper *= 2;
-        trial = getPostHocPower({
-            sampleSize: upper,
+        trial = evaluateIndependentTPower({
             alpha,
             effectSize,
+            sampleSize: upper,
+            allocationRatio,
             tails,
             direction,
         });
@@ -57,15 +90,16 @@ const solveRequiredSampleSize = ({ alpha, effectSize, powerTarget, tails, direct
         throw new Error('Required sample size exceeded the search limit.');
     }
 
-    let low = MIN_SAMPLE_SIZE;
+    let low = MIN_TOTAL_SAMPLE_SIZE;
     let high = upper;
 
     while (low < high) {
         const mid = Math.floor((low + high) / 2);
-        const result = getPostHocPower({
-            sampleSize: mid,
+        const result = evaluateIndependentTPower({
             alpha,
             effectSize,
+            sampleSize: mid,
+            allocationRatio,
             tails,
             direction,
         });
@@ -77,26 +111,30 @@ const solveRequiredSampleSize = ({ alpha, effectSize, powerTarget, tails, direct
         }
     }
 
-    const finalResult = getPostHocPower({
-        sampleSize: low,
+    return evaluateIndependentTPower({
         alpha,
         effectSize,
+        sampleSize: low,
+        allocationRatio,
         tails,
         direction,
     });
-
-    return {
-        sampleSize: low,
-        ...finalResult,
-    };
 };
 
-const solveSensitivityEffect = ({ alpha, powerTarget, sampleSize, tails, direction }) => {
+const solveSensitivityEffect = ({
+    alpha,
+    powerTarget,
+    sampleSize,
+    allocationRatio,
+    tails,
+    direction,
+}) => {
     const predicate = (effectSize) => {
-        const result = getPostHocPower({
-            sampleSize,
+        const result = evaluateIndependentTPower({
             alpha,
             effectSize,
+            sampleSize,
+            allocationRatio,
             tails,
             direction,
         });
@@ -120,17 +158,16 @@ const solveSensitivityEffect = ({ alpha, powerTarget, sampleSize, tails, directi
         predicate,
     });
 
-    const postHoc = getPostHocPower({
-        sampleSize,
-        alpha,
-        effectSize,
-        tails,
-        direction,
-    });
-
     return {
         effectSize,
-        ...postHoc,
+        ...evaluateIndependentTPower({
+            alpha,
+            effectSize,
+            sampleSize,
+            allocationRatio,
+            tails,
+            direction,
+        }),
     };
 };
 
@@ -140,9 +177,13 @@ const buildSharedResult = ({
     tails,
     direction,
     sampleSize,
+    group1SampleSize,
+    group2SampleSize,
+    achievedAllocationRatio,
     effectSize,
     power,
     criticalValue,
+    df,
     noncentrality,
     targetPower,
 }) => {
@@ -154,14 +195,29 @@ const buildSharedResult = ({
             tone: 'primary',
         },
         {
+            id: 'group_1_n',
+            label: 'Group 1 N',
+            value: `${group1SampleSize}`,
+        },
+        {
+            id: 'group_2_n',
+            label: 'Group 2 N',
+            value: `${group2SampleSize}`,
+        },
+        {
             id: 'actual_power',
             label: 'Actual Power',
             value: roundTo(power, 4).toFixed(4),
         },
         {
             id: 'critical_value',
-            label: 'Critical Z',
+            label: 'Critical t',
             value: roundTo(criticalValue, 4).toFixed(4),
+        },
+        {
+            id: 'degrees_freedom',
+            label: 'Degrees of Freedom',
+            value: roundTo(df, 4).toFixed(4),
         },
         {
             id: 'noncentrality',
@@ -183,6 +239,8 @@ const buildSharedResult = ({
         });
     }
 
+    const groupSplitText = `n1 = ${group1SampleSize}, n2 = ${group2SampleSize}`;
+
     return {
         ok: true,
         mode,
@@ -190,20 +248,24 @@ const buildSharedResult = ({
         tails,
         direction,
         sampleSize,
+        group1SampleSize,
+        group2SampleSize,
+        achievedAllocationRatio,
         effectSize,
         actualPower: power,
         criticalValue,
+        df,
         noncentrality,
         metrics,
         summary:
             mode === 'a_priori'
-                ? `A one-sample z test needs N = ${sampleSize} to reach power ${roundTo(power, 3)} at alpha ${alpha}.`
+                ? `An independent-samples t test needs total N = ${sampleSize} (${groupSplitText}) to reach power ${roundTo(power, 3)} at alpha ${alpha}.`
                 : mode === 'post_hoc'
-                    ? `With N = ${sampleSize}, the achieved power is ${roundTo(power, 3)} for effect size d = ${roundTo(effectSize, 3)}.`
-                    : `With N = ${sampleSize}, the smallest detectable effect is d = ${roundTo(effectSize, 3)} at power ${roundTo(targetPower, 3)}.`,
+                    ? `With total N = ${sampleSize} split as ${groupSplitText}, the achieved power is ${roundTo(power, 3)} for effect size d = ${roundTo(effectSize, 3)}.`
+                    : `With total N = ${sampleSize} split as ${groupSplitText}, the smallest detectable effect is d = ${roundTo(effectSize, 3)} at power ${roundTo(targetPower, 3)}.`,
         visualizer: {
             kind: 'normal_distribution',
-            type: 'z',
+            type: 't',
             config: {
                 uiPreset: 'power_compact',
                 visualMode: 'power',
@@ -214,6 +276,7 @@ const buildSharedResult = ({
                 h1Direction: direction,
                 targetEffect: effectSize,
                 calcMode: false,
+                df,
                 calcData: {
                     xBar: effectSize,
                     mu: 0,
@@ -228,9 +291,13 @@ const buildSharedResult = ({
                     direction,
                     actualPower: power,
                     criticalValue,
+                    df,
                     noncentrality,
                     effectSize,
                     sampleSize,
+                    group1SampleSize,
+                    group2SampleSize,
+                    achievedAllocationRatio,
                     targetPower: targetPower ?? null,
                 },
             },
@@ -238,13 +305,14 @@ const buildSharedResult = ({
     };
 };
 
-export const solveOneSampleZPower = (rawInputs) => {
+export const solveIndependentTPower = (rawInputs) => {
     const mode = rawInputs?.mode || 'a_priori';
     const alpha = cleanNumber(rawInputs?.alpha, 0.05);
     const tails = cleanNumber(rawInputs?.tails, 2);
     const direction = rawInputs?.direction || 'greater';
     const effectSize = Math.abs(cleanNumber(rawInputs?.effectSize, 0.5));
-    const sampleSize = Math.max(MIN_SAMPLE_SIZE, Math.round(cleanNumber(rawInputs?.sampleSize, 30)));
+    const sampleSize = Math.max(MIN_TOTAL_SAMPLE_SIZE, Math.round(cleanNumber(rawInputs?.sampleSize, 60)));
+    const allocationRatio = normalizeAllocationRatio(rawInputs?.allocationRatio, 1);
     const powerTarget = cleanNumber(rawInputs?.powerTarget, 0.8);
 
     if (!(alpha > 0 && alpha < 1)) {
@@ -264,6 +332,7 @@ export const solveOneSampleZPower = (rawInputs) => {
             alpha,
             effectSize,
             powerTarget,
+            allocationRatio,
             tails,
             direction,
         });
@@ -274,19 +343,24 @@ export const solveOneSampleZPower = (rawInputs) => {
             tails,
             direction,
             sampleSize: result.sampleSize,
+            group1SampleSize: result.group1SampleSize,
+            group2SampleSize: result.group2SampleSize,
+            achievedAllocationRatio: result.achievedAllocationRatio,
             effectSize,
             power: result.power,
             criticalValue: result.criticalValue,
+            df: result.df,
             noncentrality: result.noncentrality,
             targetPower: powerTarget,
         });
     }
 
     if (mode === 'post_hoc') {
-        const result = getPostHocPower({
-            sampleSize,
+        const result = evaluateIndependentTPower({
             alpha,
             effectSize,
+            sampleSize,
+            allocationRatio,
             tails,
             direction,
         });
@@ -296,10 +370,14 @@ export const solveOneSampleZPower = (rawInputs) => {
             alpha,
             tails,
             direction,
-            sampleSize,
+            sampleSize: result.sampleSize,
+            group1SampleSize: result.group1SampleSize,
+            group2SampleSize: result.group2SampleSize,
+            achievedAllocationRatio: result.achievedAllocationRatio,
             effectSize,
             power: result.power,
             criticalValue: result.criticalValue,
+            df: result.df,
             noncentrality: result.noncentrality,
         });
     }
@@ -309,6 +387,7 @@ export const solveOneSampleZPower = (rawInputs) => {
             alpha,
             powerTarget,
             sampleSize,
+            allocationRatio,
             tails,
             direction,
         });
@@ -318,10 +397,14 @@ export const solveOneSampleZPower = (rawInputs) => {
             alpha,
             tails,
             direction,
-            sampleSize,
+            sampleSize: result.sampleSize,
+            group1SampleSize: result.group1SampleSize,
+            group2SampleSize: result.group2SampleSize,
+            achievedAllocationRatio: result.achievedAllocationRatio,
             effectSize: result.effectSize,
             power: result.power,
             criticalValue: result.criticalValue,
+            df: result.df,
             noncentrality: result.noncentrality,
             targetPower: powerTarget,
         });
@@ -330,6 +413,6 @@ export const solveOneSampleZPower = (rawInputs) => {
     return {
         ok: false,
         planned: true,
-        errors: [`${mode} mode is reserved in the shared engine, but it is not implemented in this first slice yet.`],
+        errors: [`${mode} mode is reserved in the shared engine, but it is not implemented for this t-test slice yet.`],
     };
 };
