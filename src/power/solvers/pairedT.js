@@ -1,6 +1,6 @@
 import {
-    oneSampleTDegreesOfFreedom,
-    oneSampleTNoncentrality,
+    pairedTDegreesOfFreedom,
+    pairedTNoncentrality,
 } from '../tMath.js';
 import {
     buildTPowerMetrics,
@@ -12,7 +12,7 @@ import { roundTo } from '../math.js';
 
 const MIN_SAMPLE_SIZE = 2;
 
-const evaluateOneSampleTPower = ({
+const evaluatePairedTPower = ({
     alpha,
     effectSize,
     sampleSize,
@@ -25,8 +25,8 @@ const evaluateOneSampleTPower = ({
     tails,
     direction,
     minSampleSize: MIN_SAMPLE_SIZE,
-    degreesOfFreedomResolver: oneSampleTDegreesOfFreedom,
-    noncentralityResolver: oneSampleTNoncentrality,
+    degreesOfFreedomResolver: pairedTDegreesOfFreedom,
+    noncentralityResolver: pairedTNoncentrality,
 });
 
 const buildSharedResult = ({
@@ -61,13 +61,15 @@ const buildSharedResult = ({
         noncentrality,
         effectSize,
         targetPower,
+        sampleSizeLabel: 'Total N (Pairs)',
+        effectSizeLabel: 'Effect Size (d_z)',
     }),
     summary:
         mode === 'a_priori'
-            ? `A one-sample t test needs N = ${sampleSize} to reach power ${roundTo(power, 3)} at alpha ${alpha}.`
+            ? `A paired-samples t test needs N = ${sampleSize} paired participants to reach power ${roundTo(power, 3)} at alpha ${alpha}.`
             : mode === 'post_hoc'
-                ? `With N = ${sampleSize}, the achieved power is ${roundTo(power, 3)} for effect size d = ${roundTo(effectSize, 3)}.`
-                : `With N = ${sampleSize}, the smallest detectable effect is d = ${roundTo(effectSize, 3)} at power ${roundTo(targetPower, 3)}.`,
+                ? `With N = ${sampleSize} paired participants, the achieved power is ${roundTo(power, 3)} for paired-difference effect size d_z = ${roundTo(effectSize, 3)}.`
+                : `With N = ${sampleSize} paired participants, the smallest detectable paired-difference effect is d_z = ${roundTo(effectSize, 3)} at power ${roundTo(targetPower, 3)}.`,
     visualizer: buildTPowerVisualizer({
         alpha,
         tails,
@@ -81,14 +83,16 @@ const buildSharedResult = ({
         targetPower,
         extraPowerMeta: {
             mode,
+            sampleSizeMeaning: 'paired_participants',
+            effectSizeMetric: 'd_z',
         },
     }),
 });
 
-export const solveOneSampleTPower = (rawInputs) =>
+export const solvePairedTPower = (rawInputs) =>
     solveSingleSampleTPowerModes({
         rawInputs,
         minSampleSize: MIN_SAMPLE_SIZE,
-        evaluateAtSampleSize: evaluateOneSampleTPower,
+        evaluateAtSampleSize: evaluatePairedTPower,
         buildResult: buildSharedResult,
     });

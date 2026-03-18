@@ -1,5 +1,6 @@
 import { solveOneSampleZPower } from './solvers/oneSampleZ.js';
 import { solveOneSampleTPower } from './solvers/oneSampleT.js';
+import { solvePairedTPower } from './solvers/pairedT.js';
 import { solveIndependentTPower } from './solvers/independentT.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
@@ -105,6 +106,24 @@ const buildIndependentTDefaults = (stats = {}, mode = 'a_priori') => {
         group2SampleSize,
         sampleSize: group1SampleSize + group2SampleSize,
         allocationRatio: Number((group2SampleSize / group1SampleSize).toFixed(3)),
+    };
+};
+
+const buildPairedTDefaults = (stats = {}, mode = 'a_priori') => {
+    const meanDifference = Math.abs(stats?.dBar ?? stats?.delta ?? 0);
+    const pairedDifferenceSD = Math.abs(stats?.sd ?? stats?.sd_diff ?? 1) || 1;
+    const effectSize = Math.abs(stats?.dz ?? (pairedDifferenceSD > 0 ? meanDifference / pairedDifferenceSD : 0.5)) || 0.5;
+    const sampleSize = Math.max(2, Math.round(stats?.n ?? stats?.n_pairs ?? 30));
+    const signedDifference = stats?.dBar ?? stats?.delta ?? 0;
+
+    return {
+        mode,
+        alpha: 0.05,
+        tails: 2,
+        direction: signedDifference < 0 ? 'less' : 'greater',
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        sampleSize,
     };
 };
 
@@ -264,6 +283,60 @@ const independentTEffectTransform = {
                 {
                     label: 'Pooled SD',
                     value: pooled.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const pairedTEffectTransform = {
+    primaryMetricLabel: "Cohen's d_z",
+    description: 'For a paired-samples t test, d_z is the mean paired difference divided by the SD of the paired differences.',
+    fields: [
+        {
+            id: 'meanDifference',
+            label: 'Mean Paired Difference',
+            type: 'number',
+            step: 0.1,
+            min: 0,
+        },
+        {
+            id: 'pairedDifferenceSD',
+            label: 'SD of Paired Differences',
+            type: 'number',
+            step: 0.1,
+            min: 0.01,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        meanDifference: Number(Math.abs(stats?.dBar ?? stats?.delta ?? 0).toFixed(3)),
+        pairedDifferenceSD: Number(Math.abs(stats?.sd ?? stats?.sd_diff ?? 1).toFixed(3)),
+    }),
+    compute: ({ meanDifference, pairedDifferenceSD }) => {
+        const diff = Number(meanDifference);
+        const sd = Number(pairedDifferenceSD);
+
+        if (!(sd > 0)) {
+            return {
+                ok: false,
+                error: 'The SD of the paired differences must be greater than 0.',
+            };
+        }
+
+        const effectSize = diff / sd;
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: "Cohen's d_z",
+            summary: `d_z = mean paired difference / SD of paired differences = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Mean Paired Difference',
+                    value: diff.toFixed(4),
+                },
+                {
+                    label: 'SD of Paired Differences',
+                    value: sd.toFixed(4),
                 },
             ],
         };
@@ -504,14 +577,110 @@ export const POWER_TEST_REGISTRY = [
             buildInitialInputs: buildOneSampleTDefaults,
         },
     },
-    createPlannedTest({
+    {
         id: 'paired_t',
         family: 't_tests',
         slug: 'paired-t',
         label: 'Paired Samples T-Test',
         stepId: 'res_paired_ttest',
-        gpowerTest: 'Means: Difference between two dependent means (matched pairs)',
-    }),
+        power: {
+            status: 'available',
+            gpowerFamily: 't tests',
+            gpowerTest: 'Means: Difference between two dependent means (matched pairs)',
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (d_z)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                    },
+                ],
+                post_hoc: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Paired N (participants with both measurements)',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100000,
+                        helperText: 'N is the number of paired observations or participants who have both measurements, not the total count of raw scores across two time points or conditions.',
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (d_z)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                    },
+                ],
+                sensitivity: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Paired N (participants with both measurements)',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100000,
+                        helperText: 'N is the number of paired observations or participants who have both measurements, not the total count of raw scores across two time points or conditions.',
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: pairedTEffectTransform,
+            solver: solvePairedTPower,
+            availableVisualizerModes: ['test', 'power'],
+            buildInitialInputs: buildPairedTDefaults,
+        },
+    },
     {
         id: 'independent_t',
         family: 't_tests',

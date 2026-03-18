@@ -1,4 +1,5 @@
 import { roundTo, solveByBinarySearch } from '../math.js';
+import { studentTCriticalValue, tPowerFromNoncentrality } from '../tMath.js';
 
 export const solveIntegerSampleSizeByTargetPower = ({
     minSampleSize,
@@ -74,11 +75,13 @@ export const buildTPowerMetrics = ({
     noncentrality,
     effectSize,
     targetPower,
+    sampleSizeLabel = 'Total N',
+    effectSizeLabel = "Effect Size (d)",
 }) => {
     const metrics = [
         {
             id: 'sample_size',
-            label: 'Total N',
+            label: sampleSizeLabel,
             value: `${sampleSize}`,
             tone: 'primary',
         },
@@ -122,7 +125,7 @@ export const buildTPowerMetrics = ({
         },
         {
             id: 'effect_size',
-            label: "Effect Size (d)",
+            label: effectSizeLabel,
             value: roundTo(effectSize, 4).toFixed(4),
         }
     );
@@ -136,6 +139,161 @@ export const buildTPowerMetrics = ({
     }
 
     return metrics;
+};
+
+export const evaluateSingleSampleTPower = ({
+    alpha,
+    effectSize,
+    sampleSize,
+    tails,
+    direction,
+    minSampleSize = 2,
+    degreesOfFreedomResolver,
+    noncentralityResolver,
+}) => {
+    const resolvedSampleSize = Math.max(minSampleSize, Math.round(sampleSize));
+    const df = degreesOfFreedomResolver({ sampleSize: resolvedSampleSize });
+    const criticalMagnitude = studentTCriticalValue({ alpha, tails, df });
+    const criticalValue = tails === 2
+        ? criticalMagnitude
+        : (direction === 'less' ? -criticalMagnitude : criticalMagnitude);
+    const noncentrality = noncentralityResolver({
+        effectSize,
+        sampleSize: resolvedSampleSize,
+        tails,
+        direction,
+    });
+    const power = tPowerFromNoncentrality({
+        criticalValue,
+        df,
+        noncentrality,
+        tails,
+        direction,
+    });
+
+    return {
+        sampleSize: resolvedSampleSize,
+        df,
+        power,
+        criticalValue,
+        noncentrality,
+    };
+};
+
+const cleanNumber = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+export const solveSingleSampleTPowerModes = ({
+    rawInputs,
+    minSampleSize = 2,
+    evaluateAtSampleSize,
+    buildResult,
+}) => {
+    const mode = rawInputs?.mode || 'a_priori';
+    const alpha = cleanNumber(rawInputs?.alpha, 0.05);
+    const tails = cleanNumber(rawInputs?.tails, 2);
+    const direction = rawInputs?.direction || 'greater';
+    const effectSize = Math.abs(cleanNumber(rawInputs?.effectSize, 0.5));
+    const sampleSize = Math.max(minSampleSize, Math.round(cleanNumber(rawInputs?.sampleSize, 30)));
+    const powerTarget = cleanNumber(rawInputs?.powerTarget, 0.8);
+
+    if (!(alpha > 0 && alpha < 1)) {
+        return { ok: false, errors: ['Alpha must be between 0 and 1.'] };
+    }
+
+    if (!(powerTarget > 0 && powerTarget < 1) && mode !== 'post_hoc') {
+        return { ok: false, errors: ['Target power must be between 0 and 1.'] };
+    }
+
+    if (!(effectSize > 0) && mode !== 'sensitivity') {
+        return { ok: false, errors: ['Effect size must be greater than 0.'] };
+    }
+
+    if (mode === 'a_priori') {
+        const result = solveIntegerSampleSizeByTargetPower({
+            minSampleSize,
+            powerTarget,
+            evaluateAtSampleSize: (candidateSampleSize) => evaluateAtSampleSize({
+                alpha,
+                effectSize,
+                sampleSize: candidateSampleSize,
+                tails,
+                direction,
+            }),
+        });
+
+        return buildResult({
+            mode,
+            alpha,
+            tails,
+            direction,
+            sampleSize: result.sampleSize,
+            effectSize,
+            power: result.power,
+            criticalValue: result.criticalValue,
+            df: result.df,
+            noncentrality: result.noncentrality,
+            targetPower: powerTarget,
+        });
+    }
+
+    if (mode === 'post_hoc') {
+        const result = evaluateAtSampleSize({
+            alpha,
+            effectSize,
+            sampleSize,
+            tails,
+            direction,
+        });
+
+        return buildResult({
+            mode,
+            alpha,
+            tails,
+            direction,
+            sampleSize: result.sampleSize,
+            effectSize,
+            power: result.power,
+            criticalValue: result.criticalValue,
+            df: result.df,
+            noncentrality: result.noncentrality,
+        });
+    }
+
+    if (mode === 'sensitivity') {
+        const result = solveEffectSizeByTargetPower({
+            powerTarget,
+            evaluateAtEffectSize: (candidateEffectSize) => evaluateAtSampleSize({
+                alpha,
+                effectSize: candidateEffectSize,
+                sampleSize,
+                tails,
+                direction,
+            }),
+        });
+
+        return buildResult({
+            mode,
+            alpha,
+            tails,
+            direction,
+            sampleSize: result.sampleSize,
+            effectSize: result.effectSize,
+            power: result.power,
+            criticalValue: result.criticalValue,
+            df: result.df,
+            noncentrality: result.noncentrality,
+            targetPower: powerTarget,
+        });
+    }
+
+    return {
+        ok: false,
+        planned: true,
+        errors: [`${mode} mode is reserved in the shared engine, but it is not implemented for this t-test slice yet.`],
+    };
 };
 
 export const buildTPowerVisualizer = ({

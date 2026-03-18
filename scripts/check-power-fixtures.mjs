@@ -4,6 +4,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { solveOneSampleZPower } from '../src/power/solvers/oneSampleZ.js';
 import { solveOneSampleTPower } from '../src/power/solvers/oneSampleT.js';
+import { solvePairedTPower } from '../src/power/solvers/pairedT.js';
 import { solveIndependentTPower } from '../src/power/solvers/independentT.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +14,7 @@ const fixtureDirectory = path.resolve(__dirname, '../src/power/fixtures');
 const SOLVER_BY_TEST_ID = {
     one_sample_z: solveOneSampleZPower,
     one_sample_t: solveOneSampleTPower,
+    paired_t: solvePairedTPower,
     independent_t: solveIndependentTPower,
 };
 

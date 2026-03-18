@@ -97,8 +97,14 @@ export const resolveIndependentTSamplePlan = ({
 export const independentTDegreesOfFreedom = ({ group1SampleSize, group2SampleSize }) =>
     Math.max(1, group1SampleSize + group2SampleSize - 2);
 
-export const oneSampleTDegreesOfFreedom = ({ sampleSize }) =>
+export const singleSampleTDegreesOfFreedom = ({ sampleSize }) =>
     Math.max(1, Math.round(sampleSize) - 1);
+
+export const oneSampleTDegreesOfFreedom = ({ sampleSize }) =>
+    singleSampleTDegreesOfFreedom({ sampleSize });
+
+export const pairedTDegreesOfFreedom = ({ sampleSize }) =>
+    singleSampleTDegreesOfFreedom({ sampleSize });
 
 export const independentTNoncentrality = ({ effectSize, group1SampleSize, group2SampleSize, tails = 2, direction = 'greater' }) => {
     const magnitude = Math.abs(effectSize) * Math.sqrt((group1SampleSize * group2SampleSize) / (group1SampleSize + group2SampleSize));
@@ -110,7 +116,7 @@ export const independentTNoncentrality = ({ effectSize, group1SampleSize, group2
     return direction === 'less' ? -magnitude : magnitude;
 };
 
-export const oneSampleTNoncentrality = ({ effectSize, sampleSize, tails = 2, direction = 'greater' }) => {
+export const singleSampleTNoncentrality = ({ effectSize, sampleSize, tails = 2, direction = 'greater' }) => {
     const magnitude = Math.abs(effectSize) * Math.sqrt(sampleSize);
 
     if (tails === 2) {
@@ -119,6 +125,12 @@ export const oneSampleTNoncentrality = ({ effectSize, sampleSize, tails = 2, dir
 
     return direction === 'less' ? -magnitude : magnitude;
 };
+
+export const oneSampleTNoncentrality = ({ effectSize, sampleSize, tails = 2, direction = 'greater' }) =>
+    singleSampleTNoncentrality({ effectSize, sampleSize, tails, direction });
+
+export const pairedTNoncentrality = ({ effectSize, sampleSize, tails = 2, direction = 'greater' }) =>
+    singleSampleTNoncentrality({ effectSize, sampleSize, tails, direction });
 
 export const studentTCDF = (value, df) => {
     if (!(df > 0)) {
