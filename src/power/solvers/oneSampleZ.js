@@ -205,13 +205,15 @@ const buildSharedResult = ({
             kind: 'normal_distribution',
             type: 'z',
             config: {
+                uiPreset: 'power_compact',
                 visualMode: 'power',
                 showPopulation: true,
+                showPowerLabels: true,
                 alpha,
                 tails,
                 h1Direction: direction,
                 targetEffect: effectSize,
-                calcMode: true,
+                calcMode: false,
                 calcData: {
                     xBar: effectSize,
                     mu: 0,
@@ -219,6 +221,14 @@ const buildSharedResult = ({
                     n: sampleSize,
                 },
                 showBothH1: tails === 2,
+                powerMeta: {
+                    actualPower: power,
+                    criticalValue,
+                    noncentrality,
+                    effectSize,
+                    sampleSize,
+                    targetPower: targetPower ?? null,
+                },
             },
         },
     };

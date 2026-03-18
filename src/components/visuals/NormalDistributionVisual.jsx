@@ -14,6 +14,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   const [showPopulation, setShowPopulation] = useState(false);
   const [visualMode, setVisualMode] = useState('p-value'); // 'p-value' or 'power'
   const [showPModal, setShowPModal] = useState(false);
+  const [showPowerLabels, setShowPowerLabels] = useState(true);
   const [hoveredRegion, setHoveredRegion] = useState(null);
   const [calcMode, setCalcMode] = useState(false);
   const [calcData, setCalcData] = useState({ xBar: 105, mu: 100, sigma: 15, n: 30 });
@@ -39,6 +40,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   const [isHovering, setIsHovering] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const svgRef = useRef(null);
+  const isPowerCompactPreset = powerViewConfig?.uiPreset === 'power_compact';
 
   useEffect(() => {
     if (!powerViewConfig) return;
@@ -47,6 +49,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
     if (typeof powerViewConfig.alpha === 'number') setAlpha(powerViewConfig.alpha);
     if (typeof powerViewConfig.tails === 'number') setTails(powerViewConfig.tails);
     if (typeof powerViewConfig.showPopulation === 'boolean') setShowPopulation(powerViewConfig.showPopulation);
+    if (typeof powerViewConfig.showPowerLabels === 'boolean') setShowPowerLabels(powerViewConfig.showPowerLabels);
     if (typeof powerViewConfig.targetEffect === 'number') setTargetEffect(powerViewConfig.targetEffect);
     if (typeof powerViewConfig.calcMode === 'boolean') setCalcMode(powerViewConfig.calcMode);
     if (typeof powerViewConfig.showBothH1 === 'boolean') setShowBothH1(powerViewConfig.showBothH1);
@@ -60,6 +63,12 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
       setCalcData(prev => ({ ...prev, ...powerViewConfig.calcData }));
     }
   }, [powerViewConfig]);
+
+  useEffect(() => {
+    if (!isPowerCompactPreset) return;
+    setVisualMode('power');
+    setShowPModal(false);
+  }, [isPowerCompactPreset]);
 
   // --- REORGANIZED CALCULATIONS ---
 
@@ -187,6 +196,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   const mean = 150;
   const h1Sign = (tails === 1) ? (h1Direction === 'greater' ? 1 : -1) : (altH1Dir === 'greater' ? 1 : -1);
   const altMeanZ = h1Sign * (targetEffect * Math.sqrt(calcData.n));
+  const altDistributionCenter = mean + altMeanZ * stdDev;
 
   // --- HOOKS ---
 
@@ -328,7 +338,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   return (
     <div className="w-full flex">
       <div className={`flex-1 flex flex-col items-center transition-all duration-500`}>
-        <div className={`w-full h-72 relative flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100'}`}>
+        <div className={`w-full ${isPowerCompactPreset ? 'h-80 rounded-2xl' : 'h-72'} relative flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? `bg-slate-950 border-slate-800 shadow-inner ${isPowerCompactPreset ? 'rounded-2xl' : ''}` : `bg-white border-slate-100 ${isPowerCompactPreset ? 'rounded-2xl' : 'rounded-t-lg'}`}`}>
           <svg
             ref={svgRef}
             viewBox="-20 0 340 200"
@@ -367,7 +377,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                 <g key={sd} transform={`translate(${mean + sd * stdDev}, 150)`}>
                   <line y2="5" stroke={darkMode ? "#334155" : "#e2e8f0"} />
                   <text y="15" textAnchor="middle">{sd > 0 ? `+${sd}` : sd}</text>
-                  {calcMode && (
+                  {calcMode && !isPowerCompactPreset && (
                     <text y="25" textAnchor="middle" className="fill-indigo-500 font-bold animate-in fade-in duration-300">
                       {(calcData.mu + sd * (calcData.sigma / Math.sqrt(calcData.n))).toFixed(1)}
                     </text>
@@ -430,16 +440,41 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   fill="url(#dotsPattern)" onMouseEnter={() => setHoveredRegion('beta')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
 
                 {/* Plot Labels for Power Mode - Positioned relative to H1 center */}
+                {(!isPowerCompactPreset || showPowerLabels) && (
+                  <>
                 <text x={mean + altMeanZ * stdDev + (altMeanZ >= 0 ? 30 : -30)} y="125" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-green-500 font-bold bg-white/50 px-1">Power (1-β)</text>
                 <text x={mean + altMeanZ * stdDev + (altMeanZ >= 0 ? -30 : 30)} y="145" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-orange-500 font-bold italic">β (Type II)</text>
 
+                  </>
+                )}
+
+                {isPowerCompactPreset && showPowerLabels && (
+                  <>
+                    <text x="150" y="22" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-indigo-500 font-black">
+                      H0
+                    </text>
+                    {showPopulation && (
+                      <text x={altDistributionCenter} y="34" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-slate-500 font-black">
+                        H1
+                      </text>
+                    )}
+                    {showPopulation && tails === 2 && showBothH1 && (
+                      <text x={mean - (targetEffect * Math.sqrt(calcData.n)) * stdDev} y="34" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-slate-500 font-black">
+                        H1
+                      </text>
+                    )}
+                  </>
+                )}
+
                 {/* Decision Rule UI Label */}
-                <g transform="translate(150, 20)">
+                {!isPowerCompactPreset && (
+                  <g transform="translate(150, 20)">
                   <rect x="-40" y="-8" width="80" height="12" rx="2" fill="#1e293b" fillOpacity="0.8" />
                   <text textAnchor="middle" className="text-[6px] fill-slate-300 font-black tracking-widest uppercase">
                     Reject if Z {tails === 2 ? '±' : ''}{h1Direction === 'greater' ? '≥' : '≤'} {tails === 2 ? Math.abs(criticalValue).toFixed(3) : criticalValue.toFixed(3)}
                   </text>
-                </g>
+                  </g>
+                )}
               </g>
             )}
 
@@ -498,6 +533,8 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
               )}
 
               {/* Cutoff Labels & Alpha annotations */}
+              {(!isPowerCompactPreset || showPowerLabels) && (
+                <>
               {tails === 2 && (
                 <g transform={`translate(${mean - Math.abs(criticalValue) * stdDev}, 150)`}>
                   <text y="-125" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-red-500 font-black">
@@ -512,10 +549,12 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                 </text>
                 <text y="-5" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-red-500 font-bold italic">{tails === 2 ? `α/2=${(alpha / 2).toFixed(3)}` : `α=${alpha}`}</text>
               </g>
+                </>
+              )}
             </g>
 
             {/* Score Marker (Follows Curve) */}
-            {(() => {
+            {!isPowerCompactPreset && (() => {
               // Clamp visual position to +/- 4.0 SD so it stays on the graph line
               const displayVal = Math.max(-4, Math.min(4, val));
               const markerX = mean + displayVal * stdDev;
@@ -571,6 +610,24 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
           </svg>
 
           <div className="absolute top-4 right-4 flex flex-col items-end gap-2 text-right">
+            {isPowerCompactPreset ? (
+              <>
+                <div className={`backdrop-blur-sm border rounded-lg px-3 py-2 shadow-sm ${darkMode ? 'bg-slate-900/90 border-slate-800 text-slate-300' : 'bg-white/90 border-slate-200 text-slate-700'}`}>
+                  <div className={`text-[8px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Planning View</div>
+                  <div className={`mt-1 text-[11px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Alpha, beta, power, and critical cutoffs only</div>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-2 max-w-[220px]">
+                  <button onClick={() => setShowPopulation(!showPopulation)} className={`px-2.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${showPopulation ? (darkMode ? 'bg-indigo-500 text-white shadow-lg' : 'bg-indigo-600 text-white shadow-lg') : (darkMode ? 'bg-slate-900 text-slate-500 hover:bg-slate-800' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200')}`}>
+                    {showPopulation ? 'Hide' : 'Show'} H1
+                  </button>
+                  <button onClick={() => setShowPowerLabels(!showPowerLabels)} className={`px-2.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${showPowerLabels ? (darkMode ? 'bg-slate-800 text-indigo-300 border border-slate-700' : 'bg-slate-900 text-white') : (darkMode ? 'bg-slate-900 text-slate-500 hover:bg-slate-800' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200')}`}>
+                    {showPowerLabels ? 'Hide' : 'Show'} Labels
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
             <div className={`backdrop-blur-sm border rounded-lg p-2 shadow-sm cursor-pointer transition-colors ${darkMode ? 'bg-slate-900/90 border-slate-800 hover:bg-slate-800' : 'bg-white/90 border-slate-200 hover:bg-slate-50'}`} onClick={() => setShowPModal(true)}>
               <div className={`text-[8px] font-black uppercase tracking-widest mb-1 flex items-center gap-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>p-value (Null Area) <HelpCircle size={8} /></div>
               <div className={`text-sm font-black ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>p = {pTail.toFixed(4)}</div>
@@ -584,9 +641,48 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
             <button onClick={() => setShowPopulation(!showPopulation)} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${showPopulation ? (darkMode ? 'bg-indigo-500 text-white shadow-lg' : 'bg-indigo-600 text-white shadow-lg') : (darkMode ? 'bg-slate-900 text-slate-500 hover:bg-slate-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>
               {showPopulation ? 'Hide' : 'Show'} Alternative (H₁)
             </button>
+              </>
+            )}
           </div>
 
-          {showPopulation && (
+          {isPowerCompactPreset && (
+            <div className={`absolute top-4 left-4 max-w-[180px] text-[8px] p-3 rounded-xl backdrop-blur-md border shadow-2xl animate-in fade-in slide-in-from-left-2 transition-all ${darkMode ? 'bg-slate-900/95 border-slate-800 text-slate-300' : 'bg-slate-800/95 text-white border-slate-700'}`}>
+              <div className={`font-black uppercase mb-2 text-[9px] flex items-center gap-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-300'}`}>
+                <Info size={10} /> {hoveredRegion ? 'Plot Detail' : 'Power Legend'}
+              </div>
+
+              {hoveredRegion ? (
+                <div className="animate-in fade-in zoom-in-95 duration-200">
+                  {hoveredRegion === 'alpha' && (
+                    <p><strong className="text-red-400">Alpha:</strong> Type I error under the null distribution.</p>
+                  )}
+                  {hoveredRegion === 'beta' && (
+                    <p><strong className="text-orange-400">Beta:</strong> Type II error under the alternative distribution.</p>
+                  )}
+                  {hoveredRegion === 'power' && (
+                    <p><strong className="text-green-400">Power:</strong> Correct detection when the planned effect is real.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <p className="flex items-center gap-1.5"><span className="w-3 h-[2px] bg-indigo-400 rounded-full"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>H0:</strong> Null distribution.</p>
+                  {showPopulation && (
+                    <p className="flex items-center gap-1.5"><span className="w-3 h-0 border-t-2 border-dashed border-slate-400"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>H1:</strong> Alternative distribution.</p>
+                  )}
+                  <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-red-400 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Alpha:</strong> Rejection region under H0.</p>
+                  {showPopulation && (
+                    <>
+                      <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-orange-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Beta:</strong> Missed detections under H1.</p>
+                      <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-green-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Power:</strong> Correct detections under H1.</p>
+                    </>
+                  )}
+                  <div className={`pt-2 text-[7px] italic ${darkMode ? 'text-slate-500' : 'text-slate-300'}`}>Hover shaded regions for quick definitions.</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isPowerCompactPreset && showPopulation && (
             <div className={`absolute top-4 left-4 max-w-[160px] text-[8px] p-2.5 rounded-xl backdrop-blur-md border shadow-2xl animate-in fade-in slide-in-from-left-2 transition-all ${darkMode ? 'bg-slate-900/95 border-slate-800 text-slate-300' : 'bg-slate-800/95 text-white border-slate-700'}`}>
               <div className={`font-black uppercase mb-2 text-[9px] flex items-center gap-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-300'}`}>
                 <Info size={10} /> {hoveredRegion ? 'Concept Review' : 'NHST Model View'}
@@ -654,7 +750,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
             </div>
           )}
 
-          {showPModal && (
+          {showPModal && !isPowerCompactPreset && (
             <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowPModal(false)}>
               <div className={`rounded-xl shadow-2xl p-6 max-w-xs border animate-in zoom-in duration-200 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`} onClick={e => e.stopPropagation()}>
                 <div className="text-xs font-black text-indigo-500 uppercase mb-2">What is a p-value?</div>
@@ -668,6 +764,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
           )}
         </div>
 
+        {!isPowerCompactPreset && (
         <div className={`w-full p-4 rounded-b-lg border-x border-b space-y-4 shadow-xl relative z-10 transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-900 text-white border-slate-800'}`}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1.5 col-span-1">
@@ -912,6 +1009,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
           {/* Tutor Integration (moved to App for better layout) */}
         </div>
+        )}
       </div>
     </div>
   );

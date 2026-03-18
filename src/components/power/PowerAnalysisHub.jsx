@@ -44,8 +44,8 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
                 </p>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-                <div className={`rounded-3xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className="grid lg:grid-cols-12 gap-6 items-start">
+                <div className={`rounded-3xl border p-6 lg:col-span-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <div className={`text-xs font-black uppercase tracking-widest mb-4 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                         1. Test Family
                     </div>
@@ -67,7 +67,7 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
                     </div>
                 </div>
 
-                <div className={`rounded-3xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className={`rounded-3xl border p-6 lg:col-span-5 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <div className={`text-xs font-black uppercase tracking-widest mb-4 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                         2. Statistical Test
                     </div>
@@ -76,7 +76,7 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
                             <button
                                 key={test.id}
                                 onClick={() => setSelectedTestId(test.id)}
-                                className={`w-full rounded-2xl border px-4 py-4 text-left transition-all ${selectedTest?.id === test.id ? 'border-indigo-500 bg-indigo-500/10' : (darkMode ? 'border-slate-800 bg-slate-950 hover:border-slate-700' : 'border-slate-200 bg-slate-50 hover:border-slate-300')}`}
+                                className={`w-full rounded-2xl border px-4 py-4 text-left transition-all ${selectedTest?.id === test.id ? 'border-indigo-500 bg-indigo-500/10' : (darkMode ? 'border-slate-800 bg-slate-950 hover:border-slate-700' : 'border-slate-200 bg-slate-50 hover:border-slate-300')} ${test.power.status !== 'available' ? 'border-dashed opacity-85' : ''}`}
                             >
                                 <div className="flex items-center justify-between gap-3">
                                     <div className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{test.label}</div>
@@ -90,9 +90,12 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
                             </button>
                         ))}
                     </div>
+                    <div className={`mt-4 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                        Live tests stay fully selectable. Planned tests remain visible here so the hub reflects the shared architecture that future solver slices will plug into.
+                    </div>
                 </div>
 
-                <div className={`rounded-3xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className={`rounded-3xl border p-6 lg:col-span-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <div className={`text-xs font-black uppercase tracking-widest mb-4 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                         3. Power Mode
                     </div>

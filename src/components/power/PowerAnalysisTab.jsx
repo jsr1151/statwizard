@@ -6,7 +6,7 @@ const PowerAnalysisTab = ({ testConfig, currentStats, darkMode, initialMode }) =
     const [result, setResult] = useState(null);
 
     return (
-        <div className="grid lg:grid-cols-12 gap-8">
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-4">
                 <PowerAnalysisPanel
                     testConfig={testConfig}
@@ -17,7 +17,11 @@ const PowerAnalysisTab = ({ testConfig, currentStats, darkMode, initialMode }) =
                 />
             </div>
             <div className="lg:col-span-8">
-                <PowerVisualizerFrame result={result} darkMode={darkMode} />
+                <PowerVisualizerFrame
+                    result={result}
+                    testConfig={testConfig}
+                    darkMode={darkMode}
+                />
             </div>
         </div>
     );

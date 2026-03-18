@@ -70,7 +70,11 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
             </p>
 
             {schema.length > 0 && (
-                <div className="grid gap-4 mb-6">
+                <div className="mb-6">
+                    <div className={`text-[10px] font-black uppercase tracking-widest mb-4 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                        Planning Inputs
+                    </div>
+                    <div className="grid gap-4">
                     {schema
                         .filter((field) => !(typeof field.hidden === 'function' && field.hidden(inputs)))
                         .map((field) => (
@@ -116,6 +120,7 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                                 )}
                             </label>
                         ))}
+                    </div>
                 </div>
             )}
 
@@ -124,26 +129,16 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                     {(result?.errors || ['Power analysis is not available yet.']).join(' ')}
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className={`rounded-xl border p-5 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
                         <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
-                            Summary
+                            Planning Summary
                         </div>
                         <p className={`${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{result.summary}</p>
                     </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                        {result.metrics?.map((metric) => (
-                            <div key={metric.id} className={`rounded-xl border p-4 ${metric.tone === 'primary' ? (darkMode ? 'bg-slate-950 border-indigo-500/30' : 'bg-white border-indigo-200') : (darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200')}`}>
-                                <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    {metric.label}
-                                </div>
-                                <div className={`mt-2 text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                    {metric.value}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <p className={`text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                        The plot and result cards on the right summarize the planning output. This panel is only for selecting the power-analysis mode and entering the inputs that drive the shared solver.
+                    </p>
                 </div>
             )}
         </div>
