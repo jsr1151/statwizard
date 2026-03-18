@@ -8,6 +8,7 @@ import {
     ChevronLeft,
     Sparkles,
     Calculator,
+    Sigma,
     Terminal,
     MousePointer2,
     XCircle,
@@ -65,11 +66,15 @@ import ModulesView from './components/navigation/ModulesView';
 import SearchView from './components/navigation/SearchView';
 import LessonsView from './components/navigation/LessonsView';
 import UpdateToast from './components/common/UpdateToast';
+import PowerAnalysisHub from './components/power/PowerAnalysisHub';
+import PowerAnalysisTab from './components/power/PowerAnalysisTab';
+import EffectSizePanel from './components/power/EffectSizePanel';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
 import FactorialAnovaTutorPanel from './components/tutor/FactorialAnovaTutorPanel';
 import AncovaTutorPanel from './components/tutor/AncovaTutorPanel';
+import { POWER_TEST_BY_STEP_ID } from './power/testRegistry';
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -108,6 +113,8 @@ export default function App() {
     const [hoveredTerm, setHoveredTerm] = useState(null);
     const [activeExplanation, setActiveExplanation] = useState(null);
     const [showHistory, setShowHistory] = useState(false);
+    const [activeResultSection, setActiveResultSection] = useState('calculator');
+    const [pendingPowerLaunch, setPendingPowerLaunch] = useState(null);
 
     // --- 3. STATE WITH INITIALIZERS / SIDE EFFECTS ---
     const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => {
@@ -195,6 +202,7 @@ export default function App() {
     }, [appMode, currentStepId, history, answers]);
 
     const currentStep = STEPS[currentStepId];
+    const currentTestConfig = POWER_TEST_BY_STEP_ID[currentStepId] || null;
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
 
@@ -206,6 +214,21 @@ export default function App() {
         setProbabilityTab('basics');
         setSymbolKeyOpen(false);
     }, [currentStepId]);
+
+    useEffect(() => {
+        if (pendingPowerLaunch?.stepId === currentStepId) {
+            setActiveResultSection('power');
+            return;
+        }
+
+        setActiveResultSection('calculator');
+    }, [currentStepId, pendingPowerLaunch]);
+
+    useEffect(() => {
+        if (appMode !== 'wizard') {
+            setPendingPowerLaunch(null);
+        }
+    }, [appMode]);
 
     const handleOptionClick = (option) => {
         const nextStepId = option.next;
@@ -227,6 +250,17 @@ export default function App() {
         setCurrentStepId('start');
         setReport("");
         setAiExplanation(null);
+        setMathHistory([]);
+        setActiveResultSection('calculator');
+        setPendingPowerLaunch(null);
+    };
+
+    const handleOpenPowerCalculator = (testConfig, mode) => {
+        setPendingPowerLaunch({ stepId: testConfig.stepId, mode });
+        setCurrentStepId(testConfig.stepId);
+        setAppMode('wizard');
+        setActiveResultSection('power');
+        setActiveTutorScript(null);
         setMathHistory([]);
     };
     const pushMathTerm = (term) => setMathHistory([...mathHistory, term]);
@@ -333,6 +367,13 @@ export default function App() {
 
                         {appMode === 'search' && <SearchView searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSelect={(id) => { setCurrentStepId(id); setAppMode('wizard'); }} darkMode={darkMode} />}
 
+                        {appMode === 'power' && (
+                            <PowerAnalysisHub
+                                darkMode={darkMode}
+                                onOpenCalculator={handleOpenPowerCalculator}
+                            />
+                        )}
+
                         {appMode === 'lessons' && <LessonsView darkMode={darkMode} />}
 
                         {appMode === 'wizard' && (
@@ -397,6 +438,51 @@ export default function App() {
                                                 </div>
                                             )}
 
+                                            {currentTestConfig && (
+                                                <div className={`rounded-xl border p-2 flex flex-wrap gap-2 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                    <button
+                                                        onClick={() => {
+                                                            setActiveResultSection('calculator');
+                                                            setPendingPowerLaunch(null);
+                                                        }}
+                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'calculator' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
+                                                    >
+                                                        <Calculator className="w-4 h-4" /> Test Calculator
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setActiveResultSection('effect_size');
+                                                            setPendingPowerLaunch(null);
+                                                        }}
+                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'effect_size' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
+                                                    >
+                                                        <Sigma className="w-4 h-4" /> Effect Size
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setActiveResultSection('power')}
+                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'power' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
+                                                    >
+                                                        <BarChart2 className="w-4 h-4" /> Power Analysis
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {activeResultSection === 'power' && currentTestConfig ? (
+                                                <PowerAnalysisTab
+                                                    key={`${currentStepId}-${pendingPowerLaunch?.mode || activeResultSection}`}
+                                                    testConfig={currentTestConfig}
+                                                    currentStats={currentStats}
+                                                    darkMode={darkMode}
+                                                    initialMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                />
+                                            ) : activeResultSection === 'effect_size' && currentTestConfig ? (
+                                                <EffectSizePanel
+                                                    testConfig={currentTestConfig}
+                                                    currentStats={currentStats}
+                                                    darkMode={darkMode}
+                                                />
+                                            ) : (
+                                            <>
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
                                                 {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && (
                                                     <div className="lg:col-span-4 flex flex-col gap-6">
@@ -603,6 +689,8 @@ export default function App() {
                                                     </div>
                                                 </div>
                                             </div>
+                                            </>
+                                            )}
                                         </div>
                                     </>
                                 )}

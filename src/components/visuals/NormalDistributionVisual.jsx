@@ -6,7 +6,7 @@ import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
-const NormalDistributionVisual = ({ highlight = null, label = "Distribution", type = "z", darkMode, tutorLevel = 'tutor', showTutor: showTutorProp = true, onTutorUpdate, onStatsUpdate }) => {
+const NormalDistributionVisual = ({ highlight = null, label = "Distribution", type = "z", darkMode, tutorLevel = 'tutor', showTutor: showTutorProp = true, onTutorUpdate, onStatsUpdate, powerViewConfig = null }) => {
   const [showTutor, setShowTutor] = useState(showTutorProp);
   const [val, setVal] = useState(0);
   const [alpha, setAlpha] = useState(0.05);
@@ -39,6 +39,27 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   const [isHovering, setIsHovering] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const svgRef = useRef(null);
+
+  useEffect(() => {
+    if (!powerViewConfig) return;
+
+    if (powerViewConfig.visualMode) setVisualMode(powerViewConfig.visualMode);
+    if (typeof powerViewConfig.alpha === 'number') setAlpha(powerViewConfig.alpha);
+    if (typeof powerViewConfig.tails === 'number') setTails(powerViewConfig.tails);
+    if (typeof powerViewConfig.showPopulation === 'boolean') setShowPopulation(powerViewConfig.showPopulation);
+    if (typeof powerViewConfig.targetEffect === 'number') setTargetEffect(powerViewConfig.targetEffect);
+    if (typeof powerViewConfig.calcMode === 'boolean') setCalcMode(powerViewConfig.calcMode);
+    if (typeof powerViewConfig.showBothH1 === 'boolean') setShowBothH1(powerViewConfig.showBothH1);
+    if (typeof powerViewConfig.h1Direction === 'string') {
+      setH1Direction(powerViewConfig.h1Direction);
+      setAltH1Dir(powerViewConfig.h1Direction);
+    }
+    if (typeof powerViewConfig.df === 'number') setDf(powerViewConfig.df);
+    if (typeof powerViewConfig.val === 'number') setVal(powerViewConfig.val);
+    if (powerViewConfig.calcData) {
+      setCalcData(prev => ({ ...prev, ...powerViewConfig.calcData }));
+    }
+  }, [powerViewConfig]);
 
   // --- REORGANIZED CALCULATIONS ---
 

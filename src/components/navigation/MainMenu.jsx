@@ -1,9 +1,10 @@
 import React from 'react';
-import { ArrowRight, Compass, Search, Book, LayoutGrid, Sparkles, BrainCircuit } from 'lucide-react';
+import { ArrowRight, Search, Book, LayoutGrid, BrainCircuit, Sigma } from 'lucide-react';
 const MainMenu = ({ onSelect, darkMode }) => {
   const modes = [
     { id: 'wizard', title: 'The Wizard', desc: 'Step-by-step guidance to find the right test for your project.', icon: BrainCircuit, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
     { id: 'modules', title: 'Stat Modules', desc: 'Browse all statistical pages organized by analysis type.', icon: LayoutGrid, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { id: 'power', title: 'Power Analysis', desc: 'Launch the shared power-analysis system by family, test, and analysis mode.', icon: Sigma, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
     { id: 'lessons', title: 'Learning Lab', desc: 'Follow structured lessons from easy to complex (Coming Soon).', icon: Book, color: 'text-amber-400', bg: 'bg-amber-500/10' },
     { id: 'search', title: 'Direct Search', desc: 'Quickly find a specific statistic or concept by name.', icon: Search, color: 'text-rose-400', bg: 'bg-rose-500/10' }
   ];
