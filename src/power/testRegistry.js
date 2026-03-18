@@ -1,4 +1,5 @@
 import { solveOneSampleZPower } from './solvers/oneSampleZ.js';
+import { solveOneSampleTPower } from './solvers/oneSampleT.js';
 import { solveIndependentTPower } from './solvers/independentT.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
@@ -67,6 +68,24 @@ const buildZDefaults = (stats = {}, mode = 'a_priori') => {
     };
 };
 
+const buildOneSampleTDefaults = (stats = {}, mode = 'a_priori') => {
+    const meanDifference = Math.abs((stats?.xBar ?? 0) - (stats?.mu ?? 0));
+    const sampleSD = Math.abs(stats?.s ?? stats?.sigma ?? 1) || 1;
+    const effectSize = meanDifference > 0 ? meanDifference / sampleSD : 0.5;
+    const sampleSize = Math.max(2, Math.round(stats?.n ?? 30));
+    const signedDifference = (stats?.xBar ?? 0) - (stats?.mu ?? 0);
+
+    return {
+        mode,
+        alpha: 0.05,
+        tails: 2,
+        direction: signedDifference < 0 ? 'less' : 'greater',
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        sampleSize,
+    };
+};
+
 const buildIndependentTDefaults = (stats = {}, mode = 'a_priori') => {
     const group1SampleSize = Math.max(2, Math.round(stats?.n1 ?? 30));
     const group2SampleSize = Math.max(2, Math.round(stats?.n2 ?? 30));
@@ -82,6 +101,8 @@ const buildIndependentTDefaults = (stats = {}, mode = 'a_priori') => {
         direction,
         powerTarget: 0.8,
         effectSize: Number(effectSize.toFixed(3)),
+        group1SampleSize,
+        group2SampleSize,
         sampleSize: group1SampleSize + group2SampleSize,
         allocationRatio: Number((group2SampleSize / group1SampleSize).toFixed(3)),
     };
@@ -135,6 +156,60 @@ const oneSampleZEffectTransform = {
                 {
                     label: 'Known Population SD',
                     value: knownSigma.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const oneSampleTEffectTransform = {
+    primaryMetricLabel: "Cohen's d",
+    description: "For the one-sample t test, Cohen's d is the mean difference divided by the sample SD used to estimate variability.",
+    fields: [
+        {
+            id: 'meanDifference',
+            label: 'Mean Difference',
+            type: 'number',
+            step: 0.1,
+            min: 0,
+        },
+        {
+            id: 'sampleSD',
+            label: 'Sample SD',
+            type: 'number',
+            step: 0.1,
+            min: 0.01,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        meanDifference: Number(Math.abs((stats?.xBar ?? 0) - (stats?.mu ?? 0)).toFixed(3)),
+        sampleSD: Number(Math.abs(stats?.s ?? stats?.sigma ?? 1).toFixed(3)),
+    }),
+    compute: ({ meanDifference, sampleSD }) => {
+        const diff = Number(meanDifference);
+        const sd = Number(sampleSD);
+
+        if (!(sd > 0)) {
+            return {
+                ok: false,
+                error: 'Sample SD must be greater than 0.',
+            };
+        }
+
+        const effectSize = diff / sd;
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: "Cohen's d",
+            summary: `d = diff / sample SD = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Mean Difference',
+                    value: diff.toFixed(4),
+                },
+                {
+                    label: 'Sample SD',
+                    value: sd.toFixed(4),
                 },
             ],
         };
@@ -327,14 +402,108 @@ export const POWER_TEST_REGISTRY = [
             buildInitialInputs: buildZDefaults,
         },
     },
-    createPlannedTest({
+    {
         id: 'one_sample_t',
         family: 't_tests',
         slug: 'one-sample-t',
         label: 'One-Sample T-Test',
         stepId: 'res_onesample_ttest',
-        gpowerTest: 'Means: Difference from constant (one sample case)',
-    }),
+        power: {
+            status: 'available',
+            gpowerFamily: 't tests',
+            gpowerTest: 'Means: Difference from constant (one sample case)',
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: "Effect Size (d)",
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                    },
+                ],
+                post_hoc: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100000,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: "Effect Size (d)",
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                    },
+                ],
+                sensitivity: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100000,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: oneSampleTEffectTransform,
+            solver: solveOneSampleTPower,
+            availableVisualizerModes: ['test', 'power'],
+            buildInitialInputs: buildOneSampleTDefaults,
+        },
+    },
     createPlannedTest({
         id: 'paired_t',
         family: 't_tests',
@@ -404,21 +573,21 @@ export const POWER_TEST_REGISTRY = [
                         max: 0.2,
                     },
                     {
-                        id: 'sampleSize',
-                        label: 'Total N',
+                        id: 'group1SampleSize',
+                        label: 'Group 1 N',
                         type: 'number',
                         step: 1,
-                        min: 4,
+                        min: 2,
                         max: 100000,
                     },
                     {
-                        id: 'allocationRatio',
-                        label: 'Allocation Ratio (Group 2 / Group 1)',
+                        id: 'group2SampleSize',
+                        label: 'Group 2 N',
                         type: 'number',
-                        step: 0.1,
-                        min: 0.05,
-                        max: 20,
-                        helperText: '1.0 means equal group sizes. 2.0 means Group 2 is twice as large as Group 1. In most cases, 1.0 is recommended.',
+                        step: 1,
+                        min: 2,
+                        max: 100000,
+                        helperText: 'Enter the actual or planned group sizes directly here. Total N and the allocation ratio are derived automatically.',
                     },
                     {
                         id: 'effectSize',
@@ -440,21 +609,21 @@ export const POWER_TEST_REGISTRY = [
                         max: 0.2,
                     },
                     {
-                        id: 'sampleSize',
-                        label: 'Total N',
+                        id: 'group1SampleSize',
+                        label: 'Group 1 N',
                         type: 'number',
                         step: 1,
-                        min: 4,
+                        min: 2,
                         max: 100000,
                     },
                     {
-                        id: 'allocationRatio',
-                        label: 'Allocation Ratio (Group 2 / Group 1)',
+                        id: 'group2SampleSize',
+                        label: 'Group 2 N',
                         type: 'number',
-                        step: 0.1,
-                        min: 0.05,
-                        max: 20,
-                        helperText: '1.0 means equal group sizes. 2.0 means Group 2 is twice as large as Group 1. In most cases, 1.0 is recommended.',
+                        step: 1,
+                        min: 2,
+                        max: 100000,
+                        helperText: 'Enter the actual or planned group sizes directly here. Total N and the allocation ratio are derived automatically.',
                     },
                     {
                         id: 'powerTarget',

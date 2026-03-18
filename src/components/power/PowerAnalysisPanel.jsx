@@ -21,6 +21,20 @@ const getImpliedAllocationSplit = (sampleSize, allocationRatio) => {
     return { group1SampleSize, group2SampleSize };
 };
 
+const getDerivedGroupSummary = (group1SampleSize, group2SampleSize) => {
+    const group1 = Math.round(Number(group1SampleSize));
+    const group2 = Math.round(Number(group2SampleSize));
+
+    if (!(group1 >= 2) || !(group2 >= 2)) {
+        return null;
+    }
+
+    return {
+        sampleSize: group1 + group2,
+        allocationRatio: group2 / group1,
+    };
+};
+
 const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, onResultChange }) => {
     const powerConfig = testConfig?.power;
     const availableModes = useMemo(() => {
@@ -44,6 +58,14 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
     }, [testConfig?.id, powerConfig, currentStats, initialMode, availableModes]);
 
     const schema = powerConfig?.inputSchema?.[mode] || [];
+    const visibleFieldIds = useMemo(
+        () => new Set(
+            schema
+                .filter((field) => !(typeof field.hidden === 'function' && field.hidden(inputs)))
+                .map((field) => field.id)
+        ),
+        [schema, inputs]
+    );
     const result = useMemo(() => runPowerAnalysis(testConfig, { ...inputs, mode }), [testConfig, inputs, mode]);
 
     useEffect(() => {
@@ -145,6 +167,10 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                                 )}
 
                                 {field.id === 'allocationRatio' && (() => {
+                                    if (!visibleFieldIds.has('sampleSize')) {
+                                        return null;
+                                    }
+
                                     const split = getImpliedAllocationSplit(inputs.sampleSize, inputs.allocationRatio);
 
                                     if (!split) {
@@ -154,6 +180,20 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                                     return (
                                         <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
                                             At the current total N, this implies about n1 = {split.group1SampleSize} and n2 = {split.group2SampleSize}.
+                                        </p>
+                                    );
+                                })()}
+
+                                {field.id === 'group2SampleSize' && (() => {
+                                    const groupSummary = getDerivedGroupSummary(inputs.group1SampleSize, inputs.group2SampleSize);
+
+                                    if (!groupSummary) {
+                                        return null;
+                                    }
+
+                                    return (
+                                        <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
+                                            Total N = {groupSummary.sampleSize}; allocation ratio ≈ {groupSummary.allocationRatio.toFixed(2)}.
                                         </p>
                                     );
                                 })()}

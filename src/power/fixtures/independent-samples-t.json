@@ -1,9 +1,14 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "testId": "independent_t",
+  "parityTarget": {
+    "tool": "G*Power",
+    "version": "3.1.9.7",
+    "status": "pending_external_parity_replacement"
+  },
   "reference": {
     "source": "statwizard_baseline_2026_03_18",
-    "notes": "Replace or augment with pinned G*Power values as parity fixtures mature."
+    "notes": "Baseline values generated from the live shared StatWizard solver. Replace or augment with G*Power 3.1.9.7 values as parity fixtures mature."
   },
   "defaultTolerances": {
     "actualPower": 0.000001,
@@ -36,15 +41,15 @@
       }
     },
     {
-      "id": "post_hoc_one_tailed_alpha_005_d_05_n_90_ratio_15",
+      "id": "post_hoc_one_tailed_alpha_005_d_05_n1_36_n2_54",
       "inputs": {
         "mode": "post_hoc",
         "alpha": 0.05,
         "tails": 1,
         "direction": "greater",
         "effectSize": 0.5,
-        "sampleSize": 90,
-        "allocationRatio": 1.5
+        "group1SampleSize": 36,
+        "group2SampleSize": 54
       },
       "expected": {
         "sampleSize": 90,
@@ -58,15 +63,15 @@
       }
     },
     {
-      "id": "sensitivity_two_tailed_alpha_005_power_08_n_80_ratio_1",
+      "id": "sensitivity_two_tailed_alpha_005_power_08_n1_40_n2_40",
       "inputs": {
         "mode": "sensitivity",
         "alpha": 0.05,
         "tails": 2,
         "direction": "greater",
         "powerTarget": 0.8,
-        "sampleSize": 80,
-        "allocationRatio": 1
+        "group1SampleSize": 40,
+        "group2SampleSize": 40
       },
       "expected": {
         "sampleSize": 80,

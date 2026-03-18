@@ -4,6 +4,11 @@ const MIN_GROUP_SIZE = 2;
 const NONCENTRAL_T_TOLERANCE = 1e-12;
 const NONCENTRAL_T_MAX_TERMS = 512;
 
+const normalizeGroupSampleSize = (value, fallback = MIN_GROUP_SIZE) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(MIN_GROUP_SIZE, Math.round(parsed)) : fallback;
+};
+
 export const normalizeAllocationRatio = (value, fallback = 1) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -53,11 +58,60 @@ export const splitTotalSampleSize = ({ sampleSize, allocationRatio, minGroupSize
     return best;
 };
 
+export const samplePlanFromGroupSizes = ({ group1SampleSize, group2SampleSize, minGroupSize = MIN_GROUP_SIZE }) => {
+    const resolvedGroup1 = normalizeGroupSampleSize(group1SampleSize, minGroupSize);
+    const resolvedGroup2 = normalizeGroupSampleSize(group2SampleSize, minGroupSize);
+
+    return {
+        sampleSize: resolvedGroup1 + resolvedGroup2,
+        group1SampleSize: resolvedGroup1,
+        group2SampleSize: resolvedGroup2,
+        achievedAllocationRatio: resolvedGroup2 / resolvedGroup1,
+        ratioError: 0,
+        balanceError: Math.abs(resolvedGroup1 - resolvedGroup2),
+    };
+};
+
+export const resolveIndependentTSamplePlan = ({
+    sampleSize,
+    allocationRatio,
+    group1SampleSize,
+    group2SampleSize,
+    minGroupSize = MIN_GROUP_SIZE,
+}) => {
+    if (Number.isFinite(Number(group1SampleSize)) && Number.isFinite(Number(group2SampleSize))) {
+        return samplePlanFromGroupSizes({
+            group1SampleSize,
+            group2SampleSize,
+            minGroupSize,
+        });
+    }
+
+    return splitTotalSampleSize({
+        sampleSize,
+        allocationRatio,
+        minGroupSize,
+    });
+};
+
 export const independentTDegreesOfFreedom = ({ group1SampleSize, group2SampleSize }) =>
     Math.max(1, group1SampleSize + group2SampleSize - 2);
 
+export const oneSampleTDegreesOfFreedom = ({ sampleSize }) =>
+    Math.max(1, Math.round(sampleSize) - 1);
+
 export const independentTNoncentrality = ({ effectSize, group1SampleSize, group2SampleSize, tails = 2, direction = 'greater' }) => {
     const magnitude = Math.abs(effectSize) * Math.sqrt((group1SampleSize * group2SampleSize) / (group1SampleSize + group2SampleSize));
+
+    if (tails === 2) {
+        return magnitude;
+    }
+
+    return direction === 'less' ? -magnitude : magnitude;
+};
+
+export const oneSampleTNoncentrality = ({ effectSize, sampleSize, tails = 2, direction = 'greater' }) => {
+    const magnitude = Math.abs(effectSize) * Math.sqrt(sampleSize);
 
     if (tails === 2) {
         return magnitude;

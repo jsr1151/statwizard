@@ -1,9 +1,6 @@
-import { roundTo } from '../math.js';
 import {
-    independentTDegreesOfFreedom,
-    independentTNoncentrality,
-    normalizeAllocationRatio,
-    resolveIndependentTSamplePlan,
+    oneSampleTDegreesOfFreedom,
+    oneSampleTNoncentrality,
     studentTCriticalValue,
     tPowerFromNoncentrality,
 } from '../tMath.js';
@@ -13,39 +10,31 @@ import {
     solveEffectSizeByTargetPower,
     solveIntegerSampleSizeByTargetPower,
 } from './tShared.js';
+import { roundTo } from '../math.js';
 
-const MIN_TOTAL_SAMPLE_SIZE = 4;
+const MIN_SAMPLE_SIZE = 2;
 
 const cleanNumber = (value, fallback) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const evaluateIndependentTPower = ({
+const evaluateOneSampleTPower = ({
     alpha,
     effectSize,
     sampleSize,
-    allocationRatio,
-    group1SampleSize,
-    group2SampleSize,
     tails,
     direction,
 }) => {
-    const samplePlan = resolveIndependentTSamplePlan({
-        sampleSize,
-        allocationRatio,
-        group1SampleSize,
-        group2SampleSize,
-    });
-    const df = independentTDegreesOfFreedom(samplePlan);
+    const resolvedSampleSize = Math.max(MIN_SAMPLE_SIZE, Math.round(sampleSize));
+    const df = oneSampleTDegreesOfFreedom({ sampleSize: resolvedSampleSize });
     const criticalMagnitude = studentTCriticalValue({ alpha, tails, df });
     const criticalValue = tails === 2
         ? criticalMagnitude
         : (direction === 'less' ? -criticalMagnitude : criticalMagnitude);
-    const noncentrality = independentTNoncentrality({
+    const noncentrality = oneSampleTNoncentrality({
         effectSize,
-        group1SampleSize: samplePlan.group1SampleSize,
-        group2SampleSize: samplePlan.group2SampleSize,
+        sampleSize: resolvedSampleSize,
         tails,
         direction,
     });
@@ -58,7 +47,7 @@ const evaluateIndependentTPower = ({
     });
 
     return {
-        ...samplePlan,
+        sampleSize: resolvedSampleSize,
         df,
         power,
         criticalValue,
@@ -72,81 +61,63 @@ const buildSharedResult = ({
     tails,
     direction,
     sampleSize,
-    group1SampleSize,
-    group2SampleSize,
-    achievedAllocationRatio,
     effectSize,
     power,
     criticalValue,
     df,
     noncentrality,
     targetPower,
-}) => {
-    const groupSplitText = `n1 = ${group1SampleSize}, n2 = ${group2SampleSize}`;
-
-    return {
-        ok: true,
-        mode,
-        alpha,
-        tails,
-        direction,
+}) => ({
+    ok: true,
+    mode,
+    alpha,
+    tails,
+    direction,
+    sampleSize,
+    effectSize,
+    actualPower: power,
+    criticalValue,
+    df,
+    noncentrality,
+    metrics: buildTPowerMetrics({
         sampleSize,
-        group1SampleSize,
-        group2SampleSize,
-        achievedAllocationRatio,
-        effectSize,
-        actualPower: power,
+        power,
         criticalValue,
         df,
         noncentrality,
-        metrics: buildTPowerMetrics({
-            sampleSize,
-            group1SampleSize,
-            group2SampleSize,
-            power,
-            criticalValue,
-            df,
-            noncentrality,
-            effectSize,
-            targetPower,
-        }),
-        summary:
-            mode === 'a_priori'
-                ? `An independent-samples t test needs total N = ${sampleSize} (${groupSplitText}) to reach power ${roundTo(power, 3)} at alpha ${alpha}.`
-                : mode === 'post_hoc'
-                    ? `With total N = ${sampleSize} split as ${groupSplitText}, the achieved power is ${roundTo(power, 3)} for effect size d = ${roundTo(effectSize, 3)}.`
-                    : `With total N = ${sampleSize} split as ${groupSplitText}, the smallest detectable effect is d = ${roundTo(effectSize, 3)} at power ${roundTo(targetPower, 3)}.`,
-        visualizer: buildTPowerVisualizer({
-            alpha,
-            tails,
-            direction,
-            effectSize,
-            sampleSize,
-            df,
-            power,
-            criticalValue,
-            noncentrality,
-            targetPower,
-            extraPowerMeta: {
-                mode,
-                group1SampleSize,
-                group2SampleSize,
-                achievedAllocationRatio,
-            },
-        }),
-    };
-};
+        effectSize,
+        targetPower,
+    }),
+    summary:
+        mode === 'a_priori'
+            ? `A one-sample t test needs N = ${sampleSize} to reach power ${roundTo(power, 3)} at alpha ${alpha}.`
+            : mode === 'post_hoc'
+                ? `With N = ${sampleSize}, the achieved power is ${roundTo(power, 3)} for effect size d = ${roundTo(effectSize, 3)}.`
+                : `With N = ${sampleSize}, the smallest detectable effect is d = ${roundTo(effectSize, 3)} at power ${roundTo(targetPower, 3)}.`,
+    visualizer: buildTPowerVisualizer({
+        alpha,
+        tails,
+        direction,
+        effectSize,
+        sampleSize,
+        df,
+        power,
+        criticalValue,
+        noncentrality,
+        targetPower,
+        extraPowerMeta: {
+            mode,
+        },
+    }),
+});
 
-export const solveIndependentTPower = (rawInputs) => {
+export const solveOneSampleTPower = (rawInputs) => {
     const mode = rawInputs?.mode || 'a_priori';
     const alpha = cleanNumber(rawInputs?.alpha, 0.05);
     const tails = cleanNumber(rawInputs?.tails, 2);
     const direction = rawInputs?.direction || 'greater';
     const effectSize = Math.abs(cleanNumber(rawInputs?.effectSize, 0.5));
-    const sampleSize = Math.max(MIN_TOTAL_SAMPLE_SIZE, Math.round(cleanNumber(rawInputs?.sampleSize, 60)));
-    const allocationRatio = normalizeAllocationRatio(rawInputs?.allocationRatio, 1);
-    const group1SampleSize = cleanNumber(rawInputs?.group1SampleSize, NaN);
-    const group2SampleSize = cleanNumber(rawInputs?.group2SampleSize, NaN);
+    const sampleSize = Math.max(MIN_SAMPLE_SIZE, Math.round(cleanNumber(rawInputs?.sampleSize, 30)));
     const powerTarget = cleanNumber(rawInputs?.powerTarget, 0.8);
 
     if (!(alpha > 0 && alpha < 1)) {
@@ -163,13 +134,12 @@ export const solveIndependentTPower = (rawInputs) => {
 
     if (mode === 'a_priori') {
         const result = solveIntegerSampleSizeByTargetPower({
-            minSampleSize: MIN_TOTAL_SAMPLE_SIZE,
+            minSampleSize: MIN_SAMPLE_SIZE,
             powerTarget,
-            evaluateAtSampleSize: (candidateSampleSize) => evaluateIndependentTPower({
+            evaluateAtSampleSize: (candidateSampleSize) => evaluateOneSampleTPower({
                 alpha,
                 effectSize,
                 sampleSize: candidateSampleSize,
-                allocationRatio,
                 tails,
                 direction,
             }),
@@ -181,9 +151,6 @@ export const solveIndependentTPower = (rawInputs) => {
             tails,
             direction,
             sampleSize: result.sampleSize,
-            group1SampleSize: result.group1SampleSize,
-            group2SampleSize: result.group2SampleSize,
-            achievedAllocationRatio: result.achievedAllocationRatio,
             effectSize,
             power: result.power,
             criticalValue: result.criticalValue,
@@ -194,13 +161,10 @@ export const solveIndependentTPower = (rawInputs) => {
     }
 
     if (mode === 'post_hoc') {
-        const result = evaluateIndependentTPower({
+        const result = evaluateOneSampleTPower({
             alpha,
             effectSize,
             sampleSize,
-            allocationRatio,
-            group1SampleSize,
-            group2SampleSize,
             tails,
             direction,
         });
@@ -211,9 +175,6 @@ export const solveIndependentTPower = (rawInputs) => {
             tails,
             direction,
             sampleSize: result.sampleSize,
-            group1SampleSize: result.group1SampleSize,
-            group2SampleSize: result.group2SampleSize,
-            achievedAllocationRatio: result.achievedAllocationRatio,
             effectSize,
             power: result.power,
             criticalValue: result.criticalValue,
@@ -225,13 +186,10 @@ export const solveIndependentTPower = (rawInputs) => {
     if (mode === 'sensitivity') {
         const result = solveEffectSizeByTargetPower({
             powerTarget,
-            evaluateAtEffectSize: (candidateEffectSize) => evaluateIndependentTPower({
+            evaluateAtEffectSize: (candidateEffectSize) => evaluateOneSampleTPower({
                 alpha,
                 effectSize: candidateEffectSize,
                 sampleSize,
-                allocationRatio,
-                group1SampleSize,
-                group2SampleSize,
                 tails,
                 direction,
             }),
@@ -243,9 +201,6 @@ export const solveIndependentTPower = (rawInputs) => {
             tails,
             direction,
             sampleSize: result.sampleSize,
-            group1SampleSize: result.group1SampleSize,
-            group2SampleSize: result.group2SampleSize,
-            achievedAllocationRatio: result.achievedAllocationRatio,
             effectSize: result.effectSize,
             power: result.power,
             criticalValue: result.criticalValue,

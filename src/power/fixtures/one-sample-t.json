@@ -1,6 +1,6 @@
 {
   "formatVersion": 2,
-  "testId": "one_sample_z",
+  "testId": "one_sample_t",
   "parityTarget": {
     "tool": "G*Power",
     "version": "3.1.9.7",
@@ -13,6 +13,7 @@
   "defaultTolerances": {
     "actualPower": 0.000001,
     "criticalValue": 0.000001,
+    "df": 0.000001,
     "noncentrality": 0.000001,
     "effectSize": 0.000001
   },
@@ -28,10 +29,11 @@
         "powerTarget": 0.8
       },
       "expected": {
-        "sampleSize": 32,
-        "actualPower": 0.8074304605724381,
-        "criticalValue": 1.959963986120195,
-        "noncentrality": 2.8284271247461903,
+        "sampleSize": 34,
+        "actualPower": 0.8077775193097475,
+        "criticalValue": 2.034515227967205,
+        "df": 33,
+        "noncentrality": 2.9154759474226504,
         "effectSize": 0.5
       }
     },
@@ -47,8 +49,9 @@
       },
       "expected": {
         "sampleSize": 30,
-        "actualPower": 0.8629696480045002,
-        "criticalValue": 1.644853625133699,
+        "actualPower": 0.8482541502294779,
+        "criticalValue": 1.6991269683702095,
+        "df": 29,
         "noncentrality": 2.7386127875258306,
         "effectSize": 0.5
       }
@@ -65,10 +68,11 @@
       },
       "expected": {
         "sampleSize": 30,
-        "actualPower": 0.7999992185569231,
-        "criticalValue": 1.959963986120195,
-        "noncentrality": 2.801578817619884,
-        "effectSize": 0.5114959716796874
+        "actualPower": 0.799995829280387,
+        "criticalValue": 2.0452295870721375,
+        "df": 29,
+        "noncentrality": 2.898727362060193,
+        "effectSize": 0.5292327880859375
       }
     }
   ]
