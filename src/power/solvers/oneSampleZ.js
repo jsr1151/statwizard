@@ -222,6 +222,10 @@ const buildSharedResult = ({
                 },
                 showBothH1: tails === 2,
                 powerMeta: {
+                    mode,
+                    alpha,
+                    tails,
+                    direction,
                     actualPower: power,
                     criticalValue,
                     noncentrality,

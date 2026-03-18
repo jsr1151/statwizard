@@ -3,6 +3,20 @@ import NormalDistributionVisual from '../visuals/NormalDistributionVisual';
 
 const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
     const metrics = result?.ok ? result.metrics || [] : [];
+    const visualizerKey = result?.ok
+        ? [
+            testConfig?.id,
+            result.mode,
+            result.alpha,
+            result.tails,
+            result.direction,
+            result.sampleSize,
+            result.effectSize,
+            result.criticalValue,
+            result.noncentrality,
+            result.actualPower,
+        ].join(':')
+        : `power-visualizer-${testConfig?.id || 'unknown'}`;
 
     return (
         <div className="space-y-6">
@@ -27,6 +41,7 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
                     </div>
                 ) : result.visualizer.kind === 'normal_distribution' ? (
                     <NormalDistributionVisual
+                        key={visualizerKey}
                         darkMode={darkMode}
                         type={result.visualizer.type}
                         showTutor={false}

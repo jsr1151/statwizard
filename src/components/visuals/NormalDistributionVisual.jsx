@@ -9,22 +9,22 @@ import TabButton from '../common/TabButton';
 const NormalDistributionVisual = ({ highlight = null, label = "Distribution", type = "z", darkMode, tutorLevel = 'tutor', showTutor: showTutorProp = true, onTutorUpdate, onStatsUpdate, powerViewConfig = null }) => {
   const [showTutor, setShowTutor] = useState(showTutorProp);
   const [val, setVal] = useState(0);
-  const [alpha, setAlpha] = useState(0.05);
-  const [tails, setTails] = useState(2);
-  const [showPopulation, setShowPopulation] = useState(false);
-  const [visualMode, setVisualMode] = useState('p-value'); // 'p-value' or 'power'
+  const [alpha, setAlpha] = useState(powerViewConfig?.alpha ?? 0.05);
+  const [tails, setTails] = useState(powerViewConfig?.tails ?? 2);
+  const [showPopulation, setShowPopulation] = useState(powerViewConfig?.showPopulation ?? false);
+  const [visualMode, setVisualMode] = useState(powerViewConfig?.visualMode || 'p-value'); // 'p-value' or 'power'
   const [showPModal, setShowPModal] = useState(false);
-  const [showPowerLabels, setShowPowerLabels] = useState(true);
+  const [showPowerLabels, setShowPowerLabels] = useState(powerViewConfig?.showPowerLabels ?? true);
   const [hoveredRegion, setHoveredRegion] = useState(null);
-  const [calcMode, setCalcMode] = useState(false);
-  const [calcData, setCalcData] = useState({ xBar: 105, mu: 100, sigma: 15, n: 30 });
-  const [h1Direction, setH1Direction] = useState('greater'); // 'greater' or 'less'
+  const [calcMode, setCalcMode] = useState(powerViewConfig?.calcMode ?? false);
+  const [calcData, setCalcData] = useState(() => ({ xBar: 105, mu: 100, sigma: 15, n: 30, ...(powerViewConfig?.calcData || {}) }));
+  const [h1Direction, setH1Direction] = useState(powerViewConfig?.h1Direction || 'greater'); // 'greater' or 'less'
   const [precision, setPrecision] = useState(2);
   const [showCI, setShowCI] = useState(false);
-  const [altH1Dir, setAltH1Dir] = useState('greater'); // For two-tailed power view
-  const [showBothH1, setShowBothH1] = useState(false);
-  const [targetEffect, setTargetEffect] = useState(0.5); // Hypothesized Cohen's d for H1
-  const [df, setDf] = useState(29);
+  const [altH1Dir, setAltH1Dir] = useState(powerViewConfig?.h1Direction || 'greater'); // For two-tailed power view
+  const [showBothH1, setShowBothH1] = useState(powerViewConfig?.showBothH1 ?? false);
+  const [targetEffect, setTargetEffect] = useState(powerViewConfig?.targetEffect ?? 0.5); // Hypothesized Cohen's d for H1
+  const [df, setDf] = useState(powerViewConfig?.df ?? 29);
   const [ciType, setCiType] = useState('two-sided'); // 'two-sided' or 'one-sided'
   const [dataInputMode, setDataInputMode] = useState('summary'); // 'summary' or 'raw'
   const [rawData, setRawData] = useState("");
@@ -41,6 +41,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   const [isDragging, setIsDragging] = useState(false);
   const svgRef = useRef(null);
   const isPowerCompactPreset = powerViewConfig?.uiPreset === 'power_compact';
+  const powerMeta = powerViewConfig?.powerMeta || null;
 
   useEffect(() => {
     if (!powerViewConfig) return;
@@ -194,8 +195,30 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
   const stdDev = 35;
   const mean = 150;
-  const h1Sign = (tails === 1) ? (h1Direction === 'greater' ? 1 : -1) : (altH1Dir === 'greater' ? 1 : -1);
-  const altMeanZ = h1Sign * (targetEffect * Math.sqrt(calcData.n));
+  const plotAlpha = isPowerCompactPreset && typeof powerViewConfig?.alpha === 'number' ? powerViewConfig.alpha : alpha;
+  const plotTails = isPowerCompactPreset && typeof powerViewConfig?.tails === 'number' ? powerViewConfig.tails : tails;
+  const plotDirection = isPowerCompactPreset && typeof powerViewConfig?.h1Direction === 'string' ? powerViewConfig.h1Direction : h1Direction;
+  const plotShowPopulation = showPopulation;
+  const plotShowBothH1 = isPowerCompactPreset && typeof powerViewConfig?.showBothH1 === 'boolean' ? powerViewConfig.showBothH1 : showBothH1;
+  const plotEffectSize = isPowerCompactPreset && Number.isFinite(powerMeta?.effectSize) ? Math.abs(Number(powerMeta.effectSize)) : targetEffect;
+  const plotSampleSize = isPowerCompactPreset && Number.isFinite(powerMeta?.sampleSize) ? Math.max(2, Number(powerMeta.sampleSize)) : calcData.n;
+  const plotNoncentrality = isPowerCompactPreset && Number.isFinite(powerMeta?.noncentrality)
+    ? Math.abs(Number(powerMeta.noncentrality))
+    : plotEffectSize * Math.sqrt(plotSampleSize);
+  const plotCriticalMagnitude = isPowerCompactPreset && Number.isFinite(powerMeta?.criticalValue)
+    ? Math.abs(Number(powerMeta.criticalValue))
+    : Math.abs(criticalValue);
+  const plotCriticalValue = plotTails === 2
+    ? plotCriticalMagnitude
+    : (plotDirection === 'greater' ? plotCriticalMagnitude : -plotCriticalMagnitude);
+  const plotCalcData = isPowerCompactPreset
+    ? { ...calcData, ...(powerViewConfig?.calcData || {}), n: plotSampleSize }
+    : calcData;
+  const plotVisualMode = isPowerCompactPreset ? 'power' : visualMode;
+  const h1Sign = plotTails === 1
+    ? (plotDirection === 'greater' ? 1 : -1)
+    : (isPowerCompactPreset ? 1 : (altH1Dir === 'greater' ? 1 : -1));
+  const altMeanZ = h1Sign * plotNoncentrality;
   const altDistributionCenter = mean + altMeanZ * stdDev;
 
   // --- HOOKS ---
@@ -316,9 +339,9 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   }, [altMeanZ, mean, stdDev, df, type]);
 
   const altPointsNeg = useMemo(() => {
-    if (type === 't') return getTPoints(mean - (targetEffect * Math.sqrt(calcData.n)) * stdDev, stdDev, df, 120, 300);
-    return getGaussianPoints(mean - (targetEffect * Math.sqrt(calcData.n)) * stdDev, stdDev, 120, 300);
-  }, [targetEffect, calcData.n, mean, stdDev, df, type]);
+    if (type === 't') return getTPoints(mean - plotNoncentrality * stdDev, stdDev, df, 120, 300);
+    return getGaussianPoints(mean - plotNoncentrality * stdDev, stdDev, 120, 300);
+  }, [plotNoncentrality, mean, stdDev, df, type]);
 
   const pathData = pointsToPath(points);
   const zPathData = pointsToPath(zPoints);
@@ -379,7 +402,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   <text y="15" textAnchor="middle">{sd > 0 ? `+${sd}` : sd}</text>
                   {calcMode && !isPowerCompactPreset && (
                     <text y="25" textAnchor="middle" className="fill-indigo-500 font-bold animate-in fade-in duration-300">
-                      {(calcData.mu + sd * (calcData.sigma / Math.sqrt(calcData.n))).toFixed(1)}
+                      {(plotCalcData.mu + sd * (plotCalcData.sigma / Math.sqrt(plotCalcData.n))).toFixed(1)}
                     </text>
                   )}
                 </g>
@@ -389,11 +412,11 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
             <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
 
             {/* Alternative Distribution (H1) - Dimmed in P-value mode */}
-            {showPopulation && (
+            {plotShowPopulation && (
               <>
-                <path d={altPathData} fill="url(#nullGradient)" stroke={darkMode ? "#475569" : "#94a3b8"} strokeWidth="2" strokeDasharray="4" opacity={visualMode === 'p-value' ? "0.15" : "0.6"} className="transition-all duration-500" />
-                {tails === 2 && showBothH1 && (
-                  <path d={altPathDataNeg} fill="url(#nullGradient)" stroke={darkMode ? "#475569" : "#94a3b8"} strokeWidth="2" strokeDasharray="4" opacity={visualMode === 'p-value' ? "0.15" : "0.6"} className="transition-all duration-500" />
+                <path d={altPathData} fill="url(#nullGradient)" stroke={darkMode ? "#475569" : "#94a3b8"} strokeWidth="2" strokeDasharray="4" opacity={plotVisualMode === 'p-value' ? "0.15" : "0.6"} className="transition-all duration-500" />
+                {plotTails === 2 && plotShowBothH1 && (
+                  <path d={altPathDataNeg} fill="url(#nullGradient)" stroke={darkMode ? "#475569" : "#94a3b8"} strokeWidth="2" strokeDasharray="4" opacity={plotVisualMode === 'p-value' ? "0.15" : "0.6"} className="transition-all duration-500" />
                 )}
               </>
             )}
@@ -407,36 +430,36 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
             )}
 
             {/* Power / Beta Shading (Alternative Curve Area) - Only in Power Mode */}
-            {showPopulation && visualMode === 'power' && (
+            {plotShowPopulation && plotVisualMode === 'power' && (
               <g className="transition-all duration-300">
                 {/* Power: Area under H1 that falls in H0 rejection region */}
-                {tails === 2 ? (
+                {plotTails === 2 ? (
                   <>
-                    <path d={`M ${mean + Math.abs(criticalValue) * stdDev},150 ` +
-                      altPoints.filter(p => p[0] >= mean + Math.abs(criticalValue) * stdDev)
+                    <path d={`M ${mean + Math.abs(plotCriticalValue) * stdDev},150 ` +
+                      altPoints.filter(p => p[0] >= mean + Math.abs(plotCriticalValue) * stdDev)
                         .map((p, i) => (i === 0 ? `L ${p[0]},${p[1]}` : `L ${p[0]},${p[1]}`))
                         .join(' ') + ` L 300,150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
                     <path d={`M 0,150 ` +
-                      (showBothH1 ? altPointsNeg : altPoints).filter(p => p[0] <= mean - Math.abs(criticalValue) * stdDev)
+                      (plotShowBothH1 ? altPointsNeg : altPoints).filter(p => p[0] <= mean - Math.abs(plotCriticalValue) * stdDev)
                         .map(p => `L ${p[0]},${p[1]}`).join(' ') +
-                      ` L ${mean - Math.abs(criticalValue) * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
+                      ` L ${mean - Math.abs(plotCriticalValue) * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
                   </>
                 ) : (
-                  h1Direction === 'greater'
-                    ? <path d={`M ${mean + criticalValue * stdDev},150 ` +
-                      altPoints.filter(p => p[0] >= mean + criticalValue * stdDev)
+                  plotDirection === 'greater'
+                    ? <path d={`M ${mean + plotCriticalValue * stdDev},150 ` +
+                      altPoints.filter(p => p[0] >= mean + plotCriticalValue * stdDev)
                         .map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
-                    : <path d={`M 0,150 ` + altPoints.filter(p => p[0] <= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + criticalValue * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
+                    : <path d={`M 0,150 ` + altPoints.filter(p => p[0] <= mean + plotCriticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + plotCriticalValue * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
                 )}
 
                 {/* Beta: Area under H1 that falls in H0 non-rejection region (The entire interval) */}
-                <path d={`M ${mean - (tails === 1 ? (h1Direction === 'greater' ? 4 : Math.abs(criticalValue)) : Math.abs(criticalValue)) * stdDev},150 ` +
+                <path d={`M ${mean - (plotTails === 1 ? (plotDirection === 'greater' ? 4 : Math.abs(plotCriticalValue)) : Math.abs(plotCriticalValue)) * stdDev},150 ` +
                   altPoints.filter(p => {
                     const z = (p[0] - mean) / stdDev;
-                    if (tails === 2) return z > -Math.abs(criticalValue) && z < Math.abs(criticalValue);
-                    return h1Direction === 'greater' ? z < criticalValue : z > criticalValue;
+                    if (plotTails === 2) return z > -Math.abs(plotCriticalValue) && z < Math.abs(plotCriticalValue);
+                    return plotDirection === 'greater' ? z < plotCriticalValue : z > plotCriticalValue;
                   }).map(p => `L ${p[0]},${p[1]}`).join(' ') +
-                  ` L ${mean + (tails === 1 ? (h1Direction === 'greater' ? Math.abs(criticalValue) : 4) : Math.abs(criticalValue)) * stdDev},150 Z`}
+                  ` L ${mean + (plotTails === 1 ? (plotDirection === 'greater' ? Math.abs(plotCriticalValue) : 4) : Math.abs(plotCriticalValue)) * stdDev},150 Z`}
                   fill="url(#dotsPattern)" onMouseEnter={() => setHoveredRegion('beta')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
 
                 {/* Plot Labels for Power Mode - Positioned relative to H1 center */}
@@ -453,13 +476,13 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                     <text x="150" y="22" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-indigo-500 font-black">
                       H0
                     </text>
-                    {showPopulation && (
+                    {plotShowPopulation && (
                       <text x={altDistributionCenter} y="34" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-slate-500 font-black">
                         H1
                       </text>
                     )}
-                    {showPopulation && tails === 2 && showBothH1 && (
-                      <text x={mean - (targetEffect * Math.sqrt(calcData.n)) * stdDev} y="34" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-slate-500 font-black">
+                    {plotShowPopulation && plotTails === 2 && plotShowBothH1 && (
+                      <text x={mean - plotNoncentrality * stdDev} y="34" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-slate-500 font-black">
                         H1
                       </text>
                     )}
@@ -471,7 +494,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   <g transform="translate(150, 20)">
                   <rect x="-40" y="-8" width="80" height="12" rx="2" fill="#1e293b" fillOpacity="0.8" />
                   <text textAnchor="middle" className="text-[6px] fill-slate-300 font-black tracking-widest uppercase">
-                    Reject if Z {tails === 2 ? '±' : ''}{h1Direction === 'greater' ? '≥' : '≤'} {tails === 2 ? Math.abs(criticalValue).toFixed(3) : criticalValue.toFixed(3)}
+                    Reject if Z {plotTails === 2 ? '±' : ''}{plotDirection === 'greater' ? '≥' : '≤'} {plotTails === 2 ? Math.abs(plotCriticalValue).toFixed(3) : plotCriticalValue.toFixed(3)}
                   </text>
                   </g>
                 )}
@@ -496,37 +519,37 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
             {/* Rejection Regions (Anchored to Null/H0) */}
             <g opacity={getOpacity('tails')} className="transition-all duration-300">
-              {tails === 2 ? (
+              {plotTails === 2 ? (
                 <>
-                  <path d={`M 0,150 ` + points.filter(p => p[0] <= mean - Math.abs(criticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean - Math.abs(criticalValue) * stdDev},150 Z`}
+                  <path d={`M 0,150 ` + points.filter(p => p[0] <= mean - Math.abs(plotCriticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean - Math.abs(plotCriticalValue) * stdDev},150 Z`}
                     fill="#fca5a5" fillOpacity="0.5" onMouseEnter={() => setHoveredRegion('alpha')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" />
-                  <path d={`M ${mean + Math.abs(criticalValue) * stdDev},150 ` + points.filter(p => p[0] >= mean + Math.abs(criticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`}
+                  <path d={`M ${mean + Math.abs(plotCriticalValue) * stdDev},150 ` + points.filter(p => p[0] >= mean + Math.abs(plotCriticalValue) * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`}
                     fill="#fca5a5" fillOpacity="0.5" onMouseEnter={() => setHoveredRegion('alpha')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" />
 
                   {/* Left Critical Boundary Line */}
                   <line
-                    x1={mean - Math.abs(criticalValue) * stdDev} y1="30"
-                    x2={mean - Math.abs(criticalValue) * stdDev} y2="150"
+                    x1={mean - Math.abs(plotCriticalValue) * stdDev} y1="30"
+                    x2={mean - Math.abs(plotCriticalValue) * stdDev} y2="150"
                     stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2"
                   />
                   {/* Right Critical Boundary Line */}
                   <line
-                    x1={mean + Math.abs(criticalValue) * stdDev} y1="30"
-                    x2={mean + Math.abs(criticalValue) * stdDev} y2="150"
+                    x1={mean + Math.abs(plotCriticalValue) * stdDev} y1="30"
+                    x2={mean + Math.abs(plotCriticalValue) * stdDev} y2="150"
                     stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2"
                   />
                 </>
               ) : (
                 <>
-                  {h1Direction === 'greater'
-                    ? <path d={`M ${mean + criticalValue * stdDev},150 ` + points.filter(p => p[0] >= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`}
+                  {plotDirection === 'greater'
+                    ? <path d={`M ${mean + plotCriticalValue * stdDev},150 ` + points.filter(p => p[0] >= mean + plotCriticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`}
                       fill="#fca5a5" fillOpacity="0.5" onMouseEnter={() => setHoveredRegion('alpha')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" />
-                    : <path d={`M 0,150 ` + points.filter(p => p[0] <= mean + criticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + criticalValue * stdDev},150 Z`}
+                    : <path d={`M 0,150 ` + points.filter(p => p[0] <= mean + plotCriticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + plotCriticalValue * stdDev},150 Z`}
                       fill="#fca5a5" fillOpacity="0.5" onMouseEnter={() => setHoveredRegion('alpha')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" />
                   }
                   <line
-                    x1={mean + criticalValue * stdDev} y1="30"
-                    x2={mean + criticalValue * stdDev} y2="150"
+                    x1={mean + plotCriticalValue * stdDev} y1="30"
+                    x2={mean + plotCriticalValue * stdDev} y2="150"
                     stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,2"
                   />
                 </>
@@ -535,19 +558,19 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
               {/* Cutoff Labels & Alpha annotations */}
               {(!isPowerCompactPreset || showPowerLabels) && (
                 <>
-              {tails === 2 && (
-                <g transform={`translate(${mean - Math.abs(criticalValue) * stdDev}, 150)`}>
+              {plotTails === 2 && (
+                <g transform={`translate(${mean - Math.abs(plotCriticalValue) * stdDev}, 150)`}>
                   <text y="-125" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-red-500 font-black">
-                    {type === 'z' ? 'z' : 't'}Crit = -{Math.abs(criticalValue).toFixed(2)}
+                    {type === 'z' ? 'z' : 't'}Crit = -{Math.abs(plotCriticalValue).toFixed(2)}
                   </text>
-                  <text y="-5" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-red-500 font-bold italic">α/2={(alpha / 2).toFixed(3)}</text>
+                  <text y="-5" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-red-500 font-bold italic">α/2={(plotAlpha / 2).toFixed(3)}</text>
                 </g>
               )}
-              <g transform={`translate(${mean + (tails === 1 && h1Direction === 'less' ? criticalValue : Math.abs(criticalValue)) * stdDev}, 150)`}>
+              <g transform={`translate(${mean + (plotTails === 1 && plotDirection === 'less' ? plotCriticalValue : Math.abs(plotCriticalValue)) * stdDev}, 150)`}>
                 <text y="-125" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[7px] fill-red-500 font-black">
-                  {type === 'z' ? 'z' : 't'}Crit = {tails === 2 ? '+' : ''}{criticalValue.toFixed(2)}
+                  {type === 'z' ? 'z' : 't'}Crit = {plotTails === 2 ? '+' : ''}{plotCriticalValue.toFixed(2)}
                 </text>
-                <text y="-5" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-red-500 font-bold italic">{tails === 2 ? `α/2=${(alpha / 2).toFixed(3)}` : `α=${alpha}`}</text>
+                <text y="-5" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-red-500 font-bold italic">{plotTails === 2 ? `α/2=${(plotAlpha / 2).toFixed(3)}` : `α=${plotAlpha}`}</text>
               </g>
                 </>
               )}

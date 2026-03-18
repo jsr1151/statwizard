@@ -221,8 +221,8 @@ export default function App() {
             return;
         }
 
-        setActiveResultSection('calculator');
-    }, [currentStepId, pendingPowerLaunch]);
+        setActiveResultSection(currentTestConfig ? 'lessons' : 'calculator');
+    }, [currentStepId, pendingPowerLaunch, currentTestConfig]);
 
     useEffect(() => {
         if (appMode !== 'wizard') {
@@ -341,6 +341,141 @@ export default function App() {
     if (displayFormulaId === 'z_test' || displayFormulaId === 't_onesample') relevantSymbols = SYMBOL_KEYS.sd_pop;
     if (displayFormulaId === 'anova') relevantSymbols = SYMBOL_KEYS.anova;
 
+    const renderResultVisualizer = ({ teachingMode = true } = {}) => {
+        if (displayVisualType === 'anova') {
+            return (
+                <ErrorBoundary>
+                    <AnovaVisual
+                        highlight={teachingMode ? activeMathTermKey : null}
+                        darkMode={darkMode}
+                        showValues={teachingMode ? showEquationValues : false}
+                        onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                        onStatsUpdate={setCurrentStats}
+                        tutor={anovaTutor}
+                    />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'factorial_anova') {
+            return (
+                <ErrorBoundary>
+                    <FactorialAnovaVisual
+                        darkMode={darkMode}
+                        showValues={teachingMode ? showEquationValues : false}
+                        onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                        onStatsUpdate={setCurrentStats}
+                        tutor={factorialAnovaTutor}
+                    />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'ancova') {
+            return (
+                <ErrorBoundary>
+                    <AncovaVisual
+                        darkMode={darkMode}
+                        showValues={teachingMode ? showEquationValues : false}
+                        onStatsUpdate={setCurrentStats}
+                        tutor={ancovaTutor}
+                    />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'indep_ttest') {
+            return (
+                <ErrorBoundary>
+                    <IndependentTTestVisual
+                        highlight={teachingMode ? activeMathTermKey : null}
+                        darkMode={darkMode}
+                        onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                        onStatsUpdate={setCurrentStats}
+                    />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'paired_ttest') {
+            return (
+                <ErrorBoundary>
+                    <PairedTTestVisual
+                        highlight={teachingMode ? activeMathTermKey : null}
+                        darkMode={darkMode}
+                        onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                        onStatsUpdate={setCurrentStats}
+                    />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'probability') {
+            return (
+                <ErrorBoundary>
+                    <ProbabilityVisual
+                        mode={probabilityTab}
+                        darkMode={darkMode}
+                        onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                        onStatsUpdate={setCurrentStats}
+                    />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'nhst') {
+            return (
+                <ErrorBoundary>
+                    <NhstVisual darkMode={darkMode} />
+                </ErrorBoundary>
+            );
+        }
+
+        if (displayVisualType === 'ttest') {
+            return (
+                <NormalDistributionVisual
+                    type={displayFormulaId === 'z_test' ? 'z' : 't'}
+                    highlight={teachingMode && activeMathTermKey ? (displayFormulaId === 'z_test' ? 'z_score' : 't_score') : null}
+                    darkMode={darkMode}
+                    showTutor={teachingMode}
+                    onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                    onStatsUpdate={setCurrentStats}
+                />
+            );
+        }
+
+        if (displayVisualType === 'normal') {
+            return (
+                <NormalDistributionVisual
+                    type="z"
+                    label="Standard Normal Distribution"
+                    highlight={teachingMode ? 'curve' : null}
+                    darkMode={darkMode}
+                    showTutor={teachingMode}
+                />
+            );
+        }
+
+        if (displayVisualType === 'variability') {
+            return <VariabilityVisual darkMode={darkMode} />;
+        }
+
+        if (displayVisualType === 'frequency') {
+            return <FrequencyVisual darkMode={darkMode} />;
+        }
+
+        if (displayVisualType === 'skew') {
+            return <ShapeVisual darkMode={darkMode} />;
+        }
+
+        if (displayVisualType === 'quartile') {
+            return <QuartileVisual darkMode={darkMode} />;
+        }
+
+        return null;
+    };
+
+    const showStructuredCalculator = Boolean(currentTestConfig) && activeResultSection === 'calculator';
 
     return (
         <ErrorBoundary>
@@ -442,8 +577,18 @@ export default function App() {
                                                 <div className={`rounded-xl border p-2 flex flex-wrap gap-2 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                                     <button
                                                         onClick={() => {
+                                                            setActiveResultSection('lessons');
+                                                            setPendingPowerLaunch(null);
+                                                        }}
+                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'lessons' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
+                                                    >
+                                                        <BookOpen className="w-4 h-4" /> Tutor / Lessons
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
                                                             setActiveResultSection('calculator');
                                                             setPendingPowerLaunch(null);
+                                                            setActiveTutorScript(null);
                                                         }}
                                                         className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'calculator' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
                                                     >
@@ -453,13 +598,17 @@ export default function App() {
                                                         onClick={() => {
                                                             setActiveResultSection('effect_size');
                                                             setPendingPowerLaunch(null);
+                                                            setActiveTutorScript(null);
                                                         }}
                                                         className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'effect_size' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
                                                     >
                                                         <Sigma className="w-4 h-4" /> Effect Size
                                                     </button>
                                                     <button
-                                                        onClick={() => setActiveResultSection('power')}
+                                                        onClick={() => {
+                                                            setActiveResultSection('power');
+                                                            setActiveTutorScript(null);
+                                                        }}
                                                         className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'power' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
                                                     >
                                                         <BarChart2 className="w-4 h-4" /> Power Analysis
@@ -481,6 +630,30 @@ export default function App() {
                                                     currentStats={currentStats}
                                                     darkMode={darkMode}
                                                 />
+                                            ) : showStructuredCalculator ? (
+                                                <div className="space-y-8">
+                                                    <div className={`rounded-xl border p-6 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                        <div className="flex flex-wrap items-start justify-between gap-4">
+                                                            <div>
+                                                                <h3 className={`text-sm font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                                    Test Calculator
+                                                                </h3>
+                                                                <p className={`text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                                    Use this workspace to enter or inspect data-driven analysis inputs and outputs. Formulas, assumptions, software walkthroughs, and guided explanations stay in Tutor / Lessons.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className={`border rounded-xl p-6 min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                        <h4 className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                            <BarChart2 className="w-4 h-4 text-indigo-400" /> Analysis Workspace
+                                                        </h4>
+                                                        <div className={`rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
+                                                            {renderResultVisualizer({ teachingMode: false })}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             ) : (
                                             <>
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
@@ -570,86 +743,7 @@ export default function App() {
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
                                                         <div className={`flex-1 flex items-stretch justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
-                                                            {displayVisualType === 'anova' ? (
-                                                                <ErrorBoundary>
-                                                                    <AnovaVisual
-                                                                        highlight={activeMathTermKey}
-                                                                        darkMode={darkMode}
-                                                                        showValues={showEquationValues}
-                                                                        onTutorUpdate={setActiveTutorScript}
-                                                                        onStatsUpdate={setCurrentStats}
-                                                                        tutor={anovaTutor}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'factorial_anova' ? (
-                                                                <ErrorBoundary>
-                                                                    <FactorialAnovaVisual
-                                                                        darkMode={darkMode}
-                                                                        showValues={showEquationValues}
-                                                                        onTutorUpdate={setActiveTutorScript}
-                                                                        onStatsUpdate={setCurrentStats}
-                                                                        tutor={factorialAnovaTutor}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'ancova' ? (
-                                                                <ErrorBoundary>
-                                                                    <AncovaVisual
-                                                                        darkMode={darkMode}
-                                                                        showValues={showEquationValues}
-                                                                        onStatsUpdate={setCurrentStats}
-                                                                        tutor={ancovaTutor}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'indep_ttest' ? (
-                                                                <ErrorBoundary>
-                                                                    <IndependentTTestVisual
-                                                                        darkMode={darkMode}
-                                                                        onTutorUpdate={setActiveTutorScript}
-                                                                        onStatsUpdate={setCurrentStats}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'paired_ttest' ? (
-                                                                <ErrorBoundary>
-                                                                    <PairedTTestVisual
-                                                                        darkMode={darkMode}
-                                                                        onTutorUpdate={setActiveTutorScript}
-                                                                        onStatsUpdate={setCurrentStats}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'probability' ? (
-                                                                <ErrorBoundary>
-                                                                    <ProbabilityVisual
-                                                                        mode={probabilityTab}
-                                                                        darkMode={darkMode}
-                                                                        onTutorUpdate={setActiveTutorScript}
-                                                                        onStatsUpdate={setCurrentStats}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'nhst' ? (
-                                                                <ErrorBoundary>
-                                                                    <NhstVisual
-                                                                        darkMode={darkMode}
-                                                                    />
-                                                                </ErrorBoundary>
-                                                            ) : displayVisualType === 'ttest' ? (
-                                                                <NormalDistributionVisual
-                                                                    type={displayFormulaId === 'z_test' ? 'z' : 't'}
-                                                                    highlight={activeMathTermKey ? (displayFormulaId === 'z_test' ? 'z_score' : 't_score') : null}
-                                                                    darkMode={darkMode}
-                                                                    onTutorUpdate={setActiveTutorScript}
-                                                                    onStatsUpdate={setCurrentStats}
-                                                                />
-                                                            ) : displayVisualType === 'normal' ? (
-                                                                <NormalDistributionVisual type="z" label="Standard Normal Distribution" highlight="curve" darkMode={darkMode} />
-                                                            ) : displayVisualType === 'variability' ? (
-                                                                <VariabilityVisual darkMode={darkMode} />
-                                                            ) : displayVisualType === 'frequency' ? (
-                                                                <FrequencyVisual darkMode={darkMode} />
-                                                            ) : displayVisualType === 'skew' ? (
-                                                                <ShapeVisual darkMode={darkMode} />
-                                                            ) : displayVisualType === 'quartile' ? (
-                                                                <QuartileVisual darkMode={darkMode} />
-                                                            ) : null}
+                                                            {renderResultVisualizer({ teachingMode: true })}
                                                         </div>
                                                     </div>
                                                 </div>
