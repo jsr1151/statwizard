@@ -388,7 +388,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                 <line x1="0" y1="0" x2="0" y2="4" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
               </pattern>
               <pattern id="dotsPattern" patternUnits="userSpaceOnUse" width="4" height="4">
-                <circle cx="1" cy="1" r="0.8" fill="#f97316" fillOpacity="0.5" />
+                <circle cx="1" cy="1" r="0.8" fill="#f59e0b" fillOpacity="0.65" />
               </pattern>
             </defs>
 
@@ -466,7 +466,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                 {(!isPowerCompactPreset || showPowerLabels) && (
                   <>
                 <text x={mean + altMeanZ * stdDev + (altMeanZ >= 0 ? 30 : -30)} y="125" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-green-500 font-bold bg-white/50 px-1">Power (1-β)</text>
-                <text x={mean + altMeanZ * stdDev + (altMeanZ >= 0 ? -30 : 30)} y="145" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-orange-500 font-bold italic">β (Type II)</text>
+                    <text x={mean + altMeanZ * stdDev + (altMeanZ >= 0 ? -30 : 30)} y="145" textAnchor="middle" stroke={darkMode ? "#020617" : "#ffffff"} strokeWidth="2" paintOrder="stroke" className="text-[6px] fill-amber-500 font-bold italic">β (Type II)</text>
 
                   </>
                 )}
@@ -680,7 +680,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                     <p><strong className="text-red-400">Alpha:</strong> Type I error under the null distribution.</p>
                   )}
                   {hoveredRegion === 'beta' && (
-                    <p><strong className="text-orange-400">Beta:</strong> Type II error under the alternative distribution.</p>
+                    <p><strong className="text-amber-400">Beta:</strong> Type II error under the alternative distribution.</p>
                   )}
                   {hoveredRegion === 'power' && (
                     <p><strong className="text-green-400">Power:</strong> Correct detection when the planned effect is real.</p>
@@ -695,7 +695,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-red-400 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Alpha:</strong> Rejection region under H0.</p>
                   {showPopulation && (
                     <>
-                      <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-orange-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Beta:</strong> Missed detections under H1.</p>
+                      <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-amber-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Beta:</strong> Missed detections under H1.</p>
                       <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-green-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Power:</strong> Correct detections under H1.</p>
                     </>
                   )}
@@ -751,7 +751,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   {visualMode === 'power' && (
                     <div className={`mt-2 pt-2 border-t space-y-1 ${darkMode ? 'border-slate-800' : 'border-slate-600'}`}>
                       <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-green-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Power ($1-\beta$):</strong> Correct rejection.</p>
-                      <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-orange-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Beta ($\beta$):</strong> Type II Error.</p>
+                      <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-amber-500 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Beta ($\beta$):</strong> Type II Error.</p>
                       <p className="flex items-center gap-1.5"><span className="w-2 h-2 bg-red-400 rounded-sm"></span> <strong className={darkMode ? 'text-slate-100' : 'text-white'}>Alpha ($\alpha$):</strong> Type I Error.</p>
                     </div>
                   )}
@@ -763,7 +763,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                     <p><strong className="text-red-400">Alpha (Type I Error):</strong> The probability of rejecting the Null Hypothesis when it is actually true (False Positive).</p>
                   )}
                   {hoveredRegion === 'beta' && (
-                    <p><strong className="text-orange-400">Beta (Type II Error):</strong> The probability of failing to reject the Null Hypothesis when a true effect actually exists (False Negative).</p>
+                    <p><strong className="text-amber-400">Beta (Type II Error):</strong> The probability of failing to reject the Null Hypothesis when a true effect actually exists (False Negative).</p>
                   )}
                   {hoveredRegion === 'power' && (
                     <p><strong className="text-green-400">Power (1-Beta):</strong> The probability of correctly rejecting the Null Hypothesis if there is a real effect in the population.</p>

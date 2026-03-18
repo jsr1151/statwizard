@@ -2,6 +2,25 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { POWER_MODE_META } from '../../power/constants';
 import { runPowerAnalysis } from '../../power/engine';
 
+const getImpliedAllocationSplit = (sampleSize, allocationRatio) => {
+    const totalN = Math.round(Number(sampleSize));
+    const ratio = Number(allocationRatio);
+
+    if (!(totalN >= 4) || !(ratio > 0)) {
+        return null;
+    }
+
+    const idealGroup1 = totalN / (1 + ratio);
+    const group1SampleSize = Math.max(2, Math.min(totalN - 2, Math.round(idealGroup1)));
+    const group2SampleSize = totalN - group1SampleSize;
+
+    if (group2SampleSize < 2) {
+        return null;
+    }
+
+    return { group1SampleSize, group2SampleSize };
+};
+
 const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, onResultChange }) => {
     const powerConfig = testConfig?.power;
     const availableModes = useMemo(() => {
@@ -118,6 +137,26 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                                         className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
                                     />
                                 )}
+
+                                {field.helperText && (
+                                    <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                        {field.helperText}
+                                    </p>
+                                )}
+
+                                {field.id === 'allocationRatio' && (() => {
+                                    const split = getImpliedAllocationSplit(inputs.sampleSize, inputs.allocationRatio);
+
+                                    if (!split) {
+                                        return null;
+                                    }
+
+                                    return (
+                                        <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
+                                            At the current total N, this implies about n1 = {split.group1SampleSize} and n2 = {split.group2SampleSize}.
+                                        </p>
+                                    );
+                                })()}
                             </label>
                         ))}
                     </div>

@@ -385,11 +385,12 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'allocationRatio',
-                        label: 'Allocation Ratio (n2 / n1)',
+                        label: 'Allocation Ratio (Group 2 / Group 1)',
                         type: 'number',
                         step: 0.1,
                         min: 0.05,
                         max: 20,
+                        helperText: '1.0 means equal group sizes. 2.0 means Group 2 is twice as large as Group 1. In most cases, 1.0 is recommended.',
                     },
                 ],
                 post_hoc: [
@@ -412,11 +413,12 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'allocationRatio',
-                        label: 'Allocation Ratio (n2 / n1)',
+                        label: 'Allocation Ratio (Group 2 / Group 1)',
                         type: 'number',
                         step: 0.1,
                         min: 0.05,
                         max: 20,
+                        helperText: '1.0 means equal group sizes. 2.0 means Group 2 is twice as large as Group 1. In most cases, 1.0 is recommended.',
                     },
                     {
                         id: 'effectSize',
@@ -447,11 +449,12 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'allocationRatio',
-                        label: 'Allocation Ratio (n2 / n1)',
+                        label: 'Allocation Ratio (Group 2 / Group 1)',
                         type: 'number',
                         step: 0.1,
                         min: 0.05,
                         max: 20,
+                        helperText: '1.0 means equal group sizes. 2.0 means Group 2 is twice as large as Group 1. In most cases, 1.0 is recommended.',
                     },
                     {
                         id: 'powerTarget',
