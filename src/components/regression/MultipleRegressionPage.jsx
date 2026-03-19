@@ -1013,7 +1013,7 @@ const MultipleRegressionPage = ({
 
             <div className="grid lg:grid-cols-12 gap-8 items-start">
                 <div className="lg:col-span-8 space-y-6">
-                    <Card darkMode={darkMode}>
+                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28 z-10">
                         <ObservedFittedPlot
                             stats={lessonStats}
                             darkMode={darkMode}
@@ -1299,6 +1299,10 @@ const MultipleRegressionPage = ({
                             <RefreshCw size={16} />
                             Regenerate Sample
                         </button>
+
+                        <p className={`mt-4 text-xs font-bold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                            On larger screens, the main visual stays pinned while you adjust the controls.
+                        </p>
                     </Card>
 
                     <Card darkMode={darkMode}>
