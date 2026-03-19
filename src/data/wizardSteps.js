@@ -535,9 +535,87 @@ export const STEPS = {
         formulaId: 'correlation',
         software: SOFTWARE_GUIDES.correlation,
         assumptions: [
-            { label: "Linearity", failAdvice: "Inspect the scatterplot for curvature before trusting r as a straight-line summary." },
-            { label: "Outlier Influence", failAdvice: "Check whether a single extreme point is driving the result." },
-            { label: "Restricted Range", failAdvice: "A narrow observed spread can shrink r even when the broader relationship is stronger." },
+            {
+                id: 'linearity',
+                kicker: 'Practical Check',
+                label: "Plot Before Inference",
+                whatItMeans: "Pearson r summarizes straight-line association. A low correlation does not rule out a strong curved relationship.",
+                howToTest: [
+                    { name: "Start with the scatterplot", desc: "Look for a roughly straight-line cloud before leaning on r as the main summary." },
+                    { name: "Watch for curves", desc: "U-shapes, waves, or segmented patterns can hide a real relationship while keeping r small." }
+                ],
+                ifItFails: "If the relationship is clearly curved, report the plot and consider a transformation, a nonlinear model, or a rank-based association instead of treating r as the whole story."
+            },
+            {
+                id: 'outliers',
+                kicker: 'Practical Check',
+                label: "Check for Outliers",
+                whatItMeans: "Pearson r is sensitive to unusual observations. One influential point can strongly change both the fitted line and the correlation.",
+                howToTest: [
+                    { name: "Inspect the scatterplot", desc: "Look for points far away from the main cloud or sitting alone at the edge of the range." },
+                    { name: "Do a quick sensitivity check", desc: "Ask whether the pattern would look meaningfully different if the suspicious point were removed." }
+                ],
+                ifItFails: "Investigate whether the point is a data problem or a real case. If it is real, explain its influence and consider a robustness check such as Spearman correlation.",
+                nonParametric: "Spearman Correlation"
+            },
+            {
+                id: 'independence',
+                kicker: 'Design Check',
+                label: "Observations Should Be Independent",
+                whatItMeans: "Each (x, y) pair should come from a separate case. Repeated measures, clustered data, or duplicated cases can distort inference.",
+                howToTest: [
+                    { name: "Review the study design", desc: "Check whether the same person appears multiple times or whether observations come from groups, classrooms, families, or other clusters." },
+                    { name: "Look for duplicated cases", desc: "Repeated rows or matched pairs treated as independent can make the p-value look more precise than it really is." }
+                ],
+                ifItFails: "If observations are related, move to an approach that matches the design, such as a repeated-measures, multilevel, or cluster-aware model.",
+                link: "This is mostly a design issue, not something the scatterplot can diagnose by itself."
+            },
+            {
+                id: 'quantitative',
+                kicker: 'Measurement Check',
+                label: "Use Pearson for Quantitative Variables",
+                whatItMeans: "Pearson correlation is designed for two numeric variables. It is generally not the right tool for purely categorical variables.",
+                howToTest: [
+                    { name: "Check the measurement scale", desc: "Both variables should be meaningful numbers, not just category labels coded as 1, 2, 3." },
+                    { name: "Think about ordering", desc: "If the data are mainly ordinal or rank-based, a rank correlation may describe the relationship better." }
+                ],
+                ifItFails: "If one variable is categorical, use a group-comparison or contingency-table method instead. If the data are mainly ranked, consider Spearman or Kendall.",
+                nonParametric: "Spearman or Kendall Correlation"
+            },
+            {
+                id: 'bivariate_normality',
+                kicker: 'Inference Check',
+                label: "Inference Works Best with Approximate Bivariate Normality",
+                whatItMeans: "The coefficient itself can still be computed without normality, but the usual p-value and confidence interval are more trustworthy when the joint distribution is not extremely skewed or irregular, especially in smaller samples.",
+                howToTest: [
+                    { name: "Inspect the scatterplot shape", desc: "Heavy skew, strong clumping, or highly irregular clouds are signs that textbook inference may be less stable." },
+                    { name: "Check the margins too", desc: "Strong skew or outliers in either variable often signal that the joint distribution may not behave well in small samples." }
+                ],
+                ifItFails: "You can still report r, but treat small-sample p-values and confidence intervals more cautiously. Consider a robustness check such as Spearman correlation or bootstrap intervals.",
+                nonParametric: "Spearman Correlation or Bootstrap CI"
+            },
+            {
+                id: 'restricted_range',
+                kicker: 'Context Check',
+                label: "Watch for Restriction of Range",
+                whatItMeans: "If the sample covers only a narrow slice of the true variable range, the observed correlation can underestimate the broader relationship.",
+                howToTest: [
+                    { name: "Compare the observed range to the target population", desc: "Ask whether you only sampled high performers, a narrow age band, or another limited slice of the full range." },
+                    { name: "Look for truncated axes", desc: "When most points sit inside a narrow x or y window, the correlation can shrink even if the underlying pattern is real." }
+                ],
+                ifItFails: "Interpret r as the association within the observed slice, not automatically as the full-population relationship. Explain the limited range directly."
+            },
+            {
+                id: 'uneven_spread',
+                kicker: 'Pattern Check',
+                label: "Check for Uneven Spread",
+                whatItMeans: "If the spread of points changes a lot across the x-axis, one simple linear summary may be incomplete.",
+                howToTest: [
+                    { name: "Look for a funnel shape", desc: "A cloud that fans out or tightens dramatically as x increases is a sign that the relationship may be more complicated than one line." },
+                    { name: "Compare left and right spread", desc: "If one end of the plot is much noisier than the other, summarize that pattern in words instead of relying only on r." }
+                ],
+                ifItFails: "Pearson r may still describe the average direction, but mention the uneven spread and consider whether a transformation or richer model would tell the story better."
+            },
         ]
     },
     regression_result: {

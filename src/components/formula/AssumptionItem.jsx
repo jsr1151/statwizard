@@ -17,7 +17,7 @@ const AssumptionItem = ({ assumption, darkMode }) => {
           </div>
           <div>
             <span className={`text-base font-black tracking-tight transition-colors ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{assumption.label}</span>
-            {expanded && <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Statistical Requirement</div>}
+            {expanded && <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{assumption.kicker || 'Statistical Requirement'}</div>}
           </div>
         </div>
         <div className={`p-2 rounded-lg transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>

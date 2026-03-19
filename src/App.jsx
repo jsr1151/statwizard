@@ -624,6 +624,7 @@ export default function App() {
                                                     darkMode={darkMode}
                                                     currentStats={currentStats}
                                                     onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
                                                     testConfig={currentTestConfig}
                                                     initialMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
                                                 />
