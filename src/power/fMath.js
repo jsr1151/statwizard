@@ -39,13 +39,22 @@ export const centralFCDF = (value, numeratorDf, denominatorDf) => {
     return regularizedIncompleteBeta(x, numeratorDf / 2, denominatorDf / 2);
 };
 
-export const centralFCriticalValue = ({ alpha, numeratorDf, denominatorDf }) => {
-    const targetProbability = 1 - alpha;
+const resolveFUpperBound = ({ targetProbability, evaluator }) => {
     let high = 1;
 
-    while (centralFCDF(high, numeratorDf, denominatorDf) < targetProbability) {
+    while (evaluator(high) < targetProbability && high < 1000000) {
         high *= 2;
     }
+
+    return high;
+};
+
+export const centralFQuantile = ({ probability, numeratorDf, denominatorDf }) => {
+    const targetProbability = clampProbability(probability);
+    const high = resolveFUpperBound({
+        targetProbability,
+        evaluator: (candidate) => centralFCDF(candidate, numeratorDf, denominatorDf),
+    });
 
     return solveByBinarySearch({
         low: 0,
@@ -54,6 +63,13 @@ export const centralFCriticalValue = ({ alpha, numeratorDf, denominatorDf }) => 
         predicate: (candidate) => centralFCDF(candidate, numeratorDf, denominatorDf) >= targetProbability,
     });
 };
+
+export const centralFCriticalValue = ({ alpha, numeratorDf, denominatorDf }) =>
+    centralFQuantile({
+        probability: 1 - alpha,
+        numeratorDf,
+        denominatorDf,
+    });
 
 const iterateNoncentralFTerms = ({ noncentrality, callback }) => {
     const lambdaHalf = noncentrality / 2;
@@ -120,6 +136,21 @@ export const noncentralFDensity = (value, numeratorDf, denominatorDf, noncentral
     });
 
     return sum;
+};
+
+export const noncentralFQuantile = ({ probability, numeratorDf, denominatorDf, noncentrality }) => {
+    const targetProbability = clampProbability(probability);
+    const high = resolveFUpperBound({
+        targetProbability,
+        evaluator: (candidate) => noncentralFCDF(candidate, numeratorDf, denominatorDf, noncentrality),
+    });
+
+    return solveByBinarySearch({
+        low: 0,
+        high,
+        tolerance: 1e-7,
+        predicate: (candidate) => noncentralFCDF(candidate, numeratorDf, denominatorDf, noncentrality) >= targetProbability,
+    });
 };
 
 export const oneWayAnovaNumeratorDf = ({ groupCount }) =>

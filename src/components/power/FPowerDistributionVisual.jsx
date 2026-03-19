@@ -1,10 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { centralFDensity, noncentralFDensity } from '../../power/fMath';
+import {
+    centralFDensity,
+    centralFQuantile,
+    noncentralFDensity,
+    noncentralFQuantile,
+} from '../../power/fMath';
 import { roundTo } from '../../power/math';
 
 const WIDTH = 640;
 const HEIGHT = 320;
-const MARGIN = { top: 28, right: 24, bottom: 44, left: 28 };
+const MARGIN = { top: 28, right: 24, bottom: 44, left: 54 };
+const TAIL_PERCENTILE = 0.995;
+const X_PADDING_RATIO = 1.08;
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 const buildLinePath = (points) => points.map((point, index) => (
     `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
@@ -19,6 +28,49 @@ const buildAreaPath = (points, baselineY) => {
     const last = points[points.length - 1];
     return `M ${first.x.toFixed(2)} ${baselineY.toFixed(2)} L ${points.map((point) => `${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' L ')} L ${last.x.toFixed(2)} ${baselineY.toFixed(2)} Z`;
 };
+
+const buildRegionLabelAnchor = ({
+    points,
+    yKey,
+    preferredRatio,
+    baselineY,
+}) => {
+    if (!points.length) {
+        return null;
+    }
+
+    const index = clamp(
+        Math.round((points.length - 1) * preferredRatio),
+        0,
+        points.length - 1
+    );
+    const point = points[index];
+
+    return {
+        x: clamp(point.x, MARGIN.left + 20, WIDTH - MARGIN.right - 28),
+        y: clamp(
+            Math.min(baselineY - 14, point[yKey] + 22),
+            MARGIN.top + 18,
+            baselineY - 14
+        ),
+    };
+};
+
+const PlotLabel = ({ x, y, fill, stroke, children }) => (
+    <text
+        x={x}
+        y={y}
+        textAnchor="middle"
+        fill={fill}
+        fontSize="11"
+        fontWeight="800"
+        stroke={stroke}
+        strokeWidth="3"
+        paintOrder="stroke"
+    >
+        {children}
+    </text>
+);
 
 const FPowerDistributionVisual = ({ config, darkMode }) => {
     const powerMeta = config?.powerMeta || {};
@@ -42,11 +94,26 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
             return null;
         }
 
+        const h0UpperQuantile = centralFQuantile({
+            probability: TAIL_PERCENTILE,
+            numeratorDf,
+            denominatorDf,
+        });
+        const h1UpperQuantile = noncentralFQuantile({
+            probability: TAIL_PERCENTILE,
+            numeratorDf,
+            denominatorDf,
+            noncentrality,
+        });
+        const maxX = Math.max(
+            1.5,
+            criticalValue * 1.08,
+            h0UpperQuantile,
+            h1UpperQuantile
+        ) * X_PADDING_RATIO;
         const plotWidth = WIDTH - MARGIN.left - MARGIN.right;
         const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
-        const alternativeReference = (noncentrality / Math.max(1, numeratorDf)) + criticalValue;
-        const maxX = Math.max(6, criticalValue * 2.25, alternativeReference * 1.6);
-        const steps = 160;
+        const steps = 200;
         const rawPoints = [];
         let maxDensity = 0;
 
@@ -72,12 +139,12 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
         }));
 
         const criticalX = MARGIN.left + (criticalValue / maxX) * plotWidth;
-        const alphaArea = plottedPoints.filter((point) => point.fValue >= criticalValue)
-            .map((point) => ({ x: point.x, y: point.h0Y }));
-        const betaArea = plottedPoints.filter((point) => point.fValue <= criticalValue)
-            .map((point) => ({ x: point.x, y: point.h1Y }));
-        const powerArea = plottedPoints.filter((point) => point.fValue >= criticalValue)
-            .map((point) => ({ x: point.x, y: point.h1Y }));
+        const alphaPoints = plottedPoints.filter((point) => point.fValue >= criticalValue);
+        const betaPoints = plottedPoints.filter((point) => point.fValue <= criticalValue);
+        const powerPoints = plottedPoints.filter((point) => point.fValue >= criticalValue);
+        const alphaArea = alphaPoints.map((point) => ({ x: point.x, y: point.h0Y }));
+        const betaArea = betaPoints.map((point) => ({ x: point.x, y: point.h1Y }));
+        const powerArea = powerPoints.map((point) => ({ x: point.x, y: point.h1Y }));
         const xTicks = Array.from({ length: 5 }, (_, index) => {
             const ratio = index / 4;
             const value = maxX * ratio;
@@ -98,6 +165,26 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
             betaArea,
             powerArea,
             xTicks,
+            regionLabels: {
+                alpha: buildRegionLabelAnchor({
+                    points: alphaPoints,
+                    yKey: 'h0Y',
+                    preferredRatio: 0.22,
+                    baselineY,
+                }),
+                beta: buildRegionLabelAnchor({
+                    points: betaPoints,
+                    yKey: 'h1Y',
+                    preferredRatio: 0.58,
+                    baselineY,
+                }),
+                power: buildRegionLabelAnchor({
+                    points: powerPoints,
+                    yKey: 'h1Y',
+                    preferredRatio: 0.62,
+                    baselineY,
+                }),
+            },
         };
     }, [powerMeta]);
 
@@ -114,6 +201,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
     const labelColor = darkMode ? '#94a3b8' : '#64748b';
     const h0Color = darkMode ? '#818cf8' : '#4f46e5';
     const h1Color = darkMode ? '#22c55e' : '#15803d';
+    const labelStroke = darkMode ? '#020617' : '#ffffff';
 
     return (
         <div className="space-y-4">
@@ -139,6 +227,14 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
 
             <div className={`rounded-2xl border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                 <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full h-auto">
+                    <line
+                        x1={MARGIN.left}
+                        x2={MARGIN.left}
+                        y1={MARGIN.top}
+                        y2={chartModel.baselineY}
+                        stroke={axisColor}
+                        strokeWidth="1.5"
+                    />
                     <line
                         x1={MARGIN.left}
                         x2={WIDTH - MARGIN.right}
@@ -222,7 +318,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
                                 </text>
                             )}
                             <text
-                                x={Math.min(chartModel.criticalX + 8, WIDTH - MARGIN.right - 48)}
+                                x={Math.min(chartModel.criticalX + 10, WIDTH - MARGIN.right - 56)}
                                 y={MARGIN.top + 10}
                                 fill="#ef4444"
                                 fontSize="11"
@@ -230,6 +326,22 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
                             >
                                 Fcrit = {roundTo(chartModel.criticalValue, 3)}
                             </text>
+
+                            {chartModel.regionLabels.alpha && (
+                                <PlotLabel x={chartModel.regionLabels.alpha.x} y={chartModel.regionLabels.alpha.y} fill="#fca5a5" stroke={labelStroke}>
+                                    α
+                                </PlotLabel>
+                            )}
+                            {showAlternative && chartModel.regionLabels.beta && (
+                                <PlotLabel x={chartModel.regionLabels.beta.x} y={chartModel.regionLabels.beta.y} fill="#fbbf24" stroke={labelStroke}>
+                                    β
+                                </PlotLabel>
+                            )}
+                            {showAlternative && chartModel.regionLabels.power && (
+                                <PlotLabel x={chartModel.regionLabels.power.x} y={chartModel.regionLabels.power.y} fill="#4ade80" stroke={labelStroke}>
+                                    Power (1−β)
+                                </PlotLabel>
+                            )}
                         </>
                     )}
 
@@ -242,6 +354,18 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
                         fontWeight="800"
                     >
                         F Statistic
+                    </text>
+
+                    <text
+                        x="18"
+                        y={(HEIGHT + MARGIN.top - MARGIN.bottom) / 2}
+                        textAnchor="middle"
+                        fill={textColor}
+                        fontSize="12"
+                        fontWeight="800"
+                        transform={`rotate(-90 18 ${(HEIGHT + MARGIN.top - MARGIN.bottom) / 2})`}
+                    >
+                        Density
                     </text>
                 </svg>
             </div>
