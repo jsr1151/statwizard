@@ -70,6 +70,7 @@ import PowerAnalysisHub from './components/power/PowerAnalysisHub';
 import PowerAnalysisTab from './components/power/PowerAnalysisTab';
 import EffectSizePanel from './components/power/EffectSizePanel';
 import PearsonCorrelationPage from './components/correlation/PearsonCorrelationPage';
+import SimpleLinearRegressionPage from './components/regression/SimpleLinearRegressionPage';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -205,6 +206,7 @@ export default function App() {
     const currentStep = STEPS[currentStepId];
     const currentTestConfig = POWER_TEST_BY_STEP_ID[currentStepId] || null;
     const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
+    const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
 
@@ -626,7 +628,17 @@ export default function App() {
                                                     onStatsChange={setCurrentStats}
                                                     assumptions={currentStep?.assumptions || []}
                                                     testConfig={currentTestConfig}
-                                                    initialMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                />
+                                            ) : isSimpleLinearRegressionPage ? (
+                                                <SimpleLinearRegressionPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
                                                 />
                                             ) : activeResultSection === 'power' && currentTestConfig ? (
                                                 <PowerAnalysisTab

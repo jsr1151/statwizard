@@ -51,4 +51,8 @@ export const POWER_FAMILY_META = {
         label: 'Correlation',
         description: 'Association-focused power analyses for correlation designs and related relationship tests.',
     },
+    regression: {
+        label: 'Regression',
+        description: 'Prediction-focused power analyses for regression models and related F-test planning workflows.',
+    },
 };

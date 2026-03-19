@@ -84,6 +84,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
     const perGroupSampleSize = Number(powerMeta?.perGroupSampleSize);
     const designLabel = powerMeta?.designLabel || 'Balanced F-test';
     const designScopeNote = powerMeta?.designScopeNote || '';
+    const designSummary = powerMeta?.designSummary || '';
     const perGroupText = Number.isFinite(perGroupSampleSize)
         ? (powerMeta?.isPerGroupExact
             ? `${Math.round(perGroupSampleSize)} per group`
@@ -216,7 +217,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {designLabel}: central F under H0 and noncentral F under H1 for {groupCount} groups ({perGroupText}){covariateText}.{designScopeNote ? ` ${designScopeNote}` : ''}
+                    {designSummary || `${designLabel}: central F under H0 and noncentral F under H1 for ${groupCount} groups (${perGroupText})${covariateText}.`}{designScopeNote ? ` ${designScopeNote}` : ''}
                 </div>
                 <div className={`rounded-xl border p-1 flex gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                     <button

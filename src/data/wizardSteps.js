@@ -621,12 +621,81 @@ export const STEPS = {
     regression_result: {
         id: 'regression_result',
         type: 'result',
-        title: "Linear Regression",
-        content: "Predicts Y based on X.",
-        details: ["Line of best fit."],
+        title: "Simple Linear Regression",
+        content: "Models how one quantitative outcome changes on average as one quantitative predictor changes.",
+        details: ["Slope and intercept describe the fitted line.", "R² summarizes how much variance the line explains."],
         formulaId: 'regression',
         software: SOFTWARE_GUIDES.regression,
-        assumptions: [{ label: "Homoscedasticity", failAdvice: "Transform" }, { label: "Normality of Res", failAdvice: "Bootstrapping", visual: "normality" }]
+        assumptions: [
+            {
+                id: 'linearity',
+                kicker: 'Practical Check',
+                label: "Plot Before Trusting the Model",
+                whatItMeans: "Simple linear regression assumes the mean of Y changes in a straight-line way as X changes. A fitted line can be misleading when the real pattern is curved.",
+                howToTest: [
+                    { name: "Inspect the scatterplot", desc: "Look for a roughly straight-line cloud before leaning on the slope or R² as the main summary." },
+                    { name: "Check the residual plot", desc: "Residuals should look patternless around zero. Curves or waves suggest the straight-line model is missing structure." }
+                ],
+                ifItFails: "If the relationship is clearly curved, report that pattern directly and consider a transformation, polynomial term, or nonlinear model instead of forcing one straight line."
+            },
+            {
+                id: 'outliers',
+                kicker: 'Practical Check',
+                label: "Check for Outliers / Influential Points",
+                whatItMeans: "A small number of unusual cases can strongly change the fitted slope, intercept, and R².",
+                howToTest: [
+                    { name: "Inspect the scatterplot", desc: "Look for points that sit far from the main cloud or far out in X." },
+                    { name: "Do a sensitivity check", desc: "Ask whether the fitted line would look substantially different without the suspicious point." }
+                ],
+                ifItFails: "Investigate whether the point is a data problem or a meaningful case. If it is real, explain its influence and consider a robustness check.",
+            },
+            {
+                id: 'independence',
+                kicker: 'Design Check',
+                label: "Observations Should Be Independent",
+                whatItMeans: "Each case should contribute one independent (x, y) pair. Repeated measures, clusters, or duplicated cases can distort inference.",
+                howToTest: [
+                    { name: "Review the study design", desc: "Check whether the same person appears multiple times or whether observations come from classrooms, families, teams, or other linked groups." },
+                    { name: "Check for duplicated cases", desc: "Repeated rows or copied cases can make the line look more certain than it really is." }
+                ],
+                ifItFails: "If observations are related, move to an approach that matches the design, such as repeated-measures, multilevel, or cluster-aware modeling.",
+                link: "This is mostly a study-design issue, not something the scatterplot can diagnose by itself."
+            },
+            {
+                id: 'quantitative',
+                kicker: 'Measurement Check',
+                label: "Use Simple Regression for Quantitative Variables",
+                whatItMeans: "This first simple regression page is designed for one numeric predictor and one numeric outcome. Category codes are not the same thing as meaningful quantitative values.",
+                howToTest: [
+                    { name: "Check the measurement scale", desc: "Both X and Y should be meaningful numbers, not labels like 1 = control and 2 = treatment." },
+                    { name: "Think about the modeling goal", desc: "If X is categorical or the outcome is binary, a different model is usually more appropriate." }
+                ],
+                ifItFails: "Use a group-comparison or categorical-predictor model instead of treating category labels as if they were quantitative."
+            },
+            {
+                id: 'normality_residuals',
+                kicker: 'Inference Check',
+                label: "Inference Works Best When Residuals Are Roughly Normal",
+                whatItMeans: "The line and coefficients can still be computed without normal residuals, but small-sample p-values and confidence intervals are more trustworthy when residuals are not extremely skewed or irregular.",
+                howToTest: [
+                    { name: "Inspect a residual histogram or Q-Q plot", desc: "Look for strong skew, heavy tails, or a few extreme residuals." },
+                    { name: "Pay extra attention in small samples", desc: "Residual irregularity matters more when n is modest and one or two cases can dominate the fit." }
+                ],
+                ifItFails: "You can still report the fitted line, but treat p-values and confidence intervals more cautiously. Consider robust or bootstrap inference when needed.",
+                visual: "normality"
+            },
+            {
+                id: 'homoscedasticity',
+                kicker: 'Pattern Check',
+                label: "Check for Roughly Even Residual Spread",
+                whatItMeans: "Regression works best when residual spread stays fairly similar across the predictor range. Funnel shapes suggest the line is only part of the story.",
+                howToTest: [
+                    { name: "Inspect the residual plot", desc: "Look for a fan or funnel pattern rather than a cloud with roughly even vertical spread." },
+                    { name: "Compare the left and right sides", desc: "If one end of the plot is much noisier than the other, mention that directly." }
+                ],
+                ifItFails: "The slope may still describe the average direction, but standard errors can be less stable. Consider transformations or heteroscedasticity-aware inference when needed."
+            },
+        ]
     },
     res_ztest: {
         id: 'res_ztest',
@@ -744,7 +813,7 @@ export const STAT_PAGE_LIST = [
     { id: 'res_factorial_anova', title: 'Factorial ANOVA (Two-Way)', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'res_rm_anova', title: 'Repeated Measures ANOVA', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'correlation_result', title: 'Pearson Correlation', category: 'Linear Modeling' },
-    { id: 'regression_result', title: 'Linear Regression', category: 'Linear Modeling' },
+    { id: 'regression_result', title: 'Simple Linear Regression', category: 'Linear Modeling' },
     { id: 'res_mann_whitney', title: 'Mann-Whitney U Test (Non-parametric)', category: 'Non-parametric' },
     { id: 'res_wilcoxon', title: 'Wilcoxon Signed-Rank Test (Non-parametric)', category: 'Non-parametric' }
 ];

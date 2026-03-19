@@ -8,6 +8,10 @@ import {
     buildPearsonCorrelationCurveModel,
     solvePearsonCorrelationPower,
 } from './solvers/pearsonCorrelation.js';
+import {
+    buildSimpleLinearRegressionCurveModel,
+    solveSimpleLinearRegressionPower,
+} from './solvers/simpleLinearRegression.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
 
@@ -41,6 +45,7 @@ const POWER_ASSUMPTION_NOTES = {
     oneWayAnova: 'This first one-way ANOVA slice assumes balanced groups. Total N is interpreted as an even split across groups, and per-group N is shown as approximate when integer rounding prevents an exact balance.',
     ancova: 'This first ANCOVA slice models the adjusted group main effect only, with balanced groups, fixed continuous covariates, and common slopes across groups.',
     pearsonCorrelation: 'This first Pearson correlation power slice plans against a constant ρ₀ using the Fisher z approximation. The Power tab stays planning-oriented and separate from the observed-data calculator.',
+    simpleLinearRegression: 'This first regression power slice treats simple linear regression as a one-predictor fixed-model slope test. In a one-predictor model, the slope test and the overall model test are equivalent, so the planning effect size is Cohen\'s f² derived from R².',
 };
 
 const pooledSDFromIndependentStats = (stats = {}) => {
@@ -210,6 +215,22 @@ const buildPearsonCorrelationDefaults = (stats = {}, mode = 'a_priori') => {
         powerTarget: 0.8,
         effectSize: Number(effectSize.toFixed(3)),
         nullCorrelation: Number((Number(stats?.rho0) || 0).toFixed(3)),
+        sampleSize,
+    };
+};
+
+const buildSimpleLinearRegressionDefaults = (stats = {}, mode = 'a_priori') => {
+    const rSquared = Number.isFinite(Number(stats?.rSquared))
+        ? Math.max(0, Math.min(0.999, Number(stats.rSquared)))
+        : 0.13;
+    const effectSize = rSquared / Math.max(1e-12, 1 - rSquared);
+    const sampleSize = Math.max(4, Math.round(stats?.n ?? 50));
+
+    return {
+        mode,
+        alpha: 0.05,
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
         sampleSize,
     };
 };
@@ -554,6 +575,52 @@ const pearsonCorrelationEffectTransform = {
                 {
                     label: 'Variance Explained (r²)',
                     value: rSquared.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const simpleLinearRegressionEffectTransform = {
+    primaryMetricLabel: 'Regression Effect (f² / R²)',
+    description: 'For this first simple linear regression power slice, Cohen\'s f² is derived from model fit: f² = R² / (1 - R²).',
+    fields: [
+        {
+            id: 'rSquared',
+            label: 'Model Fit (R²)',
+            type: 'number',
+            step: 0.001,
+            min: 0,
+            max: 0.999,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        rSquared: Number((Number.isFinite(Number(stats?.rSquared)) ? Number(stats.rSquared) : 0.13).toFixed(3)),
+    }),
+    compute: ({ rSquared }) => {
+        const fit = Number(rSquared);
+
+        if (!(fit >= 0) || !(fit < 1)) {
+            return {
+                ok: false,
+                error: 'R² must stay between 0 and 1.',
+            };
+        }
+
+        const effectSize = fit / Math.max(1e-12, 1 - fit);
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: 'Effect Size (f²)',
+            summary: `f² = R² / (1 - R²) = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Model Fit (R²)',
+                    value: fit.toFixed(4),
+                },
+                {
+                    label: 'Effect Size (f²)',
+                    value: effectSize.toFixed(4),
                 },
             ],
         };
@@ -1318,6 +1385,109 @@ export const POWER_TEST_REGISTRY = [
             solver: solveAncovaPower,
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildAncovaDefaults,
+        },
+    },
+    {
+        id: 'simple_linear_regression',
+        family: 'regression',
+        slug: 'simple-linear-regression',
+        label: 'Simple Linear Regression',
+        stepId: 'regression_result',
+        power: {
+            status: 'available',
+            gpowerFamily: 'F tests',
+            gpowerTest: 'Linear multiple regression: Fixed model, single regression coefficient',
+            assumptionNote: POWER_ASSUMPTION_NOTES.simpleLinearRegression,
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (f²)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 3,
+                        helperText: 'For this first simple regression slice, Cohen\'s f² is derived from fit: f² = R² / (1 - R²). Example: R² = .13 corresponds to f² ≈ .15.',
+                    },
+                ],
+                post_hoc: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (f²)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 3,
+                        helperText: 'This one-predictor slice treats slope testing and overall model testing as equivalent, so f² is the fit effect used for planning.',
+                    },
+                ],
+                sensitivity: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: simpleLinearRegressionEffectTransform,
+            solver: solveSimpleLinearRegressionPower,
+            buildCurveModel: buildSimpleLinearRegressionCurveModel,
+            availableVisualizerModes: ['test', 'power', 'curve'],
+            buildInitialInputs: buildSimpleLinearRegressionDefaults,
         },
     },
     {
