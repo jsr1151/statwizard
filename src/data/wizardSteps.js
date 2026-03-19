@@ -103,7 +103,16 @@ export const STEPS = {
         helpId: 'help_relationship',
         options: [
             { label: "Association (Correlation)", value: 'correlation', next: 'correlation_result' },
-            { label: "Prediction (Regression)", value: 'regression', next: 'regression_result' }
+            { label: "Prediction (Regression)", value: 'regression', next: 'regression_type' }
+        ]
+    },
+    regression_type: {
+        id: 'regression_type',
+        title: "Regression Type",
+        question: "How many predictors are you modeling at once?",
+        options: [
+            { label: "One Predictor (Simple Linear Regression)", value: 'simple', next: 'regression_result' },
+            { label: "Two or More Predictors (Multiple Regression)", value: 'multiple', next: 'multiple_regression_result' }
         ]
     },
     help_relationship: {
@@ -697,6 +706,107 @@ export const STEPS = {
             },
         ]
     },
+    multiple_regression_result: {
+        id: 'multiple_regression_result',
+        type: 'result',
+        title: "Multiple Regression",
+        content: "Models how one quantitative outcome changes as two or more quantitative predictors vary together.",
+        details: ["Each coefficient is conditional on the other predictors in the model.", "R^2 and adjusted R^2 summarize overall model fit rather than the size of any one slope."],
+        formulaId: 'regression',
+        software: SOFTWARE_GUIDES.multiple_regression,
+        assumptions: [
+            {
+                id: 'linearity',
+                kicker: 'Practical Check',
+                label: "Plot Before Trusting the Model",
+                whatItMeans: "Multiple regression assumes the conditional mean of Y changes linearly with the predictors. A model can return coefficients even when the fitted linear surface is missing important curvature or interaction-like structure.",
+                howToTest: [
+                    { name: "Inspect fitted and residual plots", desc: "Start with observed-vs-fitted and residual views. Curves, waves, or systematic structure suggest the model is missing part of the pattern." },
+                    { name: "Check each predictor relationship in context", desc: "Ask whether one straight-line conditional effect is a reasonable summary after the other predictors are taken into account." }
+                ],
+                ifItFails: "If the pattern is clearly nonlinear, describe that directly and consider a transformed, polynomial, interaction, or more flexible model instead of forcing one linear summary."
+            },
+            {
+                id: 'outliers',
+                kicker: 'Practical Check',
+                label: "Check for Outliers / Influential Cases",
+                whatItMeans: "A small number of unusual cases can strongly change the fitted coefficients, standard errors, and overall model fit.",
+                howToTest: [
+                    { name: "Inspect unusual predictor combinations", desc: "Look for cases sitting far from the rest of the predictor cloud or with very large residuals." },
+                    { name: "Use influence summaries", desc: "Large Cook's distance or visibly large shifts in coefficients are signs that one case may be driving the model." }
+                ],
+                ifItFails: "Investigate whether the case is a data problem or a meaningful observation. If it is real, explain its influence and consider a robustness check."
+            },
+            {
+                id: 'independence',
+                kicker: 'Design Check',
+                label: "Observations Should Be Independent",
+                whatItMeans: "Each row should be an independent case. Repeated measures, clustered observations, or duplicated rows can make the model look more precise than it really is.",
+                howToTest: [
+                    { name: "Review the study design", desc: "Check whether the same person appears multiple times or whether observations come from classrooms, teams, families, or other linked groups." },
+                    { name: "Look for duplicated cases", desc: "Repeated or copied rows can distort the standard errors and p-values." }
+                ],
+                ifItFails: "If observations are related, move to a repeated-measures, multilevel, or cluster-aware model rather than treating the rows as independent.",
+                link: "This is primarily a study-design issue, not something the residual plot can diagnose by itself."
+            },
+            {
+                id: 'quantitative',
+                kicker: 'Measurement Check',
+                label: "Use Quantitative Predictors Appropriately",
+                whatItMeans: "This first multiple-regression page is designed for one quantitative outcome and quantitative predictors. Category codes are not the same thing as meaningful numeric distances.",
+                howToTest: [
+                    { name: "Check measurement scale", desc: "Predictors and outcome should be meaningful numbers, not labels like 1 = control and 2 = treatment." },
+                    { name: "Match the model to the variable type", desc: "If the outcome is binary or a predictor is categorical, another model is usually more appropriate." }
+                ],
+                ifItFails: "Use a model that matches the variable type, such as a group-comparison model, dummy-coded regression, or logistic model, instead of treating category labels as continuous values."
+            },
+            {
+                id: 'normality_residuals',
+                kicker: 'Inference Check',
+                label: "Inference Works Best When Residuals Are Roughly Normal",
+                whatItMeans: "The coefficients can still be computed without normal residuals, but small-sample p-values and confidence intervals are more trustworthy when the residual distribution is not extremely skewed or irregular.",
+                howToTest: [
+                    { name: "Inspect residual histograms or Q-Q plots", desc: "Look for strong skew, heavy tails, or a few extreme residuals." },
+                    { name: "Pay extra attention in smaller samples", desc: "Residual irregularity matters more when the sample is modest relative to the number of predictors." }
+                ],
+                ifItFails: "You can still report the fitted model, but treat p-values and confidence intervals more cautiously. Consider robust or bootstrap inference when needed.",
+                visual: "normality"
+            },
+            {
+                id: 'homoscedasticity',
+                kicker: 'Pattern Check',
+                label: "Check for Roughly Even Residual Spread",
+                whatItMeans: "Regression works best when residual spread stays fairly similar across the fitted range. Funnel shapes suggest the linear mean model is only part of the story.",
+                howToTest: [
+                    { name: "Inspect the residual plot", desc: "Look for a fan or funnel shape instead of a cloud with roughly even vertical spread." },
+                    { name: "Compare low-fit and high-fit regions", desc: "If one side of the fitted range is much noisier than the other, mention that directly." }
+                ],
+                ifItFails: "The coefficients may still describe the average direction, but standard errors can be less stable. Consider transformations or heteroscedasticity-aware inference when needed."
+            },
+            {
+                id: 'multicollinearity',
+                kicker: 'Model Check',
+                label: "Watch for Multicollinearity",
+                whatItMeans: "When predictors overlap heavily, the overall model can still fit well while individual coefficients become unstable and hard to interpret.",
+                howToTest: [
+                    { name: "Inspect predictor overlap", desc: "Look for predictors that are strongly correlated with each other or nearly measuring the same thing." },
+                    { name: "Check collinearity diagnostics", desc: "Large VIF values or coefficients that swing a lot across nearby models are signs of overlap problems." }
+                ],
+                ifItFails: "Keep the predictive story and the coefficient-interpretation story separate. Explain the overlap directly and simplify the predictor set when needed."
+            },
+            {
+                id: 'conditional_coefficients',
+                kicker: 'Interpretation Check',
+                label: "Remember That Coefficients Are Conditional",
+                whatItMeans: "Each slope answers how Y changes with one predictor after the other predictors in the model are held constant. That is different from a simple bivariate association.",
+                howToTest: [
+                    { name: "Compare zero-order and conditional patterns", desc: "A predictor can correlate with Y but shrink or change direction once overlap with the other predictors is taken into account." },
+                    { name: "Read slopes in context", desc: "Ask what it really means to change one predictor while the others stay fixed." }
+                ],
+                ifItFails: "Avoid describing multiple-regression coefficients as if they were simple correlations. State clearly that the coefficients are conditional on the rest of the model."
+            },
+        ]
+    },
     res_ztest: {
         id: 'res_ztest',
         type: 'result',
@@ -814,6 +924,7 @@ export const STAT_PAGE_LIST = [
     { id: 'res_rm_anova', title: 'Repeated Measures ANOVA', category: 'Mean Comparisons', family: 'ANOVA' },
     { id: 'correlation_result', title: 'Pearson Correlation', category: 'Linear Modeling' },
     { id: 'regression_result', title: 'Simple Linear Regression', category: 'Linear Modeling' },
+    { id: 'multiple_regression_result', title: 'Multiple Regression', category: 'Linear Modeling' },
     { id: 'res_mann_whitney', title: 'Mann-Whitney U Test (Non-parametric)', category: 'Non-parametric' },
     { id: 'res_wilcoxon', title: 'Wilcoxon Signed-Rank Test (Non-parametric)', category: 'Non-parametric' }
 ];

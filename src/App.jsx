@@ -71,6 +71,7 @@ import PowerAnalysisTab from './components/power/PowerAnalysisTab';
 import EffectSizePanel from './components/power/EffectSizePanel';
 import PearsonCorrelationPage from './components/correlation/PearsonCorrelationPage';
 import SimpleLinearRegressionPage from './components/regression/SimpleLinearRegressionPage';
+import MultipleRegressionPage from './components/regression/MultipleRegressionPage';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -207,6 +208,7 @@ export default function App() {
     const currentTestConfig = POWER_TEST_BY_STEP_ID[currentStepId] || null;
     const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
     const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
+    const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
 
@@ -632,6 +634,16 @@ export default function App() {
                                                 />
                                             ) : isSimpleLinearRegressionPage ? (
                                                 <SimpleLinearRegressionPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                />
+                                            ) : isMultipleRegressionPage ? (
+                                                <MultipleRegressionPage
                                                     section={activeResultSection}
                                                     darkMode={darkMode}
                                                     currentStats={currentStats}

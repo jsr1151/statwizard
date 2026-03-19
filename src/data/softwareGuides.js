@@ -77,6 +77,13 @@ export const SOFTWARE_GUIDES = {
         excel: "1. Slope: =SLOPE(y_range, x_range)\n2. Intercept: =INTERCEPT(y_range, x_range)\n3. Full: =LINEST(y_range, x_range, TRUE, TRUE)",
         google_sheets: "1. Slope: =SLOPE(y_range, x_range)\n2. Intercept: =INTERCEPT(y_range, x_range)\n3. Full: =LINEST(y_range, x_range, TRUE, TRUE)"
     },
+    multiple_regression: {
+        spss: "Analyze > Regression > Linear.\nDependent: move the outcome variable.\nIndependent(s): move two or more quantitative predictors.\nStatistics: request confidence intervals and collinearity diagnostics if needed.",
+        jasp: "Regression > Linear Regression.\nDependent Variable: move the outcome.\nCovariates: move two or more quantitative predictors.\nModel Fit / Coefficients: request estimates, confidence intervals, and collinearity diagnostics.",
+        r: "model <- lm(y ~ x1 + x2 + x3, data = df)\nsummary(model)\nconfint(model)",
+        excel: "Use =LINEST(y_range, x_ranges, TRUE, TRUE) with multiple predictor columns. The full regression output array includes coefficients, standard errors, and model fit summaries.",
+        google_sheets: "Use =LINEST(y_range, x_ranges, TRUE, TRUE) with multiple predictor columns. Arrange the predictor columns side-by-side before fitting the model."
+    },
     frequency: {
         spss: "Analyze > Descriptive Statistics > Frequencies.\nMove variable(s) to the right box.",
         jasp: "Descriptives > Descriptive Statistics.\nCheck 'Frequency tables'.",

@@ -12,6 +12,10 @@ import {
     buildSimpleLinearRegressionCurveModel,
     solveSimpleLinearRegressionPower,
 } from './solvers/simpleLinearRegression.js';
+import {
+    buildMultipleRegressionCurveModel,
+    solveMultipleRegressionPower,
+} from './solvers/multipleRegression.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
 
@@ -46,6 +50,7 @@ const POWER_ASSUMPTION_NOTES = {
     ancova: 'This first ANCOVA slice models the adjusted group main effect only, with balanced groups, fixed continuous covariates, and common slopes across groups.',
     pearsonCorrelation: 'This first Pearson correlation power slice plans against a constant ρ₀ using the Fisher z approximation. The Power tab stays planning-oriented and separate from the observed-data calculator.',
     simpleLinearRegression: 'This first regression power slice treats simple linear regression as a one-predictor fixed-model slope test. In a one-predictor model, the slope test and the overall model test are equivalent, so the planning effect size is Cohen\'s f² derived from R².',
+    multipleRegression: 'This first multiple-regression power slice plans the omnibus fixed-model test of whether model R² differs from 0 for a chosen number of predictors. The Power tab stays planning-oriented and separate from the observed-data calculator.',
 };
 
 const pooledSDFromIndependentStats = (stats = {}) => {
@@ -231,6 +236,24 @@ const buildSimpleLinearRegressionDefaults = (stats = {}, mode = 'a_priori') => {
         alpha: 0.05,
         powerTarget: 0.8,
         effectSize: Number(effectSize.toFixed(3)),
+        sampleSize,
+    };
+};
+
+const buildMultipleRegressionDefaults = (stats = {}, mode = 'a_priori') => {
+    const rSquared = Number.isFinite(Number(stats?.rSquared))
+        ? Math.max(0, Math.min(0.999, Number(stats.rSquared)))
+        : 0.2;
+    const effectSize = rSquared / Math.max(1e-12, 1 - rSquared);
+    const predictorCount = Math.max(2, Math.round(stats?.predictorCount ?? 2));
+    const sampleSize = Math.max(predictorCount + 2, Math.round(stats?.n ?? 80));
+
+    return {
+        mode,
+        alpha: 0.05,
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        predictorCount,
         sampleSize,
     };
 };
@@ -596,6 +619,52 @@ const simpleLinearRegressionEffectTransform = {
     ],
     fromStats: (stats = {}) => ({
         rSquared: Number((Number.isFinite(Number(stats?.rSquared)) ? Number(stats.rSquared) : 0.13).toFixed(3)),
+    }),
+    compute: ({ rSquared }) => {
+        const fit = Number(rSquared);
+
+        if (!(fit >= 0) || !(fit < 1)) {
+            return {
+                ok: false,
+                error: 'R² must stay between 0 and 1.',
+            };
+        }
+
+        const effectSize = fit / Math.max(1e-12, 1 - fit);
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: 'Effect Size (f²)',
+            summary: `f² = R² / (1 - R²) = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Model Fit (R²)',
+                    value: fit.toFixed(4),
+                },
+                {
+                    label: 'Effect Size (f²)',
+                    value: effectSize.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const multipleRegressionEffectTransform = {
+    primaryMetricLabel: 'Regression Effect (f² / R²)',
+    description: 'For this first multiple-regression power slice, Cohen\'s f² is derived from omnibus model fit: f² = R² / (1 - R²).',
+    fields: [
+        {
+            id: 'rSquared',
+            label: 'Model Fit (R²)',
+            type: 'number',
+            step: 0.001,
+            min: 0,
+            max: 0.999,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        rSquared: Number((Number.isFinite(Number(stats?.rSquared)) ? Number(stats.rSquared) : 0.2).toFixed(3)),
     }),
     compute: ({ rSquared }) => {
         const fit = Number(rSquared);
@@ -1488,6 +1557,133 @@ export const POWER_TEST_REGISTRY = [
             buildCurveModel: buildSimpleLinearRegressionCurveModel,
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildSimpleLinearRegressionDefaults,
+        },
+    },
+    {
+        id: 'multiple_regression',
+        family: 'regression',
+        slug: 'multiple-regression',
+        label: 'Multiple Regression',
+        stepId: 'multiple_regression_result',
+        power: {
+            status: 'available',
+            gpowerFamily: 'F tests',
+            gpowerTest: 'Linear multiple regression: Fixed model, R² deviation from zero',
+            assumptionNote: POWER_ASSUMPTION_NOTES.multipleRegression,
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (f²)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 3,
+                        helperText: 'For this first multiple-regression slice, Cohen\'s f² is derived from omnibus model fit: f² = R² / (1 - R²).',
+                    },
+                    {
+                        id: 'predictorCount',
+                        label: 'Number of Predictors',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 25,
+                        helperText: 'Enter how many fixed quantitative predictors are in the model. This first slice plans the omnibus test that model R² differs from 0.',
+                    },
+                ],
+                post_hoc: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (f²)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 3,
+                    },
+                    {
+                        id: 'predictorCount',
+                        label: 'Number of Predictors',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 25,
+                    },
+                ],
+                sensitivity: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'predictorCount',
+                        label: 'Number of Predictors',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 25,
+                    },
+                ],
+            },
+            effectSizeTransforms: multipleRegressionEffectTransform,
+            solver: solveMultipleRegressionPower,
+            buildCurveModel: buildMultipleRegressionCurveModel,
+            availableVisualizerModes: ['test', 'power', 'curve'],
+            buildInitialInputs: buildMultipleRegressionDefaults,
         },
     },
     {
