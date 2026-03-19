@@ -69,6 +69,7 @@ import UpdateToast from './components/common/UpdateToast';
 import PowerAnalysisHub from './components/power/PowerAnalysisHub';
 import PowerAnalysisTab from './components/power/PowerAnalysisTab';
 import EffectSizePanel from './components/power/EffectSizePanel';
+import PearsonCorrelationPage from './components/correlation/PearsonCorrelationPage';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -203,6 +204,7 @@ export default function App() {
 
     const currentStep = STEPS[currentStepId];
     const currentTestConfig = POWER_TEST_BY_STEP_ID[currentStepId] || null;
+    const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
 
@@ -616,7 +618,16 @@ export default function App() {
                                                 </div>
                                             )}
 
-                                            {activeResultSection === 'power' && currentTestConfig ? (
+                                            {isPearsonCorrelationPage ? (
+                                                <PearsonCorrelationPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    testConfig={currentTestConfig}
+                                                    initialMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                />
+                                            ) : activeResultSection === 'power' && currentTestConfig ? (
                                                 <PowerAnalysisTab
                                                     key={`${currentStepId}-${pendingPowerLaunch?.mode || activeResultSection}`}
                                                     testConfig={currentTestConfig}

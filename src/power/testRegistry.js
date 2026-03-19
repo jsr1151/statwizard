@@ -4,6 +4,10 @@ import { solvePairedTPower } from './solvers/pairedT.js';
 import { solveIndependentTPower } from './solvers/independentT.js';
 import { solveOneWayAnovaPower } from './solvers/oneWayAnova.js';
 import { solveAncovaPower } from './solvers/ancova.js';
+import {
+    buildPearsonCorrelationCurveModel,
+    solvePearsonCorrelationPower,
+} from './solvers/pearsonCorrelation.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
 
@@ -36,6 +40,7 @@ const POWER_ASSUMPTION_NOTES = {
     independentT: 'A Priori planning uses an allocation ratio to describe the intended group-size split. Post Hoc and Sensitivity use direct Group 1 and Group 2 sample sizes.',
     oneWayAnova: 'This first one-way ANOVA slice assumes balanced groups. Total N is interpreted as an even split across groups, and per-group N is shown as approximate when integer rounding prevents an exact balance.',
     ancova: 'This first ANCOVA slice models the adjusted group main effect only, with balanced groups, fixed continuous covariates, and common slopes across groups.',
+    pearsonCorrelation: 'This first Pearson correlation power slice plans against a constant rho0 using the Fisher z approximation. The Power tab stays planning-oriented and separate from the observed-data calculator.',
 };
 
 const pooledSDFromIndependentStats = (stats = {}) => {
@@ -186,6 +191,25 @@ const buildAncovaDefaults = (stats = {}, mode = 'a_priori') => {
         effectSize: Number(effectSize.toFixed(3)),
         groupCount,
         covariateCount,
+        sampleSize,
+    };
+};
+
+const buildPearsonCorrelationDefaults = (stats = {}, mode = 'a_priori') => {
+    const effectSize = Number.isFinite(Number(stats?.r))
+        ? Number(stats.r)
+        : 0.3;
+    const sampleSize = Math.max(4, Math.round(stats?.n ?? 40));
+    const direction = effectSize < 0 ? 'less' : 'greater';
+
+    return {
+        mode,
+        alpha: 0.05,
+        tails: 2,
+        direction,
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        nullCorrelation: Number((Number(stats?.rho0) || 0).toFixed(3)),
         sampleSize,
     };
 };
@@ -484,6 +508,52 @@ const ancovaEffectTransform = {
                 {
                     label: 'Partial Eta Squared',
                     value: eta2.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const pearsonCorrelationEffectTransform = {
+    primaryMetricLabel: "Pearson's r / r^2",
+    description: 'For Pearson correlation, r is already the effect size. r^2 reframes the same result as shared linear variance.',
+    fields: [
+        {
+            id: 'rValue',
+            label: "Pearson's r",
+            type: 'number',
+            step: 0.01,
+            min: -0.999,
+            max: 0.999,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        rValue: Number((Number.isFinite(Number(stats?.r)) ? Number(stats.r) : 0.3).toFixed(3)),
+    }),
+    compute: ({ rValue }) => {
+        const r = Number(rValue);
+
+        if (!(r > -1) || !(r < 1)) {
+            return {
+                ok: false,
+                error: 'Pearson r must stay between -1 and 1.',
+            };
+        }
+
+        const rSquared = r ** 2;
+        return {
+            ok: true,
+            effectSize: r,
+            metricLabel: "Pearson's r",
+            summary: `r^2 = ${rSquared.toFixed(4)} (${(rSquared * 100).toFixed(1)}% shared linear variance)`,
+            support: [
+                {
+                    label: "Pearson's r",
+                    value: r.toFixed(4),
+                },
+                {
+                    label: 'Variance Explained (r^2)',
+                    value: rSquared.toFixed(4),
                 },
             ],
         };
@@ -1248,6 +1318,137 @@ export const POWER_TEST_REGISTRY = [
             solver: solveAncovaPower,
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildAncovaDefaults,
+        },
+    },
+    {
+        id: 'pearson_correlation',
+        family: 'correlation',
+        slug: 'pearson-correlation',
+        label: 'Pearson Correlation',
+        stepId: 'correlation_result',
+        power: {
+            status: 'available',
+            gpowerFamily: 'Exact / z-approx tests',
+            gpowerTest: 'Correlation: Difference from a constant (Fisher z planning model)',
+            assumptionNote: POWER_ASSUMPTION_NOTES.pearsonCorrelation,
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Expected Correlation Under H1 (r)',
+                        type: 'number',
+                        step: 0.01,
+                        min: -0.95,
+                        max: 0.95,
+                    },
+                    {
+                        id: 'nullCorrelation',
+                        label: 'Null Correlation (rho0)',
+                        type: 'number',
+                        step: 0.01,
+                        min: -0.95,
+                        max: 0.95,
+                        helperText: 'rho0 defaults to 0. Non-zero null values use the Fisher z approximation in this planning slice.',
+                    },
+                ],
+                post_hoc: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Expected Correlation Under H1 (r)',
+                        type: 'number',
+                        step: 0.01,
+                        min: -0.95,
+                        max: 0.95,
+                    },
+                    {
+                        id: 'nullCorrelation',
+                        label: 'Null Correlation (rho0)',
+                        type: 'number',
+                        step: 0.01,
+                        min: -0.95,
+                        max: 0.95,
+                        helperText: 'rho0 defaults to 0. Non-zero null values use the Fisher z approximation in this planning slice.',
+                    },
+                ],
+                sensitivity: [
+                    ...buildTailFields(),
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                    },
+                    {
+                        id: 'nullCorrelation',
+                        label: 'Null Correlation (rho0)',
+                        type: 'number',
+                        step: 0.01,
+                        min: -0.95,
+                        max: 0.95,
+                        helperText: 'Sensitivity solves for the smallest detectable correlation departure from rho0 at the current N.',
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: pearsonCorrelationEffectTransform,
+            solver: solvePearsonCorrelationPower,
+            buildCurveModel: buildPearsonCorrelationCurveModel,
+            availableVisualizerModes: ['test', 'power', 'curve'],
+            buildInitialInputs: buildPearsonCorrelationDefaults,
         },
     },
 ];

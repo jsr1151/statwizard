@@ -47,4 +47,8 @@ export const POWER_FAMILY_META = {
         label: 'ANOVA / ANCOVA',
         description: 'Omnibus F-test models for multiple groups and covariate-adjusted designs.',
     },
+    correlation: {
+        label: 'Correlation',
+        description: 'Association-focused power analyses for correlation designs and related relationship tests.',
+    },
 };

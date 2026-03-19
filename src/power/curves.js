@@ -386,6 +386,18 @@ export const buildPowerCurveModel = ({ testConfig, result, curveType = 'sample_s
         return null;
     }
 
+    if (typeof testConfig?.power?.buildCurveModel === 'function') {
+        const customCurveModel = testConfig.power.buildCurveModel({
+            testConfig,
+            result,
+            curveType,
+        });
+
+        if (customCurveModel) {
+            return customCurveModel;
+        }
+    }
+
     if (curveType === 'effect_size') {
         return buildEffectCurve({ testConfig, result });
     }
