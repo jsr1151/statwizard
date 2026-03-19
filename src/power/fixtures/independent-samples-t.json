@@ -15,7 +15,8 @@
     "criticalValue": 0.000001,
     "df": 0.000001,
     "noncentrality": 0.000001,
-    "effectSize": 0.000001
+    "effectSize": 0.000001,
+    "achievedAllocationRatio": 0.000001
   },
   "cases": [
     {
@@ -37,6 +38,29 @@
         "criticalValue": 1.978970526341935,
         "df": 126,
         "noncentrality": 2.8284271247461903,
+        "effectSize": 0.5
+      }
+    },
+    {
+      "id": "a_priori_two_tailed_alpha_005_d_05_power_08_ratio_2",
+      "inputs": {
+        "mode": "a_priori",
+        "alpha": 0.05,
+        "tails": 2,
+        "direction": "greater",
+        "effectSize": 0.5,
+        "powerTarget": 0.8,
+        "allocationRatio": 2
+      },
+      "expected": {
+        "sampleSize": 143,
+        "group1SampleSize": 48,
+        "group2SampleSize": 95,
+        "achievedAllocationRatio": 1.9791666666666667,
+        "actualPower": 0.8007314865854465,
+        "criticalValue": 1.9769314400360944,
+        "df": 141,
+        "noncentrality": 2.823477992127435,
         "effectSize": 0.5
       }
     },
@@ -63,6 +87,29 @@
       }
     },
     {
+      "id": "post_hoc_one_tailed_alpha_001_d_04_n1_18_n2_33_less",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.01,
+        "tails": 1,
+        "direction": "less",
+        "effectSize": 0.4,
+        "group1SampleSize": 18,
+        "group2SampleSize": 33
+      },
+      "expected": {
+        "sampleSize": 51,
+        "group1SampleSize": 18,
+        "group2SampleSize": 33,
+        "achievedAllocationRatio": 1.8333333333333333,
+        "actualPower": 0.15898349676040102,
+        "criticalValue": -2.404891748420571,
+        "df": 49,
+        "noncentrality": -1.3651115015868507,
+        "effectSize": 0.4
+      }
+    },
+    {
       "id": "sensitivity_two_tailed_alpha_005_power_08_n1_40_n2_40",
       "inputs": {
         "mode": "sensitivity",
@@ -82,6 +129,29 @@
         "df": 78,
         "noncentrality": 2.836670049556878,
         "effectSize": 0.6342987060546876
+      }
+    },
+    {
+      "id": "sensitivity_one_tailed_alpha_010_power_075_n1_17_n2_29",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.1,
+        "tails": 1,
+        "direction": "greater",
+        "powerTarget": 0.75,
+        "group1SampleSize": 17,
+        "group2SampleSize": 29
+      },
+      "expected": {
+        "sampleSize": 46,
+        "group1SampleSize": 17,
+        "group2SampleSize": 29,
+        "achievedAllocationRatio": 1.7058823529411764,
+        "actualPower": 0.7500009990007677,
+        "criticalValue": 1.3010900278553403,
+        "df": 44,
+        "noncentrality": 1.9746059481964744,
+        "effectSize": 0.6031646728515625
       }
     }
   ]

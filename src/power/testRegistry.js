@@ -29,6 +29,15 @@ const buildTailFields = () => ([
     },
 ]);
 
+const POWER_ASSUMPTION_NOTES = {
+    oneSampleZ: 'Known population sigma is assumed. N is the total number of observations in one sample, and this planning view stays focused on effect size, alpha, and power rather than observed-test output.',
+    oneSampleT: 'N is the total number of observations in one sample. This planning view uses Cohen\'s d for the standardized mean difference and stays separate from the observed-data calculator.',
+    pairedT: 'Paired N means the number of paired observations or participants with both measurements, not the total number of raw scores across two occasions or conditions.',
+    independentT: 'A Priori planning uses an allocation ratio to describe the intended group-size split. Post Hoc and Sensitivity use direct Group 1 and Group 2 sample sizes.',
+    oneWayAnova: 'This first one-way ANOVA slice assumes balanced groups. Total N is interpreted as an even split across groups, and per-group N is shown as approximate when integer rounding prevents an exact balance.',
+    ancova: 'This first ANCOVA slice models the adjusted group main effect only, with balanced groups, fixed continuous covariates, and common slopes across groups.',
+};
+
 const pooledSDFromIndependentStats = (stats = {}) => {
     if (Number.isFinite(stats?.pooledVar) && stats.pooledVar > 0) {
         return Math.sqrt(stats.pooledVar);
@@ -521,6 +530,7 @@ export const POWER_TEST_REGISTRY = [
             status: 'available',
             gpowerFamily: 'z tests',
             gpowerTest: 'Means: Difference from constant (known sigma)',
+            assumptionNote: POWER_ASSUMPTION_NOTES.oneSampleZ,
             supportedPowerModes: ALL_GPOWER_MODES,
             implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
             defaultPowerMode: 'a_priori',
@@ -623,6 +633,7 @@ export const POWER_TEST_REGISTRY = [
             status: 'available',
             gpowerFamily: 't tests',
             gpowerTest: 'Means: Difference from constant (one sample case)',
+            assumptionNote: POWER_ASSUMPTION_NOTES.oneSampleT,
             supportedPowerModes: ALL_GPOWER_MODES,
             implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
             defaultPowerMode: 'a_priori',
@@ -725,6 +736,7 @@ export const POWER_TEST_REGISTRY = [
             status: 'available',
             gpowerFamily: 't tests',
             gpowerTest: 'Means: Difference between two dependent means (matched pairs)',
+            assumptionNote: POWER_ASSUMPTION_NOTES.pairedT,
             supportedPowerModes: ALL_GPOWER_MODES,
             implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
             defaultPowerMode: 'a_priori',
@@ -829,6 +841,7 @@ export const POWER_TEST_REGISTRY = [
             status: 'available',
             gpowerFamily: 't tests',
             gpowerTest: 'Means: Difference between two independent means (two groups)',
+            assumptionNote: POWER_ASSUMPTION_NOTES.independentT,
             supportedPowerModes: ALL_GPOWER_MODES,
             implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
             defaultPowerMode: 'a_priori',
@@ -958,6 +971,7 @@ export const POWER_TEST_REGISTRY = [
             status: 'available',
             gpowerFamily: 'F tests',
             gpowerTest: 'ANOVA: Fixed effects, omnibus, one-way',
+            assumptionNote: POWER_ASSUMPTION_NOTES.oneWayAnova,
             supportedPowerModes: ALL_GPOWER_MODES,
             implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
             defaultPowerMode: 'a_priori',
@@ -1088,6 +1102,7 @@ export const POWER_TEST_REGISTRY = [
             status: 'available',
             gpowerFamily: 'F tests',
             gpowerTest: 'ANCOVA: Fixed effects, main effects and interactions',
+            assumptionNote: POWER_ASSUMPTION_NOTES.ancova,
             supportedPowerModes: ALL_GPOWER_MODES,
             implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
             defaultPowerMode: 'a_priori',

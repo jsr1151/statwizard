@@ -65,6 +65,28 @@
       }
     },
     {
+      "id": "post_hoc_alpha_005_f_03_n_62_groups_3",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.05,
+        "effectSize": 0.3,
+        "sampleSize": 62,
+        "groupCount": 3
+      },
+      "expected": {
+        "sampleSize": 62,
+        "groupCount": 3,
+        "perGroupSampleSize": 20.666666666666668,
+        "isPerGroupExact": false,
+        "actualPower": 0.528904709804143,
+        "criticalValue": 3.15312322974205,
+        "numeratorDf": 2,
+        "denominatorDf": 59,
+        "noncentrality": 5.58,
+        "effectSize": 0.3
+      }
+    },
+    {
       "id": "sensitivity_alpha_005_power_08_n_60_groups_3",
       "inputs": {
         "mode": "sensitivity",
@@ -84,6 +106,28 @@
         "denominatorDf": 57,
         "noncentrality": 10.159434696100654,
         "effectSize": 0.4114898681640625
+      }
+    },
+    {
+      "id": "sensitivity_alpha_001_power_09_n_52_groups_4",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.01,
+        "powerTarget": 0.9,
+        "sampleSize": 52,
+        "groupCount": 4
+      },
+      "expected": {
+        "sampleSize": 52,
+        "groupCount": 4,
+        "perGroupSampleSize": 13,
+        "isPerGroupExact": true,
+        "actualPower": 0.9000032332479615,
+        "criticalValue": 4.217957824468613,
+        "numeratorDf": 3,
+        "denominatorDf": 48,
+        "noncentrality": 21.70324509311469,
+        "effectSize": 0.6460418701171877
       }
     }
   ]

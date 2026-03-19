@@ -38,6 +38,25 @@
       }
     },
     {
+      "id": "a_priori_one_tailed_alpha_005_dz_04_power_085_less",
+      "inputs": {
+        "mode": "a_priori",
+        "alpha": 0.05,
+        "tails": 1,
+        "direction": "less",
+        "effectSize": 0.4,
+        "powerTarget": 0.85
+      },
+      "expected": {
+        "sampleSize": 47,
+        "actualPower": 0.8546790988748969,
+        "criticalValue": -1.6786603389026973,
+        "df": 46,
+        "noncentrality": -2.7422618401604177,
+        "effectSize": 0.4
+      }
+    },
+    {
       "id": "post_hoc_one_tailed_alpha_005_dz_045_n_24_less",
       "inputs": {
         "mode": "post_hoc",

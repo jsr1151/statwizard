@@ -101,6 +101,16 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                     <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                         {powerConfig?.gpowerFamily} -&gt; {powerConfig?.gpowerTest}
                     </p>
+                    {powerConfig?.assumptionNote && (
+                        <div className={`mt-4 max-w-3xl rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                Current Scope
+                            </div>
+                            <p className="text-sm leading-relaxed">
+                                {powerConfig.assumptionNote}
+                            </p>
+                        </div>
+                    )}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${powerConfig?.status === 'available' ? (darkMode ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border border-emerald-200') : (darkMode ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200')}`}>
                     {powerConfig?.status === 'available' ? 'Live Solver' : 'Architecture Reserved'}

@@ -69,6 +69,30 @@
       }
     },
     {
+      "id": "post_hoc_alpha_005_f_03_n_61_groups_3_covariates_2",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.05,
+        "effectSize": 0.3,
+        "sampleSize": 61,
+        "groupCount": 3,
+        "covariateCount": 2
+      },
+      "expected": {
+        "sampleSize": 61,
+        "groupCount": 3,
+        "covariateCount": 2,
+        "perGroupSampleSize": 20.333333333333332,
+        "isPerGroupExact": false,
+        "actualPower": 0.5206734146119288,
+        "criticalValue": 3.161861151456833,
+        "numeratorDf": 2,
+        "denominatorDf": 56,
+        "noncentrality": 5.49,
+        "effectSize": 0.3
+      }
+    },
+    {
       "id": "sensitivity_alpha_005_power_08_n_60_groups_3_covariates_1",
       "inputs": {
         "mode": "sensitivity",
@@ -90,6 +114,30 @@
         "denominatorDf": 56,
         "noncentrality": 10.169382808171214,
         "effectSize": 0.41169128417968753
+      }
+    },
+    {
+      "id": "sensitivity_alpha_001_power_09_n_72_groups_4_covariates_2",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.01,
+        "powerTarget": 0.9,
+        "sampleSize": 72,
+        "groupCount": 4,
+        "covariateCount": 2
+      },
+      "expected": {
+        "sampleSize": 72,
+        "groupCount": 4,
+        "covariateCount": 2,
+        "perGroupSampleSize": 18,
+        "isPerGroupExact": true,
+        "actualPower": 0.9000021126845936,
+        "criticalValue": 4.093029886484146,
+        "numeratorDf": 3,
+        "denominatorDf": 66,
+        "noncentrality": 20.99610176749529,
+        "effectSize": 0.5400115966796877
       }
     }
   ]

@@ -21,6 +21,22 @@ Current status:
 
 These first fixtures are baseline compatibility cases generated from the current shared solver implementation. They are intended to be replaced or augmented with pinned G*Power reference outputs as the parity workflow matures.
 
+Current local coverage now includes:
+
+- `A Priori`, `Post Hoc`, and `Sensitivity` cases for every live solver
+- one-tailed and two-tailed branches where relevant
+- left-tail and right-tail direction handling
+- unequal independent-group allocation and ratio rounding
+- balanced-group exact vs approximate per-group N for F-family tests
+- ANCOVA denominator-df shifts from covariate counts
+
+The local checker also validates more than the scalar solver outputs:
+
+- fixture file structure and duplicate-case protection
+- solver output parity against saved expectations
+- visualizer metadata consistency with the solver result
+- power-curve current-point consistency with the active solver state
+
 Current pinned parity target for replacement/reference work:
 
 - `G*Power 3.1.9.7`
