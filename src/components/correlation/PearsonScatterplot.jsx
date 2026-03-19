@@ -30,6 +30,7 @@ const formatTick = (value) => {
 
 const PearsonScatterplot = ({
     pairs = [],
+    backgroundPairs = [],
     stats = null,
     darkMode,
     xLabel = 'X',
@@ -38,11 +39,14 @@ const PearsonScatterplot = ({
     showConfidenceBand = false,
     confidenceLevel = 0.95,
     highlightPointIndex = null,
+    highlightXRange = null,
     title = null,
     subtitle = null,
 }) => {
     const geometry = useMemo(() => {
-        if (!pairs.length) {
+        const allPairs = [...backgroundPairs, ...pairs];
+
+        if (!allPairs.length) {
             return null;
         }
 
@@ -52,8 +56,8 @@ const PearsonScatterplot = ({
                 confidenceLevel,
             })
             : [];
-        const xValues = pairs.map((pair) => pair.x).concat(bandPoints.map((point) => point.x));
-        const yValues = pairs.map((pair) => pair.y).concat(
+        const xValues = allPairs.map((pair) => pair.x).concat(bandPoints.map((point) => point.x));
+        const yValues = allPairs.map((pair) => pair.y).concat(
             bandPoints.flatMap((point) => [point.lower, point.upper, point.fitted])
         );
         const minX = Math.min(...xValues);
@@ -70,16 +74,27 @@ const PearsonScatterplot = ({
         const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
         const toSvgX = (value) => MARGIN.left + (((value - paddedMinX) / Math.max(1e-9, paddedMaxX - paddedMinX)) * innerWidth);
         const toSvgY = (value) => MARGIN.top + (innerHeight * (1 - ((value - paddedMinY) / Math.max(1e-9, paddedMaxY - paddedMinY))));
+        const plottedBackgroundPairs = backgroundPairs.map((pair) => ({
+            ...pair,
+            svgX: toSvgX(pair.x),
+            svgY: toSvgY(pair.y),
+        }));
         const plottedPairs = pairs.map((pair) => ({
             ...pair,
             svgX: toSvgX(pair.x),
             svgY: toSvgY(pair.y),
             isHighlighted: pair.index === highlightPointIndex || pair.id === highlightPointIndex,
         }));
+        const lineMinX = stats?.ok
+            ? stats.xSummary.min - ((stats.xSummary.max - stats.xSummary.min || 1) * 0.06)
+            : paddedMinX;
+        const lineMaxX = stats?.ok
+            ? stats.xSummary.max + ((stats.xSummary.max - stats.xSummary.min || 1) * 0.06)
+            : paddedMaxX;
         const regressionPoints = stats?.ok
             ? [
-                { x: paddedMinX, y: stats.intercept + (stats.slope * paddedMinX) },
-                { x: paddedMaxX, y: stats.intercept + (stats.slope * paddedMaxX) },
+                { x: lineMinX, y: stats.intercept + (stats.slope * lineMinX) },
+                { x: lineMaxX, y: stats.intercept + (stats.slope * lineMaxX) },
             ].map((point) => ({
                 x: toSvgX(point.x),
                 y: toSvgY(point.y),
@@ -91,11 +106,19 @@ const PearsonScatterplot = ({
                 ...bandPoints.slice().reverse().map((point) => ({ x: toSvgX(point.x), y: toSvgY(point.lower) })),
             ]
             : [];
+        const highlightedRange = highlightXRange
+            ? {
+                x: toSvgX(Math.min(highlightXRange.min, highlightXRange.max)),
+                width: Math.abs(toSvgX(highlightXRange.max) - toSvgX(highlightXRange.min)),
+            }
+            : null;
 
         return {
+            plottedBackgroundPairs,
             plottedPairs,
             regressionPoints,
             confidencePolygon,
+            highlightedRange,
             xTicks: Array.from({ length: 5 }, (_, index) => {
                 const ratio = index / 4;
                 const value = paddedMinX + ((paddedMaxX - paddedMinX) * ratio);
@@ -114,7 +137,7 @@ const PearsonScatterplot = ({
             }),
             innerHeight,
         };
-    }, [pairs, stats, showConfidenceBand, confidenceLevel, highlightPointIndex]);
+    }, [pairs, backgroundPairs, stats, showConfidenceBand, confidenceLevel, highlightPointIndex, highlightXRange]);
 
     if (!geometry) {
         return (
@@ -127,8 +150,11 @@ const PearsonScatterplot = ({
     const axisColor = darkMode ? '#334155' : '#cbd5e1';
     const gridColor = darkMode ? 'rgba(148, 163, 184, 0.18)' : 'rgba(148, 163, 184, 0.35)';
     const pointFill = darkMode ? '#a5b4fc' : '#4f46e5';
+    const backgroundPointFill = darkMode ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.28)';
     const lineColor = darkMode ? '#22c55e' : '#15803d';
     const bandFill = darkMode ? 'rgba(34, 197, 94, 0.16)' : 'rgba(21, 128, 61, 0.12)';
+    const rangeFill = darkMode ? 'rgba(99, 102, 241, 0.10)' : 'rgba(79, 70, 229, 0.08)';
+    const rangeStroke = darkMode ? 'rgba(129, 140, 248, 0.35)' : 'rgba(79, 70, 229, 0.24)';
     const labelColor = darkMode ? '#94a3b8' : '#64748b';
     const textColor = darkMode ? '#e2e8f0' : '#0f172a';
 
@@ -214,6 +240,19 @@ const PearsonScatterplot = ({
                         strokeWidth="1.5"
                     />
 
+                    {geometry.highlightedRange && (
+                        <rect
+                            x={geometry.highlightedRange.x}
+                            y={MARGIN.top}
+                            width={Math.max(0, geometry.highlightedRange.width)}
+                            height={geometry.innerHeight}
+                            fill={rangeFill}
+                            stroke={rangeStroke}
+                            strokeWidth="1.2"
+                            rx="10"
+                        />
+                    )}
+
                     {showConfidenceBand && geometry.confidencePolygon.length > 2 && (
                         <path
                             d={`${buildPath(geometry.confidencePolygon)} Z`}
@@ -221,6 +260,17 @@ const PearsonScatterplot = ({
                             stroke="none"
                         />
                     )}
+
+                    {geometry.plottedBackgroundPairs.map((pair) => (
+                        <circle
+                            key={`background-${pair.id}-${pair.x}-${pair.y}`}
+                            cx={pair.svgX}
+                            cy={pair.svgY}
+                            r={3.8}
+                            fill={backgroundPointFill}
+                            stroke="none"
+                        />
+                    ))}
 
                     {showLine && geometry.regressionPoints.length > 1 && (
                         <path
@@ -270,8 +320,30 @@ const PearsonScatterplot = ({
                 </svg>
             </div>
 
-            {(showLine || showConfidenceBand) && (
+            {(showLine || showConfidenceBand || backgroundPairs.length > 0 || highlightXRange) && (
                 <div className="grid gap-3 md:grid-cols-2">
+                    {backgroundPairs.length > 0 && (
+                        <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                Full Underlying Range
+                            </div>
+                            <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                Faded points show the broader relationship. Solid points show the slice that is actually observed.
+                            </p>
+                        </div>
+                    )}
+
+                    {highlightXRange && (
+                        <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                Observed X-Window
+                            </div>
+                            <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                The highlighted band marks the restricted X range. Narrowing that range often shrinks the observed correlation.
+                            </p>
+                        </div>
+                    )}
+
                     {showLine && (
                         <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                             <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>

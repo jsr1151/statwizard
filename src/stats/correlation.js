@@ -75,20 +75,253 @@ const roundTo = (value, decimals = 4) => {
     return Math.round(Number(value) * factor) / factor;
 };
 
-const sequenceValue = (index, sampleSize, frequency, phase = 0) => {
-    const ratio = sampleSize <= 1 ? 0 : index / (sampleSize - 1);
-    return (
-        Math.sin((ratio * Math.PI * frequency) + phase) +
-        0.45 * Math.cos((ratio * Math.PI * (frequency + 1.3)) + (phase * 1.7))
-    );
-};
-
 const normalizedAxisPosition = (index, sampleSize) => {
     if (sampleSize <= 1) {
         return 0;
     }
 
     return ((index / (sampleSize - 1)) * 2) - 1;
+};
+
+const clampToRange = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const hashSeedParts = (...parts) => {
+    const text = parts.map((part) => `${part}`).join('|');
+    let hash = 2166136261;
+
+    for (let index = 0; index < text.length; index += 1) {
+        hash ^= text.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+
+    return hash >>> 0;
+};
+
+const createSeededRandom = (seed) => {
+    let state = seed >>> 0;
+
+    return () => {
+        state = (state + 0x6D2B79F5) | 0;
+        let value = Math.imul(state ^ (state >>> 15), 1 | state);
+        value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+        return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+};
+
+const sampleStandardNormal = (random) => {
+    const u1 = Math.max(random(), 1e-12);
+    const u2 = random();
+    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+};
+
+const calculateSimpleCorrelationFromPairs = (pairs = []) => {
+    if (pairs.length < 3) {
+        return null;
+    }
+
+    const xs = pairs.map((pair) => Number(pair.x));
+    const ys = pairs.map((pair) => Number(pair.y));
+    const meanX = xs.reduce((sum, value) => sum + value, 0) / xs.length;
+    const meanY = ys.reduce((sum, value) => sum + value, 0) / ys.length;
+    let sumXX = 0;
+    let sumYY = 0;
+    let sumXY = 0;
+
+    for (let index = 0; index < pairs.length; index += 1) {
+        const dx = xs[index] - meanX;
+        const dy = ys[index] - meanY;
+        sumXX += dx ** 2;
+        sumYY += dy ** 2;
+        sumXY += dx * dy;
+    }
+
+    if (!(sumXX > EPSILON) || !(sumYY > EPSILON)) {
+        return null;
+    }
+
+    return clampCorrelation(sumXY / Math.sqrt(sumXX * sumYY));
+};
+
+const buildTutorAxisValues = ({
+    sampleSize,
+    random,
+    span = 1.35,
+    jitterScale = 0.065,
+}) => (
+    Array.from({ length: sampleSize }, (_, index) => {
+        const base = normalizedAxisPosition(index, sampleSize) * span;
+        const jitter = sampleStandardNormal(random) * jitterScale * span;
+        return clampToRange(base + jitter, -span * 1.08, span * 1.08);
+    }).sort((left, right) => left - right)
+);
+
+const buildLinearTutorPairs = ({
+    sampleSize,
+    noise,
+    slope,
+    seedKey,
+    residualBase,
+    residualNoise,
+    span = 1.35,
+}) => {
+    const random = createSeededRandom(hashSeedParts(seedKey, sampleSize, roundTo(noise, 3)));
+    const residualScale = residualBase + (noise * residualNoise);
+    const xs = buildTutorAxisValues({
+        sampleSize,
+        random,
+        span,
+    });
+
+    return xs.map((x, index) => ({
+        id: index,
+        x,
+        y: clampToRange(
+            (slope * x) + (sampleStandardNormal(random) * residualScale),
+            -2.2,
+            2.2
+        ),
+    }));
+};
+
+const buildNearZeroTutorPairs = ({
+    sampleSize,
+    noise,
+    seedKey,
+}) => {
+    const threshold = Math.min(0.12, 0.06 + (0.18 / Math.sqrt(sampleSize)));
+    let bestPairs = [];
+    let bestMagnitude = Number.POSITIVE_INFINITY;
+
+    for (let attempt = 0; attempt < 48; attempt += 1) {
+        const random = createSeededRandom(hashSeedParts(seedKey, sampleSize, roundTo(noise, 3), attempt));
+        const spreadX = 0.82 + (noise * 0.18);
+        const spreadY = 0.82 + (noise * 0.22);
+        const candidatePairs = Array.from({ length: sampleSize }, (_, index) => ({
+            id: index,
+            x: clampToRange(sampleStandardNormal(random) * spreadX, -1.55, 1.55),
+            y: clampToRange(sampleStandardNormal(random) * spreadY, -1.55, 1.55),
+        }));
+        const candidateR = Math.abs(calculateSimpleCorrelationFromPairs(candidatePairs) ?? 1);
+
+        if (candidateR < bestMagnitude) {
+            bestPairs = candidatePairs;
+            bestMagnitude = candidateR;
+        }
+
+        if (candidateR <= threshold) {
+            return candidatePairs;
+        }
+    }
+
+    return bestPairs;
+};
+
+const buildNonlinearTutorPairs = ({
+    sampleSize,
+    noise,
+    seedKey,
+}) => {
+    const random = createSeededRandom(hashSeedParts(seedKey, sampleSize, roundTo(noise, 3)));
+    const xs = buildTutorAxisValues({
+        sampleSize,
+        random,
+        span: 1.4,
+        jitterScale: 0.045,
+    });
+    const residualScale = 0.08 + (noise * 0.16);
+
+    return xs.map((x, index) => {
+        const scaledX = x / 1.4;
+        return {
+            id: index,
+            x,
+            y: clampToRange(
+                (1.28 * ((scaledX ** 2) - 0.42)) + (sampleStandardNormal(random) * residualScale),
+                -2.2,
+                2.2
+            ),
+        };
+    });
+};
+
+const takeEvenlySpacedPairs = (pairs = [], targetCount = pairs.length) => {
+    if (pairs.length <= targetCount) {
+        return pairs.map((pair, index) => ({
+            ...pair,
+            id: index,
+        }));
+    }
+
+    return Array.from({ length: targetCount }, (_, index) => {
+        const ratio = targetCount <= 1 ? 0 : index / (targetCount - 1);
+        const sourceIndex = Math.round(ratio * (pairs.length - 1));
+        return {
+            ...pairs[sourceIndex],
+            id: index,
+        };
+    });
+};
+
+const injectTutorOutlier = ({
+    pairs,
+    orientation = 'high_x_low_y',
+}) => {
+    if (!pairs.length) {
+        return pairs;
+    }
+
+    const xValues = pairs.map((pair) => pair.x);
+    const yValues = pairs.map((pair) => pair.y);
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+    const minY = Math.min(...yValues);
+    const maxY = Math.max(...yValues);
+    const xSpan = Math.max(0.75, maxX - minX);
+    const ySpan = Math.max(0.75, maxY - minY);
+    let x = maxX + (xSpan * 0.28);
+    let y = minY - (ySpan * 0.34);
+
+    if (orientation === 'high_x_high_y') {
+        y = maxY + (ySpan * 0.34);
+    }
+
+    const nextId = pairs.reduce((maxId, pair) => Math.max(maxId, Number(pair.id) || 0), -1) + 1;
+    return [
+        ...pairs,
+        {
+            id: nextId,
+            x,
+            y,
+            isSyntheticOutlier: true,
+        },
+    ];
+};
+
+const buildRestrictedRangeTutorDataset = ({
+    sampleSize,
+    noise,
+}) => {
+    const fullPairs = buildLinearTutorPairs({
+        sampleSize: Math.max(sampleSize * 8, 220),
+        noise: Math.max(0.18, noise),
+        slope: 0.95,
+        seedKey: 'restricted_range_full',
+        residualBase: 0.16,
+        residualNoise: 0.36,
+        span: 1.42,
+    });
+    const windowHalfWidth = 0.18;
+    const restrictedPairs = fullPairs.filter((pair) => Math.abs(pair.x) <= windowHalfWidth);
+
+    return {
+        pairs: takeEvenlySpacedPairs(restrictedPairs, sampleSize),
+        contextPairs: fullPairs.map((pair) => ({ ...pair })),
+        highlightXRange: {
+            min: -windowHalfWidth,
+            max: windowHalfWidth,
+        },
+        outlierOrientation: 'high_x_low_y',
+    };
 };
 
 export const fisherZTransform = (correlation) => {
@@ -123,7 +356,7 @@ export const buildCorrelationInterpretation = (correlation) => {
     const r = Number(correlation);
 
     if (!Number.isFinite(r)) {
-        return 'Pearson r is not available yet.';
+        return 'Sample correlation r is not available yet.';
     }
 
     const magnitude = Math.abs(r);
@@ -543,7 +776,7 @@ export const buildCorrelationGuidance = (stats) => {
         {
             tone: 'note',
             title: 'Inspect the scatterplot',
-            body: 'Look for a roughly straight-line pattern before leaning on Pearson r as your main summary.',
+            body: 'Look for a roughly straight-line pattern before leaning on r as your main summary.',
         },
         {
             tone: 'note',
@@ -556,7 +789,7 @@ export const buildCorrelationGuidance = (stats) => {
         guidance.unshift({
             tone: 'warning',
             title: 'X has very limited spread',
-            body: 'Restricted or nearly constant X values can make Pearson r unstable or misleadingly small.',
+            body: 'Restricted or nearly constant X values can make r unstable or misleadingly small.',
         });
     }
 
@@ -564,7 +797,7 @@ export const buildCorrelationGuidance = (stats) => {
         guidance.unshift({
             tone: 'warning',
             title: 'Y has very limited spread',
-            body: 'Restricted or nearly constant Y values can make Pearson r unstable or misleadingly small.',
+            body: 'Restricted or nearly constant Y values can make r unstable or misleadingly small.',
         });
     }
 
@@ -583,53 +816,82 @@ export const generatePearsonTutorDataset = ({
     preset = 'strong_positive',
     sampleSize = 36,
     noise = 0.3,
-    includeOutlier = true,
+    includeOutlier = false,
 }) => {
     const resolvedSampleSize = Math.max(8, Math.round(sampleSize));
     const resolvedNoise = Math.max(0, Math.min(1, Number(noise)));
-    const pairs = [];
+    let dataset;
 
-    for (let index = 0; index < resolvedSampleSize; index += 1) {
-        const baseX = normalizedAxisPosition(index, resolvedSampleSize);
-        const xJitter = resolvedNoise * 0.12 * sequenceValue(index, resolvedSampleSize, 4.2, 0.35);
-        let x = baseX + xJitter;
-        let y = 0;
-
-        if (preset === 'strong_positive') {
-            y = (0.96 * baseX) + (resolvedNoise * 0.28 * sequenceValue(index, resolvedSampleSize, 3.4, 0.6));
-        } else if (preset === 'weak_positive') {
-            y = (0.34 * baseX) + (resolvedNoise * 0.72 * sequenceValue(index, resolvedSampleSize, 4.6, 1.1));
-        } else if (preset === 'near_zero') {
-            y = (
-                0.58 * sequenceValue(index, resolvedSampleSize, 5.8, 0.9) +
-                resolvedNoise * 0.45 * sequenceValue(index, resolvedSampleSize, 8.1, 1.8)
-            );
-        } else if (preset === 'strong_negative') {
-            y = (-0.95 * baseX) + (resolvedNoise * 0.3 * sequenceValue(index, resolvedSampleSize, 3.1, 0.45));
-        } else if (preset === 'nonlinear') {
-            y = (1.7 * (baseX ** 2)) - 0.65 + (resolvedNoise * 0.22 * sequenceValue(index, resolvedSampleSize, 6.2, 0.8));
-        } else if (preset === 'outlier') {
-            y = (0.88 * baseX) + (resolvedNoise * 0.24 * sequenceValue(index, resolvedSampleSize, 3.7, 0.2));
-        } else if (preset === 'restricted_range') {
-            x = (baseX * 0.32) + (resolvedNoise * 0.04 * sequenceValue(index, resolvedSampleSize, 5.2, 0.4));
-            y = (0.92 * baseX) + (resolvedNoise * 0.44 * sequenceValue(index, resolvedSampleSize, 3.9, 1.25));
-        }
-
-        pairs.push({
-            id: index,
-            x,
-            y,
+    if (preset === 'weak_positive') {
+        dataset = {
+            pairs: buildLinearTutorPairs({
+                sampleSize: resolvedSampleSize,
+                noise: resolvedNoise,
+                slope: 0.24,
+                seedKey: 'weak_positive',
+                residualBase: 0.26,
+                residualNoise: 0.8,
+            }),
+            outlierOrientation: 'high_x_low_y',
+        };
+    } else if (preset === 'near_zero') {
+        dataset = {
+            pairs: buildNearZeroTutorPairs({
+                sampleSize: resolvedSampleSize,
+                noise: resolvedNoise,
+                seedKey: 'near_zero',
+            }),
+            outlierOrientation: 'high_x_high_y',
+        };
+    } else if (preset === 'strong_negative') {
+        dataset = {
+            pairs: buildLinearTutorPairs({
+                sampleSize: resolvedSampleSize,
+                noise: resolvedNoise,
+                slope: -0.94,
+                seedKey: 'strong_negative',
+                residualBase: 0.08,
+                residualNoise: 0.32,
+            }),
+            outlierOrientation: 'high_x_high_y',
+        };
+    } else if (preset === 'nonlinear') {
+        dataset = {
+            pairs: buildNonlinearTutorPairs({
+                sampleSize: resolvedSampleSize,
+                noise: resolvedNoise,
+                seedKey: 'nonlinear',
+            }),
+            outlierOrientation: 'high_x_low_y',
+        };
+    } else if (preset === 'restricted_range') {
+        dataset = buildRestrictedRangeTutorDataset({
+            sampleSize: resolvedSampleSize,
+            noise: resolvedNoise,
         });
+    } else {
+        dataset = {
+            pairs: buildLinearTutorPairs({
+                sampleSize: resolvedSampleSize,
+                noise: resolvedNoise,
+                slope: 0.94,
+                seedKey: 'strong_positive',
+                residualBase: 0.08,
+                residualNoise: 0.32,
+            }),
+            outlierOrientation: 'high_x_low_y',
+        };
     }
 
-    if (preset === 'outlier' && includeOutlier) {
-        pairs.push({
-            id: resolvedSampleSize,
-            x: 1.55,
-            y: -1.25,
-            isSyntheticOutlier: true,
-        });
-    }
-
-    return pairs;
+    return {
+        preset,
+        pairs: includeOutlier
+            ? injectTutorOutlier({
+                pairs: dataset.pairs,
+                orientation: dataset.outlierOrientation,
+            })
+            : dataset.pairs,
+        contextPairs: dataset.contextPairs || [],
+        highlightXRange: dataset.highlightXRange || null,
+    };
 };

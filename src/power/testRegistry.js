@@ -40,7 +40,7 @@ const POWER_ASSUMPTION_NOTES = {
     independentT: 'A Priori planning uses an allocation ratio to describe the intended group-size split. Post Hoc and Sensitivity use direct Group 1 and Group 2 sample sizes.',
     oneWayAnova: 'This first one-way ANOVA slice assumes balanced groups. Total N is interpreted as an even split across groups, and per-group N is shown as approximate when integer rounding prevents an exact balance.',
     ancova: 'This first ANCOVA slice models the adjusted group main effect only, with balanced groups, fixed continuous covariates, and common slopes across groups.',
-    pearsonCorrelation: 'This first Pearson correlation power slice plans against a constant rho0 using the Fisher z approximation. The Power tab stays planning-oriented and separate from the observed-data calculator.',
+    pearsonCorrelation: 'This first Pearson correlation power slice plans against a constant ρ₀ using the Fisher z approximation. The Power tab stays planning-oriented and separate from the observed-data calculator.',
 };
 
 const pooledSDFromIndependentStats = (stats = {}) => {
@@ -515,12 +515,12 @@ const ancovaEffectTransform = {
 };
 
 const pearsonCorrelationEffectTransform = {
-    primaryMetricLabel: "Pearson's r / r^2",
-    description: 'For Pearson correlation, r is already the effect size. r^2 reframes the same result as shared linear variance.',
+    primaryMetricLabel: 'Correlation Effect Size (r / r²)',
+    description: 'For Pearson correlation, the observed effect size is r. r² reframes the same result as shared linear variance.',
     fields: [
         {
             id: 'rValue',
-            label: "Pearson's r",
+            label: 'Sample Correlation (r)',
             type: 'number',
             step: 0.01,
             min: -0.999,
@@ -536,7 +536,7 @@ const pearsonCorrelationEffectTransform = {
         if (!(r > -1) || !(r < 1)) {
             return {
                 ok: false,
-                error: 'Pearson r must stay between -1 and 1.',
+                error: 'r must stay between -1 and 1.',
             };
         }
 
@@ -544,15 +544,15 @@ const pearsonCorrelationEffectTransform = {
         return {
             ok: true,
             effectSize: r,
-            metricLabel: "Pearson's r",
-            summary: `r^2 = ${rSquared.toFixed(4)} (${(rSquared * 100).toFixed(1)}% shared linear variance)`,
+            metricLabel: 'Sample Correlation (r)',
+            summary: `r² = ${rSquared.toFixed(4)} (${(rSquared * 100).toFixed(1)}% shared linear variance)`,
             support: [
                 {
-                    label: "Pearson's r",
+                    label: 'Sample Correlation (r)',
                     value: r.toFixed(4),
                 },
                 {
-                    label: 'Variance Explained (r^2)',
+                    label: 'Variance Explained (r²)',
                     value: rSquared.toFixed(4),
                 },
             ],
@@ -1355,7 +1355,7 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'effectSize',
-                        label: 'Expected Correlation Under H1 (r)',
+                        label: 'Expected Population Correlation Under H1 (ρ)',
                         type: 'number',
                         step: 0.01,
                         min: -0.95,
@@ -1363,12 +1363,12 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'nullCorrelation',
-                        label: 'Null Correlation (rho0)',
+                        label: 'Null Population Correlation (ρ₀)',
                         type: 'number',
                         step: 0.01,
                         min: -0.95,
                         max: 0.95,
-                        helperText: 'rho0 defaults to 0. Non-zero null values use the Fisher z approximation in this planning slice.',
+                        helperText: 'Usually 0. This is the population correlation value used under H0. Non-zero ρ₀ values use the Fisher z approximation in this planning slice.',
                     },
                 ],
                 post_hoc: [
@@ -1391,7 +1391,7 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'effectSize',
-                        label: 'Expected Correlation Under H1 (r)',
+                        label: 'Expected Population Correlation Under H1 (ρ)',
                         type: 'number',
                         step: 0.01,
                         min: -0.95,
@@ -1399,12 +1399,12 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'nullCorrelation',
-                        label: 'Null Correlation (rho0)',
+                        label: 'Null Population Correlation (ρ₀)',
                         type: 'number',
                         step: 0.01,
                         min: -0.95,
                         max: 0.95,
-                        helperText: 'rho0 defaults to 0. Non-zero null values use the Fisher z approximation in this planning slice.',
+                        helperText: 'Usually 0. This is the population correlation value used under H0. Non-zero ρ₀ values use the Fisher z approximation in this planning slice.',
                     },
                 ],
                 sensitivity: [
@@ -1427,12 +1427,12 @@ export const POWER_TEST_REGISTRY = [
                     },
                     {
                         id: 'nullCorrelation',
-                        label: 'Null Correlation (rho0)',
+                        label: 'Null Population Correlation (ρ₀)',
                         type: 'number',
                         step: 0.01,
                         min: -0.95,
                         max: 0.95,
-                        helperText: 'Sensitivity solves for the smallest detectable correlation departure from rho0 at the current N.',
+                        helperText: 'Sensitivity solves for the smallest detectable population-correlation departure from ρ₀ at the current N.',
                     },
                     {
                         id: 'powerTarget',

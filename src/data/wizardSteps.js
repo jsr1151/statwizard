@@ -531,13 +531,13 @@ export const STEPS = {
         type: 'result',
         title: "Pearson Correlation",
         content: "Measures the direction and strength of a linear association between two continuous variables.",
-        details: ["Pearson r ranges from -1 to +1.", "r^2 reframes the same result as shared linear variance."],
+        details: ["Pearson r ranges from -1 to +1.", "r² reframes the same result as shared linear variance."],
         formulaId: 'correlation',
         software: SOFTWARE_GUIDES.correlation,
         assumptions: [
-            { label: "Linearity", failAdvice: "Inspect the scatterplot for curvature before trusting Pearson r." },
+            { label: "Linearity", failAdvice: "Inspect the scatterplot for curvature before trusting r as a straight-line summary." },
             { label: "Outlier Influence", failAdvice: "Check whether a single extreme point is driving the result." },
-            { label: "Restricted Range", failAdvice: "A narrow observed spread can shrink Pearson r even when the broader relationship is stronger." },
+            { label: "Restricted Range", failAdvice: "A narrow observed spread can shrink r even when the broader relationship is stronger." },
         ]
     },
     regression_result: {

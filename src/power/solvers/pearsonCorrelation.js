@@ -28,15 +28,15 @@ const validateDirectionalInputs = ({ effectSize, nullCorrelation, tails, directi
     const fisherShift = fisherZTransform(effectSize) - fisherZTransform(nullCorrelation);
 
     if (Math.abs(fisherShift) < 1e-10 && mode !== 'sensitivity') {
-        return 'Expected correlation under H1 must differ from rho0.';
+        return 'Expected population correlation under H1 (ρ) must differ from ρ₀.';
     }
 
     if (tails === 1 && direction === 'greater' && !(effectSize > nullCorrelation)) {
-        return 'For a positive one-tailed test, the expected correlation under H1 must be greater than rho0.';
+        return 'For a positive one-tailed test, the expected population correlation under H1 (ρ) must be greater than ρ₀.';
     }
 
     if (tails === 1 && direction === 'less' && !(effectSize < nullCorrelation)) {
-        return 'For a negative one-tailed test, the expected correlation under H1 must be less than rho0.';
+        return 'For a negative one-tailed test, the expected population correlation under H1 (ρ) must be less than ρ₀.';
     }
 
     return null;
@@ -130,12 +130,12 @@ const buildCorrelationPowerMetrics = ({
         },
         {
             id: 'effect_size',
-            label: 'Expected Correlation (r)',
+            label: 'Expected Population Correlation (ρ)',
             value: roundTo(effectSize, 4).toFixed(4),
         },
         {
             id: 'null_correlation',
-            label: 'Null Correlation (rho0)',
+            label: 'Null Population Correlation (ρ₀)',
             value: roundTo(nullCorrelation, 4).toFixed(4),
         },
     ];
@@ -286,10 +286,10 @@ const buildSharedResult = ({
     }),
     summary:
         mode === 'a_priori'
-            ? `A Pearson correlation study needs N = ${sampleSize} to reach power ${roundTo(power, 3)} at alpha ${alpha} when planning for r = ${roundTo(effectSize, 3)} against rho0 = ${roundTo(nullCorrelation, 3)}.`
+            ? `A Pearson correlation study needs N = ${sampleSize} to reach power ${roundTo(power, 3)} at alpha ${alpha} when planning for ρ = ${roundTo(effectSize, 3)} against ρ₀ = ${roundTo(nullCorrelation, 3)}.`
             : mode === 'post_hoc'
-                ? `With N = ${sampleSize}, the achieved power is ${roundTo(power, 3)} when the expected correlation is r = ${roundTo(effectSize, 3)} against rho0 = ${roundTo(nullCorrelation, 3)}.`
-                : `With N = ${sampleSize}, the smallest detectable correlation is about r = ${roundTo(effectSize, 3)} against rho0 = ${roundTo(nullCorrelation, 3)} at power ${roundTo(targetPower, 3)}.`,
+                ? `With N = ${sampleSize}, the achieved power is ${roundTo(power, 3)} when the expected population correlation is ρ = ${roundTo(effectSize, 3)} against ρ₀ = ${roundTo(nullCorrelation, 3)}.`
+                : `With N = ${sampleSize}, the smallest detectable population correlation is about ρ = ${roundTo(effectSize, 3)} against ρ₀ = ${roundTo(nullCorrelation, 3)} at power ${roundTo(targetPower, 3)}.`,
     visualizer: buildPearsonCorrelationVisualizer({
         alpha,
         tails,
@@ -523,16 +523,16 @@ export const buildPearsonCorrelationCurveModel = ({ result, curveType = 'sample_
             ok: true,
             curveType: 'effect_size',
             curveNature: 'continuous',
-            title: 'Power vs Correlation',
-            xLabel: 'Expected Correlation (r)',
+            title: 'Power vs Population Correlation',
+            xLabel: 'Expected Population Correlation (ρ)',
             yLabel: 'Power',
             points,
             currentPoint: {
                 x: result.effectSize,
                 power: result.actualPower,
             },
-            assumptions: `Holding N = ${result.sampleSize}, alpha = ${roundTo(result.alpha, 3)}, rho0 = ${roundTo(result.nullCorrelation, 3)}, and ${describeTailSetting(result.tails, result.direction)}.`,
-            currentPointSummary: `r = ${roundTo(result.effectSize, 4)} gives power ${roundTo(result.actualPower, 4)} at N = ${result.sampleSize}.`,
+            assumptions: `Holding N = ${result.sampleSize}, alpha = ${roundTo(result.alpha, 3)}, ρ₀ = ${roundTo(result.nullCorrelation, 3)}, and ${describeTailSetting(result.tails, result.direction)}.`,
+            currentPointSummary: `ρ = ${roundTo(result.effectSize, 4)} gives power ${roundTo(result.actualPower, 4)} at N = ${result.sampleSize}.`,
         };
     }
 
@@ -571,7 +571,7 @@ export const buildPearsonCorrelationCurveModel = ({ result, curveType = 'sample_
             x: currentSampleSize,
             power: result.actualPower,
         },
-        assumptions: `Holding expected r = ${roundTo(result.effectSize, 3)}, rho0 = ${roundTo(result.nullCorrelation, 3)}, alpha = ${roundTo(result.alpha, 3)}, and ${describeTailSetting(result.tails, result.direction)}.`,
-        currentPointSummary: `N = ${currentSampleSize} gives power ${roundTo(result.actualPower, 4)} for r = ${roundTo(result.effectSize, 3)} against rho0 = ${roundTo(result.nullCorrelation, 3)}.`,
+        assumptions: `Holding expected ρ = ${roundTo(result.effectSize, 3)}, ρ₀ = ${roundTo(result.nullCorrelation, 3)}, alpha = ${roundTo(result.alpha, 3)}, and ${describeTailSetting(result.tails, result.direction)}.`,
+        currentPointSummary: `N = ${currentSampleSize} gives power ${roundTo(result.actualPower, 4)} for ρ = ${roundTo(result.effectSize, 3)} against ρ₀ = ${roundTo(result.nullCorrelation, 3)}.`,
     };
 };
