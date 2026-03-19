@@ -43,6 +43,9 @@ const RegressionScatterplot = ({
     showResiduals = false,
     confidenceLevel = 0.95,
     highlightPointIndex = null,
+    selectedPointId = null,
+    onPointSelect = null,
+    predictionTarget = null,
     title = null,
     subtitle = null,
 }) => {
@@ -65,7 +68,8 @@ const RegressionScatterplot = ({
             : [];
         const xValues = pairs.map((pair) => pair.x)
             .concat(meanBandPoints.map((point) => point.x))
-            .concat(predictionBandPoints.map((point) => point.x));
+            .concat(predictionBandPoints.map((point) => point.x))
+            .concat(Number.isFinite(predictionTarget?.x) ? [predictionTarget.x] : []);
         const yValues = pairs.map((pair) => pair.y)
             .concat(meanBandPoints.flatMap((point) => [point.lower, point.upper, point.fitted]))
             .concat(predictionBandPoints.flatMap((point) => [
@@ -74,7 +78,8 @@ const RegressionScatterplot = ({
                 point.meanLower,
                 point.meanUpper,
                 point.fitted,
-            ]));
+            ]))
+            .concat(Number.isFinite(predictionTarget?.fitted) ? [predictionTarget.fitted] : []);
         const minX = Math.min(...xValues);
         const maxX = Math.max(...xValues);
         const minY = Math.min(...yValues);
@@ -95,7 +100,9 @@ const RegressionScatterplot = ({
             svgY: toSvgY(pair.y),
             fittedSvgY: Number.isFinite(pair.fitted) ? toSvgY(pair.fitted) : null,
             isHighlighted: pair.index === highlightPointIndex || pair.id === highlightPointIndex,
+            isSelected: pair.index === selectedPointId || pair.id === selectedPointId,
         }));
+        const selectedPair = plottedPairs.find((pair) => pair.isSelected) || null;
         const lineMinX = stats?.ok
             ? stats.xSummary.min - ((stats.xSummary.max - stats.xSummary.min || 1) * 0.04)
             : paddedMinX;
@@ -123,12 +130,20 @@ const RegressionScatterplot = ({
                 ...predictionBandPoints.slice().reverse().map((point) => ({ x: toSvgX(point.x), y: toSvgY(point.predictionLower) })),
             ]
             : [];
+        const predictionSvgPoint = Number.isFinite(predictionTarget?.x) && Number.isFinite(predictionTarget?.fitted)
+            ? {
+                x: toSvgX(predictionTarget.x),
+                y: toSvgY(predictionTarget.fitted),
+            }
+            : null;
 
         return {
             plottedPairs,
+            selectedPair,
             regressionPoints,
             confidencePolygon,
             predictionPolygon,
+            predictionSvgPoint,
             xTicks: Array.from({ length: 5 }, (_, index) => {
                 const ratio = index / 4;
                 const value = paddedMinX + ((paddedMaxX - paddedMinX) * ratio);
@@ -146,7 +161,7 @@ const RegressionScatterplot = ({
                 };
             }),
         };
-    }, [pairs, stats, showConfidenceBand, showPredictionBand, confidenceLevel, highlightPointIndex]);
+    }, [pairs, stats, showConfidenceBand, showPredictionBand, confidenceLevel, highlightPointIndex, selectedPointId, predictionTarget]);
 
     if (!geometry) {
         return (
@@ -163,8 +178,11 @@ const RegressionScatterplot = ({
     const confidenceBandFill = darkMode ? 'rgba(34, 197, 94, 0.16)' : 'rgba(21, 128, 61, 0.12)';
     const predictionBandFill = darkMode ? 'rgba(14, 165, 233, 0.12)' : 'rgba(2, 132, 199, 0.10)';
     const residualColor = darkMode ? 'rgba(251, 191, 36, 0.65)' : 'rgba(217, 119, 6, 0.62)';
+    const selectedResidualColor = darkMode ? 'rgba(251, 191, 36, 0.96)' : 'rgba(180, 83, 9, 0.96)';
     const labelColor = darkMode ? '#94a3b8' : '#64748b';
     const textColor = darkMode ? '#e2e8f0' : '#0f172a';
+    const predictionColor = darkMode ? '#38bdf8' : '#0284c7';
+    const selectedFittedColor = darkMode ? '#4ade80' : '#16a34a';
 
     return (
         <div className="space-y-4">
@@ -279,6 +297,18 @@ const RegressionScatterplot = ({
                         )
                     ))}
 
+                    {geometry.selectedPair?.fittedSvgY != null && (
+                        <line
+                            x1={geometry.selectedPair.svgX}
+                            x2={geometry.selectedPair.svgX}
+                            y1={geometry.selectedPair.svgY}
+                            y2={geometry.selectedPair.fittedSvgY}
+                            stroke={selectedResidualColor}
+                            strokeWidth="2.8"
+                            strokeDasharray="5 4"
+                        />
+                    )}
+
                     {showLine && geometry.regressionPoints.length > 1 && (
                         <path
                             d={buildPath(geometry.regressionPoints)}
@@ -289,16 +319,51 @@ const RegressionScatterplot = ({
                         />
                     )}
 
+                    {geometry.selectedPair?.fittedSvgY != null && (
+                        <circle
+                            cx={geometry.selectedPair.svgX}
+                            cy={geometry.selectedPair.fittedSvgY}
+                            r={5.2}
+                            fill={selectedFittedColor}
+                            stroke={darkMode ? '#020617' : '#ffffff'}
+                            strokeWidth="2"
+                        />
+                    )}
+
+                    {geometry.predictionSvgPoint && (
+                        <>
+                            <line
+                                x1={geometry.predictionSvgPoint.x}
+                                x2={geometry.predictionSvgPoint.x}
+                                y1={HEIGHT - MARGIN.bottom}
+                                y2={geometry.predictionSvgPoint.y}
+                                stroke={predictionColor}
+                                strokeWidth="1.8"
+                                strokeDasharray="6 5"
+                            />
+                            <circle
+                                cx={geometry.predictionSvgPoint.x}
+                                cy={geometry.predictionSvgPoint.y}
+                                r={6.6}
+                                fill={predictionColor}
+                                stroke={darkMode ? '#020617' : '#ffffff'}
+                                strokeWidth="2.2"
+                            />
+                        </>
+                    )}
+
                     {geometry.plottedPairs.map((pair) => (
                         <circle
                             key={`${pair.id}-${pair.x}-${pair.y}`}
                             cx={pair.svgX}
                             cy={pair.svgY}
-                            r={pair.isHighlighted ? 6.5 : (pair.isSyntheticOutlier ? 5.8 : 4.8)}
-                            fill={pair.isHighlighted ? '#f97316' : (pair.isSyntheticOutlier ? '#ef4444' : pointFill)}
+                            r={pair.isSelected ? 6.8 : (pair.isHighlighted ? 6.2 : (pair.isSyntheticOutlier ? 5.8 : 4.8))}
+                            fill={pair.isSelected ? '#f59e0b' : (pair.isHighlighted ? '#f97316' : (pair.isSyntheticOutlier ? '#ef4444' : pointFill))}
                             stroke={darkMode ? '#020617' : '#ffffff'}
-                            strokeWidth={pair.isHighlighted || pair.isSyntheticOutlier ? 2.2 : 1.8}
-                            opacity={pair.isHighlighted ? 1 : 0.92}
+                            strokeWidth={pair.isSelected || pair.isHighlighted || pair.isSyntheticOutlier ? 2.2 : 1.8}
+                            opacity={pair.isSelected || pair.isHighlighted ? 1 : 0.92}
+                            onClick={onPointSelect ? () => onPointSelect(pair.id) : undefined}
+                            style={{ cursor: onPointSelect ? 'pointer' : 'default' }}
                         />
                     ))}
 
@@ -327,7 +392,7 @@ const RegressionScatterplot = ({
                 </svg>
             </div>
 
-            {(showLine || showConfidenceBand || showPredictionBand || showResiduals) && (
+            {(showLine || showConfidenceBand || showPredictionBand || showResiduals || geometry.predictionSvgPoint) && (
                 <div className="grid gap-3 md:grid-cols-2">
                     {showLine && (
                         <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -369,6 +434,17 @@ const RegressionScatterplot = ({
                             </div>
                             <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                                 Residual lines show the gap between each observed point and its fitted value.
+                            </p>
+                        </div>
+                    )}
+
+                    {geometry.predictionSvgPoint && (
+                        <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-sky-300' : 'text-sky-700'}`}>
+                                Prediction Target
+                            </div>
+                            <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                The blue marker shows the fitted mean outcome at the chosen predictor value.
                             </p>
                         </div>
                     )}

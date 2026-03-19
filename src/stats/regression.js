@@ -412,22 +412,38 @@ export const buildSlopeInterpretation = ({
     return `For every ${roundTo(numericUnits, 3)}-unit increase in ${predictorLabel}, predicted ${outcomeLabel} ${direction} by about ${roundTo(Math.abs(predictedChange), 3)} units on average.`;
 };
 
+const describeRegressionFit = (rSquared) => {
+    const numeric = Number(rSquared);
+
+    if (!(numeric >= 0)) {
+        return 'an unknown share';
+    }
+
+    if (numeric < 0.1) {
+        return 'very little';
+    }
+
+    if (numeric < 0.3) {
+        return 'a modest share';
+    }
+
+    if (numeric < 0.6) {
+        return 'a meaningful share';
+    }
+
+    return 'a large share';
+};
+
 export const buildRegressionInterpretation = (stats) => {
     if (!stats?.ok) {
         return 'Regression output is not available yet.';
     }
 
     const slopeMagnitude = Math.abs(stats.slope);
-    const fitStrength = stats.rSquared < 0.1
-        ? 'very little'
-        : stats.rSquared < 0.3
-            ? 'a modest share'
-            : stats.rSquared < 0.6
-                ? 'a meaningful share'
-                : 'a large share';
     const direction = stats.slope >= 0 ? 'upward' : 'downward';
+    const fitStrength = describeRegressionFit(stats.rSquared);
 
-    return `The fitted line has a ${direction} slope of about ${roundTo(slopeMagnitude, 3)} and explains ${fitStrength} of the outcome variance.`;
+    return `The fitted line predicts an average ${direction} change of about ${roundTo(slopeMagnitude, 3)} outcome units for each 1-unit increase in the predictor and explains ${fitStrength} of the outcome variance around that line.`;
 };
 
 export const rSquaredToFSquared = (rSquared) => {
@@ -547,6 +563,56 @@ export const calculateSimpleLinearRegressionStats = ({
         slopeInterpretation: buildSlopeInterpretation({
             slope: coreStats.slope,
         }),
+    };
+};
+
+export const calculateRegressionPrediction = ({
+    stats,
+    xValue,
+    confidenceLevel = DEFAULT_CONFIDENCE_LEVEL,
+}) => {
+    if (!stats?.ok) {
+        return null;
+    }
+
+    if (xValue === '' || xValue == null) {
+        return null;
+    }
+
+    const numericX = Number(xValue);
+
+    if (!Number.isFinite(numericX)) {
+        return null;
+    }
+
+    const alpha = 1 - confidenceLevel;
+    const tCritical = studentTCriticalValue({
+        alpha,
+        tails: 2,
+        df: stats.dfError,
+    });
+    const fitted = stats.intercept + (stats.slope * numericX);
+    const meanStandardError = stats.rmse * Math.sqrt(
+        Math.max(EPSILON, (1 / stats.n) + (((numericX - stats.meanX) ** 2) / stats.sumXX))
+    );
+    const predictionStandardError = stats.rmse * Math.sqrt(
+        Math.max(EPSILON, 1 + (1 / stats.n) + (((numericX - stats.meanX) ** 2) / stats.sumXX))
+    );
+
+    return {
+        x: numericX,
+        fitted,
+        meanStandardError,
+        predictionStandardError,
+        meanInterval: {
+            lower: fitted - (tCritical * meanStandardError),
+            upper: fitted + (tCritical * meanStandardError),
+        },
+        predictionInterval: {
+            lower: fitted - (tCritical * predictionStandardError),
+            upper: fitted + (tCritical * predictionStandardError),
+        },
+        isExtrapolation: numericX < stats.xSummary.min || numericX > stats.xSummary.max,
     };
 };
 
@@ -809,9 +875,10 @@ const evaluateTutorCandidate = ({
         penalty += minimumPenalty(diagnostics.fallSteps, 2, 0.9);
         penalty += maximumPenalty(diagnostics.quadraticGain, 0.1, 3.4);
     } else if (preset === 'near_flat') {
-        penalty += maximumPenalty(Math.abs(diagnostics.slope), 0.18, 6);
-        penalty += maximumPenalty(diagnostics.rSquared, 0.08, 6);
-        penalty += maximumPenalty(Math.abs(diagnostics.quartileDelta), 1.3, 2.8);
+        penalty += rangePenalty(diagnostics.slope, 0.08, 0.26, 6);
+        penalty += rangePenalty(diagnostics.rSquared, 0.48, 0.92, 5.2);
+        penalty += minimumPenalty(diagnostics.riseSteps, 2, 0.9);
+        penalty += maximumPenalty(Math.abs(diagnostics.quartileDelta), 2.2, 2.4);
         penalty += maximumPenalty(diagnostics.quadraticGain, 0.08, 3.2);
     } else if (preset === 'nonlinear') {
         penalty += maximumPenalty(diagnostics.rSquared, 0.25, 4.5);
@@ -897,12 +964,12 @@ const REGRESSION_TUTOR_PRESET_CONFIG = {
     },
     near_flat: {
         kind: 'linear',
-        slope: 0.06,
-        intercept: 11,
+        slope: 0.16,
+        intercept: 10.2,
         poolSize: DEFAULT_TUTOR_POOL_SIZE,
-        baseResidual: 1.1,
-        noiseMultiplier: 1.3,
-        outlierOrientation: 'high_x_high_y',
+        baseResidual: 0.14,
+        noiseMultiplier: 0.55,
+        outlierOrientation: 'high_x_low_y',
     },
     nonlinear: {
         kind: 'nonlinear',

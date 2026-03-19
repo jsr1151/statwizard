@@ -22,6 +22,7 @@ import {
     buildRegressionInterpretation,
     buildRegressionTutorBaseDataset,
     buildSlopeInterpretation,
+    calculateRegressionPrediction,
     calculateSimpleLinearRegressionStats,
     deriveRegressionTutorDataset,
     rSquaredToFSquared,
@@ -29,12 +30,12 @@ import {
 import { parseDelimitedTable } from '../../utils/delimitedTable.js';
 
 const TUTOR_PRESETS = [
-    ['positive_low_noise', 'Positive / Low Noise', 'A positive slope with tight scatter around the line.'],
-    ['positive_high_noise', 'Positive / High Noise', 'The slope stays positive, but the fit weakens as noise grows.'],
-    ['negative_low_noise', 'Negative / Low Noise', 'A clear downward line with little residual spread.'],
-    ['negative_high_noise', 'Negative / High Noise', 'The slope stays negative, but predictions get noisier.'],
-    ['near_flat', 'Near-Flat Slope', 'A small slope is not the same thing as a strong predictive model.'],
-    ['nonlinear', 'Nonlinear', 'A curved pattern can make one straight regression line misleading.'],
+    ['positive_low_noise', 'Steep Upward / Tight Fit', 'A clear positive slope with small residuals, so the fitted line predicts well.'],
+    ['positive_high_noise', 'Steep Upward / Noisy Fit', 'The slope stays positive, but larger residuals make the predictions less precise.'],
+    ['negative_low_noise', 'Downward Slope / Tight Fit', 'A clear negative slope with little residual spread around the fitted line.'],
+    ['negative_high_noise', 'Downward Slope / Noisy Fit', 'The slope stays negative, but the line leaves larger prediction errors behind.'],
+    ['near_flat', 'Shallow Slope / Tight Fit', 'A shallow slope can still fit tightly, which helps separate rate of change from model fit.'],
+    ['nonlinear', 'Curved Pattern / Bad Linear Fit', 'A curved pattern can make a straight-line model predict badly even when it still returns a slope.'],
 ];
 
 const SAMPLE_DATASET = `Study Hours,Practice Problems,Exam Score,Stress Level
@@ -125,6 +126,58 @@ const buildLessonBaseRequest = ({
     generationKey,
 });
 
+const clampToRange = (value, min, max) => {
+    const numeric = Number(value);
+
+    if (!Number.isFinite(numeric)) {
+        return min;
+    }
+
+    return Math.min(max, Math.max(min, numeric));
+};
+
+const resolvePredictionStep = (summary) => {
+    if (!summary) {
+        return 0.1;
+    }
+
+    const span = Math.max(0, Number(summary.max) - Number(summary.min));
+
+    if (span <= 1) {
+        return 0.01;
+    }
+
+    if (span <= 10) {
+        return 0.1;
+    }
+
+    return Math.max(0.1, Number((span / 100).toFixed(2)));
+};
+
+const findDefaultPointId = (stats, preferSyntheticOutlier = false) => {
+    if (!stats?.pairs?.length) {
+        return null;
+    }
+
+    if (preferSyntheticOutlier) {
+        const outlier = stats.pairs.find((pair) => pair.isSyntheticOutlier);
+
+        if (outlier) {
+            return outlier.id;
+        }
+    }
+
+    if (stats.influence?.influentialIndex != null) {
+        const matchingInfluentialPair = stats.pairs.find((pair) => pair.index === stats.influence.influentialIndex || pair.id === stats.influence.influentialIndex);
+
+        if (matchingInfluentialPair) {
+            return matchingInfluentialPair.id;
+        }
+    }
+
+    return stats.pairs[Math.floor(stats.pairs.length / 2)]?.id ?? null;
+};
+
 const SimpleLinearRegressionPage = ({
     section,
     darkMode,
@@ -142,6 +195,8 @@ const SimpleLinearRegressionPage = ({
     const [lessonShowPredictionBand, setLessonShowPredictionBand] = useState(false);
     const [lessonShowResiduals, setLessonShowResiduals] = useState(false);
     const [lessonOutlierOn, setLessonOutlierOn] = useState(false);
+    const [lessonPredictionX, setLessonPredictionX] = useState(5);
+    const [lessonSelectedPointId, setLessonSelectedPointId] = useState(null);
     const [lessonBaseRequest, setLessonBaseRequest] = useState(() => buildLessonBaseRequest({
         preset: 'positive_low_noise',
         sampleSize: 36,
@@ -167,6 +222,48 @@ const SimpleLinearRegressionPage = ({
         yValues: (lessonDataset.pairs || []).map((pair) => pair.y),
         confidenceLevel: 0.95,
     }), [lessonDataset]);
+
+    const lessonPredictionStep = useMemo(
+        () => resolvePredictionStep(lessonStats?.xSummary),
+        [lessonStats?.xSummary]
+    );
+
+    const lessonPrediction = useMemo(() => calculateRegressionPrediction({
+        stats: lessonStats,
+        xValue: lessonPredictionX,
+        confidenceLevel: 0.95,
+    }), [lessonStats, lessonPredictionX]);
+
+    const lessonSelectedPair = useMemo(
+        () => lessonStats?.pairs?.find((pair) => pair.id === lessonSelectedPointId || pair.index === lessonSelectedPointId) || null,
+        [lessonStats, lessonSelectedPointId]
+    );
+
+    useEffect(() => {
+        if (!lessonStats?.ok) {
+            setLessonSelectedPointId(null);
+            return;
+        }
+
+        setLessonPredictionX((previous) => clampToRange(
+            Number.isFinite(Number(previous)) ? Number(previous) : lessonStats.meanX,
+            lessonStats.xSummary.min,
+            lessonStats.xSummary.max
+        ));
+        setLessonSelectedPointId((previous) => {
+            const hasPrevious = lessonStats.pairs.some((pair) => pair.id === previous || pair.index === previous);
+
+            if (lessonOutlierOn) {
+                const outlier = lessonStats.pairs.find((pair) => pair.isSyntheticOutlier);
+
+                if (outlier) {
+                    return outlier.id;
+                }
+            }
+
+            return hasPrevious ? previous : findDefaultPointId(lessonStats);
+        });
+    }, [lessonStats, lessonOutlierOn]);
 
     const lessonSubtitle = useMemo(() => {
         const baseDescription = TUTOR_PRESETS.find((preset) => preset[0] === lessonPreset)?.[2]
@@ -209,6 +306,8 @@ const SimpleLinearRegressionPage = ({
     const [calculatorShowLine, setCalculatorShowLine] = useState(true);
     const [calculatorShowBand, setCalculatorShowBand] = useState(false);
     const [calculatorShowPredictionBand, setCalculatorShowPredictionBand] = useState(false);
+    const [calculatorPredictionX, setCalculatorPredictionX] = useState('');
+    const [calculatorSelectedPointId, setCalculatorSelectedPointId] = useState(null);
 
     const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
     const numericColumns = parsedTable.numericColumns || [];
@@ -259,6 +358,35 @@ const SimpleLinearRegressionPage = ({
     const influentialIndex = calculatorStats?.influence?.maxCooksDistance > 0.5 || calculatorStats?.influence?.maxDeltaSlope > 0.35
         ? calculatorStats.influence.influentialIndex
         : null;
+    const calculatorPrediction = useMemo(() => calculateRegressionPrediction({
+        stats: calculatorStats,
+        xValue: calculatorPredictionX,
+        confidenceLevel,
+    }), [calculatorStats, calculatorPredictionX, confidenceLevel]);
+    const calculatorSelectedPair = useMemo(
+        () => calculatorStats?.pairs?.find((pair) => pair.id === calculatorSelectedPointId || pair.index === calculatorSelectedPointId) || null,
+        [calculatorStats, calculatorSelectedPointId]
+    );
+
+    useEffect(() => {
+        if (!calculatorStats?.ok) {
+            setCalculatorSelectedPointId(null);
+            return;
+        }
+
+        setCalculatorPredictionX((previous) => {
+            if (previous === '' || previous == null) {
+                return calculatorStats.meanX;
+            }
+
+            const numeric = Number(previous);
+            return Number.isFinite(numeric) ? numeric : calculatorStats.meanX;
+        });
+        setCalculatorSelectedPointId((previous) => {
+            const hasPrevious = calculatorStats.pairs.some((pair) => pair.id === previous || pair.index === previous);
+            return hasPrevious ? previous : findDefaultPointId(calculatorStats);
+        });
+    }, [calculatorStats]);
 
     const effectSourceStats = currentStats?.ok ? currentStats : (calculatorStats?.ok ? calculatorStats : null);
     const [effectRSquared, setEffectRSquared] = useState(0.25);
@@ -275,7 +403,6 @@ const SimpleLinearRegressionPage = ({
     }, [effectSourceStats?.rSquared, effectSourceStats?.slope]);
 
     const effectFSquared = rSquaredToFSquared(effectRSquared);
-    const effectSignedR = (effectSlope >= 0 ? 1 : -1) * Math.sqrt(Math.max(0, effectRSquared));
     const effectPredictedChange = effectSlope * effectUnitChange;
 
     const onUpload = async (event) => {
@@ -405,7 +532,7 @@ const SimpleLinearRegressionPage = ({
                     <div className="lg:col-span-7 space-y-6">
                         <div className="grid md:grid-cols-3 gap-4">
                             <MetricTile darkMode={darkMode} label="R²" value={formatStat(effectRSquared, 3)} tone="primary" detail={`${formatStat(effectRSquared * 100, 1)}% of the outcome variance is explained by the line.`} />
-                            <MetricTile darkMode={darkMode} label="Equivalent r" value={formatStat(effectSignedR, 3)} detail="In simple regression, the sign of r follows the sign of the slope." />
+                            <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(effectSlope, 3)} detail={buildSlopeInterpretation({ slope: effectSlope, units: 1 })} />
                             <MetricTile darkMode={darkMode} label="Predicted Change" value={formatStat(effectPredictedChange, 3)} detail={buildSlopeInterpretation({ slope: effectSlope, units: effectUnitChange })} />
                         </div>
 
@@ -430,6 +557,18 @@ const SimpleLinearRegressionPage = ({
                             </div>
                             <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 You can have a noticeable slope with a noisy cloud and a modest R², or a tight line with a small slope if the X scale is small. Significance, slope size, and fit are related but not interchangeable.
+                            </p>
+                        </Card>
+
+                        <Card darkMode={darkMode}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <Target size={18} className={darkMode ? 'text-sky-300' : 'text-sky-700'} />
+                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    Slopes depend on units
+                                </h3>
+                            </div>
+                            <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                The slope is a rate of change, so rescaling X changes the slope value and its interpretation. The overall fit stays the same because the line still explains the same share of outcome variance.
                             </p>
                         </Card>
 
@@ -583,8 +722,11 @@ const SimpleLinearRegressionPage = ({
                                 showPredictionBand={calculatorShowPredictionBand}
                                 confidenceLevel={confidenceLevel}
                                 highlightPointIndex={influentialIndex}
+                                selectedPointId={calculatorSelectedPointId}
+                                onPointSelect={setCalculatorSelectedPointId}
+                                predictionTarget={calculatorPrediction}
                                 title="Scatterplot with fitted regression line"
-                                subtitle="Regression models the mean of Y as a straight-line function of X, so the plot comes first."
+                                subtitle="Regression models the mean of the outcome as a straight-line function of the predictor. Click a point to inspect its residual or enter an X value to inspect the model prediction."
                             />
                         </Card>
 
@@ -595,18 +737,82 @@ const SimpleLinearRegressionPage = ({
                         ) : (
                             <>
                                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                    <MetricTile darkMode={darkMode} label="Slope" value={formatStat(calculatorStats.slope, 3)} tone="primary" detail={buildSlopeInterpretation({ slope: calculatorStats.slope, predictorLabel: selectedX || 'X', outcomeLabel: selectedY || 'Y' })} />
-                                    <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(calculatorStats.intercept, 3)} />
+                                    <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(calculatorStats.slope, 3)} tone="primary" detail={buildSlopeInterpretation({ slope: calculatorStats.slope, predictorLabel: selectedX || 'X', outcomeLabel: selectedY || 'Y' })} />
+                                    <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(calculatorStats.intercept, 3)} detail={`Predicted ${selectedY || 'Y'} when ${selectedX || 'X'} = 0.`} />
                                     <MetricTile darkMode={darkMode} label="R²" value={formatStat(calculatorStats.rSquared, 3)} detail={`${formatStat(calculatorStats.rSquared * 100, 1)}% variance explained`} />
                                     <MetricTile darkMode={darkMode} label="Adjusted R²" value={formatStat(calculatorStats.adjustedRSquared, 3)} />
-                                    <MetricTile darkMode={darkMode} label="RMSE" value={formatStat(calculatorStats.rmse, 3)} />
+                                    <MetricTile darkMode={darkMode} label="RMSE" value={formatStat(calculatorStats.rmse, 3)} detail="Typical prediction error around the fitted line." />
                                     <MetricTile darkMode={darkMode} label="n" value={`${calculatorStats.n}`} />
                                 </div>
 
                                 <Card darkMode={darkMode}>
+                                    <div className="grid lg:grid-cols-12 gap-6 items-start">
+                                        <div className="lg:col-span-5 space-y-3">
+                                            <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                Prediction
+                                            </div>
+                                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                Predict the outcome from the fitted line
+                                            </h3>
+                                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                Choose a predictor value and the model will return the fitted mean outcome plus interval estimates.
+                                            </p>
+
+                                            <label className="block">
+                                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                    Predictor Value ({selectedX || 'X'})
+                                                </span>
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    value={Number.isFinite(Number(calculatorPredictionX)) ? calculatorPredictionX : ''}
+                                                    onChange={(event) => setCalculatorPredictionX(event.target.value === '' ? '' : Number(event.target.value))}
+                                                    className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                                />
+                                            </label>
+
+                                            <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                Observed {selectedX || 'X'} range: {formatStat(calculatorStats.xSummary.min, 3)} to {formatStat(calculatorStats.xSummary.max, 3)}
+                                            </p>
+                                        </div>
+
+                                        <div className="lg:col-span-7">
+                                            <div className="grid sm:grid-cols-3 gap-3">
+                                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {selectedY || 'Y'}</div>
+                                                    <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorPrediction?.fitted, 3)}</p>
+                                                </div>
+                                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{Math.round(confidenceLevel * 100)}% Mean CI</div>
+                                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        [{formatStat(calculatorPrediction?.meanInterval?.lower, 3)}, {formatStat(calculatorPrediction?.meanInterval?.upper, 3)}]
+                                                    </p>
+                                                </div>
+                                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{Math.round(confidenceLevel * 100)}% Prediction Interval</div>
+                                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                        [{formatStat(calculatorPrediction?.predictionInterval?.lower, 3)}, {formatStat(calculatorPrediction?.predictionInterval?.upper, 3)}]
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                The fitted line predicts the mean {selectedY || 'Y'} at this {selectedX || 'X'} value. The prediction interval is wider because individual observed outcomes can vary around that mean.
+                                            </p>
+
+                                            {calculatorPrediction?.isExtrapolation && (
+                                                <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                                                    This prediction is outside the observed predictor range, so it is an extrapolation rather than an interpolation.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Card>
+
+                                <Card darkMode={darkMode}>
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Fitted Equation</div>
+                                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Fitted Model</div>
                                             <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{buildEquationText({ stats: calculatorStats, xLabel: selectedX || 'X', yLabel: selectedY || 'Y' })}</h3>
                                             <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                                 {calculatorStats.interpretation}
@@ -655,7 +861,51 @@ const SimpleLinearRegressionPage = ({
                                 </Card>
 
                                 <Card darkMode={darkMode}>
-                                    <RegressionResidualPlot stats={calculatorStats} darkMode={darkMode} />
+                                    <div className="grid lg:grid-cols-12 gap-6 items-start">
+                                        <div className="lg:col-span-4">
+                                            <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Selected Case</div>
+                                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    Residual breakdown
+                                                </h3>
+                                                <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                    Click a point in the scatterplot to inspect how far the observed outcome sits above or below the fitted line.
+                                                </p>
+
+                                                <div className="mt-4 space-y-3">
+                                                    <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{selectedX || 'X'}</div>
+                                                        <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.x, 3)}</p>
+                                                    </div>
+                                                    <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed {selectedY || 'Y'}</div>
+                                                        <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.y, 3)}</p>
+                                                    </div>
+                                                    <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predicted {selectedY || 'Y'}</div>
+                                                        <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.fitted, 3)}</p>
+                                                    </div>
+                                                    <div className={`rounded-xl border p-3 ${darkMode ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Residual</div>
+                                                        <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.residual, 3)}</p>
+                                                    </div>
+                                                </div>
+
+                                                <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                    Residual = observed {selectedY || 'Y'} - predicted {selectedY || 'Y'}. The residual plot helps you see whether those errors stay patternless around zero.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="lg:col-span-8">
+                                            <RegressionResidualPlot
+                                                stats={calculatorStats}
+                                                darkMode={darkMode}
+                                                highlightPointIndex={calculatorSelectedPointId}
+                                                subtitle="Residuals should look roughly patternless around zero when the fitted model is doing a good job. The selected case is highlighted."
+                                            />
+                                        </div>
+                                    </div>
                                 </Card>
                             </>
                         )}
@@ -723,20 +973,88 @@ const SimpleLinearRegressionPage = ({
                             showResiduals={lessonShowResiduals}
                             confidenceLevel={0.95}
                             highlightPointIndex={lessonStats?.influence?.influentialIndex}
-                            title="Interactive regression plot"
-                            subtitle={lessonSubtitle}
+                            selectedPointId={lessonSelectedPointId}
+                            onPointSelect={setLessonSelectedPointId}
+                            predictionTarget={lessonPrediction}
+                            title="Interactive fitted-model plot"
+                            subtitle={`${lessonSubtitle} Click a point to inspect its residual, or move the prediction target to see what the model says at a chosen X value.`}
                         />
                     </Card>
 
                     {lessonShowResiduals && lessonStats?.ok && (
                         <Card darkMode={darkMode}>
-                            <RegressionResidualPlot stats={lessonStats} darkMode={darkMode} />
+                            <RegressionResidualPlot
+                                stats={lessonStats}
+                                darkMode={darkMode}
+                                highlightPointIndex={lessonSelectedPointId}
+                                subtitle="Residuals are observed Y minus predicted Y. The selected case is highlighted so you can connect the scatterplot to the error pattern."
+                            />
                         </Card>
                     )}
 
+                    <div className="grid xl:grid-cols-2 gap-6">
+                        <Card darkMode={darkMode}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <TrendingUp size={18} className={darkMode ? 'text-sky-300' : 'text-sky-700'} />
+                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    Prediction spotlight
+                                </h3>
+                            </div>
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                At <span className="font-black">X = {formatStat(lessonPrediction?.x, 2)}</span>, the fitted line predicts <span className="font-black">Y = {formatStat(lessonPrediction?.fitted, 3)}</span>.
+                            </p>
+                            <div className="mt-4 grid sm:grid-cols-2 gap-3">
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-sky-300' : 'text-sky-700'}`}>Mean CI</div>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                        [{formatStat(lessonPrediction?.meanInterval?.lower, 3)}, {formatStat(lessonPrediction?.meanInterval?.upper, 3)}]
+                                    </p>
+                                </div>
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-sky-300' : 'text-sky-700'}`}>Prediction Interval</div>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                        [{formatStat(lessonPrediction?.predictionInterval?.lower, 3)}, {formatStat(lessonPrediction?.predictionInterval?.upper, 3)}]
+                                    </p>
+                                </div>
+                            </div>
+                            <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                Regression is using the fitted line to estimate the mean outcome at a chosen predictor value, not just describing how two variables move together.
+                            </p>
+                        </Card>
+
+                        <Card darkMode={darkMode}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <Target size={18} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
+                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    Residual spotlight
+                                </h3>
+                            </div>
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                Click any point to compare its observed outcome with what the fitted line predicted.
+                            </p>
+                            <div className="mt-4 grid sm:grid-cols-3 gap-3">
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed Y</div>
+                                    <p className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.y, 3)}</p>
+                                </div>
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predicted Y</div>
+                                    <p className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.fitted, 3)}</p>
+                                </div>
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Residual</div>
+                                    <p className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.residual, 3)}</p>
+                                </div>
+                            </div>
+                            <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                Residual = observed Y - predicted Y. Small residuals mean the line predicted that case well; large residuals mean the model missed by more.
+                            </p>
+                        </Card>
+                    </div>
+
                     <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                        <MetricTile darkMode={darkMode} label="Slope" value={formatStat(lessonStats?.slope, 3)} tone="primary" />
-                        <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(lessonStats?.intercept, 3)} />
+                        <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(lessonStats?.slope, 3)} tone="primary" detail={buildSlopeInterpretation({ slope: lessonStats?.slope, predictorLabel: 'X', outcomeLabel: 'Y' })} />
+                        <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(lessonStats?.intercept, 3)} detail="Predicted Y when X = 0." />
                         <MetricTile darkMode={darkMode} label="R²" value={formatStat(lessonStats?.rSquared, 3)} />
                         <MetricTile darkMode={darkMode} label="n" value={`${lessonStats?.n || 0}`} detail={lessonStats?.interpretation || 'Waiting for data'} />
                     </div>
@@ -752,8 +1070,8 @@ const SimpleLinearRegressionPage = ({
                             {lessonPreset === 'nonlinear'
                                 ? 'The line is still fitted, but the curved pattern shows why one straight regression model can be misleading even when it returns a slope and an R².'
                                 : lessonOutlierOn
-                                    ? 'Because the outlier is being added to the same underlying sample, you can see exactly how one influential point changes the slope, the residuals, and the fit.'
-                                    : buildRegressionInterpretation(lessonStats)}
+                                    ? 'Because the outlier is being added to the same underlying sample, you can see exactly how one influential case changes the slope, the selected residual, and the predictions coming off the fitted line.'
+                                    : `${buildRegressionInterpretation(lessonStats)} Slope answers rate of change; R² answers how tightly the points follow that model.`}
                         </p>
                     </Card>
                 </div>
@@ -764,7 +1082,7 @@ const SimpleLinearRegressionPage = ({
                             <SlidersHorizontal size={18} className={darkMode ? 'text-indigo-300' : 'text-indigo-700'} />
                             <div>
                                 <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Presets</div>
-                                <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Explore the model</h3>
+                                <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Explore fitted models</h3>
                             </div>
                         </div>
 
@@ -792,13 +1110,29 @@ const SimpleLinearRegressionPage = ({
                                 </div>
                                 <input type="range" min="0" max="1" step="0.01" value={lessonNoise} onChange={(event) => setLessonNoise(Number(event.target.value))} className="mt-2 w-full accent-indigo-500" />
                             </div>
+
+                            <div>
+                                <div className="flex justify-between items-center">
+                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predict Y at X</span>
+                                    <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonPredictionX, 2)}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={lessonStats?.xSummary?.min ?? 0}
+                                    max={lessonStats?.xSummary?.max ?? 10}
+                                    step={lessonPredictionStep}
+                                    value={lessonPredictionX}
+                                    onChange={(event) => setLessonPredictionX(Number(event.target.value))}
+                                    className="mt-2 w-full accent-indigo-500"
+                                />
+                            </div>
                         </div>
 
                         <div className="mt-6 grid grid-cols-2 gap-3">
+                            <button onClick={() => setLessonShowResiduals((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowResiduals ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowResiduals ? 'Hide Residual Overlay' : 'Show Residual Overlay'}</button>
                             <button onClick={() => setLessonShowLine((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowLine ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowLine ? 'Hide Line' : 'Show Line'}</button>
-                            <button onClick={() => setLessonShowBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowBand ? 'Hide Band' : 'Show Band'}</button>
-                            <button onClick={() => setLessonShowPredictionBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowPredictionBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowPredictionBand ? 'Hide PI' : 'Show PI'}</button>
-                            <button onClick={() => setLessonShowResiduals((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowResiduals ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowResiduals ? 'Hide Residuals' : 'Show Residuals'}</button>
+                            <button onClick={() => setLessonShowBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowBand ? 'Hide Mean Band' : 'Show Mean Band'}</button>
+                            <button onClick={() => setLessonShowPredictionBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonShowPredictionBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonShowPredictionBand ? 'Hide Prediction Interval' : 'Show Prediction Interval'}</button>
                             <button onClick={() => setLessonOutlierOn((value) => !value)} className={`col-span-2 rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${lessonOutlierOn ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{lessonOutlierOn ? 'Remove Outlier' : 'Add Outlier'}</button>
                             <button onClick={regenerateLessonSample} className={`col-span-2 inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-indigo-500'}`}>
                                 <RefreshCw size={14} />
@@ -818,12 +1152,14 @@ const SimpleLinearRegressionPage = ({
 
                         <div className="space-y-3">
                             {[
-                                'The regression line models the mean of Y as X changes.',
-                                'Slope and intercept answer different questions.',
-                                'Residuals are prediction errors around the fitted line.',
+                                'The fitted line models the mean of Y as the predictor changes.',
+                                'Slope tells you the rate of change in predicted Y per 1-unit increase in X.',
+                                'Intercept tells you the model prediction when X = 0.',
+                                'Residuals are observed Y minus predicted Y.',
                                 'R² summarizes fit, not causation.',
-                                'A strong slope is not the same thing as a strong fit.',
-                                'Outliers and nonlinear patterns can make one straight line misleading.',
+                                'A steep slope is not the same thing as a strong fit.',
+                                'A shallow slope can still fit tightly if the points stay close to the line.',
+                                'Outliers and nonlinear patterns can make a straight-line model predict poorly.',
                             ].map((idea) => (
                                 <div key={idea} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                     <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{idea}</p>

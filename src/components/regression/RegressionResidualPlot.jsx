@@ -26,6 +26,7 @@ const formatTick = (value) => {
 const RegressionResidualPlot = ({
     stats = null,
     darkMode,
+    highlightPointIndex = null,
     title = 'Residual Plot',
     subtitle = 'Residuals should look roughly patternless around zero when the simple linear model is doing a good job.',
 }) => {
@@ -56,7 +57,9 @@ const RegressionResidualPlot = ({
                 id: pair.id,
                 x: toSvgX(pair.fitted),
                 y: toSvgY(pair.residual),
-                isHighlighted: pair.index === stats.influence?.influentialIndex || pair.id === stats.influence?.influentialIndex,
+                isHighlighted: highlightPointIndex == null
+                    ? (pair.index === stats.influence?.influentialIndex || pair.id === stats.influence?.influentialIndex)
+                    : (pair.index === highlightPointIndex || pair.id === highlightPointIndex),
             })),
             zeroY,
             xTicks: Array.from({ length: 5 }, (_, index) => {
@@ -76,7 +79,7 @@ const RegressionResidualPlot = ({
                 };
             }),
         };
-    }, [stats]);
+    }, [stats, highlightPointIndex]);
 
     if (!geometry) {
         return (
