@@ -13,6 +13,16 @@ const EFFECT_CURVE_MARGIN_RATIO = 0.08;
 const getMetricLabel = (result, metricId, fallback) =>
     result?.metrics?.find((metric) => metric.id === metricId)?.label || fallback;
 
+const formatCovariateText = (covariateCount) => {
+    const resolvedCovariateCount = Number(covariateCount);
+
+    if (!(resolvedCovariateCount > 0)) {
+        return '';
+    }
+
+    return `${Math.round(resolvedCovariateCount)} covariate${Math.round(resolvedCovariateCount) === 1 ? '' : 's'}`;
+};
+
 const isFDesign = (result) =>
     result?.visualizer?.kind === 'f_distribution' ||
     (
@@ -130,6 +140,9 @@ const buildPostHocInputs = ({ result, effectSize, sampleSize }) => {
 
     if (isFDesign(result)) {
         baseInputs.groupCount = Math.max(2, Math.round(Number(result.groupCount) || 2));
+        if (Number.isFinite(Number(result.covariateCount))) {
+            baseInputs.covariateCount = Math.max(0, Math.round(Number(result.covariateCount)));
+        }
     }
 
     if (isGroupBasedDesign(result)) {
@@ -235,7 +248,13 @@ const buildSampleCurve = ({ testConfig, result }) => {
     const currentSampleSize = Math.max(2, Math.round(Number(result.sampleSize)));
     const minimumSampleSize = isGroupBasedDesign(result)
         ? 4
-        : (isFDesign(result) ? Math.max(4, Math.round(Number(result.groupCount) || 2) * 2) : 2);
+        : (isFDesign(result)
+            ? Math.max(
+                4,
+                Math.round(Number(result.groupCount) || 2) * 2,
+                Math.round(Number(result.groupCount) || 2) + Math.max(0, Math.round(Number(result.covariateCount) || 0)) + 1
+            )
+            : 2);
     const lowerBound = Math.max(minimumSampleSize, Math.floor(currentSampleSize * 0.25));
     const upperBound = Math.max(
         currentSampleSize,
@@ -277,11 +296,12 @@ const buildSampleCurve = ({ testConfig, result }) => {
     const ratioNote = isGroupBasedDesign(result)
         ? ` and allocation ratio about ${roundTo(getCurrentAllocationRatio(result), 2)}`
         : '';
+    const covariateNote = formatCovariateText(result.covariateCount);
     const assumptions = isFDesign(result)
-        ? `Holding ${effectLabel} = ${roundTo(result.effectSize, 3)}, alpha = ${roundTo(result.alpha, 3)}, ${Math.round(Number(result.groupCount) || 2)} groups, and a balanced split across groups.`
+        ? `Holding ${effectLabel} = ${roundTo(result.effectSize, 3)}, alpha = ${roundTo(result.alpha, 3)}, ${Math.round(Number(result.groupCount) || 2)} groups${covariateNote ? `, ${covariateNote},` : ','} and a balanced split across groups.`
         : `Holding ${effectLabel} = ${roundTo(result.effectSize, 3)}, alpha = ${roundTo(result.alpha, 3)}, ${describeTailSetting(result.tails, result.direction)}${ratioNote}.`;
     const currentPointSummary = isFDesign(result)
-        ? `${sampleLabel} = ${currentSampleSize} gives power ${roundTo(result.actualPower, 4)} with ${Math.round(Number(result.groupCount) || 2)} balanced groups${Number.isFinite(Number(result?.perGroupSampleSize)) ? ` (~${roundTo(result.perGroupSampleSize, result.isPerGroupExact ? 0 : 2)} per group)` : ''}.`
+        ? `${sampleLabel} = ${currentSampleSize} gives power ${roundTo(result.actualPower, 4)} with ${Math.round(Number(result.groupCount) || 2)} balanced groups${Number.isFinite(Number(result?.perGroupSampleSize)) ? ` (~${roundTo(result.perGroupSampleSize, result.isPerGroupExact ? 0 : 2)} per group)` : ''}${covariateNote ? ` and ${covariateNote}` : ''}.`
         : `${sampleLabel} = ${currentSampleSize} gives power ${roundTo(result.actualPower, 4)}.`;
 
     return {
@@ -334,13 +354,14 @@ const buildEffectCurve = ({ testConfig, result }) => {
 
     const effectLabel = getMetricLabel(result, 'effect_size', 'Effect Size');
     const sampleLabel = getMetricLabel(result, 'sample_size', 'Total N');
+    const covariateNote = formatCovariateText(result.covariateCount);
     const sampleNote = isGroupBasedDesign(result)
         ? `${sampleLabel} = ${result.sampleSize} (n1 = ${result.group1SampleSize}, n2 = ${result.group2SampleSize})`
         : (isFDesign(result)
-            ? `${sampleLabel} = ${result.sampleSize} across ${Math.round(Number(result.groupCount) || 2)} balanced groups${Number.isFinite(Number(result?.perGroupSampleSize)) ? ` (~${roundTo(result.perGroupSampleSize, result.isPerGroupExact ? 0 : 2)} per group)` : ''}`
+            ? `${sampleLabel} = ${result.sampleSize} across ${Math.round(Number(result.groupCount) || 2)} balanced groups${Number.isFinite(Number(result?.perGroupSampleSize)) ? ` (~${roundTo(result.perGroupSampleSize, result.isPerGroupExact ? 0 : 2)} per group)` : ''}${covariateNote ? ` with ${covariateNote}` : ''}`
             : `${sampleLabel} = ${result.sampleSize}`);
     const assumptions = isFDesign(result)
-        ? `Holding ${sampleNote}, alpha = ${roundTo(result.alpha, 3)}, and the same balanced one-way ANOVA group structure.`
+        ? `Holding ${sampleNote}, alpha = ${roundTo(result.alpha, 3)}, and the same balanced F-family design assumptions.`
         : `Holding ${sampleNote}, alpha = ${roundTo(result.alpha, 3)}, and ${describeTailSetting(result.tails, result.direction)}.`;
 
     return {

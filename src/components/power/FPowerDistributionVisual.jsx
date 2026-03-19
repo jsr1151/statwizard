@@ -80,12 +80,18 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
     const [showAlternative, setShowAlternative] = useState(true);
     const [showLabels, setShowLabels] = useState(true);
     const groupCount = Math.max(2, Math.round(Number(powerMeta?.groupCount) || 2));
+    const covariateCount = Math.max(0, Math.round(Number(powerMeta?.covariateCount) || 0));
     const perGroupSampleSize = Number(powerMeta?.perGroupSampleSize);
+    const designLabel = powerMeta?.designLabel || 'Balanced F-test';
+    const designScopeNote = powerMeta?.designScopeNote || '';
     const perGroupText = Number.isFinite(perGroupSampleSize)
         ? (powerMeta?.isPerGroupExact
             ? `${Math.round(perGroupSampleSize)} per group`
             : `about ${roundTo(perGroupSampleSize, 2)} per group`)
         : 'balanced groups';
+    const covariateText = covariateCount > 0
+        ? ` with ${covariateCount} covariate${covariateCount === 1 ? '' : 's'}`
+        : '';
 
     const chartModel = useMemo(() => {
         const criticalValue = Number(powerMeta?.criticalValue);
@@ -210,7 +216,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                    Balanced one-way ANOVA view: central F under H0 and noncentral F under H1 for {groupCount} groups ({perGroupText}).
+                    {designLabel}: central F under H0 and noncentral F under H1 for {groupCount} groups ({perGroupText}){covariateText}.{designScopeNote ? ` ${designScopeNote}` : ''}
                 </div>
                 <div className={`rounded-xl border p-1 flex gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                     <button

@@ -20,6 +20,7 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
             result.group1SampleSize,
             result.group2SampleSize,
             result.groupCount,
+            result.covariateCount,
             result.perGroupSampleSize,
             result.effectSize,
             result.criticalValue,

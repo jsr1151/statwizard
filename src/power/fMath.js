@@ -153,16 +153,16 @@ export const noncentralFQuantile = ({ probability, numeratorDf, denominatorDf, n
     });
 };
 
-export const oneWayAnovaNumeratorDf = ({ groupCount }) =>
+export const fixedEffectsNumeratorDf = ({ groupCount }) =>
     Math.max(1, Math.round(groupCount) - 1);
 
-export const oneWayAnovaDenominatorDf = ({ sampleSize, groupCount }) =>
-    Math.max(1, Math.round(sampleSize) - Math.round(groupCount));
+export const ancovaDenominatorDf = ({ sampleSize, groupCount, covariateCount = 0 }) =>
+    Math.max(1, Math.round(sampleSize) - Math.round(groupCount) - Math.max(0, Math.round(covariateCount)));
 
-export const oneWayAnovaNoncentrality = ({ effectSize, sampleSize }) =>
+export const fixedEffectsNoncentrality = ({ effectSize, sampleSize }) =>
     Math.max(0, Number(sampleSize) * (Math.abs(effectSize) ** 2));
 
-export const oneWayAnovaPerGroupSize = ({ sampleSize, groupCount }) => {
+export const balancedFPerGroupSize = ({ sampleSize, groupCount }) => {
     const resolvedGroups = Math.max(2, Math.round(groupCount));
     const resolvedSampleSize = Math.max(resolvedGroups + 1, Math.round(sampleSize));
     const perGroupSampleSize = resolvedSampleSize / resolvedGroups;
@@ -172,6 +172,24 @@ export const oneWayAnovaPerGroupSize = ({ sampleSize, groupCount }) => {
         isExact: Math.abs(perGroupSampleSize - Math.round(perGroupSampleSize)) < 1e-9,
     };
 };
+
+export const oneWayAnovaNumeratorDf = ({ groupCount }) =>
+    fixedEffectsNumeratorDf({ groupCount });
+
+export const ancovaNumeratorDf = ({ groupCount }) =>
+    fixedEffectsNumeratorDf({ groupCount });
+
+export const oneWayAnovaDenominatorDf = ({ sampleSize, groupCount }) =>
+    ancovaDenominatorDf({ sampleSize, groupCount, covariateCount: 0 });
+
+export const oneWayAnovaNoncentrality = ({ effectSize, sampleSize }) =>
+    fixedEffectsNoncentrality({ effectSize, sampleSize });
+
+export const ancovaNoncentrality = ({ effectSize, sampleSize }) =>
+    fixedEffectsNoncentrality({ effectSize, sampleSize });
+
+export const oneWayAnovaPerGroupSize = ({ sampleSize, groupCount }) =>
+    balancedFPerGroupSize({ sampleSize, groupCount });
 
 export const fPowerFromNoncentrality = ({
     criticalValue,

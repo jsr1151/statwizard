@@ -17,6 +17,7 @@ Current status:
 - `paired-samples-t.json` seeds the format for the new paired-samples t solver
 - `independent-samples-t.json` seeds the format for the new independent-t solver
 - `one-way-anova.json` seeds the format for the new one-way ANOVA solver
+- `ancova.json` seeds the format for the new ANCOVA solver
 
 These first fixtures are baseline compatibility cases generated from the current shared solver implementation. They are intended to be replaced or augmented with pinned G*Power reference outputs as the parity workflow matures.
 

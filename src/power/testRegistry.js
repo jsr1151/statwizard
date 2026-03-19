@@ -3,6 +3,7 @@ import { solveOneSampleTPower } from './solvers/oneSampleT.js';
 import { solvePairedTPower } from './solvers/pairedT.js';
 import { solveIndependentTPower } from './solvers/independentT.js';
 import { solveOneWayAnovaPower } from './solvers/oneWayAnova.js';
+import { solveAncovaPower } from './solvers/ancova.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
 
@@ -157,6 +158,25 @@ const buildOneWayAnovaDefaults = (stats = {}, mode = 'a_priori') => {
         powerTarget: 0.8,
         effectSize: Number(effectSize.toFixed(3)),
         groupCount,
+        sampleSize,
+    };
+};
+
+const buildAncovaDefaults = (stats = {}, mode = 'a_priori') => {
+    const groupCount = Math.max(2, Math.round(stats?.k ?? 3));
+    const covariateCount = Math.max(0, Math.round(stats?.dfCov ?? 1));
+    const sampleSize = Math.max(groupCount * 2, Math.round(stats?.nTotal ?? stats?.N ?? (groupCount * 20)));
+    const partialEtaSquared = Number(stats?.pes_grp);
+    const effectSizeFromStats = etaSquaredToCohensF(partialEtaSquared);
+    const effectSize = effectSizeFromStats > 0 ? effectSizeFromStats : 0.25;
+
+    return {
+        mode,
+        alpha: 0.05,
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        groupCount,
+        covariateCount,
         sampleSize,
     };
 };
@@ -412,6 +432,48 @@ const oneWayAnovaEffectTransform = {
             support: [
                 {
                     label: 'Eta Squared',
+                    value: eta2.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const ancovaEffectTransform = {
+    primaryMetricLabel: "Cohen's f",
+    description: "For this first ANCOVA slice, Cohen's f refers to the adjusted group effect after controlling for the covariates in a fixed-effects ANCOVA model.",
+    fields: [
+        {
+            id: 'partialEtaSquared',
+            label: 'Partial Eta Squared (Group Effect)',
+            type: 'number',
+            step: 0.001,
+            min: 0,
+            max: 0.999,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        partialEtaSquared: Number((Number.isFinite(Number(stats?.pes_grp)) ? Number(stats.pes_grp) : cohensFToEtaSquared(0.25)).toFixed(3)),
+    }),
+    compute: ({ partialEtaSquared }) => {
+        const eta2 = Number(partialEtaSquared);
+
+        if (!(eta2 >= 0) || !(eta2 < 1)) {
+            return {
+                ok: false,
+                error: 'Partial eta squared must be between 0 and 1.',
+            };
+        }
+
+        const effectSize = etaSquaredToCohensF(eta2);
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: "Cohen's f",
+            summary: `f = sqrt(partial eta^2 / (1 - partial eta^2)) = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Partial Eta Squared',
                     value: eta2.toFixed(4),
                 },
             ],
@@ -1016,14 +1078,163 @@ export const POWER_TEST_REGISTRY = [
             buildInitialInputs: buildOneWayAnovaDefaults,
         },
     },
-    createPlannedTest({
+    {
         id: 'ancova',
         family: 'anova',
         slug: 'ancova',
         label: 'ANCOVA',
         stepId: 'res_ancova',
-        gpowerTest: 'ANCOVA: Fixed effects, main effects and interactions',
-    }),
+        power: {
+            status: 'available',
+            gpowerFamily: 'F tests',
+            gpowerTest: 'ANCOVA: Fixed effects, main effects and interactions',
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (f)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                        helperText: "For this ANCOVA slice, Cohen's f is the adjusted group-effect size after controlling for the covariates. Rough anchors are 0.10 small, 0.25 medium, and 0.40 large.",
+                    },
+                    {
+                        id: 'groupCount',
+                        label: 'Number of Groups',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100,
+                        helperText: 'Enter the number of independent groups or treatment conditions. This first ANCOVA power slice assumes balanced groups.',
+                    },
+                    {
+                        id: 'covariateCount',
+                        label: 'Number of Covariates',
+                        type: 'number',
+                        step: 1,
+                        min: 0,
+                        max: 25,
+                        helperText: 'Enter how many continuous covariates are included as fixed adjustment terms. This first slice assumes a common-slope ANCOVA with no group-by-covariate interaction in the power model.',
+                    },
+                ],
+                post_hoc: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'groupCount',
+                        label: 'Number of Groups',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100,
+                        helperText: 'Enter the number of independent groups or treatment conditions. This first ANCOVA power slice assumes balanced groups.',
+                    },
+                    {
+                        id: 'covariateCount',
+                        label: 'Number of Covariates',
+                        type: 'number',
+                        step: 1,
+                        min: 0,
+                        max: 25,
+                        helperText: 'Enter how many continuous covariates are included as fixed adjustment terms. This first slice assumes a common-slope ANCOVA with no group-by-covariate interaction in the power model.',
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                        helperText: 'Total N is interpreted as evenly split across groups. If it is not divisible by the group count, the per-group N shown in the results is an approximate balanced average. Covariates reduce the denominator degrees of freedom in this ANCOVA slice.',
+                    },
+                    {
+                        id: 'effectSize',
+                        label: 'Effect Size (f)',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                        helperText: "For this ANCOVA slice, Cohen's f is the adjusted group-effect size after controlling for the covariates. Rough anchors are 0.10 small, 0.25 medium, and 0.40 large.",
+                    },
+                ],
+                sensitivity: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'groupCount',
+                        label: 'Number of Groups',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100,
+                        helperText: 'Enter the number of independent groups or treatment conditions. This first ANCOVA power slice assumes balanced groups.',
+                    },
+                    {
+                        id: 'covariateCount',
+                        label: 'Number of Covariates',
+                        type: 'number',
+                        step: 1,
+                        min: 0,
+                        max: 25,
+                        helperText: 'Enter how many continuous covariates are included as fixed adjustment terms. This first slice assumes a common-slope ANCOVA with no group-by-covariate interaction in the power model.',
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                        helperText: 'Total N is interpreted as evenly split across groups. If it is not divisible by the group count, the per-group N shown in the results is an approximate balanced average. Covariates reduce the denominator degrees of freedom in this ANCOVA slice.',
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: ancovaEffectTransform,
+            solver: solveAncovaPower,
+            availableVisualizerModes: ['test', 'power', 'curve'],
+            buildInitialInputs: buildAncovaDefaults,
+        },
+    },
 ];
 
 export const POWER_TEST_BY_STEP_ID = Object.fromEntries(

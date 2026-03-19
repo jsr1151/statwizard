@@ -1,0 +1,96 @@
+{
+  "formatVersion": 2,
+  "testId": "ancova",
+  "parityTarget": {
+    "tool": "G*Power",
+    "version": "3.1.9.7",
+    "status": "pending_external_parity_replacement"
+  },
+  "reference": {
+    "source": "statwizard_baseline_2026_03_18",
+    "notes": "Baseline values generated from the live shared StatWizard ANCOVA solver. Replace or augment with G*Power 3.1.9.7 values as parity fixtures mature."
+  },
+  "defaultTolerances": {
+    "actualPower": 0.000001,
+    "criticalValue": 0.000001,
+    "numeratorDf": 0.000001,
+    "denominatorDf": 0.000001,
+    "noncentrality": 0.000001,
+    "effectSize": 0.000001,
+    "perGroupSampleSize": 0.000001
+  },
+  "cases": [
+    {
+      "id": "a_priori_alpha_005_f_025_power_08_groups_3_covariates_1",
+      "inputs": {
+        "mode": "a_priori",
+        "alpha": 0.05,
+        "effectSize": 0.25,
+        "powerTarget": 0.8,
+        "groupCount": 3,
+        "covariateCount": 1
+      },
+      "expected": {
+        "sampleSize": 159,
+        "groupCount": 3,
+        "covariateCount": 1,
+        "perGroupSampleSize": 53,
+        "isPerGroupExact": true,
+        "actualPower": 0.8048353077806395,
+        "criticalValue": 3.0543849766254425,
+        "numeratorDf": 2,
+        "denominatorDf": 155,
+        "noncentrality": 9.9375,
+        "effectSize": 0.25
+      }
+    },
+    {
+      "id": "post_hoc_alpha_005_f_025_n_60_groups_3_covariates_1",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.05,
+        "effectSize": 0.25,
+        "sampleSize": 60,
+        "groupCount": 3,
+        "covariateCount": 1
+      },
+      "expected": {
+        "sampleSize": 60,
+        "groupCount": 3,
+        "covariateCount": 1,
+        "perGroupSampleSize": 20,
+        "isPerGroupExact": true,
+        "actualPower": 0.37411767154163267,
+        "criticalValue": 3.161861151456833,
+        "numeratorDf": 2,
+        "denominatorDf": 56,
+        "noncentrality": 3.75,
+        "effectSize": 0.25
+      }
+    },
+    {
+      "id": "sensitivity_alpha_005_power_08_n_60_groups_3_covariates_1",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.05,
+        "powerTarget": 0.8,
+        "sampleSize": 60,
+        "groupCount": 3,
+        "covariateCount": 1
+      },
+      "expected": {
+        "sampleSize": 60,
+        "groupCount": 3,
+        "covariateCount": 1,
+        "perGroupSampleSize": 20,
+        "isPerGroupExact": true,
+        "actualPower": 0.8000055904127211,
+        "criticalValue": 3.161861151456833,
+        "numeratorDf": 2,
+        "denominatorDf": 56,
+        "noncentrality": 10.169382808171214,
+        "effectSize": 0.41169128417968753
+      }
+    }
+  ]
+}
