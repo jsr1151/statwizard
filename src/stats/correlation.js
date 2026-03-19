@@ -3,6 +3,12 @@ import { studentTCDF, studentTCriticalValue } from '../power/tMath.js';
 
 const EPSILON = 1e-12;
 const CORRELATION_LIMIT = 0.999999;
+const DEFAULT_TUTOR_REFERENCE_SAMPLE_SIZE = 36;
+const DEFAULT_TUTOR_REFERENCE_NOISE = 0.28;
+const DEFAULT_TUTOR_CONTEXT_DISPLAY_POINTS = 220;
+const DEFAULT_TUTOR_POOL_SIZE = 180;
+const RESTRICTED_RANGE_FULL_POOL_SIZE = 720;
+const TUTOR_ACCEPTANCE_ATTEMPTS = 72;
 
 const clampCorrelation = (value, limit = CORRELATION_LIMIT) => {
     const numeric = Number(value);
@@ -155,95 +161,6 @@ const buildTutorAxisValues = ({
     }).sort((left, right) => left - right)
 );
 
-const buildLinearTutorPairs = ({
-    sampleSize,
-    noise,
-    slope,
-    seedKey,
-    residualBase,
-    residualNoise,
-    span = 1.35,
-}) => {
-    const random = createSeededRandom(hashSeedParts(seedKey, sampleSize, roundTo(noise, 3)));
-    const residualScale = residualBase + (noise * residualNoise);
-    const xs = buildTutorAxisValues({
-        sampleSize,
-        random,
-        span,
-    });
-
-    return xs.map((x, index) => ({
-        id: index,
-        x,
-        y: clampToRange(
-            (slope * x) + (sampleStandardNormal(random) * residualScale),
-            -2.2,
-            2.2
-        ),
-    }));
-};
-
-const buildNearZeroTutorPairs = ({
-    sampleSize,
-    noise,
-    seedKey,
-}) => {
-    const threshold = Math.min(0.12, 0.06 + (0.18 / Math.sqrt(sampleSize)));
-    let bestPairs = [];
-    let bestMagnitude = Number.POSITIVE_INFINITY;
-
-    for (let attempt = 0; attempt < 48; attempt += 1) {
-        const random = createSeededRandom(hashSeedParts(seedKey, sampleSize, roundTo(noise, 3), attempt));
-        const spreadX = 0.82 + (noise * 0.18);
-        const spreadY = 0.82 + (noise * 0.22);
-        const candidatePairs = Array.from({ length: sampleSize }, (_, index) => ({
-            id: index,
-            x: clampToRange(sampleStandardNormal(random) * spreadX, -1.55, 1.55),
-            y: clampToRange(sampleStandardNormal(random) * spreadY, -1.55, 1.55),
-        }));
-        const candidateR = Math.abs(calculateSimpleCorrelationFromPairs(candidatePairs) ?? 1);
-
-        if (candidateR < bestMagnitude) {
-            bestPairs = candidatePairs;
-            bestMagnitude = candidateR;
-        }
-
-        if (candidateR <= threshold) {
-            return candidatePairs;
-        }
-    }
-
-    return bestPairs;
-};
-
-const buildNonlinearTutorPairs = ({
-    sampleSize,
-    noise,
-    seedKey,
-}) => {
-    const random = createSeededRandom(hashSeedParts(seedKey, sampleSize, roundTo(noise, 3)));
-    const xs = buildTutorAxisValues({
-        sampleSize,
-        random,
-        span: 1.4,
-        jitterScale: 0.045,
-    });
-    const residualScale = 0.08 + (noise * 0.16);
-
-    return xs.map((x, index) => {
-        const scaledX = x / 1.4;
-        return {
-            id: index,
-            x,
-            y: clampToRange(
-                (1.28 * ((scaledX ** 2) - 0.42)) + (sampleStandardNormal(random) * residualScale),
-                -2.2,
-                2.2
-            ),
-        };
-    });
-};
-
 const takeEvenlySpacedPairs = (pairs = [], targetCount = pairs.length) => {
     if (pairs.length <= targetCount) {
         return pairs.map((pair, index) => ({
@@ -260,6 +177,279 @@ const takeEvenlySpacedPairs = (pairs = [], targetCount = pairs.length) => {
             id: index,
         };
     });
+};
+
+const buildNestedTutorSelectionOrder = (count) => {
+    if (count <= 0) {
+        return [];
+    }
+
+    if (count === 1) {
+        return [0];
+    }
+
+    const order = [0, count - 1];
+    const selected = new Set(order);
+
+    while (order.length < count) {
+        const sortedSelected = Array.from(selected).sort((left, right) => left - right);
+        let bestGap = -1;
+        let bestIndex = null;
+
+        for (let index = 0; index < sortedSelected.length - 1; index += 1) {
+            const left = sortedSelected[index];
+            const right = sortedSelected[index + 1];
+
+            if (right - left <= 1) {
+                continue;
+            }
+
+            const candidate = Math.floor((left + right) / 2);
+            const gap = right - left;
+
+            if (!selected.has(candidate) && gap > bestGap) {
+                bestGap = gap;
+                bestIndex = candidate;
+            }
+        }
+
+        if (bestIndex == null) {
+            for (let index = 0; index < count; index += 1) {
+                if (!selected.has(index)) {
+                    bestIndex = index;
+                    break;
+                }
+            }
+        }
+
+        if (bestIndex == null) {
+            break;
+        }
+
+        selected.add(bestIndex);
+        order.push(bestIndex);
+    }
+
+    return order;
+};
+
+const takeNestedTutorPairs = (pairs = [], targetCount = pairs.length) => {
+    if (pairs.length <= targetCount) {
+        return pairs.map((pair, index) => ({
+            ...pair,
+            id: index,
+        }));
+    }
+
+    const selectedIndices = new Set(
+        buildNestedTutorSelectionOrder(pairs.length).slice(0, targetCount)
+    );
+
+    return pairs
+        .filter((_, index) => selectedIndices.has(index))
+        .map((pair, index) => ({
+            ...pair,
+            id: index,
+        }));
+};
+
+const buildLinearTutorSource = ({
+    pointCount,
+    slope,
+    seed,
+    span = 1.35,
+    jitterScale = 0.065,
+}) => {
+    const random = createSeededRandom(seed);
+    const xs = buildTutorAxisValues({
+        sampleSize: pointCount,
+        random,
+        span,
+        jitterScale,
+    });
+
+    return xs.map((x, index) => ({
+        id: index,
+        x,
+        signalY: slope * x,
+        residualUnit: sampleStandardNormal(random),
+    }));
+};
+
+const buildIndependentTutorSource = ({
+    pointCount,
+    seed,
+    xScale = 0.92,
+    yScale = 0.88,
+}) => {
+    const random = createSeededRandom(seed);
+    const xs = Array.from(
+        { length: pointCount },
+        () => clampToRange(sampleStandardNormal(random) * xScale, -1.6, 1.6)
+    ).sort((left, right) => left - right);
+
+    return xs.map((x, index) => ({
+        id: index,
+        x,
+        signalY: clampToRange(sampleStandardNormal(random) * yScale, -1.8, 1.8),
+        residualUnit: sampleStandardNormal(random),
+    }));
+};
+
+const buildNonlinearTutorSource = ({
+    pointCount,
+    seed,
+    span = 1.38,
+    jitterScale = 0.045,
+    curveScale = 1.18,
+}) => {
+    const random = createSeededRandom(seed);
+    const xs = buildTutorAxisValues({
+        sampleSize: pointCount,
+        random,
+        span,
+        jitterScale,
+    });
+
+    return xs.map((x, index) => {
+        const scaledX = x / span;
+        return {
+            id: index,
+            x,
+            signalY: curveScale * ((scaledX ** 2) - 0.42),
+            residualUnit: sampleStandardNormal(random),
+        };
+    });
+};
+
+const calculateCorrelationFromArrays = (xValues = [], yValues = []) => calculateSimpleCorrelationFromPairs(
+    xValues.map((x, index) => ({
+        id: index,
+        x,
+        y: yValues[index],
+    }))
+);
+
+const buildTutorPatternDiagnostics = (pairs = []) => {
+    if (!pairs.length) {
+        return {
+            r: 0,
+            quadraticCorrelation: 0,
+            quartileDelta: 0,
+            binMeans: [0, 0, 0, 0],
+            riseSteps: 0,
+            fallSteps: 0,
+            edgeVsMiddle: 0,
+            binSpan: 0,
+            xRange: 0,
+            n: 0,
+        };
+    }
+
+    const sortedPairs = [...pairs].sort((left, right) => left.x - right.x);
+    const xs = sortedPairs.map((pair) => pair.x);
+    const ys = sortedPairs.map((pair) => pair.y);
+    const r = calculateSimpleCorrelationFromPairs(sortedPairs) ?? 0;
+    const quadraticCorrelation = calculateCorrelationFromArrays(
+        xs.map((value) => value ** 2),
+        ys
+    ) ?? 0;
+    const binCount = 4;
+    const binMeans = Array.from({ length: binCount }, (_, index) => {
+        const start = Math.floor((index * sortedPairs.length) / binCount);
+        const end = index === binCount - 1
+            ? sortedPairs.length
+            : Math.floor(((index + 1) * sortedPairs.length) / binCount);
+        const slice = sortedPairs.slice(start, Math.max(start + 1, end));
+        return slice.reduce((sum, pair) => sum + pair.y, 0) / Math.max(1, slice.length);
+    });
+    const binDiffs = binMeans.slice(1).map((mean, index) => mean - binMeans[index]);
+    const riseSteps = binDiffs.filter((diff) => diff > 0.05).length;
+    const fallSteps = binDiffs.filter((diff) => diff < -0.05).length;
+    const quartileDelta = binMeans[binMeans.length - 1] - binMeans[0];
+    const edgeVsMiddle = ((binMeans[0] + binMeans[binMeans.length - 1]) / 2)
+        - ((binMeans[1] + binMeans[2]) / 2);
+    const binSpan = Math.max(...binMeans) - Math.min(...binMeans);
+    const xRange = xs[xs.length - 1] - xs[0];
+
+    return {
+        r,
+        quadraticCorrelation,
+        quartileDelta,
+        binMeans,
+        riseSteps,
+        fallSteps,
+        edgeVsMiddle,
+        binSpan,
+        xRange,
+        n: sortedPairs.length,
+    };
+};
+
+const rangePenalty = (value, min, max, weight = 1) => {
+    if (value < min) {
+        return (min - value) * weight;
+    }
+
+    if (value > max) {
+        return (value - max) * weight;
+    }
+
+    return 0;
+};
+
+const minimumPenalty = (value, min, weight = 1) => (value < min ? (min - value) * weight : 0);
+const maximumPenalty = (value, max, weight = 1) => (value > max ? (value - max) * weight : 0);
+
+const evaluateTutorCandidate = ({
+    preset,
+    visiblePairs = [],
+    contextPairs = [],
+}) => {
+    const visible = buildTutorPatternDiagnostics(visiblePairs);
+    const context = buildTutorPatternDiagnostics(contextPairs.length ? contextPairs : visiblePairs);
+    let penalty = 0;
+
+    if (preset === 'strong_positive') {
+        penalty += rangePenalty(visible.r, 0.84, 0.985, 4);
+        penalty += minimumPenalty(visible.quartileDelta, 1.15, 2.5);
+        penalty += minimumPenalty(visible.riseSteps, 3, 0.9);
+        penalty += maximumPenalty(Math.abs(visible.quadraticCorrelation), 0.24, 2.2);
+    } else if (preset === 'weak_positive') {
+        penalty += rangePenalty(visible.r, 0.3, 0.62, 4.4);
+        penalty += minimumPenalty(visible.quartileDelta, 0.52, 2.2);
+        penalty += minimumPenalty(visible.riseSteps, 2, 0.8);
+        penalty += maximumPenalty(Math.abs(visible.quadraticCorrelation), 0.24, 2.2);
+    } else if (preset === 'strong_negative') {
+        penalty += rangePenalty(visible.r, -0.985, -0.84, 4);
+        penalty += maximumPenalty(visible.quartileDelta, -1.15, 2.5);
+        penalty += minimumPenalty(visible.fallSteps, 3, 0.9);
+        penalty += maximumPenalty(Math.abs(visible.quadraticCorrelation), 0.24, 2.2);
+    } else if (preset === 'near_zero') {
+        const nearZeroLimit = Math.min(0.12, 0.08 + (0.14 / Math.sqrt(Math.max(12, visible.n))));
+        penalty += maximumPenalty(Math.abs(visible.r), nearZeroLimit, 6);
+        penalty += maximumPenalty(Math.abs(visible.quartileDelta), 0.4, 3);
+        penalty += maximumPenalty(Math.abs(visible.quadraticCorrelation), 0.18, 4.5);
+        penalty += maximumPenalty(visible.binSpan, 0.7, 2.2);
+    } else if (preset === 'nonlinear') {
+        penalty += maximumPenalty(Math.abs(visible.r), 0.32, 6);
+        penalty += minimumPenalty(visible.edgeVsMiddle, 0.62, 3.4);
+        penalty += minimumPenalty(visible.quadraticCorrelation, 0.74, 5.5);
+    } else if (preset === 'restricted_range') {
+        const rangeRatio = visible.xRange / Math.max(EPSILON, context.xRange);
+        penalty += rangePenalty(context.r, 0.84, 0.985, 3.4);
+        penalty += rangePenalty(visible.r, 0.12, 0.55, 4.5);
+        penalty += minimumPenalty(context.r - visible.r, 0.32, 5.2);
+        penalty += maximumPenalty(rangeRatio, 0.34, 3.5);
+        penalty += minimumPenalty(visible.quartileDelta, 0.12, 1.4);
+    }
+
+    return {
+        ok: penalty <= 1e-9,
+        penalty,
+        visible,
+        context,
+    };
 };
 
 const injectTutorOutlier = ({
@@ -297,31 +487,201 @@ const injectTutorOutlier = ({
     ];
 };
 
-const buildRestrictedRangeTutorDataset = ({
-    sampleSize,
-    noise,
-}) => {
-    const fullPairs = buildLinearTutorPairs({
-        sampleSize: Math.max(sampleSize * 8, 220),
-        noise: Math.max(0.18, noise),
+const PEARSON_TUTOR_PRESET_CONFIG = {
+    strong_positive: {
+        kind: 'linear',
         slope: 0.95,
-        seedKey: 'restricted_range_full',
-        residualBase: 0.16,
-        residualNoise: 0.36,
+        poolSize: DEFAULT_TUTOR_POOL_SIZE,
+        span: 1.35,
+        baseResidual: 0.06,
+        noiseMultiplier: 0.42,
+        outlierOrientation: 'high_x_low_y',
+    },
+    weak_positive: {
+        kind: 'linear',
+        slope: 0.34,
+        poolSize: DEFAULT_TUTOR_POOL_SIZE,
+        span: 1.35,
+        baseResidual: 0.16,
+        noiseMultiplier: 0.72,
+        outlierOrientation: 'high_x_low_y',
+    },
+    strong_negative: {
+        kind: 'linear',
+        slope: -0.95,
+        poolSize: DEFAULT_TUTOR_POOL_SIZE,
+        span: 1.35,
+        baseResidual: 0.06,
+        noiseMultiplier: 0.42,
+        outlierOrientation: 'high_x_high_y',
+    },
+    near_zero: {
+        kind: 'independent',
+        poolSize: DEFAULT_TUTOR_POOL_SIZE,
+        baseResidual: 0.05,
+        noiseMultiplier: 0.22,
+        outlierOrientation: 'high_x_high_y',
+    },
+    nonlinear: {
+        kind: 'nonlinear',
+        poolSize: DEFAULT_TUTOR_POOL_SIZE,
+        baseResidual: 0.06,
+        noiseMultiplier: 0.18,
+        outlierOrientation: 'high_x_low_y',
+    },
+    restricted_range: {
+        kind: 'restricted_range',
+        slope: 0.94,
+        fullPoolSize: RESTRICTED_RANGE_FULL_POOL_SIZE,
+        displayContextCount: DEFAULT_TUTOR_CONTEXT_DISPLAY_POINTS,
         span: 1.42,
-    });
-    const windowHalfWidth = 0.18;
-    const restrictedPairs = fullPairs.filter((pair) => Math.abs(pair.x) <= windowHalfWidth);
+        windowHalfWidth: 0.24,
+        baseResidual: 0.1,
+        noiseMultiplier: 0.34,
+        outlierOrientation: 'high_x_low_y',
+    },
+};
+
+const resolveTutorPresetConfig = (preset = 'strong_positive') => PEARSON_TUTOR_PRESET_CONFIG[preset]
+    || PEARSON_TUTOR_PRESET_CONFIG.strong_positive;
+
+const buildPearsonTutorBaseCandidate = ({
+    preset = 'strong_positive',
+    generationKey = 0,
+    attempt = 0,
+}) => {
+    const config = resolveTutorPresetConfig(preset);
+    const seed = hashSeedParts('pearson_tutor', preset, generationKey, attempt);
+
+    if (config.kind === 'independent') {
+        return {
+            preset,
+            config,
+            sourcePairs: buildIndependentTutorSource({
+                pointCount: config.poolSize,
+                seed,
+            }),
+        };
+    }
+
+    if (config.kind === 'nonlinear') {
+        return {
+            preset,
+            config,
+            sourcePairs: buildNonlinearTutorSource({
+                pointCount: config.poolSize,
+                seed,
+            }),
+        };
+    }
 
     return {
-        pairs: takeEvenlySpacedPairs(restrictedPairs, sampleSize),
-        contextPairs: fullPairs.map((pair) => ({ ...pair })),
-        highlightXRange: {
-            min: -windowHalfWidth,
-            max: windowHalfWidth,
-        },
-        outlierOrientation: 'high_x_low_y',
+        preset,
+        config,
+        sourcePairs: buildLinearTutorSource({
+            pointCount: config.kind === 'restricted_range' ? config.fullPoolSize : config.poolSize,
+            slope: config.slope,
+            seed,
+            span: config.span,
+            jitterScale: config.kind === 'restricted_range' ? 0.055 : 0.065,
+        }),
     };
+};
+
+export const derivePearsonTutorDataset = ({
+    baseDataset = null,
+    sampleSize = DEFAULT_TUTOR_REFERENCE_SAMPLE_SIZE,
+    noise = DEFAULT_TUTOR_REFERENCE_NOISE,
+    includeOutlier = false,
+}) => {
+    if (!baseDataset?.sourcePairs?.length) {
+        return {
+            preset: baseDataset?.preset || 'strong_positive',
+            pairs: [],
+            contextPairs: [],
+            contextStatsPairs: [],
+            highlightXRange: null,
+        };
+    }
+
+    const config = baseDataset.config || resolveTutorPresetConfig(baseDataset.preset);
+    const resolvedSampleSize = Math.max(8, Math.round(sampleSize));
+    const resolvedNoise = Math.max(0, Math.min(1, Number(noise)));
+    const residualScale = config.baseResidual + (resolvedNoise * config.noiseMultiplier);
+    const transformedFullPairs = baseDataset.sourcePairs.map((pair, index) => ({
+        id: index,
+        x: pair.x,
+        y: clampToRange(pair.signalY + (pair.residualUnit * residualScale), -2.25, 2.25),
+    }));
+    const visiblePool = config.kind === 'restricted_range'
+        ? transformedFullPairs.filter((pair) => Math.abs(pair.x) <= config.windowHalfWidth)
+        : transformedFullPairs;
+    const visiblePairs = takeNestedTutorPairs(visiblePool, resolvedSampleSize);
+    const pairs = includeOutlier
+        ? injectTutorOutlier({
+            pairs: visiblePairs,
+            orientation: config.outlierOrientation,
+        })
+        : visiblePairs;
+
+    return {
+        preset: baseDataset.preset,
+        pairs,
+        contextPairs: config.kind === 'restricted_range'
+            ? takeEvenlySpacedPairs(transformedFullPairs, config.displayContextCount || DEFAULT_TUTOR_CONTEXT_DISPLAY_POINTS)
+            : [],
+        contextStatsPairs: config.kind === 'restricted_range' ? transformedFullPairs : [],
+        highlightXRange: config.kind === 'restricted_range'
+            ? {
+                min: -config.windowHalfWidth,
+                max: config.windowHalfWidth,
+            }
+            : null,
+    };
+};
+
+export const buildPearsonTutorBaseDataset = ({
+    preset = 'strong_positive',
+    targetSampleSize = DEFAULT_TUTOR_REFERENCE_SAMPLE_SIZE,
+    targetNoise = DEFAULT_TUTOR_REFERENCE_NOISE,
+    generationKey = 0,
+}) => {
+    let bestCandidate = null;
+    let bestPenalty = Number.POSITIVE_INFINITY;
+
+    for (let attempt = 0; attempt < TUTOR_ACCEPTANCE_ATTEMPTS; attempt += 1) {
+        const candidate = buildPearsonTutorBaseCandidate({
+            preset,
+            generationKey,
+            attempt,
+        });
+        const renderedCandidate = derivePearsonTutorDataset({
+            baseDataset: candidate,
+            sampleSize: targetSampleSize,
+            noise: targetNoise,
+            includeOutlier: false,
+        });
+        const evaluation = evaluateTutorCandidate({
+            preset,
+            visiblePairs: renderedCandidate.pairs,
+            contextPairs: renderedCandidate.contextStatsPairs,
+        });
+
+        if (evaluation.penalty < bestPenalty) {
+            bestCandidate = candidate;
+            bestPenalty = evaluation.penalty;
+        }
+
+        if (evaluation.ok) {
+            return candidate;
+        }
+    }
+
+    return bestCandidate || buildPearsonTutorBaseCandidate({
+        preset,
+        generationKey,
+        attempt: 0,
+    });
 };
 
 export const fisherZTransform = (correlation) => {
@@ -814,84 +1174,22 @@ export const buildCorrelationGuidance = (stats) => {
 
 export const generatePearsonTutorDataset = ({
     preset = 'strong_positive',
-    sampleSize = 36,
-    noise = 0.3,
+    sampleSize = DEFAULT_TUTOR_REFERENCE_SAMPLE_SIZE,
+    noise = DEFAULT_TUTOR_REFERENCE_NOISE,
     includeOutlier = false,
+    generationKey = 0,
 }) => {
-    const resolvedSampleSize = Math.max(8, Math.round(sampleSize));
-    const resolvedNoise = Math.max(0, Math.min(1, Number(noise)));
-    let dataset;
-
-    if (preset === 'weak_positive') {
-        dataset = {
-            pairs: buildLinearTutorPairs({
-                sampleSize: resolvedSampleSize,
-                noise: resolvedNoise,
-                slope: 0.24,
-                seedKey: 'weak_positive',
-                residualBase: 0.26,
-                residualNoise: 0.8,
-            }),
-            outlierOrientation: 'high_x_low_y',
-        };
-    } else if (preset === 'near_zero') {
-        dataset = {
-            pairs: buildNearZeroTutorPairs({
-                sampleSize: resolvedSampleSize,
-                noise: resolvedNoise,
-                seedKey: 'near_zero',
-            }),
-            outlierOrientation: 'high_x_high_y',
-        };
-    } else if (preset === 'strong_negative') {
-        dataset = {
-            pairs: buildLinearTutorPairs({
-                sampleSize: resolvedSampleSize,
-                noise: resolvedNoise,
-                slope: -0.94,
-                seedKey: 'strong_negative',
-                residualBase: 0.08,
-                residualNoise: 0.32,
-            }),
-            outlierOrientation: 'high_x_high_y',
-        };
-    } else if (preset === 'nonlinear') {
-        dataset = {
-            pairs: buildNonlinearTutorPairs({
-                sampleSize: resolvedSampleSize,
-                noise: resolvedNoise,
-                seedKey: 'nonlinear',
-            }),
-            outlierOrientation: 'high_x_low_y',
-        };
-    } else if (preset === 'restricted_range') {
-        dataset = buildRestrictedRangeTutorDataset({
-            sampleSize: resolvedSampleSize,
-            noise: resolvedNoise,
-        });
-    } else {
-        dataset = {
-            pairs: buildLinearTutorPairs({
-                sampleSize: resolvedSampleSize,
-                noise: resolvedNoise,
-                slope: 0.94,
-                seedKey: 'strong_positive',
-                residualBase: 0.08,
-                residualNoise: 0.32,
-            }),
-            outlierOrientation: 'high_x_low_y',
-        };
-    }
-
-    return {
+    const baseDataset = buildPearsonTutorBaseDataset({
         preset,
-        pairs: includeOutlier
-            ? injectTutorOutlier({
-                pairs: dataset.pairs,
-                orientation: dataset.outlierOrientation,
-            })
-            : dataset.pairs,
-        contextPairs: dataset.contextPairs || [],
-        highlightXRange: dataset.highlightXRange || null,
-    };
+        targetSampleSize: sampleSize,
+        targetNoise: noise,
+        generationKey,
+    });
+
+    return derivePearsonTutorDataset({
+        baseDataset,
+        sampleSize,
+        noise,
+        includeOutlier,
+    });
 };

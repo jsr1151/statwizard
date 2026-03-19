@@ -5,6 +5,7 @@ import {
     Database,
     FileUp,
     Info,
+    RefreshCw,
     Sigma,
     SlidersHorizontal,
     Sparkles,
@@ -16,8 +17,9 @@ import PowerAnalysisTab from '../power/PowerAnalysisTab';
 import {
     buildCorrelationGuidance,
     buildCorrelationInterpretation,
+    buildPearsonTutorBaseDataset,
     calculatePearsonCorrelationStats,
-    generatePearsonTutorDataset,
+    derivePearsonTutorDataset,
     getCorrelationConventionLabel,
 } from '../../stats/correlation.js';
 import { parseDelimitedTable } from '../../utils/delimitedTable.js';
@@ -93,6 +95,18 @@ const formatPValue = (value) => {
     return `= ${numeric.toFixed(3).replace(/^0/, '')}`;
 };
 
+const buildLessonBaseRequest = ({
+    preset,
+    sampleSize,
+    noise,
+    generationKey = 0,
+}) => ({
+    preset,
+    sampleSize,
+    noise,
+    generationKey,
+});
+
 const PearsonCorrelationPage = ({
     section,
     darkMode,
@@ -107,13 +121,25 @@ const PearsonCorrelationPage = ({
     const [lessonShowLine, setLessonShowLine] = useState(true);
     const [lessonShowBand, setLessonShowBand] = useState(false);
     const [lessonOutlierOn, setLessonOutlierOn] = useState(false);
+    const [lessonBaseRequest, setLessonBaseRequest] = useState(() => buildLessonBaseRequest({
+        preset: 'strong_positive',
+        sampleSize: 36,
+        noise: 0.28,
+    }));
 
-    const lessonDataset = useMemo(() => generatePearsonTutorDataset({
-        preset: lessonPreset,
+    const lessonBaseDataset = useMemo(() => buildPearsonTutorBaseDataset({
+        preset: lessonBaseRequest.preset,
+        targetSampleSize: lessonBaseRequest.sampleSize,
+        targetNoise: lessonBaseRequest.noise,
+        generationKey: lessonBaseRequest.generationKey,
+    }), [lessonBaseRequest]);
+
+    const lessonDataset = useMemo(() => derivePearsonTutorDataset({
+        baseDataset: lessonBaseDataset,
         sampleSize: lessonSampleSize,
         noise: lessonNoise,
         includeOutlier: lessonOutlierOn,
-    }), [lessonPreset, lessonSampleSize, lessonNoise, lessonOutlierOn]);
+    }), [lessonBaseDataset, lessonSampleSize, lessonNoise, lessonOutlierOn]);
     const lessonPairs = lessonDataset.pairs || [];
 
     const lessonStats = useMemo(() => calculatePearsonCorrelationStats({
@@ -122,15 +148,19 @@ const PearsonCorrelationPage = ({
     }), [lessonPairs]);
 
     const lessonContextStats = useMemo(() => {
-        if (!lessonDataset.contextPairs?.length) {
+        const contextPairs = lessonDataset.contextStatsPairs?.length
+            ? lessonDataset.contextStatsPairs
+            : lessonDataset.contextPairs;
+
+        if (!contextPairs?.length) {
             return null;
         }
 
         return calculatePearsonCorrelationStats({
-            xValues: lessonDataset.contextPairs.map((pair) => pair.x),
-            yValues: lessonDataset.contextPairs.map((pair) => pair.y),
+            xValues: contextPairs.map((pair) => pair.x),
+            yValues: contextPairs.map((pair) => pair.y),
         });
-    }, [lessonDataset.contextPairs]);
+    }, [lessonDataset.contextPairs, lessonDataset.contextStatsPairs]);
 
     const lessonSubtitle = useMemo(() => {
         const baseDescription = TUTOR_PRESETS.find((preset) => preset[0] === lessonPreset)?.[2]
@@ -142,6 +172,29 @@ const PearsonCorrelationPage = ({
 
         return `${baseDescription} The added outlier lets you compare the same base pattern before and after one influential point.`;
     }, [lessonPreset, lessonOutlierOn]);
+
+    const regenerateLessonSample = () => {
+        setLessonBaseRequest((previous) => buildLessonBaseRequest({
+            preset: lessonPreset,
+            sampleSize: lessonSampleSize,
+            noise: lessonNoise,
+            generationKey: previous.generationKey + 1,
+        }));
+    };
+
+    const selectLessonPreset = (nextPreset) => {
+        if (nextPreset === lessonPreset) {
+            return;
+        }
+
+        setLessonPreset(nextPreset);
+        setLessonBaseRequest((previous) => buildLessonBaseRequest({
+            preset: nextPreset,
+            sampleSize: lessonSampleSize,
+            noise: lessonNoise,
+            generationKey: previous.generationKey + 1,
+        }));
+    };
 
     const [tableText, setTableText] = useState(SAMPLE_DATASET);
     const [selectedX, setSelectedX] = useState('');
@@ -725,7 +778,7 @@ const PearsonCorrelationPage = ({
 
                         <div className="grid grid-cols-2 gap-3">
                             {TUTOR_PRESETS.map(([id, label]) => (
-                                <button key={id} onClick={() => setLessonPreset(id)} className={`rounded-xl border px-3 py-3 text-left text-xs font-black uppercase tracking-widest transition-all ${lessonPreset === id ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-indigo-500')}`}>
+                                <button key={id} onClick={() => selectLessonPreset(id)} className={`rounded-xl border px-3 py-3 text-left text-xs font-black uppercase tracking-widest transition-all ${lessonPreset === id ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-indigo-500')}`}>
                                     {label}
                                 </button>
                             ))}
@@ -758,6 +811,13 @@ const PearsonCorrelationPage = ({
                             >
                                 {lessonOutlierOn ? 'Remove Outlier' : 'Add Outlier'}
                             </button>
+                            <button
+                                onClick={regenerateLessonSample}
+                                className={`col-span-2 inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-indigo-500'}`}
+                            >
+                                <RefreshCw size={14} />
+                                Regenerate Sample
+                            </button>
                         </div>
 
                         <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -766,6 +826,15 @@ const PearsonCorrelationPage = ({
                             </div>
                             <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                                 Apply one influential point to the current base pattern so you can compare the same relationship before and after the outlier appears.
+                            </p>
+                        </div>
+
+                        <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                Stable Sample
+                            </div>
+                            <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                Noise, sample size, and the outlier toggle now modify the same active sample. Use regenerate only when you want a fresh example.
                             </p>
                         </div>
                     </Card>
