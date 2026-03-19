@@ -2,8 +2,13 @@ import { runPowerAnalysis } from './engine.js';
 import { roundTo } from './math.js';
 import { resolveIndependentTSamplePlan } from './tMath.js';
 
+// Keep sample-size sweeps intentionally discrete because N changes in
+// whole-number chunks. Effect-size sweeps are continuous, so we sample them
+// more densely to avoid visual kinks near the power = 1 saturation region.
 const SAMPLE_CURVE_POINTS = 25;
-const EFFECT_CURVE_POINTS = 25;
+const EFFECT_CURVE_POINTS = 61;
+const EFFECT_CURVE_SATURATION_POWER = 0.9995;
+const EFFECT_CURVE_MARGIN_RATIO = 0.08;
 
 const getMetricLabel = (result, metricId, fallback) =>
     result?.metrics?.find((metric) => metric.id === metricId)?.label || fallback;
@@ -165,6 +170,67 @@ const evaluateCurvePoint = ({ testConfig, inputs, xAccessor }) => {
     };
 };
 
+const findEffectCurveUpperBound = ({ testConfig, result, currentEffectSize }) => {
+    const defaultUpperBound = Math.min(3, Math.max(1, currentEffectSize * 2.5, currentEffectSize + 0.5));
+
+    if (result.actualPower >= EFFECT_CURVE_SATURATION_POWER) {
+        return Math.min(3, Math.max(currentEffectSize * 1.12, currentEffectSize + 0.12));
+    }
+
+    let candidateEffectSize = Math.max(0.05, currentEffectSize);
+    let lowerSaturationBound = candidateEffectSize;
+    let saturationEffectSize = null;
+
+    while (candidateEffectSize < 3) {
+        lowerSaturationBound = candidateEffectSize;
+        candidateEffectSize = Math.min(3, (candidateEffectSize * 1.2) + 0.04);
+
+        const candidateResult = runPowerAnalysis(testConfig, buildPostHocInputs({
+            result,
+            effectSize: candidateEffectSize,
+        }));
+
+        if (candidateResult?.ok && candidateResult.actualPower >= EFFECT_CURVE_SATURATION_POWER) {
+            saturationEffectSize = candidateEffectSize;
+            break;
+        }
+
+        if (candidateEffectSize >= 3) {
+            break;
+        }
+    }
+
+    if (saturationEffectSize == null) {
+        return defaultUpperBound;
+    }
+
+    let low = lowerSaturationBound;
+    let high = saturationEffectSize;
+
+    for (let index = 0; index < 14; index += 1) {
+        const midpoint = (low + high) / 2;
+        const midpointResult = runPowerAnalysis(testConfig, buildPostHocInputs({
+            result,
+            effectSize: midpoint,
+        }));
+
+        if (midpointResult?.ok && midpointResult.actualPower >= EFFECT_CURVE_SATURATION_POWER) {
+            high = midpoint;
+        } else {
+            low = midpoint;
+        }
+    }
+
+    return Math.min(
+        3,
+        Math.max(
+            currentEffectSize * 1.05,
+            currentEffectSize + 0.08,
+            high * (1 + EFFECT_CURVE_MARGIN_RATIO)
+        )
+    );
+};
+
 const buildSampleCurve = ({ testConfig, result }) => {
     const currentSampleSize = Math.max(2, Math.round(Number(result.sampleSize)));
     const minimumSampleSize = isGroupBasedDesign(result)
@@ -221,6 +287,7 @@ const buildSampleCurve = ({ testConfig, result }) => {
     return {
         ok: true,
         curveType: 'sample_size',
+        curveNature: 'discrete',
         title: 'Power vs Sample Size',
         xLabel: sampleLabel,
         yLabel: 'Power',
@@ -237,13 +304,17 @@ const buildSampleCurve = ({ testConfig, result }) => {
 const buildEffectCurve = ({ testConfig, result }) => {
     const currentEffectSize = Math.max(0.001, Number(result.effectSize));
     const lowerBound = currentEffectSize < 0.05 ? 0.01 : 0.05;
-    const upperBound = Math.min(3, Math.max(1, currentEffectSize * 2.5, currentEffectSize + 0.5));
+    const upperBound = findEffectCurveUpperBound({
+        testConfig,
+        result,
+        currentEffectSize,
+    });
     const candidateEffectSizes = buildDecimalSequence({
         min: lowerBound,
         max: upperBound,
         current: currentEffectSize,
         pointCount: EFFECT_CURVE_POINTS,
-        decimals: 3,
+        decimals: 4,
     });
 
     const points = candidateEffectSizes
@@ -275,6 +346,7 @@ const buildEffectCurve = ({ testConfig, result }) => {
     return {
         ok: true,
         curveType: 'effect_size',
+        curveNature: 'continuous',
         title: 'Power vs Effect Size',
         xLabel: effectLabel,
         yLabel: 'Power',

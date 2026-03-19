@@ -12,6 +12,9 @@ const HEIGHT = 320;
 const MARGIN = { top: 28, right: 24, bottom: 44, left: 54 };
 const TAIL_PERCENTILE = 0.995;
 const X_PADDING_RATIO = 1.08;
+const ALPHA_SYMBOL = '\u03b1';
+const BETA_SYMBOL = '\u03b2';
+const POWER_SYMBOL = 'Power (1\u2212\u03b2)';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -329,17 +332,17 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
 
                             {chartModel.regionLabels.alpha && (
                                 <PlotLabel x={chartModel.regionLabels.alpha.x} y={chartModel.regionLabels.alpha.y} fill="#fca5a5" stroke={labelStroke}>
-                                    α
+                                    {ALPHA_SYMBOL}
                                 </PlotLabel>
                             )}
                             {showAlternative && chartModel.regionLabels.beta && (
                                 <PlotLabel x={chartModel.regionLabels.beta.x} y={chartModel.regionLabels.beta.y} fill="#fbbf24" stroke={labelStroke}>
-                                    β
+                                    {BETA_SYMBOL}
                                 </PlotLabel>
                             )}
                             {showAlternative && chartModel.regionLabels.power && (
                                 <PlotLabel x={chartModel.regionLabels.power.x} y={chartModel.regionLabels.power.y} fill="#4ade80" stroke={labelStroke}>
-                                    Power (1−β)
+                                    {POWER_SYMBOL}
                                 </PlotLabel>
                             )}
                         </>
@@ -376,7 +379,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
                         Alpha
                     </div>
                     <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                        Red marks the right-tail rejection region under the null F distribution.
+                        {ALPHA_SYMBOL} = Type I error. Red marks the right-tail rejection region under the null F distribution.
                     </p>
                 </div>
                 <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -384,7 +387,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
                         Beta
                     </div>
                     <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                        Orange marks the missed-detection region under H1 to the left of the critical cutoff.
+                        {BETA_SYMBOL} = missed detection. Orange marks the part of H1 that stays left of the critical cutoff.
                     </p>
                 </div>
                 <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -392,7 +395,7 @@ const FPowerDistributionVisual = ({ config, darkMode }) => {
                         Power
                     </div>
                     <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                        Green marks the part of H1 that falls beyond the critical F cutoff and contributes to power.
+                        {POWER_SYMBOL} = correct detection. Green marks the part of H1 beyond the critical F cutoff.
                     </p>
                 </div>
             </div>

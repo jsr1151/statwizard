@@ -73,8 +73,10 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
                 body: 'The highlighted point is the active design on this page, so you can see how it sits on the broader planning curve.',
             },
             {
-                title: 'Held Constant',
-                body: 'Only one planning variable changes at a time. Alpha, tails, and the other active design assumptions stay fixed for the sweep.',
+                title: 'Curve Shape',
+                body: curveModel?.curveNature === 'continuous'
+                    ? 'Effect-size sweeps are continuous, so this curve is sampled more densely and should stay smooth even as power saturates toward 1.'
+                    : 'Sample-size sweeps are discrete, so small steps or plateaus can be real when total N or balanced group counts move in whole-number chunks.',
             },
         ];
 
