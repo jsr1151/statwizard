@@ -1,0 +1,90 @@
+{
+  "formatVersion": 2,
+  "testId": "one_way_anova",
+  "parityTarget": {
+    "tool": "G*Power",
+    "version": "3.1.9.7",
+    "status": "pending_external_parity_replacement"
+  },
+  "reference": {
+    "source": "statwizard_baseline_2026_03_18",
+    "notes": "Baseline values generated from the live shared StatWizard one-way ANOVA solver. Replace or augment with G*Power 3.1.9.7 values as parity fixtures mature."
+  },
+  "defaultTolerances": {
+    "actualPower": 0.000001,
+    "criticalValue": 0.000001,
+    "numeratorDf": 0.000001,
+    "denominatorDf": 0.000001,
+    "noncentrality": 0.000001,
+    "effectSize": 0.000001,
+    "perGroupSampleSize": 0.000001
+  },
+  "cases": [
+    {
+      "id": "a_priori_alpha_005_f_025_power_08_groups_3",
+      "inputs": {
+        "mode": "a_priori",
+        "alpha": 0.05,
+        "effectSize": 0.25,
+        "powerTarget": 0.8,
+        "groupCount": 3
+      },
+      "expected": {
+        "sampleSize": 159,
+        "groupCount": 3,
+        "perGroupSampleSize": 53,
+        "isPerGroupExact": true,
+        "actualPower": 0.8048872861463346,
+        "criticalValue": 3.0540041625499725,
+        "numeratorDf": 2,
+        "denominatorDf": 156,
+        "noncentrality": 9.9375,
+        "effectSize": 0.25
+      }
+    },
+    {
+      "id": "post_hoc_alpha_005_f_025_n_60_groups_3",
+      "inputs": {
+        "mode": "post_hoc",
+        "alpha": 0.05,
+        "effectSize": 0.25,
+        "sampleSize": 60,
+        "groupCount": 3
+      },
+      "expected": {
+        "sampleSize": 60,
+        "groupCount": 3,
+        "perGroupSampleSize": 20,
+        "isPerGroupExact": true,
+        "actualPower": 0.3744310783894128,
+        "criticalValue": 3.1588427126407623,
+        "numeratorDf": 2,
+        "denominatorDf": 57,
+        "noncentrality": 3.75,
+        "effectSize": 0.25
+      }
+    },
+    {
+      "id": "sensitivity_alpha_005_power_08_n_60_groups_3",
+      "inputs": {
+        "mode": "sensitivity",
+        "alpha": 0.05,
+        "powerTarget": 0.8,
+        "sampleSize": 60,
+        "groupCount": 3
+      },
+      "expected": {
+        "sampleSize": 60,
+        "groupCount": 3,
+        "perGroupSampleSize": 20,
+        "isPerGroupExact": true,
+        "actualPower": 0.799996046128442,
+        "criticalValue": 3.1588427126407623,
+        "numeratorDf": 2,
+        "denominatorDf": 57,
+        "noncentrality": 10.159434696100654,
+        "effectSize": 0.4114898681640625
+      }
+    }
+  ]
+}

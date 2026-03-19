@@ -2,6 +2,7 @@ import { solveOneSampleZPower } from './solvers/oneSampleZ.js';
 import { solveOneSampleTPower } from './solvers/oneSampleT.js';
 import { solvePairedTPower } from './solvers/pairedT.js';
 import { solveIndependentTPower } from './solvers/independentT.js';
+import { solveOneWayAnovaPower } from './solvers/oneWayAnova.js';
 
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
 
@@ -123,6 +124,39 @@ const buildPairedTDefaults = (stats = {}, mode = 'a_priori') => {
         direction: signedDifference < 0 ? 'less' : 'greater',
         powerTarget: 0.8,
         effectSize: Number(effectSize.toFixed(3)),
+        sampleSize,
+    };
+};
+
+const etaSquaredToCohensF = (etaSquared) => {
+    const eta2 = Number(etaSquared);
+
+    if (!(eta2 >= 0) || !(eta2 < 1)) {
+        return null;
+    }
+
+    return Math.sqrt(eta2 / Math.max(1e-12, 1 - eta2));
+};
+
+const cohensFToEtaSquared = (effectSize) => {
+    const f = Math.abs(Number(effectSize));
+    const fSquared = f ** 2;
+    return fSquared / (1 + fSquared);
+};
+
+const buildOneWayAnovaDefaults = (stats = {}, mode = 'a_priori') => {
+    const groupCount = Math.max(2, Math.round(stats?.k ?? 3));
+    const sampleSize = Math.max(groupCount * 2, Math.round(stats?.N ?? (groupCount * 20)));
+    const etaSquared = Number(stats?.eta2);
+    const effectSizeFromStats = etaSquaredToCohensF(etaSquared);
+    const effectSize = effectSizeFromStats > 0 ? effectSizeFromStats : 0.25;
+
+    return {
+        mode,
+        alpha: 0.05,
+        powerTarget: 0.8,
+        effectSize: Number(effectSize.toFixed(3)),
+        groupCount,
         sampleSize,
     };
 };
@@ -337,6 +371,48 @@ const pairedTEffectTransform = {
                 {
                     label: 'SD of Paired Differences',
                     value: sd.toFixed(4),
+                },
+            ],
+        };
+    },
+};
+
+const oneWayAnovaEffectTransform = {
+    primaryMetricLabel: "Cohen's f",
+    description: "For a one-way ANOVA, Cohen's f is the omnibus effect size derived from the share of variance explained across the groups.",
+    fields: [
+        {
+            id: 'etaSquared',
+            label: 'Eta Squared (eta^2)',
+            type: 'number',
+            step: 0.001,
+            min: 0,
+            max: 0.999,
+        },
+    ],
+    fromStats: (stats = {}) => ({
+        etaSquared: Number((Number.isFinite(Number(stats?.eta2)) ? Number(stats.eta2) : cohensFToEtaSquared(0.25)).toFixed(3)),
+    }),
+    compute: ({ etaSquared }) => {
+        const eta2 = Number(etaSquared);
+
+        if (!(eta2 >= 0) || !(eta2 < 1)) {
+            return {
+                ok: false,
+                error: 'Eta squared must be between 0 and 1.',
+            };
+        }
+
+        const effectSize = etaSquaredToCohensF(eta2);
+        return {
+            ok: true,
+            effectSize,
+            metricLabel: "Cohen's f",
+            summary: `f = sqrt(eta^2 / (1 - eta^2)) = ${effectSize.toFixed(4)}`,
+            support: [
+                {
+                    label: 'Eta Squared',
+                    value: eta2.toFixed(4),
                 },
             ],
         };
@@ -810,14 +886,136 @@ export const POWER_TEST_REGISTRY = [
             buildInitialInputs: buildIndependentTDefaults,
         },
     },
-    createPlannedTest({
+    {
         id: 'one_way_anova',
         family: 'anova',
         slug: 'one-way-anova',
         label: 'One-Way ANOVA',
         stepId: 'res_one_way_anova',
-        gpowerTest: 'ANOVA: Fixed effects, omnibus, one-way',
-    }),
+        power: {
+            status: 'available',
+            gpowerFamily: 'F tests',
+            gpowerTest: 'ANOVA: Fixed effects, omnibus, one-way',
+            supportedPowerModes: ALL_GPOWER_MODES,
+            implementedPowerModes: ['a_priori', 'post_hoc', 'sensitivity'],
+            defaultPowerMode: 'a_priori',
+            inputSchema: {
+                a_priori: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                    {
+                        id: 'effectSize',
+                        label: "Effect Size (f)",
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                        helperText: "Cohen's f is the omnibus ANOVA effect size. Rough anchors are 0.10 small, 0.25 medium, and 0.40 large.",
+                    },
+                    {
+                        id: 'groupCount',
+                        label: 'Number of Groups',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100,
+                        helperText: 'This first one-way ANOVA power slice assumes balanced groups. Enter the number of independent groups or levels being compared.',
+                    },
+                ],
+                post_hoc: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'groupCount',
+                        label: 'Number of Groups',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100,
+                        helperText: 'This first one-way ANOVA power slice assumes balanced groups across these independent groups or levels.',
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                        helperText: 'Total N is interpreted as evenly split across groups. If it is not divisible by the group count, the per-group N shown in the results is an approximate balanced average.',
+                    },
+                    {
+                        id: 'effectSize',
+                        label: "Effect Size (f)",
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.01,
+                        max: 3,
+                        helperText: "Cohen's f is the omnibus ANOVA effect size. Rough anchors are 0.10 small, 0.25 medium, and 0.40 large.",
+                    },
+                ],
+                sensitivity: [
+                    {
+                        id: 'alpha',
+                        label: 'Alpha',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.001,
+                        max: 0.2,
+                    },
+                    {
+                        id: 'groupCount',
+                        label: 'Number of Groups',
+                        type: 'number',
+                        step: 1,
+                        min: 2,
+                        max: 100,
+                        helperText: 'This first one-way ANOVA power slice assumes balanced groups across these independent groups or levels.',
+                    },
+                    {
+                        id: 'sampleSize',
+                        label: 'Total N',
+                        type: 'number',
+                        step: 1,
+                        min: 4,
+                        max: 100000,
+                        helperText: 'Total N is interpreted as evenly split across groups. If it is not divisible by the group count, the per-group N shown in the results is an approximate balanced average.',
+                    },
+                    {
+                        id: 'powerTarget',
+                        label: 'Target Power',
+                        type: 'number',
+                        step: 0.01,
+                        min: 0.5,
+                        max: 0.999,
+                    },
+                ],
+            },
+            effectSizeTransforms: oneWayAnovaEffectTransform,
+            solver: solveOneWayAnovaPower,
+            availableVisualizerModes: ['test', 'power', 'curve'],
+            buildInitialInputs: buildOneWayAnovaDefaults,
+        },
+    },
     createPlannedTest({
         id: 'ancova',
         family: 'anova',

@@ -35,6 +35,22 @@ const getDerivedGroupSummary = (group1SampleSize, group2SampleSize) => {
     };
 };
 
+const getBalancedGroupPreview = (sampleSize, groupCount) => {
+    const totalN = Math.round(Number(sampleSize));
+    const groups = Math.round(Number(groupCount));
+
+    if (!(totalN >= 4) || !(groups >= 2)) {
+        return null;
+    }
+
+    const perGroupSampleSize = totalN / groups;
+    return {
+        groupCount: groups,
+        perGroupSampleSize,
+        isExact: Math.abs(perGroupSampleSize - Math.round(perGroupSampleSize)) < 1e-9,
+    };
+};
+
 const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, onResultChange }) => {
     const powerConfig = testConfig?.power;
     const availableModes = useMemo(() => {
@@ -116,89 +132,111 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                         Planning Inputs
                     </div>
                     <div className="grid gap-4">
-                    {schema
-                        .filter((field) => !(typeof field.hidden === 'function' && field.hidden(inputs)))
-                        .map((field) => (
-                            <label key={field.id} className="block">
-                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    {field.label}
-                                </span>
+                        {schema
+                            .filter((field) => !(typeof field.hidden === 'function' && field.hidden(inputs)))
+                            .map((field) => (
+                                <label key={field.id} className="block">
+                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        {field.label}
+                                    </span>
 
-                                {field.type === 'select' ? (
-                                    <select
-                                        value={inputs[field.id] ?? ''}
-                                        onChange={(event) => {
-                                            const nextValue = event.target.value;
-                                            setInputs((prev) => ({
-                                                ...prev,
-                                                [field.id]: Number.isNaN(Number(nextValue)) || nextValue === '' ? nextValue : Number(nextValue),
-                                            }));
-                                        }}
-                                        className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                                    >
-                                        {field.options?.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type="number"
-                                        min={field.min}
-                                        max={field.max}
-                                        step={field.step || 'any'}
-                                        value={inputs[field.id] ?? ''}
-                                        onChange={(event) => {
-                                            const nextValue = event.target.value;
-                                            setInputs((prev) => ({
-                                                ...prev,
-                                                [field.id]: nextValue === '' ? '' : Number(nextValue),
-                                            }));
-                                        }}
-                                        className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                                    />
-                                )}
+                                    {field.type === 'select' ? (
+                                        <select
+                                            value={inputs[field.id] ?? ''}
+                                            onChange={(event) => {
+                                                const nextValue = event.target.value;
+                                                setInputs((prev) => ({
+                                                    ...prev,
+                                                    [field.id]: Number.isNaN(Number(nextValue)) || nextValue === '' ? nextValue : Number(nextValue),
+                                                }));
+                                            }}
+                                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                        >
+                                            {field.options?.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            type="number"
+                                            min={field.min}
+                                            max={field.max}
+                                            step={field.step || 'any'}
+                                            value={inputs[field.id] ?? ''}
+                                            onChange={(event) => {
+                                                const nextValue = event.target.value;
+                                                setInputs((prev) => ({
+                                                    ...prev,
+                                                    [field.id]: nextValue === '' ? '' : Number(nextValue),
+                                                }));
+                                            }}
+                                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                        />
+                                    )}
 
-                                {field.helperText && (
-                                    <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                                        {field.helperText}
-                                    </p>
-                                )}
-
-                                {field.id === 'allocationRatio' && (() => {
-                                    if (!visibleFieldIds.has('sampleSize')) {
-                                        return null;
-                                    }
-
-                                    const split = getImpliedAllocationSplit(inputs.sampleSize, inputs.allocationRatio);
-
-                                    if (!split) {
-                                        return null;
-                                    }
-
-                                    return (
-                                        <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
-                                            At the current total N, this implies about n1 = {split.group1SampleSize} and n2 = {split.group2SampleSize}.
+                                    {field.helperText && (
+                                        <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                            {field.helperText}
                                         </p>
-                                    );
-                                })()}
+                                    )}
 
-                                {field.id === 'group2SampleSize' && (() => {
-                                    const groupSummary = getDerivedGroupSummary(inputs.group1SampleSize, inputs.group2SampleSize);
+                                    {field.id === 'allocationRatio' && (() => {
+                                        if (!visibleFieldIds.has('sampleSize')) {
+                                            return null;
+                                        }
 
-                                    if (!groupSummary) {
-                                        return null;
-                                    }
+                                        const split = getImpliedAllocationSplit(inputs.sampleSize, inputs.allocationRatio);
 
-                                    return (
-                                        <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
-                                            Total N = {groupSummary.sampleSize}; allocation ratio ≈ {groupSummary.allocationRatio.toFixed(2)}.
-                                        </p>
-                                    );
-                                })()}
-                            </label>
-                        ))}
+                                        if (!split) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
+                                                At the current total N, this implies about n1 = {split.group1SampleSize} and n2 = {split.group2SampleSize}.
+                                            </p>
+                                        );
+                                    })()}
+
+                                    {field.id === 'group2SampleSize' && (() => {
+                                        const groupSummary = getDerivedGroupSummary(inputs.group1SampleSize, inputs.group2SampleSize);
+
+                                        if (!groupSummary) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
+                                                Total N = {groupSummary.sampleSize}; allocation ratio ~ {groupSummary.allocationRatio.toFixed(2)}.
+                                            </p>
+                                        );
+                                    })()}
+
+                                    {field.id === 'sampleSize' && (() => {
+                                        if (
+                                            !visibleFieldIds.has('groupCount') ||
+                                            visibleFieldIds.has('group1SampleSize') ||
+                                            visibleFieldIds.has('group2SampleSize')
+                                        ) {
+                                            return null;
+                                        }
+
+                                        const preview = getBalancedGroupPreview(inputs.sampleSize, inputs.groupCount);
+
+                                        if (!preview) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <p className={`mt-2 text-[11px] font-medium ${darkMode ? 'text-indigo-300/80' : 'text-indigo-700'}`}>
+                                                At the current total N, a balanced split is {preview.isExact ? `${Math.round(preview.perGroupSampleSize)}` : `about ${preview.perGroupSampleSize.toFixed(2)}`} per group across {preview.groupCount} groups.
+                                            </p>
+                                        );
+                                    })()}
+                                </label>
+                            ))}
                     </div>
                 </div>
             )}

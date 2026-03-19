@@ -6,6 +6,7 @@ import { solveOneSampleZPower } from '../src/power/solvers/oneSampleZ.js';
 import { solveOneSampleTPower } from '../src/power/solvers/oneSampleT.js';
 import { solvePairedTPower } from '../src/power/solvers/pairedT.js';
 import { solveIndependentTPower } from '../src/power/solvers/independentT.js';
+import { solveOneWayAnovaPower } from '../src/power/solvers/oneWayAnova.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ const SOLVER_BY_TEST_ID = {
     one_sample_t: solveOneSampleTPower,
     paired_t: solvePairedTPower,
     independent_t: solveIndependentTPower,
+    one_way_anova: solveOneWayAnovaPower,
 };
 
 const compareWithTolerance = (actual, expected, tolerance) => {

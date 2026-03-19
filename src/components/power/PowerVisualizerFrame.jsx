@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import NormalDistributionVisual from '../visuals/NormalDistributionVisual';
 import PowerCurveChart from './PowerCurveChart';
+import FPowerDistributionVisual from './FPowerDistributionVisual';
 import { buildPowerCurveModel } from '../../power/curves';
 
 const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
@@ -10,6 +11,7 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
     const visualizerKey = result?.ok
         ? [
             testConfig?.id,
+            result.visualizer?.kind,
             result.mode,
             result.alpha,
             result.tails,
@@ -17,9 +19,13 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
             result.sampleSize,
             result.group1SampleSize,
             result.group2SampleSize,
+            result.groupCount,
+            result.perGroupSampleSize,
             result.effectSize,
             result.criticalValue,
             result.df,
+            result.numeratorDf,
+            result.denominatorDf,
             result.noncentrality,
             result.actualPower,
         ].join(':')
@@ -140,6 +146,12 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
                         type={result.visualizer.type}
                         showTutor={false}
                         powerViewConfig={result.visualizer.config}
+                    />
+                ) : result?.visualizer?.kind === 'f_distribution' ? (
+                    <FPowerDistributionVisual
+                        key={visualizerKey}
+                        darkMode={darkMode}
+                        config={result.visualizer.config}
                     />
                 ) : (
                     <div className={`rounded-xl border p-5 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
