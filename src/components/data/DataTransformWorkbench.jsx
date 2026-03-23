@@ -368,7 +368,17 @@ const DataTransformWorkbench = ({
                 </div>
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-3">
+            <section className="space-y-4">
+                <div>
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                        Quick Transforms
+                    </div>
+                    <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Reverse coding, mean-centering, and category recoding now live inside this same derived-and-transforms workspace.
+                    </p>
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-3">
                 <CardTone darkMode={darkMode}>
                     <div className="flex items-center gap-3 mb-4">
                         <FlaskConical size={16} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
@@ -508,6 +518,7 @@ const DataTransformWorkbench = ({
                         </ActionButton>
                     </div>
                 </CardTone>
+                </div>
             </section>
 
             <section className="space-y-4">

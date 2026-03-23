@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Search, Trash2, X } from 'lucide-react';
 
-const FILTERS = ['All', 'Numeric', 'Categorical', 'Derived', 'Problematic'];
+const FILTERS = ['All', 'Numeric', 'Categorical', 'Derived', 'Identifier'];
 
 const TonePill = ({ darkMode, children, tone = 'default', onClick }) => {
     const toneClass = tone === 'warning'
@@ -40,8 +40,8 @@ const matchesFilter = (column, filter) => {
         return column.derived;
     }
 
-    if (filter === 'Problematic') {
-        return (column.summary?.issues || []).length > 0;
+    if (filter === 'Identifier') {
+        return (column.tags || []).includes('identifier') || (column.summary?.issues || []).includes('Identifier');
     }
 
     return true;
@@ -157,7 +157,7 @@ const VariableBrowser = ({
                                         <TonePill
                                             key={`${column.id}-${tag}`}
                                             darkMode={darkMode}
-                                            tone={tag === 'problematic' ? 'warning' : tag === 'numeric' ? 'primary' : 'default'}
+                                            tone={tag === 'numeric' ? 'primary' : 'default'}
                                         >
                                             {tag}
                                         </TonePill>
@@ -187,7 +187,7 @@ const VariableBrowser = ({
                                                     {column.summary?.detectedType || 'unknown'}
                                                 </TonePill>
                                                 <TonePill darkMode={darkMode}>{column.sourceKind}</TonePill>
-                                                {(column.summary?.issues || []).length > 0 && <TonePill darkMode={darkMode} tone="warning">problematic</TonePill>}
+                                                {(column.tags || []).includes('identifier') && <TonePill darkMode={darkMode}>identifier</TonePill>}
                                             </div>
 
                                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
@@ -201,6 +201,21 @@ const VariableBrowser = ({
                                                     Missing {column.summary?.missingCount || 0} of {dataset?.rowCount || 0} rows
                                                 </p>
                                             </div>
+
+                                            {(column.summary?.issues || []).length > 0 && (
+                                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                        Notes
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {column.summary.issues.map((issue) => (
+                                                            <TonePill key={`${column.id}-issue-${issue}`} darkMode={darkMode} tone={issue === 'Identifier' ? 'default' : 'warning'}>
+                                                                {issue}
+                                                            </TonePill>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="space-y-4">
@@ -246,7 +261,7 @@ const VariableBrowser = ({
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {(column.autoTags || []).filter((tag) => !column.hiddenAutoTags?.includes(tag)).map((tag) => (
-                                                <TonePill key={`${column.id}-auto-${tag}`} darkMode={darkMode} tone={tag === 'problematic' ? 'warning' : 'default'} onClick={() => onHideAutoTag?.(column.id, tag)}>
+                                                <TonePill key={`${column.id}-auto-${tag}`} darkMode={darkMode} tone={tag === 'numeric' ? 'primary' : 'default'} onClick={() => onHideAutoTag?.(column.id, tag)}>
                                                     {tag}
                                                     <X size={10} />
                                                 </TonePill>

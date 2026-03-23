@@ -316,6 +316,8 @@ const buildIssueTags = ({
     label,
 }) => {
     const issues = [];
+    const normalizedLabel = String(label ?? '').trim().toLowerCase();
+    const identifierHints = ['id', 'identifier', 'participant', 'subject', 'respondent', 'record', 'case'];
 
     if (missingCount > 0) {
         issues.push('Missing data');
@@ -333,11 +335,14 @@ const buildIssueTags = ({
         issues.push('Single value');
     }
 
-    const normalizedLabel = String(label ?? '').trim().toLowerCase();
     const likelyId = (
         nonMissingValues.length >= 5
         && uniqueCount === nonMissingValues.length
-        && (normalizedLabel === 'id' || normalizedLabel.endsWith('_id') || normalizedLabel.includes('identifier'))
+        && (
+            normalizedLabel === 'id'
+            || normalizedLabel.endsWith('_id')
+            || identifierHints.some((hint) => normalizedLabel.includes(hint))
+        )
     ) || (
         nonMissingValues.length >= 8
         && uniqueCount === nonMissingValues.length
@@ -345,7 +350,7 @@ const buildIssueTags = ({
     );
 
     if (likelyId) {
-        issues.push('Likely ID');
+        issues.push('Identifier');
     }
 
     return issues;
@@ -433,8 +438,8 @@ const buildAutoTags = ({ column, summary }) => {
         tags.push('text');
     }
 
-    if ((summary?.issues || []).length > 0) {
-        tags.push('problematic');
+    if ((summary?.issues || []).includes('Identifier')) {
+        tags.push('identifier');
     }
 
     if (transformType === 'reverse_code') {
