@@ -523,8 +523,18 @@ export default function App() {
                         {appMode === 'data_manager' && (
                             <DataManagerPage
                                 darkMode={darkMode}
-                                onOpenMultipleRegression={() => {
-                                    setCurrentStepId('multiple_regression_result');
+                                onOpenAnalysis={(analysisId) => {
+                                    const nextStepId = analysisId === 'pearson_correlation'
+                                        ? 'correlation_result'
+                                        : analysisId === 'multiple_regression'
+                                            ? 'multiple_regression_result'
+                                            : null;
+
+                                    if (!nextStepId) {
+                                        return;
+                                    }
+
+                                    setCurrentStepId(nextStepId);
                                     setAppMode('wizard');
                                     setActiveResultSection('calculator');
                                 }}

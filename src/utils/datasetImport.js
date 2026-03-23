@@ -2,6 +2,24 @@ const DELIMITER_OPTIONS = [',', '\t', ';'];
 const MISSING_TOKENS = new Set(['', 'na', 'n/a', 'null', 'none', 'nan']);
 const CATEGORY_PREVIEW_LIMIT = 6;
 
+const normalizeTagList = (tags = []) => {
+    const seen = new Set();
+
+    return tags
+        .map((tag) => String(tag ?? '').trim())
+        .filter(Boolean)
+        .filter((tag) => {
+            const normalized = tag.toLowerCase();
+
+            if (seen.has(normalized)) {
+                return false;
+            }
+
+            seen.add(normalized);
+            return true;
+        });
+};
+
 const roundTo = (value, decimals = 4) => {
     const factor = 10 ** decimals;
     return Math.round(Number(value) * factor) / factor;
@@ -248,10 +266,12 @@ const dedupeColumnLabels = (columns = []) => {
 const summarizeNumericValues = (values = []) => {
     if (!values.length) {
         return {
+            count: 0,
             min: null,
             max: null,
             mean: null,
             sd: null,
+            standardError: null,
         };
     }
 
@@ -261,10 +281,14 @@ const summarizeNumericValues = (values = []) => {
         : 0;
 
     return {
+        count: values.length,
         min: Math.min(...values),
         max: Math.max(...values),
         mean: roundTo(mean, 4),
         sd: roundTo(Math.sqrt(Math.max(0, variance)), 4),
+        standardError: values.length > 0
+            ? roundTo(Math.sqrt(Math.max(0, variance)) / Math.sqrt(values.length), 4)
+            : null,
     };
 };
 
@@ -393,6 +417,49 @@ const buildStatusSummary = (columns = []) => {
     return tags;
 };
 
+const buildAutoTags = ({ column, summary }) => {
+    const tags = [];
+    const transformType = column.transform?.type;
+
+    tags.push(column.derived ? 'derived' : 'original');
+
+    if (summary?.detectedType === 'numeric') {
+        tags.push('numeric');
+    } else if (summary?.detectedType === 'categorical') {
+        tags.push('categorical');
+    } else if (summary?.detectedType === 'date') {
+        tags.push('date');
+    } else if (summary?.detectedType === 'text') {
+        tags.push('text');
+    }
+
+    if ((summary?.issues || []).length > 0) {
+        tags.push('problematic');
+    }
+
+    if (transformType === 'reverse_code') {
+        tags.push('reverse coded');
+    }
+
+    if (transformType === 'recode') {
+        tags.push('recoded');
+    }
+
+    if (transformType === 'center') {
+        tags.push('centered');
+    }
+
+    if ((transformType === 'mean' || transformType === 'sum') && (column.transform?.sourceColumnIds || []).length >= 2) {
+        tags.push('scale score');
+    }
+
+    if (transformType === 'wide_to_long_key' || transformType === 'wide_to_long_value') {
+        tags.push('reshaped');
+    }
+
+    return normalizeTagList(tags);
+};
+
 export const getDatasetColumn = (dataset, columnId) =>
     dataset?.columns?.find((column) => column.id === columnId) || null;
 
@@ -412,19 +479,33 @@ export const refreshDatasetMetadata = (dataset, { touch = true } = {}) => {
             label: column.label ?? column.originalName ?? `Column ${index + 1}`,
             derived: Boolean(column.derived),
             transform: column.transform || { type: 'import' },
+            manualTags: normalizeTagList(column.manualTags || []),
+            hiddenAutoTags: normalizeTagList(column.hiddenAutoTags || []),
         }))
     );
 
     const columns = preparedColumns.map((column, index) => {
         const values = rows.map((row) => row?.[column.id] ?? null);
+        const summary = buildColumnSummary({
+            values,
+            label: column.label,
+        });
+        const autoTags = buildAutoTags({
+            column,
+            summary,
+        });
+        const tags = normalizeTagList([
+            ...autoTags.filter((tag) => !column.hiddenAutoTags.includes(tag)),
+            ...column.manualTags,
+        ]);
 
         return {
             ...column,
             index,
-            summary: buildColumnSummary({
-                values,
-                label: column.label,
-            }),
+            sourceKind: column.derived ? 'derived' : 'original',
+            autoTags,
+            tags,
+            summary,
         };
     });
 
@@ -558,6 +639,40 @@ export const updateDatasetColumnLabel = (dataset, columnId, nextLabel) => refres
     )),
 });
 
+export const updateDatasetColumnTags = (dataset, columnId, { manualTags, hiddenAutoTags }) => refreshDatasetMetadata({
+    ...dataset,
+    columns: (dataset?.columns || []).map((column) => (
+        column.id === columnId
+            ? {
+                ...column,
+                manualTags: normalizeTagList(manualTags ?? column.manualTags ?? []),
+                hiddenAutoTags: normalizeTagList(hiddenAutoTags ?? column.hiddenAutoTags ?? []),
+            }
+            : column
+    )),
+});
+
+export const deleteDatasetColumn = (dataset, columnId) => {
+    const nextColumns = (dataset?.columns || []).filter((column) => column.id !== columnId);
+    const nextRows = (dataset?.rows || []).map((row, rowIndex) => {
+        const nextRow = {
+            __rowId: rowIndex,
+        };
+
+        nextColumns.forEach((column) => {
+            nextRow[column.id] = row?.[column.id] ?? null;
+        });
+
+        return nextRow;
+    });
+
+    return refreshDatasetMetadata({
+        ...dataset,
+        columns: nextColumns,
+        rows: nextRows,
+    });
+};
+
 export const duplicateDatasetRecord = (dataset) => {
     const columnMap = Object.fromEntries(
         (dataset?.columns || []).map((column) => [column.id, createId('column')])
@@ -641,6 +756,8 @@ const buildDerivedLabel = ({ operation, columns, dataset, outputLabel }) => {
             return `${selected[0]} Centered`;
         case 'recode':
             return `${selected[0]} Recoded`;
+        case 'reverse_code':
+            return `${selected[0]} Reverse Coded`;
         default:
             return 'Derived Variable';
     }
@@ -653,6 +770,8 @@ const buildDerivedValues = ({
     operation,
     columns = [],
     mappings = {},
+    minimum = null,
+    maximum = null,
 }) => {
     if (!columns.length) {
         return [];
@@ -732,7 +851,51 @@ const buildDerivedValues = ({
         });
     }
 
+    if (operation === 'reverse_code') {
+        return getDatasetColumnValues(dataset, columns[0]).map((value) => {
+            const numeric = parseNumericValue(value);
+
+            if (numeric == null || minimum == null || maximum == null) {
+                return null;
+            }
+
+            return roundTo(maximum + minimum - numeric, 6);
+        });
+    }
+
     return [];
+};
+
+const replaceDatasetColumnValues = ({
+    dataset,
+    columnId,
+    values,
+    label,
+    derived = true,
+    transform,
+}) => {
+    const nextRows = (dataset?.rows || []).map((row, rowIndex) => ({
+        ...row,
+        __rowId: rowIndex,
+        [columnId]: values[rowIndex] ?? null,
+    }));
+
+    const nextColumns = (dataset?.columns || []).map((column) => (
+        column.id === columnId
+            ? {
+                ...column,
+                label: label || column.label,
+                derived,
+                transform,
+            }
+            : column
+    ));
+
+    return refreshDatasetMetadata({
+        ...dataset,
+        rows: nextRows,
+        columns: nextColumns,
+    });
 };
 
 export const addDerivedVariableToDataset = (dataset, config) => {
@@ -744,6 +907,8 @@ export const addDerivedVariableToDataset = (dataset, config) => {
         operation,
         columns,
         mappings: config?.mappings,
+        minimum: config?.minimum,
+        maximum: config?.maximum,
     });
 
     const nextColumn = {
@@ -781,10 +946,207 @@ export const addDerivedVariableToDataset = (dataset, config) => {
     });
 };
 
+export const reverseCodeDatasetVariable = (dataset, {
+    sourceColumnId,
+    minimum,
+    maximum,
+    outputLabel,
+    overwrite = false,
+}) => {
+    const values = buildDerivedValues({
+        dataset,
+        operation: 'reverse_code',
+        columns: [sourceColumnId],
+        minimum,
+        maximum,
+    });
+
+    if (overwrite) {
+        return replaceDatasetColumnValues({
+            dataset,
+            columnId: sourceColumnId,
+            values,
+            label: outputLabel || getDatasetColumn(dataset, sourceColumnId)?.label,
+            derived: true,
+            transform: {
+                type: 'reverse_code',
+                sourceColumnIds: [sourceColumnId],
+                minimum,
+                maximum,
+                overwrite: true,
+            },
+        });
+    }
+
+    return addDerivedVariableToDataset(dataset, {
+        operation: 'reverse_code',
+        columns: [sourceColumnId],
+        outputLabel,
+        minimum,
+        maximum,
+    });
+};
+
+export const recodeDatasetVariable = (dataset, {
+    sourceColumnId,
+    mappings,
+    outputLabel,
+    overwrite = false,
+}) => {
+    const values = buildDerivedValues({
+        dataset,
+        operation: 'recode',
+        columns: [sourceColumnId],
+        mappings,
+    });
+
+    if (overwrite) {
+        return replaceDatasetColumnValues({
+            dataset,
+            columnId: sourceColumnId,
+            values,
+            label: outputLabel || getDatasetColumn(dataset, sourceColumnId)?.label,
+            derived: true,
+            transform: {
+                type: 'recode',
+                sourceColumnIds: [sourceColumnId],
+                overwrite: true,
+            },
+        });
+    }
+
+    return addDerivedVariableToDataset(dataset, {
+        operation: 'recode',
+        columns: [sourceColumnId],
+        outputLabel,
+        mappings,
+    });
+};
+
+export const meanCenterDatasetVariable = (dataset, { sourceColumnId, outputLabel }) =>
+    addDerivedVariableToDataset(dataset, {
+        operation: 'center',
+        columns: [sourceColumnId],
+        outputLabel,
+    });
+
+export const meanCenterDatasetVariables = (dataset, columnIds = []) => columnIds.reduce(
+    (currentDataset, columnId) => meanCenterDatasetVariable(currentDataset, {
+        sourceColumnId: columnId,
+        outputLabel: `${getDatasetColumn(currentDataset, columnId)?.label || 'variable'}_centered`,
+    }),
+    dataset
+);
+
+export const reshapeWideToLongDataset = (dataset, {
+    pivotColumnIds = [],
+    idColumnIds = [],
+    keyColumnLabel = 'variable',
+    valueColumnLabel = 'value',
+}) => {
+    const pivotColumns = pivotColumnIds
+        .map((columnId) => getDatasetColumn(dataset, columnId))
+        .filter(Boolean);
+    const idColumns = idColumnIds
+        .map((columnId) => getDatasetColumn(dataset, columnId))
+        .filter(Boolean);
+
+    const keyColumnId = createId('column');
+    const valueColumnId = createId('column');
+    const nextRows = [];
+
+    (dataset?.rows || []).forEach((row) => {
+        pivotColumns.forEach((pivotColumn) => {
+            const nextRow = {
+                __rowId: nextRows.length,
+                [keyColumnId]: pivotColumn.label,
+                [valueColumnId]: row?.[pivotColumn.id] ?? null,
+            };
+
+            idColumns.forEach((idColumn) => {
+                nextRow[idColumn.id] = row?.[idColumn.id] ?? null;
+            });
+
+            nextRows.push(nextRow);
+        });
+    });
+
+    return refreshDatasetMetadata({
+        ...dataset,
+        name: `${dataset?.name || 'Dataset'} Long`,
+        rows: nextRows,
+        columns: [
+            ...idColumns.map((column) => ({
+                ...column,
+                transform: column.transform || { type: 'import' },
+            })),
+            {
+                id: keyColumnId,
+                name: 'long_key',
+                originalName: keyColumnLabel,
+                label: keyColumnLabel,
+                derived: true,
+                transform: { type: 'wide_to_long_key', sourceColumnIds: pivotColumnIds },
+            },
+            {
+                id: valueColumnId,
+                name: 'long_value',
+                originalName: valueColumnLabel,
+                label: valueColumnLabel,
+                derived: true,
+                transform: { type: 'wide_to_long_value', sourceColumnIds: pivotColumnIds },
+            },
+        ],
+    });
+};
+
 export const getDatasetVariableOptions = (dataset, allowedTypes = []) =>
     (dataset?.columns || []).filter((column) => (
         !allowedTypes.length || allowedTypes.includes(column.summary?.detectedType)
     ));
+
+export const getRecommendedVariableGroups = (dataset) => {
+    const groups = new Map();
+
+    (dataset?.columns || []).forEach((column) => {
+        const candidateNames = normalizeTagList([
+            column.originalName,
+            column.label,
+        ]);
+
+        candidateNames.forEach((candidateName) => {
+            const match = String(candidateName).trim().match(/^(.*?)(?:[_\-\s]?)(\d+)$/i);
+
+            if (!match || match[1].trim().length < 2) {
+                return;
+            }
+
+            const key = match[1].trim().toLowerCase();
+            const current = groups.get(key) || {
+                id: key,
+                prefix: match[1].trim(),
+                columns: [],
+                seenColumnIds: new Set(),
+            };
+
+            if (!current.seenColumnIds.has(column.id)) {
+                current.columns.push(column);
+                current.seenColumnIds.add(column.id);
+            }
+
+            groups.set(key, current);
+        });
+    });
+
+    return Array.from(groups.values())
+        .filter((group) => group.columns.length >= 2)
+        .map((group) => ({
+            ...group,
+            columns: group.columns.sort((left, right) => left.label.localeCompare(right.label, undefined, { numeric: true })),
+            numericOnly: group.columns.every((column) => column.summary?.detectedType === 'numeric'),
+        }))
+        .sort((left, right) => right.columns.length - left.columns.length);
+};
 
 export const buildNumericAnalysisColumn = (dataset, columnId) => {
     const column = getDatasetColumn(dataset, columnId);
@@ -801,6 +1163,34 @@ export const buildNumericAnalysisColumn = (dataset, columnId) => {
         numericValues: getDatasetColumnValues(dataset, column.id).map(parseNumericValue),
         values: getDatasetColumnValues(dataset, column.id),
     };
+};
+
+export const buildDatasetExportRows = (dataset) => {
+    const columns = dataset?.columns || [];
+
+    return (dataset?.rows || []).map((row) => Object.fromEntries(
+        columns.map((column) => [column.label, row?.[column.id] ?? null])
+    ));
+};
+
+export const buildDatasetCsv = (dataset) => {
+    const columns = dataset?.columns || [];
+    const escapeValue = (value) => {
+        const text = formatDatasetValue(value);
+
+        if (/[",\n]/.test(text)) {
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        return text;
+    };
+
+    const lines = [
+        columns.map((column) => escapeValue(column.label)).join(','),
+        ...(dataset?.rows || []).map((row) => columns.map((column) => escapeValue(row?.[column.id] ?? null)).join(',')),
+    ];
+
+    return lines.join('\n');
 };
 
 export const countCompleteRows = (dataset, columnIds = [], numericOnly = false) => {

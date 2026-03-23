@@ -35,6 +35,7 @@ import { rSquaredToFSquared } from '../../stats/regression.js';
 import { parseDelimitedTable } from '../../utils/delimitedTable.js';
 import { buildNumericAnalysisColumn, countCompleteRows } from '../../utils/datasetImport.js';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
+import { ACTIVE_DATASET_SESSION_KEY, consumeAnalysisLaunchPayload } from '../../utils/analysisLaunch.js';
 
 const SAMPLE_DATASET = `Study Hours,Sleep Hours,Practice Problems,Stress Level,Exam Score
 2,5.9,18,8.3,56
@@ -87,7 +88,6 @@ const TUTOR_SCENARIOS = [
 ];
 
 const INTERNAL_PREDICTOR_IDS = ['Predictor X1', 'Predictor X2'];
-const ACTIVE_DATASET_SESSION_KEY = 'statwizard_active_dataset_id';
 
 const LESSON_CONTEXTS = [
     {
@@ -885,6 +885,8 @@ const MultipleRegressionPage = ({
     const [tableText, setTableText] = useState(SAMPLE_DATASET);
     const [calculatorInputMode, setCalculatorInputMode] = useState('paste');
     const [selectedDatasetId, setSelectedDatasetId] = useState('');
+    const [launchPayload] = useState(() => consumeAnalysisLaunchPayload('multiple_regression'));
+    const [launchPayloadApplied, setLaunchPayloadApplied] = useState(false);
     const [savedRoleSelection, setSavedRoleSelection] = useState({
         outcome: '',
         predictors: [],
@@ -901,6 +903,12 @@ const MultipleRegressionPage = ({
         () => datasets.find((dataset) => dataset.id === selectedDatasetId) || null,
         [datasets, selectedDatasetId]
     );
+
+    useEffect(() => {
+        if (launchPayload?.datasetId) {
+            setCalculatorInputMode('saved');
+        }
+    }, [launchPayload]);
 
     useEffect(() => {
         if (!datasets.length) {
@@ -921,6 +929,10 @@ const MultipleRegressionPage = ({
                 return previous;
             }
 
+            if (launchPayload?.datasetId && datasets.some((dataset) => dataset.id === launchPayload.datasetId)) {
+                return launchPayload.datasetId;
+            }
+
             if (preferredDatasetId && datasets.some((dataset) => dataset.id === preferredDatasetId)) {
                 try {
                     window.sessionStorage.removeItem(ACTIVE_DATASET_SESSION_KEY);
@@ -933,7 +945,7 @@ const MultipleRegressionPage = ({
 
             return datasets[0]?.id || '';
         });
-    }, [datasets]);
+    }, [datasets, launchPayload?.datasetId]);
 
     useEffect(() => {
         if (!savedDataset) {
@@ -947,6 +959,30 @@ const MultipleRegressionPage = ({
         const numericIds = savedDataset.columns
             .filter((column) => column.summary?.detectedType === 'numeric')
             .map((column) => column.id);
+
+        if (
+            launchPayload
+            && !launchPayloadApplied
+            && launchPayload.datasetId === savedDataset.id
+        ) {
+            const nextOutcome = numericIds.includes(launchPayload.outcome)
+                ? launchPayload.outcome
+                : numericIds[numericIds.length - 1] || '';
+            const availablePredictors = numericIds.filter((columnId) => columnId !== nextOutcome);
+            const nextPredictors = (launchPayload.predictors || []).filter((columnId) => availablePredictors.includes(columnId));
+
+            setSavedRoleSelection({
+                outcome: nextOutcome,
+                predictors: nextPredictors.length >= 2
+                    ? nextPredictors
+                    : [...new Set([
+                        ...nextPredictors,
+                        ...availablePredictors.slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
+                    ])].slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
+            });
+            setLaunchPayloadApplied(true);
+            return;
+        }
 
         setSavedRoleSelection((previous) => {
             const nextOutcome = numericIds.includes(previous.outcome)
@@ -970,7 +1006,7 @@ const MultipleRegressionPage = ({
                 ])].slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
             };
         });
-    }, [savedDataset]);
+    }, [launchPayload, launchPayloadApplied, savedDataset]);
 
     useEffect(() => {
         if (!numericColumns.length) {

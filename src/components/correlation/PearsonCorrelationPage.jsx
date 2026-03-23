@@ -16,6 +16,7 @@ import {
 import PearsonScatterplot from './PearsonScatterplot';
 import PowerAnalysisTab from '../power/PowerAnalysisTab';
 import AssumptionItem from '../formula/AssumptionItem';
+import VariableRolePicker from '../data/VariableRolePicker.jsx';
 import {
     buildCorrelationGuidance,
     buildCorrelationInterpretation,
@@ -25,6 +26,9 @@ import {
     getCorrelationConventionLabel,
 } from '../../stats/correlation.js';
 import { parseDelimitedTable } from '../../utils/delimitedTable.js';
+import { buildNumericAnalysisColumn, countCompleteRows } from '../../utils/datasetImport.js';
+import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
+import { ACTIVE_DATASET_SESSION_KEY, consumeAnalysisLaunchPayload } from '../../utils/analysisLaunch.js';
 
 const TUTOR_PRESETS = [
     ['strong_positive', 'Strong Positive', 'Positive linear trend with modest noise.'],
@@ -118,6 +122,7 @@ const PearsonCorrelationPage = ({
     testConfig,
     initialPowerMode,
 }) => {
+    const { datasets } = useDatasetLibraryContext();
     const [lessonPreset, setLessonPreset] = useState('strong_positive');
     const [lessonSampleSize, setLessonSampleSize] = useState(36);
     const [lessonNoise, setLessonNoise] = useState(0.28);
@@ -200,6 +205,14 @@ const PearsonCorrelationPage = ({
     };
 
     const [tableText, setTableText] = useState(SAMPLE_DATASET);
+    const [calculatorInputMode, setCalculatorInputMode] = useState('paste');
+    const [selectedDatasetId, setSelectedDatasetId] = useState('');
+    const [launchPayload] = useState(() => consumeAnalysisLaunchPayload('pearson_correlation'));
+    const [launchPayloadApplied, setLaunchPayloadApplied] = useState(false);
+    const [savedRoleSelection, setSavedRoleSelection] = useState({
+        x: '',
+        y: '',
+    });
     const [selectedX, setSelectedX] = useState('');
     const [selectedY, setSelectedY] = useState('');
     const [tails, setTails] = useState(2);
@@ -211,6 +224,57 @@ const PearsonCorrelationPage = ({
 
     const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
     const numericColumns = parsedTable.numericColumns || [];
+    const savedDataset = useMemo(
+        () => datasets.find((dataset) => dataset.id === selectedDatasetId) || null,
+        [datasets, selectedDatasetId]
+    );
+    const savedNumericColumns = useMemo(
+        () => (savedDataset?.columns || []).filter((column) => column.summary?.detectedType === 'numeric'),
+        [savedDataset]
+    );
+
+    useEffect(() => {
+        if (launchPayload?.datasetId) {
+            setCalculatorInputMode('saved');
+        }
+    }, [launchPayload]);
+
+    useEffect(() => {
+        if (!datasets.length) {
+            setSelectedDatasetId('');
+            return;
+        }
+
+        let preferredDatasetId = '';
+
+        try {
+            preferredDatasetId = window.sessionStorage.getItem(ACTIVE_DATASET_SESSION_KEY) || '';
+        } catch (error) {
+            preferredDatasetId = '';
+        }
+
+        setSelectedDatasetId((previous) => {
+            if (datasets.some((dataset) => dataset.id === previous)) {
+                return previous;
+            }
+
+            if (launchPayload?.datasetId && datasets.some((dataset) => dataset.id === launchPayload.datasetId)) {
+                return launchPayload.datasetId;
+            }
+
+            if (preferredDatasetId && datasets.some((dataset) => dataset.id === preferredDatasetId)) {
+                try {
+                    window.sessionStorage.removeItem(ACTIVE_DATASET_SESSION_KEY);
+                } catch (error) {
+                    // Ignore sessionStorage access problems and keep going.
+                }
+
+                return preferredDatasetId;
+            }
+
+            return datasets[0]?.id || '';
+        });
+    }, [datasets, launchPayload?.datasetId]);
 
     useEffect(() => {
         if (!numericColumns.length) {
@@ -228,24 +292,91 @@ const PearsonCorrelationPage = ({
         }
     }, [numericColumns, selectedX, selectedY]);
 
+    useEffect(() => {
+        if (!savedDataset) {
+            setSavedRoleSelection({
+                x: '',
+                y: '',
+            });
+            return;
+        }
+
+        const numericIds = savedDataset.columns
+            .filter((column) => column.summary?.detectedType === 'numeric')
+            .map((column) => column.id);
+
+        if (
+            launchPayload
+            && !launchPayloadApplied
+            && launchPayload.datasetId === savedDataset.id
+        ) {
+            const nextX = numericIds.includes(launchPayload.x) ? launchPayload.x : numericIds[0] || '';
+            const nextY = numericIds.includes(launchPayload.y) && launchPayload.y !== nextX
+                ? launchPayload.y
+                : (numericIds.find((columnId) => columnId !== nextX) || numericIds[1] || nextX);
+
+            setSavedRoleSelection({
+                x: nextX,
+                y: nextY,
+            });
+            setLaunchPayloadApplied(true);
+            return;
+        }
+
+        setSavedRoleSelection((previous) => {
+            const nextX = numericIds.includes(previous.x) ? previous.x : numericIds[0] || '';
+            const nextY = numericIds.includes(previous.y) && previous.y !== nextX
+                ? previous.y
+                : (numericIds.find((columnId) => columnId !== nextX) || numericIds[1] || nextX);
+
+            return {
+                x: nextX,
+                y: nextY,
+            };
+        });
+    }, [launchPayload, launchPayloadApplied, savedDataset]);
+
     const selectedXColumn = numericColumns.find((column) => column.name === selectedX) || null;
     const selectedYColumn = numericColumns.find((column) => column.name === selectedY) || null;
+    const savedXColumn = useMemo(
+        () => buildNumericAnalysisColumn(savedDataset, savedRoleSelection.x),
+        [savedDataset, savedRoleSelection.x]
+    );
+    const savedYColumn = useMemo(
+        () => buildNumericAnalysisColumn(savedDataset, savedRoleSelection.y),
+        [savedDataset, savedRoleSelection.y]
+    );
+    const savedCompleteCaseSummary = useMemo(
+        () => countCompleteRows(savedDataset, [savedRoleSelection.x, savedRoleSelection.y].filter(Boolean), true),
+        [savedDataset, savedRoleSelection.x, savedRoleSelection.y]
+    );
+    const activeXColumn = calculatorInputMode === 'saved' ? savedXColumn : selectedXColumn;
+    const activeYColumn = calculatorInputMode === 'saved' ? savedYColumn : selectedYColumn;
+    const activeCompleteCaseSummary = calculatorInputMode === 'saved'
+        ? savedCompleteCaseSummary
+        : {
+            total: parsedTable.rowCount || 0,
+            usable: Math.min(selectedXColumn?.numericValues?.length || 0, selectedYColumn?.numericValues?.length || 0),
+            dropped: Math.max(0, (parsedTable.rowCount || 0) - Math.min(selectedXColumn?.numericValues?.length || 0, selectedYColumn?.numericValues?.length || 0)),
+        };
+    const activeXLabel = activeXColumn?.label || activeXColumn?.name || 'X';
+    const activeYLabel = activeYColumn?.label || activeYColumn?.name || 'Y';
 
     const calculatorStats = useMemo(() => {
-        if (!selectedXColumn || !selectedYColumn || selectedXColumn.name === selectedYColumn.name) {
+        if (!activeXColumn || !activeYColumn || activeXColumn.name === activeYColumn.name) {
             return null;
         }
 
         return calculatePearsonCorrelationStats({
-            xValues: selectedXColumn.numericValues,
-            yValues: selectedYColumn.numericValues,
+            xValues: activeXColumn.numericValues,
+            yValues: activeYColumn.numericValues,
             alpha: 1 - confidenceLevel,
             tails,
             direction,
             confidenceLevel,
             rho0,
         });
-    }, [selectedXColumn, selectedYColumn, confidenceLevel, tails, direction, rho0]);
+    }, [activeXColumn, activeYColumn, confidenceLevel, tails, direction, rho0]);
 
     useEffect(() => {
         if (calculatorStats?.ok && typeof onStatsChange === 'function') {
@@ -492,31 +623,86 @@ const PearsonCorrelationPage = ({
                                         Data Source
                                     </div>
                                     <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                        Paste or upload
+                                        Choose the input mode
                                     </h3>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-3 mb-4">
-                                <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border cursor-pointer text-sm font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-indigo-500'}`}>
-                                    <FileUp size={16} />
-                                    Upload CSV
-                                    <input type="file" accept=".csv,.txt,.tsv" className="hidden" onChange={onUpload} />
-                                </label>
-                                <button
-                                    onClick={() => setTableText(SAMPLE_DATASET)}
-                                    className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-indigo-500'}`}
-                                >
-                                    <Sparkles size={16} />
-                                    Sample Data
-                                </button>
+                            <div className="flex flex-wrap gap-2 mb-5">
+                                {[
+                                    { id: 'paste', label: 'Paste / Upload' },
+                                    { id: 'saved', label: 'Saved Dataset' },
+                                ].map((mode) => (
+                                    <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() => setCalculatorInputMode(mode.id)}
+                                        className={`rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest transition-colors ${calculatorInputMode === mode.id
+                                            ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
+                                            : (darkMode ? 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:text-slate-900')
+                                        }`}
+                                    >
+                                        {mode.label}
+                                    </button>
+                                ))}
                             </div>
 
-                            <textarea
-                                value={tableText}
-                                onChange={(event) => setTableText(event.target.value)}
-                                className={`w-full h-64 rounded-2xl border p-4 text-sm font-mono outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                            />
+                            {calculatorInputMode === 'paste' ? (
+                                <>
+                                    <div className="flex flex-wrap gap-3 mb-4">
+                                        <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border cursor-pointer text-sm font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-indigo-500'}`}>
+                                            <FileUp size={16} />
+                                            Upload CSV
+                                            <input type="file" accept=".csv,.txt,.tsv" className="hidden" onChange={onUpload} />
+                                        </label>
+                                        <button
+                                            onClick={() => setTableText(SAMPLE_DATASET)}
+                                            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-indigo-500'}`}
+                                        >
+                                            <Sparkles size={16} />
+                                            Sample Data
+                                        </button>
+                                    </div>
+
+                                    <textarea
+                                        value={tableText}
+                                        onChange={(event) => setTableText(event.target.value)}
+                                        className={`w-full h-64 rounded-2xl border p-4 text-sm font-mono outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                    />
+                                </>
+                            ) : (
+                                <div className="space-y-5">
+                                    <label className="block">
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Saved Dataset
+                                        </span>
+                                        <select
+                                            value={selectedDatasetId}
+                                            onChange={(event) => setSelectedDatasetId(event.target.value)}
+                                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                        >
+                                            {!datasets.length && <option value="">No saved datasets yet</option>}
+                                            {datasets.map((dataset) => (
+                                                <option key={dataset.id} value={dataset.id}>{dataset.name}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    {savedDataset && (
+                                        <div className={`rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                Dataset snapshot
+                                            </div>
+                                            <p className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                {savedDataset.rowCount} rows / {savedDataset.columnCount} variables
+                                            </p>
+                                            <p className={`mt-2 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                                {savedNumericColumns.length} numeric variable{savedNumericColumns.length === 1 ? '' : 's'} available for Pearson correlation.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </Card>
 
                         <Card darkMode={darkMode}>
@@ -532,7 +718,133 @@ const PearsonCorrelationPage = ({
                                 </div>
                             </div>
 
-                            {!parsedTable.ok ? (
+                            {calculatorInputMode === 'saved' ? (
+                                !datasets.length ? (
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                                        Save a dataset in Data Manager first, then come back here to launch Pearson correlation with that dataset already loaded.
+                                    </div>
+                                ) : !savedDataset ? (
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                        Choose a saved dataset to map the X and Y variables.
+                                    </div>
+                                ) : savedNumericColumns.length < 2 ? (
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                                        This dataset needs at least two numeric variables before Pearson correlation can run.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <VariableRolePicker
+                                            darkMode={darkMode}
+                                            dataset={savedDataset}
+                                            selection={savedRoleSelection}
+                                            onChange={setSavedRoleSelection}
+                                            emptyMessage="Choose a saved dataset to map the X and Y variables."
+                                            roles={[
+                                                {
+                                                    id: 'x',
+                                                    label: 'X Variable',
+                                                    selection: 'single',
+                                                    allowedTypes: ['numeric'],
+                                                    placeholder: 'Select numeric X variable',
+                                                    excludeRoleIds: ['y'],
+                                                    emptyOptionsText: 'No numeric variables are currently available for the X role.',
+                                                },
+                                                {
+                                                    id: 'y',
+                                                    label: 'Y Variable',
+                                                    selection: 'single',
+                                                    allowedTypes: ['numeric'],
+                                                    placeholder: 'Select numeric Y variable',
+                                                    excludeRoleIds: ['x'],
+                                                    emptyOptionsText: 'No numeric variables are currently available for the Y role.',
+                                                },
+                                            ]}
+                                        />
+
+                                        <div className={`rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Complete cases</div>
+                                            <p className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                {activeCompleteCaseSummary.usable} of {activeCompleteCaseSummary.total} rows are usable after dropping incomplete X or Y values.
+                                            </p>
+                                        </div>
+
+                                        <p className={`text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                            Data preparation lives in Data Manager. This calculator focuses on mapping variables and running the existing Pearson engine.
+                                        </p>
+
+                                        <div>
+                                            <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Hypothesis Direction</span>
+                                            <div className={`mt-2 rounded-xl border p-1 flex gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                {[
+                                                    ['two_tailed', 'Two-tailed'],
+                                                    ['positive', 'Positive'],
+                                                    ['negative', 'Negative'],
+                                                ].map(([id, label]) => {
+                                                    const isActive = setupState === id;
+                                                    return (
+                                                        <button
+                                                            key={id}
+                                                            onClick={() => {
+                                                                if (id === 'two_tailed') {
+                                                                    setTails(2);
+                                                                } else {
+                                                                    setTails(1);
+                                                                    setDirection(id === 'negative' ? 'less' : 'greater');
+                                                                }
+                                                            }}
+                                                            className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900 hover:bg-white')}`}
+                                                        >
+                                                            {label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <label className="block">
+                                            <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Confidence Level</span>
+                                            <select value={confidenceLevel} onChange={(event) => setConfidenceLevel(Number(event.target.value))} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                                <option value={0.9}>90%</option>
+                                                <option value={0.95}>95%</option>
+                                                <option value={0.99}>99%</option>
+                                            </select>
+                                        </label>
+
+                                        <label className="block">
+                                            <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Null Population Correlation (rho0)</span>
+                                            <input
+                                                type="number"
+                                                min={-0.95}
+                                                max={0.95}
+                                                step={0.01}
+                                                value={rho0}
+                                                onChange={(event) => {
+                                                    const numeric = Number(event.target.value);
+                                                    if (Number.isFinite(numeric)) {
+                                                        setRho0(Math.max(-0.95, Math.min(0.95, numeric)));
+                                                    }
+                                                }}
+                                                className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                            />
+                                            <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                Usually 0. This is the population correlation value the hypothesis test is evaluated against.
+                                            </p>
+                                        </label>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button onClick={() => setCalculatorShowLine((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${calculatorShowLine ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{calculatorShowLine ? 'Hide Line' : 'Show Line'}</button>
+                                            <button onClick={() => setCalculatorShowBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${calculatorShowBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{calculatorShowBand ? 'Hide Band' : 'Show Band'}</button>
+                                        </div>
+
+                                        <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Notation</div>
+                                            <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                This calculator reports the observed sample correlation as r. Population language uses rho, and rho0 names the null population correlation being tested.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )
+                            ) : !parsedTable.ok ? (
                                 <div className={`rounded-xl border p-4 ${darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
                                     {parsedTable.errors.join(' ')}
                                 </div>
@@ -555,6 +867,13 @@ const PearsonCorrelationPage = ({
                                             {numericColumns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
                                         </select>
                                     </label>
+
+                                    <div className={`rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Complete cases</div>
+                                        <p className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            {activeCompleteCaseSummary.usable} of {activeCompleteCaseSummary.total} rows are usable after dropping incomplete X or Y values.
+                                        </p>
+                                    </div>
 
                                     <div>
                                         <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Hypothesis Direction</span>
@@ -595,7 +914,7 @@ const PearsonCorrelationPage = ({
                                     </label>
 
                                     <label className="block">
-                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Null Population Correlation (ρ₀)</span>
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Null Population Correlation (rho0)</span>
                                         <input
                                             type="number"
                                             min={-0.95}
@@ -623,7 +942,7 @@ const PearsonCorrelationPage = ({
                                     <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                         <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Notation</div>
                                         <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                            This calculator reports the observed sample correlation as r. Population language uses ρ, and ρ₀ names the null population correlation being tested.
+                                            This calculator reports the observed sample correlation as r. Population language uses rho, and rho0 names the null population correlation being tested.
                                         </p>
                                     </div>
                                 </div>
@@ -660,8 +979,8 @@ const PearsonCorrelationPage = ({
                                 pairs={calculatorStats?.pairs || []}
                                 stats={calculatorStats}
                                 darkMode={darkMode}
-                                xLabel={selectedX || 'X'}
-                                yLabel={selectedY || 'Y'}
+                                xLabel={activeXLabel}
+                                yLabel={activeYLabel}
                                 showLine={calculatorShowLine}
                                 showConfidenceBand={calculatorShowBand}
                                 confidenceLevel={confidenceLevel}
@@ -700,7 +1019,7 @@ const PearsonCorrelationPage = ({
                                             </p>
                                         </div>
                                         <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-950 border border-slate-800 text-slate-400' : 'bg-slate-50 border border-slate-200 text-slate-600'}`}>
-                                            {selectedX} vs {selectedY}
+                                            {activeXLabel} vs {activeYLabel}
                                         </div>
                                     </div>
                                 </Card>
