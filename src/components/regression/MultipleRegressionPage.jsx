@@ -22,6 +22,7 @@ import RegressionResidualPlot from './RegressionResidualPlot';
 import ObservedFittedPlot from './ObservedFittedPlot';
 import MultipleRegressionConditionalEffectPlot from './MultipleRegressionConditionalEffectPlot';
 import MultipleRegressionPlanePlot from './MultipleRegressionPlanePlot';
+import VariableRolePicker from '../data/VariableRolePicker.jsx';
 import {
     buildMultipleRegressionGuidance,
     buildMultipleRegressionInterpretation,
@@ -32,6 +33,8 @@ import {
 } from '../../stats/multipleRegression.js';
 import { rSquaredToFSquared } from '../../stats/regression.js';
 import { parseDelimitedTable } from '../../utils/delimitedTable.js';
+import { buildNumericAnalysisColumn, countCompleteRows } from '../../utils/datasetImport.js';
+import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
 
 const SAMPLE_DATASET = `Study Hours,Sleep Hours,Practice Problems,Stress Level,Exam Score
 2,5.9,18,8.3,56
@@ -84,6 +87,7 @@ const TUTOR_SCENARIOS = [
 ];
 
 const INTERNAL_PREDICTOR_IDS = ['Predictor X1', 'Predictor X2'];
+const ACTIVE_DATASET_SESSION_KEY = 'statwizard_active_dataset_id';
 
 const LESSON_CONTEXTS = [
     {
@@ -330,6 +334,26 @@ const clampToRange = (value, min, max) => {
     return Math.min(max, Math.max(min, numeric));
 };
 
+const countNumericCompleteCasesFromColumns = (columns = [], totalRows = 0) => {
+    if (!columns.length || totalRows <= 0) {
+        return {
+            total: totalRows,
+            usable: 0,
+            dropped: Math.max(0, totalRows),
+        };
+    }
+
+    const usable = Array.from({ length: totalRows }, (_, rowIndex) => (
+        columns.every((column) => Number.isFinite(column?.numericValues?.[rowIndex]))
+    )).filter(Boolean).length;
+
+    return {
+        total: totalRows,
+        usable,
+        dropped: Math.max(0, totalRows - usable),
+    };
+};
+
 const getLessonContext = (contextId) =>
     LESSON_CONTEXTS.find((context) => context.id === contextId) || LESSON_CONTEXTS[0];
 
@@ -536,7 +560,9 @@ const MultipleRegressionPage = ({
     assumptions = [],
     testConfig,
     initialPowerMode,
+    onOpenDataManager,
 }) => {
+    const { datasets } = useDatasetLibraryContext();
     const [lessonScenario, setLessonScenario] = useState('balanced');
     const [lessonContextId, setLessonContextId] = useState('abstract');
     const [lessonBeta1, setLessonBeta1] = useState(1.1);
@@ -857,6 +883,12 @@ const MultipleRegressionPage = ({
     };
 
     const [tableText, setTableText] = useState(SAMPLE_DATASET);
+    const [calculatorInputMode, setCalculatorInputMode] = useState('paste');
+    const [selectedDatasetId, setSelectedDatasetId] = useState('');
+    const [savedRoleSelection, setSavedRoleSelection] = useState({
+        outcome: '',
+        predictors: [],
+    });
     const [selectedOutcome, setSelectedOutcome] = useState('');
     const [selectedPredictors, setSelectedPredictors] = useState([]);
     const [confidenceLevel, setConfidenceLevel] = useState(0.95);
@@ -865,6 +897,80 @@ const MultipleRegressionPage = ({
 
     const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
     const numericColumns = parsedTable.numericColumns || [];
+    const savedDataset = useMemo(
+        () => datasets.find((dataset) => dataset.id === selectedDatasetId) || null,
+        [datasets, selectedDatasetId]
+    );
+
+    useEffect(() => {
+        if (!datasets.length) {
+            setSelectedDatasetId('');
+            return;
+        }
+
+        let preferredDatasetId = '';
+
+        try {
+            preferredDatasetId = window.sessionStorage.getItem(ACTIVE_DATASET_SESSION_KEY) || '';
+        } catch (error) {
+            preferredDatasetId = '';
+        }
+
+        setSelectedDatasetId((previous) => {
+            if (datasets.some((dataset) => dataset.id === previous)) {
+                return previous;
+            }
+
+            if (preferredDatasetId && datasets.some((dataset) => dataset.id === preferredDatasetId)) {
+                try {
+                    window.sessionStorage.removeItem(ACTIVE_DATASET_SESSION_KEY);
+                } catch (error) {
+                    // Ignore sessionStorage access problems and keep going.
+                }
+
+                return preferredDatasetId;
+            }
+
+            return datasets[0]?.id || '';
+        });
+    }, [datasets]);
+
+    useEffect(() => {
+        if (!savedDataset) {
+            setSavedRoleSelection({
+                outcome: '',
+                predictors: [],
+            });
+            return;
+        }
+
+        const numericIds = savedDataset.columns
+            .filter((column) => column.summary?.detectedType === 'numeric')
+            .map((column) => column.id);
+
+        setSavedRoleSelection((previous) => {
+            const nextOutcome = numericIds.includes(previous.outcome)
+                ? previous.outcome
+                : numericIds[numericIds.length - 1] || '';
+            const availablePredictors = numericIds.filter((columnId) => columnId !== nextOutcome);
+            const validPredictors = (previous.predictors || []).filter((columnId) => availablePredictors.includes(columnId));
+
+            if (validPredictors.length >= 2) {
+                return {
+                    outcome: nextOutcome,
+                    predictors: validPredictors,
+                };
+            }
+
+            return {
+                outcome: nextOutcome,
+                predictors: [...new Set([
+                    ...validPredictors,
+                    ...availablePredictors.slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
+                ])].slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
+            };
+        });
+    }, [savedDataset]);
 
     useEffect(() => {
         if (!numericColumns.length) {
@@ -907,13 +1013,101 @@ const MultipleRegressionPage = ({
 
     const selectedOutcomeColumn = numericColumns.find((column) => column.name === selectedOutcome) || null;
     const selectedPredictorColumns = numericColumns.filter((column) => selectedPredictors.includes(column.name));
+    const savedOutcomeColumn = useMemo(
+        () => buildNumericAnalysisColumn(savedDataset, savedRoleSelection.outcome),
+        [savedDataset, savedRoleSelection.outcome]
+    );
+    const savedPredictorColumns = useMemo(
+        () => (savedRoleSelection.predictors || [])
+            .map((columnId) => buildNumericAnalysisColumn(savedDataset, columnId))
+            .filter(Boolean),
+        [savedDataset, savedRoleSelection.predictors]
+    );
+    const pasteCompleteCaseSummary = useMemo(
+        () => countNumericCompleteCasesFromColumns(
+            [selectedOutcomeColumn, ...selectedPredictorColumns].filter(Boolean),
+            parsedTable.rowCount || 0
+        ),
+        [parsedTable.rowCount, selectedOutcomeColumn, selectedPredictorColumns]
+    );
+    const savedCompleteCaseSummary = useMemo(
+        () => countCompleteRows(
+            savedDataset,
+            [savedRoleSelection.outcome, ...(savedRoleSelection.predictors || [])].filter(Boolean),
+            true
+        ),
+        [savedDataset, savedRoleSelection]
+    );
+    const activeOutcomeColumn = calculatorInputMode === 'saved' ? savedOutcomeColumn : selectedOutcomeColumn;
+    const activePredictorColumns = calculatorInputMode === 'saved' ? savedPredictorColumns : selectedPredictorColumns;
+    const activeCompleteCaseSummary = calculatorInputMode === 'saved' ? savedCompleteCaseSummary : pasteCompleteCaseSummary;
+    const activeOutcomeLabel = calculatorInputMode === 'saved'
+        ? (savedOutcomeColumn?.label || 'Y')
+        : (selectedOutcome || 'Y');
+    const calculatorSetupErrors = useMemo(() => {
+        if (calculatorInputMode === 'saved') {
+            if (!datasets.length) {
+                return ['No saved datasets are available yet. Open the Data Manager to import and save one first.'];
+            }
 
+            if (!savedDataset) {
+                return ['Choose a saved dataset to begin.'];
+            }
+
+            const numericVariableCount = savedDataset.columns.filter((column) => column.summary?.detectedType === 'numeric').length;
+
+            if (!savedRoleSelection.outcome) {
+                return ['Outcome variable must be numeric.'];
+            }
+
+            if ((savedRoleSelection.predictors || []).length < 2) {
+                return ['Select at least two quantitative predictors.'];
+            }
+
+            if (numericVariableCount < 3) {
+                return ['This saved dataset needs at least three numeric variables for the current multiple-regression setup.'];
+            }
+
+            if (activeCompleteCaseSummary.usable === 0) {
+                return ['No usable rows remain after excluding missing values.'];
+            }
+
+            return [];
+        }
+
+        if (!selectedOutcome) {
+            return ['Choose one outcome variable and at least two predictors to fit the multiple-regression model.'];
+        }
+
+        if (selectedPredictors.length < 2) {
+            return ['Select at least two quantitative predictors for the multiple-regression model.'];
+        }
+
+        if (activeCompleteCaseSummary.usable === 0) {
+            return ['No usable rows remain after excluding missing values.'];
+        }
+
+        return [];
+    }, [
+        activeCompleteCaseSummary.usable,
+        calculatorInputMode,
+        datasets.length,
+        savedDataset,
+        savedRoleSelection.outcome,
+        savedRoleSelection.predictors,
+        selectedOutcome,
+        selectedPredictors.length,
+    ]);
     const calculatorStats = useMemo(() => calculateMultipleRegressionStats({
-        outcomeValues: selectedOutcomeColumn?.numericValues || [],
-        predictorColumns: selectedPredictorColumns,
+        outcomeValues: activeOutcomeColumn?.numericValues || [],
+        predictorColumns: activePredictorColumns,
         confidenceLevel,
         alpha: 1 - confidenceLevel,
-    }), [selectedOutcomeColumn, selectedPredictorColumns, confidenceLevel]);
+    }), [activeOutcomeColumn, activePredictorColumns, confidenceLevel]);
+    const calculatorModelErrors = calculatorSetupErrors.length
+        ? calculatorSetupErrors
+        : (calculatorStats?.errors || []);
+    const calculatorNeedsSetup = calculatorSetupErrors.length > 0 || !calculatorStats?.ok;
 
     const calculatorGuidance = useMemo(
         () => buildMultipleRegressionGuidance(calculatorStats),
@@ -1222,64 +1416,160 @@ const MultipleRegressionPage = ({
                                 </h3>
                             </div>
 
-                            <div className="flex flex-wrap gap-3">
-                                <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl cursor-pointer font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
-                                    <FileUp size={16} />
-                                    Upload CSV
-                                    <input type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={onUpload} />
-                                </label>
-                                <button
-                                    onClick={() => setTableText(SAMPLE_DATASET)}
-                                    className={`px-4 py-3 rounded-xl font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}
-                                >
-                                    Load Sample Dataset
-                                </button>
+                            <div className="flex flex-wrap gap-2 mb-5">
+                                {[
+                                    { id: 'paste', label: 'Paste / Upload' },
+                                    { id: 'saved', label: 'Saved Dataset' },
+                                ].map((mode) => (
+                                    <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() => setCalculatorInputMode(mode.id)}
+                                        className={`rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest transition-colors ${calculatorInputMode === mode.id
+                                            ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
+                                            : (darkMode ? 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:text-slate-900')
+                                        }`}
+                                    >
+                                        {mode.label}
+                                    </button>
+                                ))}
                             </div>
 
-                            <label className="block mt-5">
-                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    Paste CSV / Table Data
-                                </span>
-                                <textarea
-                                    value={tableText}
-                                    onChange={(event) => setTableText(event.target.value)}
-                                    rows={12}
-                                    className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm font-medium outline-none resize-y transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                                />
-                            </label>
-
-                            <label className="block">
-                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    Outcome Variable (Y)
-                                </span>
-                                <select value={selectedOutcome} onChange={(event) => setSelectedOutcome(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
-                                    {numericColumns.map((column) => (
-                                        <option key={column.name} value={column.name}>{column.name}</option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <div>
-                                <div className={`text-[11px] font-black uppercase tracking-widest mb-3 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    Predictor Variables (Select 2+)
-                                </div>
-                                <div className="space-y-2">
-                                    {numericColumns.filter((column) => column.name !== selectedOutcome).map((column) => (
-                                        <label key={column.name} className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer ${selectedPredictors.includes(column.name) ? (darkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-white' : 'bg-indigo-50 border-indigo-200 text-slate-900') : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')}`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedPredictors.includes(column.name)}
-                                                onChange={() => togglePredictor(column.name)}
-                                                className="rounded border-slate-400"
-                                            />
-                                            <span className="font-bold text-sm">{column.name}</span>
+                            {calculatorInputMode === 'paste' ? (
+                                <>
+                                    <div className="flex flex-wrap gap-3">
+                                        <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl cursor-pointer font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
+                                            <FileUp size={16} />
+                                            Upload CSV
+                                            <input type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={onUpload} />
                                         </label>
-                                    ))}
+                                        <button
+                                            onClick={() => setTableText(SAMPLE_DATASET)}
+                                            className={`px-4 py-3 rounded-xl font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                                        >
+                                            Load Sample Dataset
+                                        </button>
+                                    </div>
+
+                                    <label className="block mt-5">
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Paste CSV / Table Data
+                                        </span>
+                                        <textarea
+                                            value={tableText}
+                                            onChange={(event) => setTableText(event.target.value)}
+                                            rows={12}
+                                            className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm font-medium outline-none resize-y transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                        />
+                                    </label>
+
+                                    <label className="block">
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Outcome Variable (Y)
+                                        </span>
+                                        <select value={selectedOutcome} onChange={(event) => setSelectedOutcome(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                            {numericColumns.map((column) => (
+                                                <option key={column.name} value={column.name}>{column.name}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    <div>
+                                        <div className={`text-[11px] font-black uppercase tracking-widest mb-3 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Predictor Variables (Select 2+)
+                                        </div>
+                                        <div className="space-y-2">
+                                            {numericColumns.filter((column) => column.name !== selectedOutcome).map((column) => (
+                                                <label key={column.name} className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer ${selectedPredictors.includes(column.name) ? (darkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-white' : 'bg-indigo-50 border-indigo-200 text-slate-900') : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedPredictors.includes(column.name)}
+                                                        onChange={() => togglePredictor(column.name)}
+                                                        className="rounded border-slate-400"
+                                                    />
+                                                    <span className="font-bold text-sm">{column.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <p className={`mt-3 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                            This fast lane keeps the existing quick-entry workflow intact for sample data and pasted tables.
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-5">
+                                    <label className="block">
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Saved Dataset
+                                        </span>
+                                        <select
+                                            value={selectedDatasetId}
+                                            onChange={(event) => setSelectedDatasetId(event.target.value)}
+                                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                        >
+                                            {!datasets.length && <option value="">No saved datasets yet</option>}
+                                            {datasets.map((dataset) => (
+                                                <option key={dataset.id} value={dataset.id}>{dataset.name}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    {savedDataset && (
+                                        <div className={`rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                                <div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                        Dataset snapshot
+                                                    </div>
+                                                    <p className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                        {savedDataset.rowCount} rows • {savedDataset.columnCount} variables
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onOpenDataManager?.()}
+                                                    className={`rounded-lg border px-3 py-2 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900'}`}
+                                                >
+                                                    Open Data Manager
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <VariableRolePicker
+                                        darkMode={darkMode}
+                                        dataset={savedDataset}
+                                        selection={savedRoleSelection}
+                                        onChange={setSavedRoleSelection}
+                                        emptyMessage="Save a dataset in Data Manager first, then come back here to map the outcome and predictors."
+                                        roles={[
+                                            {
+                                                id: 'outcome',
+                                                label: 'Outcome Variable (Y)',
+                                                selection: 'single',
+                                                allowedTypes: ['numeric'],
+                                                placeholder: 'Select numeric outcome',
+                                                emptyOptionsText: 'This dataset does not currently have any numeric variables for the outcome role.',
+                                            },
+                                            {
+                                                id: 'predictors',
+                                                label: 'Predictor Variables (Select 2+)',
+                                                selection: 'multiple',
+                                                allowedTypes: ['numeric'],
+                                                excludeRoleIds: ['outcome'],
+                                                helperText: 'Only numeric variables are shown for the current multiple-regression workflow.',
+                                                emptyOptionsText: 'This dataset needs more numeric variables before it can drive the current multiple-regression calculator.',
+                                            },
+                                        ]}
+                                    />
+
+                                    {savedDataset && (
+                                        <p className={`text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                            Data preparation lives in the Data Manager. This calculator only maps variables and runs the existing regression engine.
+                                        </p>
+                                    )}
                                 </div>
-                                <p className={`mt-3 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                                    This first page is focused on quantitative predictors only. Coefficients are interpreted conditionally on the other predictors in the model.
-                                </p>
-                            </div>
+                            )}
 
                             <label className="block">
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
@@ -1304,7 +1594,33 @@ const MultipleRegressionPage = ({
                     </div>
 
                     <div className="lg:col-span-8 space-y-6">
-                        {!calculatorStats?.ok ? (
+                        {(activeCompleteCaseSummary.total > 0 && (activeCompleteCaseSummary.usable > 0 || activeCompleteCaseSummary.dropped > 0)) && (
+                            <Card darkMode={darkMode}>
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                            Complete-case summary
+                                        </div>
+                                        <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {activeCompleteCaseSummary.usable} usable rows remain for this model
+                                        </h3>
+                                        <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            {activeCompleteCaseSummary.dropped > 0
+                                                ? `${activeCompleteCaseSummary.dropped} rows were excluded because at least one selected analysis variable was missing or non-numeric.`
+                                                : 'All rows are currently usable for the selected variables.'}
+                                        </p>
+                                    </div>
+                                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${activeCompleteCaseSummary.dropped > 0
+                                        ? (darkMode ? 'bg-amber-500/10 text-amber-200 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200')
+                                        : (darkMode ? 'bg-slate-950 border border-slate-800 text-slate-400' : 'bg-slate-50 border border-slate-200 text-slate-600')
+                                    }`}>
+                                        {activeCompleteCaseSummary.usable} / {activeCompleteCaseSummary.total} rows
+                                    </div>
+                                </div>
+                            </Card>
+                        )}
+
+                        {calculatorNeedsSetup ? (
                             <Card darkMode={darkMode}>
                                 <div className="flex items-start gap-4">
                                     <div className={`p-3 rounded-xl ${darkMode ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700'}`}>
@@ -1315,7 +1631,7 @@ const MultipleRegressionPage = ({
                                             Complete the model setup
                                         </h3>
                                         <div className={`mt-3 space-y-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                            {(calculatorStats?.errors || ['Choose one outcome and at least two predictors to fit the multiple-regression model.']).map((error) => (
+                                            {(calculatorModelErrors.length ? calculatorModelErrors : ['Choose one outcome and at least two predictors to fit the multiple-regression model.']).map((error) => (
                                                 <p key={error}>{error}</p>
                                             ))}
                                         </div>
@@ -1339,10 +1655,10 @@ const MultipleRegressionPage = ({
                                                 Fitted Model
                                             </div>
                                             <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                                {buildEquationText({ stats: calculatorStats, outcomeLabel: selectedOutcome || 'Y' })}
+                                                {buildEquationText({ stats: calculatorStats, outcomeLabel: activeOutcomeLabel })}
                                             </h3>
                                             <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                                {buildMultipleRegressionInterpretation(calculatorStats, selectedOutcome || 'Y')}
+                                                {buildMultipleRegressionInterpretation(calculatorStats, activeOutcomeLabel)}
                                             </p>
                                         </div>
                                         <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-950 border border-slate-800 text-slate-400' : 'bg-slate-50 border border-slate-200 text-slate-600'}`}>
@@ -1360,7 +1676,7 @@ const MultipleRegressionPage = ({
                                             onPointSelect={setCalculatorSelectedPointId}
                                             predictionTarget={calculatorPrediction}
                                             subtitle="The diagonal is perfect prediction. Click a case to inspect how far its observed outcome sits above or below the fitted value."
-                                            yLabel={selectedOutcome || 'Observed Y'}
+                                            yLabel={activeOutcomeLabel || 'Observed Y'}
                                         />
                                     </Card>
 
@@ -1411,7 +1727,7 @@ const MultipleRegressionPage = ({
                                         <div className="lg:col-span-7">
                                             <div className="grid md:grid-cols-3 gap-4">
                                                 <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
-                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {selectedOutcome || 'Y'}</div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {activeOutcomeLabel}</div>
                                                     <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorPrediction?.fitted, 3)}</p>
                                                 </div>
                                                 <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -1445,11 +1761,11 @@ const MultipleRegressionPage = ({
                                                 </p>
                                                 <div className="mt-4 grid md:grid-cols-3 gap-3">
                                                     <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed {selectedOutcome || 'Y'}</div>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed {activeOutcomeLabel}</div>
                                                         <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.y, 3)}</p>
                                                     </div>
                                                     <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Fitted {selectedOutcome || 'Y'}</div>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Fitted {activeOutcomeLabel}</div>
                                                         <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.fitted, 3)}</p>
                                                     </div>
                                                     <div className={`rounded-xl border p-3 ${darkMode ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
@@ -1521,7 +1837,7 @@ const MultipleRegressionPage = ({
                                                         </div>
                                                     </div>
                                                     <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                                        {coefficient.interpretation.replace('predicted Y', `predicted ${selectedOutcome || 'Y'}`)}
+                                                        {coefficient.interpretation.replace('predicted Y', `predicted ${activeOutcomeLabel}`)}
                                                     </p>
                                                     <p className={`mt-3 text-xs font-bold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
                                                         Zero-order r {formatStat(coefficient.zeroOrderCorrelation, 3)} | Partial R^2 {formatStat(coefficient.partialRSquared, 3)}

@@ -65,6 +65,7 @@ import MainMenu from './components/navigation/MainMenu';
 import ModulesView from './components/navigation/ModulesView';
 import SearchView from './components/navigation/SearchView';
 import LessonsView from './components/navigation/LessonsView';
+import DataManagerPage from './components/data/DataManagerPage';
 import UpdateToast from './components/common/UpdateToast';
 import PowerAnalysisHub from './components/power/PowerAnalysisHub';
 import PowerAnalysisTab from './components/power/PowerAnalysisTab';
@@ -78,6 +79,7 @@ import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
 import FactorialAnovaTutorPanel from './components/tutor/FactorialAnovaTutorPanel';
 import AncovaTutorPanel from './components/tutor/AncovaTutorPanel';
 import { POWER_TEST_BY_STEP_ID } from './power/testRegistry';
+import { DatasetLibraryProvider } from './hooks/useDatasetLibrary';
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -485,7 +487,8 @@ export default function App() {
 
     return (
         <ErrorBoundary>
-            <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-indigo-500/30 pb-20 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
+            <DatasetLibraryProvider>
+                <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-indigo-500/30 pb-20 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
                 <Header onBack={handleBack} onHome={handleRestart} canGoBack={appMode !== 'menu'} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
                 {appMode === 'wizard' && !isHelp && <div className="w-full bg-slate-200 h-1.5"><div className="bg-indigo-600 h-1.5 transition-all duration-700 ease-out" style={{ width: `${Math.min((history.length / 5) * 100, 100)}%` }} /></div>}
 
@@ -516,6 +519,17 @@ export default function App() {
                         )}
 
                         {appMode === 'lessons' && <LessonsView darkMode={darkMode} />}
+
+                        {appMode === 'data_manager' && (
+                            <DataManagerPage
+                                darkMode={darkMode}
+                                onOpenMultipleRegression={() => {
+                                    setCurrentStepId('multiple_regression_result');
+                                    setAppMode('wizard');
+                                    setActiveResultSection('calculator');
+                                }}
+                            />
+                        )}
 
                         {appMode === 'wizard' && (
                             <div className={`rounded-2xl shadow-xl border overflow-hidden transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 shadow-2xl shadow-black/50' : 'bg-white border-slate-200'} ${isHelp ? (darkMode ? 'border-amber-500/30 ring-4 ring-amber-500/10' : 'border-amber-200 shadow-amber-100 ring-4 ring-amber-50') : ''}`}>
@@ -651,6 +665,7 @@ export default function App() {
                                                     assumptions={currentStep?.assumptions || []}
                                                     testConfig={currentTestConfig}
                                                     initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                    onOpenDataManager={() => setAppMode('data_manager')}
                                                 />
                                             ) : activeResultSection === 'power' && currentTestConfig ? (
                                                 <PowerAnalysisTab
@@ -1088,7 +1103,8 @@ export default function App() {
                 )}
 
                 {updateAvailable && <UpdateToast countdown={countdown} />}
-            </div>
+                </div>
+            </DatasetLibraryProvider>
         </ErrorBoundary>
     );
 }
