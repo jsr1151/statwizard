@@ -1503,6 +1503,80 @@ const MultipleRegressionPage = ({
                             </p>
                         </div>
 
+                        <div className={`lg:hidden rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                        Live controls in view
+                                    </div>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        Adjust these without leaving the graph. The full control panel below still has everything else.
+                                    </p>
+                                </div>
+                                <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}`}>
+                                    Mobile quick dock
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid gap-4">
+                                <label className="block">
+                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        Strength of {getPredictorSymbol(INTERNAL_PREDICTOR_IDS[0])}
+                                    </span>
+                                    <input type="range" min={-1.5} max={1.5} step={0.05} value={lessonBeta1} onChange={(event) => setLessonBeta1(Number(event.target.value))} className="mt-3 w-full" />
+                                    <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{formatStat(lessonBeta1, 2)}</div>
+                                </label>
+
+                                <label className="block">
+                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        Strength of {getPredictorSymbol(INTERNAL_PREDICTOR_IDS[1])}
+                                    </span>
+                                    <input type="range" min={-1.5} max={1.5} step={0.05} value={lessonBeta2} onChange={(event) => setLessonBeta2(Number(event.target.value))} className="mt-3 w-full" />
+                                    <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{formatStat(lessonBeta2, 2)}</div>
+                                </label>
+
+                                <label className="block">
+                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        Predictor overlap
+                                    </span>
+                                    <input type="range" min={-0.9} max={0.9} step={0.01} value={lessonPredictorCorrelation} onChange={(event) => setLessonPredictorCorrelation(Number(event.target.value))} className="mt-3 w-full" />
+                                    <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{formatStat(lessonPredictorCorrelation, 2)}</div>
+                                </label>
+                            </div>
+
+                            <div className="mt-4 grid gap-4">
+                                {lessonStats?.predictorSummaries?.map((summary) => (
+                                    <label key={`quick-${summary.label}`} className="block">
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            {lessonPredictorLabels[summary.label]}
+                                        </span>
+                                        <input
+                                            type="range"
+                                            min={summary.min}
+                                            max={summary.max}
+                                            step={0.05}
+                                            value={lessonPredictionInputs?.[summary.label] ?? summary.mean}
+                                            onChange={(event) => setLessonPredictionInputs((previous) => ({
+                                                ...previous,
+                                                [summary.label]: Number(event.target.value),
+                                            }))}
+                                            className="mt-3 w-full"
+                                        />
+                                        <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                            {formatStat(lessonPredictionInputs?.[summary.label] ?? summary.mean, 2)}
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+
+                            <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                    Predicted {lessonContext.outcomeLabel}
+                                </div>
+                                <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonPrediction?.fitted, 3)}</p>
+                            </div>
+                        </div>
+
                         {lessonMainView === 'observed' && (
                             <ObservedFittedPlot
                                 stats={lessonStats}
@@ -1660,6 +1734,9 @@ const MultipleRegressionPage = ({
                         </div>
                         <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                             The custom predictor profile is a hypothetical combination of predictor values. The selected sample case is one actual observed row from the sample. They are not meant to match unless you happen to choose the same values.
+                        </p>
+                        <p className={`mt-2 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                            The same prediction sliders are mirrored in the tutor controls panel so you can keep the graph in view while you adjust them.
                         </p>
 
                         <div className="mt-6 grid xl:grid-cols-2 gap-6 items-start">
@@ -1998,7 +2075,7 @@ const MultipleRegressionPage = ({
                 </div>
 
                 <div className="lg:col-span-4 space-y-6">
-                    <Card darkMode={darkMode}>
+                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28">
                         <div className="flex items-center gap-3 mb-4">
                             <SlidersHorizontal size={18} className={darkMode ? 'text-indigo-300' : 'text-indigo-700'} />
                             <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
@@ -2082,6 +2159,67 @@ const MultipleRegressionPage = ({
                                 <input type="range" min={30} max={180} step={1} value={lessonSampleSize} onChange={(event) => setLessonSampleSize(Number(event.target.value))} className="mt-3 w-full" />
                                 <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{lessonSampleSize}</div>
                             </label>
+                        </div>
+
+                        <div className={`mt-6 rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <div className={`text-[11px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                        Quick prediction dock
+                                    </div>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        These sliders mirror the custom predictor profile below, so you can keep the graph in view while you test predictions.
+                                    </p>
+                                </div>
+                                <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}`}>
+                                    Live
+                                </div>
+                            </div>
+
+                            <div className="mt-4 space-y-4">
+                                {lessonStats?.predictorSummaries?.map((summary) => (
+                                    <label key={`sidebar-${summary.label}`} className="block">
+                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            {lessonPredictorLabels[summary.label]}
+                                        </span>
+                                        <input
+                                            type="range"
+                                            min={summary.min}
+                                            max={summary.max}
+                                            step={0.05}
+                                            value={lessonPredictionInputs?.[summary.label] ?? summary.mean}
+                                            onChange={(event) => setLessonPredictionInputs((previous) => ({
+                                                ...previous,
+                                                [summary.label]: Number(event.target.value),
+                                            }))}
+                                            className="mt-3 w-full"
+                                        />
+                                        <div className={`mt-2 flex items-center justify-between gap-3 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            <span className="font-black">{formatStat(lessonPredictionInputs?.[summary.label] ?? summary.mean, 2)}</span>
+                                            <span className={darkMode ? 'text-slate-500' : 'text-slate-500'}>
+                                                {formatStat(summary.min, 1)} to {formatStat(summary.max, 1)}
+                                            </span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+
+                            <div className="mt-4 grid gap-3">
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                        Predicted {lessonContext.outcomeLabel}
+                                    </div>
+                                    <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonPrediction?.fitted, 3)}</p>
+                                </div>
+                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        Current view
+                                    </div>
+                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                        {lessonMainViews.find((view) => view.id === lessonMainView)?.label || 'Observed vs Fitted'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="mt-6 space-y-3">
