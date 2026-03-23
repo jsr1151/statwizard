@@ -64,6 +64,18 @@ const summarizeSeries = (values) => {
     };
 };
 
+const calculateSkewness = (values = []) => {
+    const summary = summarizeSeries(values);
+
+    if (!(summary?.sampleSD > EPSILON) || values.length < 3) {
+        return 0;
+    }
+
+    return values.reduce((sum, value) => (
+        sum + (((value - summary.mean) / Math.max(EPSILON, summary.sampleSD)) ** 3)
+    ), 0) / values.length;
+};
+
 const pearsonCorrelation = (xValues = [], yValues = []) => {
     if (xValues.length !== yValues.length || xValues.length < 2) {
         return 0;
@@ -500,7 +512,7 @@ export const calculateMultipleRegressionStats = ({
                 zeroOrderCorrelation: null,
                 partialRSquared: null,
                 vif: null,
-                interpretation: `When all predictors equal 0, the model predicts ${roundTo(estimate, 3)} units on the outcome scale.`,
+                interpretation: 'The intercept is the predicted outcome when every predictor equals 0. That is most meaningful when 0 is realistic or the predictors were centered.',
             };
         }
 
@@ -544,6 +556,11 @@ export const calculateMultipleRegressionStats = ({
         standardizedResidual: standardizedResiduals[index],
         cooksDistance: cooksDistances[index],
     }));
+    const maxLeverage = Math.max(0, ...leverage);
+    const averageLeverage = leverage.length
+        ? leverage.reduce((sum, value) => sum + value, 0) / leverage.length
+        : 0;
+    const residualSkewness = calculateSkewness(residuals);
 
     return {
         ok: true,
@@ -578,10 +595,13 @@ export const calculateMultipleRegressionStats = ({
         modelF,
         modelPValue,
         leverage,
+        maxLeverage,
+        averageLeverage,
         standardizedResiduals,
         cooksDistances,
         influence,
         residualSpreadRatio,
+        residualSkewness,
         xtxInverse,
         vifByPredictor,
         maxVIF,
@@ -670,7 +690,7 @@ export const buildMultipleRegressionGuidance = (stats) => {
     if (stats.maxVIF >= 5) {
         guidance.push({
             title: 'Collinearity warning',
-            body: `The predictor set shows elevated overlap (max VIF = ${roundTo(stats.maxVIF, 2)}). Coefficients can become unstable even when overall R² looks strong.`,
+            body: `The predictor set shows elevated overlap (max VIF = ${roundTo(stats.maxVIF, 2)}). Coefficients can become unstable even when overall R^2 looks strong.`,
             tone: 'warning',
         });
     }
@@ -709,7 +729,18 @@ export const buildMultipleRegressionTutorDataset = ({
     noise = 1.1,
     includeOutlier = false,
     generationKey = 0,
+    contextConfig = {},
 }) => {
+    const resolvedContext = {
+        yBase: 55,
+        signalScale: 5.5,
+        noiseScale: 5,
+        x1Mean: 0,
+        x1Scale: 1,
+        x2Mean: 0,
+        x2Scale: 1,
+        ...contextConfig,
+    };
     const resolvedSampleSize = Math.max(24, Math.round(Number(sampleSize) || 80));
     const rho = clampToRange(Number(predictorCorrelation) || 0, -0.92, 0.92);
     const random = createSeededRandom(hashSeedParts(
@@ -719,15 +750,25 @@ export const buildMultipleRegressionTutorDataset = ({
         beta2,
         rho,
         noise,
-        includeOutlier,
+        resolvedContext.yBase,
+        resolvedContext.signalScale,
+        resolvedContext.noiseScale,
+        resolvedContext.x1Mean,
+        resolvedContext.x1Scale,
+        resolvedContext.x2Mean,
+        resolvedContext.x2Scale,
         generationKey
     ));
     const scale = Math.sqrt(Math.max(EPSILON, 1 - (rho ** 2)));
     const rows = Array.from({ length: resolvedSampleSize }, (_, index) => {
-        const x1 = sampleStandardNormal(random) * 1.5;
-        const x2 = ((rho * x1) / 1.5) + (scale * sampleStandardNormal(random) * 1.2);
-        const residual = sampleStandardNormal(random) * (Number(noise) || 1.1) * 5;
-        const y = 55 + (x1 * Number(beta1) * 5.5) + (x2 * Number(beta2) * 5.5) + residual;
+        const latentX1 = sampleStandardNormal(random) * 1.5;
+        const latentX2 = ((rho * latentX1) / 1.5) + (scale * sampleStandardNormal(random) * 1.2);
+        const x1 = resolvedContext.x1Mean + (latentX1 * resolvedContext.x1Scale);
+        const x2 = resolvedContext.x2Mean + (latentX2 * resolvedContext.x2Scale);
+        const residual = sampleStandardNormal(random) * (Number(noise) || 1.1) * resolvedContext.noiseScale;
+        const y = resolvedContext.yBase
+            + ((latentX1 * Number(beta1)) + (latentX2 * Number(beta2))) * resolvedContext.signalScale
+            + residual;
 
         return {
             id: index,
@@ -739,14 +780,18 @@ export const buildMultipleRegressionTutorDataset = ({
     });
 
     if (includeOutlier) {
-        const outlierX1 = 3.4;
-        const outlierX2 = (rho * outlierX1) + (scale * -1.9);
-        const outlierExpected = 55 + (outlierX1 * Number(beta1) * 5.5) + (outlierX2 * Number(beta2) * 5.5);
+        const outlierLatentX1 = 3.4;
+        const outlierLatentX2 = (rho * outlierLatentX1) + (scale * -1.9);
+        const outlierX1 = resolvedContext.x1Mean + (outlierLatentX1 * resolvedContext.x1Scale);
+        const outlierX2 = resolvedContext.x2Mean + (outlierLatentX2 * resolvedContext.x2Scale);
+        const outlierExpected = resolvedContext.yBase
+            + ((outlierLatentX1 * Number(beta1)) + (outlierLatentX2 * Number(beta2))) * resolvedContext.signalScale;
+        const outlierShift = Math.max(18, resolvedContext.noiseScale * 2.8);
         rows.push({
             id: resolvedSampleSize,
             x1: outlierX1,
             x2: outlierX2,
-            y: outlierExpected - 18,
+            y: outlierExpected - outlierShift,
             isSyntheticOutlier: true,
         });
     }
@@ -760,4 +805,3 @@ export const buildMultipleRegressionTutorDataset = ({
         rows,
     };
 };
-

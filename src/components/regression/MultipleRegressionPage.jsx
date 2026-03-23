@@ -13,10 +13,13 @@ import {
     Target,
     TrendingUp,
 } from 'lucide-react';
+import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import AssumptionItem from '../formula/AssumptionItem';
 import PowerAnalysisTab from '../power/PowerAnalysisTab';
 import RegressionResidualPlot from './RegressionResidualPlot';
 import ObservedFittedPlot from './ObservedFittedPlot';
+import MultipleRegressionConditionalEffectPlot from './MultipleRegressionConditionalEffectPlot';
+import MultipleRegressionPlanePlot from './MultipleRegressionPlanePlot';
 import {
     buildMultipleRegressionGuidance,
     buildMultipleRegressionInterpretation,
@@ -65,8 +68,8 @@ const TUTOR_SCENARIOS = [
     },
     {
         id: 'overlap',
-        label: 'Shared Overlap',
-        description: 'High predictor overlap makes coefficients work harder to separate.',
+        label: 'Predictor Overlap',
+        description: 'High shared variance makes the slopes work harder to separate.',
         settings: { beta1: 1.0, beta2: 0.9, predictorCorrelation: 0.72, noise: 1.0, sampleSize: 96 },
     },
     {
@@ -77,11 +80,199 @@ const TUTOR_SCENARIOS = [
     },
 ];
 
+const INTERNAL_PREDICTOR_IDS = ['Predictor X1', 'Predictor X2'];
+
+const LESSON_CONTEXTS = [
+    {
+        id: 'abstract',
+        buttonLabel: 'Abstract X1/X2',
+        headline: 'Abstract predictors -> outcome',
+        description: 'Keep the labels generic so the regression logic stays front and center.',
+        outcomeLabel: 'Outcome Y',
+        predictorLabels: ['Predictor X1', 'Predictor X2'],
+        supportingText: 'Use this preset when you want the cleanest math-first story.',
+        datasetConfig: {
+            yBase: 55,
+            signalScale: 5.5,
+            noiseScale: 5,
+            x1Mean: 0,
+            x1Scale: 1,
+            x2Mean: 0,
+            x2Scale: 1,
+        },
+    },
+    {
+        id: 'study_attendance',
+        buttonLabel: 'Study + Attendance',
+        headline: 'Hours studied + class attendance -> exam score',
+        description: 'A classroom story where both preparation and attendance can matter at the same time.',
+        outcomeLabel: 'Exam score',
+        predictorLabels: ['Hours studied', 'Class attendance (%)'],
+        supportingText: 'Good for thinking about overlap: students who study more may also attend more often.',
+        datasetConfig: {
+            yBase: 78,
+            signalScale: 9.5,
+            noiseScale: 5.5,
+            x1Mean: 8,
+            x1Scale: 1.7,
+            x2Mean: 78,
+            x2Scale: 8.5,
+        },
+    },
+    {
+        id: 'sleep_caffeine',
+        buttonLabel: 'Sleep + Caffeine',
+        headline: 'Sleep + caffeine -> reaction time',
+        description: 'A human-performance story where two predictors can overlap without meaning the same thing.',
+        outcomeLabel: 'Reaction time (ms)',
+        predictorLabels: ['Sleep (hours)', 'Caffeine (mg)'],
+        supportingText: 'This is useful for showing that prediction and explanation are related, but not identical.',
+        datasetConfig: {
+            yBase: 290,
+            signalScale: 16,
+            noiseScale: 18,
+            x1Mean: 7,
+            x1Scale: 0.8,
+            x2Mean: 180,
+            x2Scale: 42,
+        },
+    },
+    {
+        id: 'ads_sales',
+        buttonLabel: 'TV + Online Ads',
+        headline: 'TV ads + online ads -> sales',
+        description: 'A business story where media channels can overlap yet still contribute unique information.',
+        outcomeLabel: 'Sales',
+        predictorLabels: ['TV ads budget', 'Online ads budget'],
+        supportingText: 'This preset helps show why a strong model fit does not automatically make every slope easy to interpret.',
+        datasetConfig: {
+            yBase: 120,
+            signalScale: 24,
+            noiseScale: 20,
+            x1Mean: 62,
+            x1Scale: 13,
+            x2Mean: 46,
+            x2Scale: 11,
+        },
+    },
+];
+
+const TOOLTIP_COPY = {
+    intercept: {
+        term: 'Intercept',
+        title: 'Predicted outcome when every predictor is 0',
+        desc: 'The intercept is the model baseline. It is most useful when 0 is realistic or when predictors were centered first.',
+    },
+    slope: {
+        term: 'Slope',
+        title: 'Change in predicted Y for a 1-unit increase',
+        desc: 'A slope tells how much the fitted mean changes for one predictor while the other predictor is held constant.',
+    },
+    standardizedBeta: {
+        term: 'Standardized beta',
+        title: 'Slope after putting variables on a shared SD scale',
+        desc: 'Standardized beta removes the original units so the predictor effects are easier to compare in the same model.',
+    },
+    standardError: {
+        term: 'Standard error',
+        title: 'How much the estimate would vary across similar samples',
+        desc: 'A larger standard error means the coefficient is less stable from sample to sample.',
+    },
+    tStatistic: {
+        term: 't statistic',
+        title: 'Estimate divided by its standard error',
+        desc: 'The t statistic compares the slope size to its uncertainty. Larger absolute values usually mean stronger evidence against a zero slope.',
+    },
+    pValue: {
+        term: 'p value',
+        title: 'How surprising the result would be if the true slope were 0',
+        desc: 'A small p value means the observed slope would be unlikely if that predictor had no conditional relationship with the outcome.',
+    },
+    vif: {
+        term: 'VIF',
+        title: 'Variance inflation factor',
+        desc: 'VIF shows how much predictor overlap is inflating the coefficient uncertainty. Larger values mean more multicollinearity.',
+    },
+    zeroOrderCorrelation: {
+        term: 'Zero-order correlation',
+        title: 'Simple X-Y correlation before controlling for the other predictor',
+        desc: 'This is the raw correlation between one predictor and the outcome, without holding the other predictor constant.',
+    },
+    partialRSquared: {
+        term: 'Partial R^2',
+        title: 'Unique fit contribution from one predictor',
+        desc: 'Partial R^2 is the share of remaining outcome variance that this predictor explains after the other predictor is already in the model.',
+    },
+    meanInterval: {
+        term: 'CI for mean response',
+        title: 'Likely range for the fitted mean',
+        desc: 'This interval is about the average outcome for cases with this predictor profile, not one individual person or row.',
+    },
+    predictionInterval: {
+        term: 'Prediction interval',
+        title: 'Likely range for one new individual case',
+        desc: 'Prediction intervals are wider because single cases still vary around the fitted mean.',
+    },
+    residual: {
+        term: 'Residual',
+        title: 'Observed outcome minus fitted outcome',
+        desc: 'Residuals show how far each real case sits above or below what the model predicted.',
+    },
+    adjustedRSquared: {
+        term: 'Adjusted R^2',
+        title: 'Model fit after a penalty for extra predictors',
+        desc: 'Adjusted R^2 helps prevent us from over-crediting a model just because it uses more predictors.',
+    },
+    rSquared: {
+        term: 'R^2',
+        title: 'Share of outcome variance explained by the whole model',
+        desc: 'R^2 is an overall model-fit summary. It does not tell you whether every individual slope is stable or easy to interpret.',
+    },
+    fStatistic: {
+        term: 'F statistic',
+        title: 'Omnibus test for whether the full model explains more than a flat mean-only model',
+        desc: 'The F statistic asks whether the predictor set, taken together, improves fit beyond predicting the same mean for everyone.',
+    },
+    leverage: {
+        term: 'Leverage',
+        title: 'How unusual a case is in predictor space',
+        desc: 'A high-leverage case has a rare combination of predictor values, so it has extra opportunity to pull the fitted model.',
+    },
+    cooksDistance: {
+        term: "Cook's D",
+        title: 'How much one case changes the fitted model',
+        desc: "Cook's D combines leverage and residual size into one influence measure. Larger values mean the model depends more on that case.",
+    },
+};
+
 const Card = ({ darkMode, children, className = '' }) => (
     <div className={`rounded-2xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} ${className}`}>
         {children}
     </div>
 );
+
+const TooltipLabel = ({ darkMode, label, tooltipKey, className = '' }) => {
+    const tooltip = TOOLTIP_COPY[tooltipKey];
+
+    if (!tooltip) {
+        return <span className={className}>{label}</span>;
+    }
+
+    return (
+        <ProgressiveTooltip
+            as="span"
+            term={tooltip.term}
+            title={tooltip.title}
+            desc={tooltip.desc}
+            darkMode={darkMode}
+        >
+            <span className={`inline-flex items-center gap-1 ${className}`}>
+                <span>{label}</span>
+                <Info size={12} className={darkMode ? 'text-slate-500' : 'text-slate-500'} />
+            </span>
+        </ProgressiveTooltip>
+    );
+};
 
 const MetricTile = ({ darkMode, label, value, detail = null, tone = 'default' }) => {
     const toneClass = tone === 'primary'
@@ -136,6 +327,46 @@ const clampToRange = (value, min, max) => {
     return Math.min(max, Math.max(min, numeric));
 };
 
+const getLessonContext = (contextId) =>
+    LESSON_CONTEXTS.find((context) => context.id === contextId) || LESSON_CONTEXTS[0];
+
+const getContextualPredictorLabel = (context, predictorId) => (
+    predictorId === INTERNAL_PREDICTOR_IDS[0]
+        ? context.predictorLabels[0]
+        : predictorId === INTERNAL_PREDICTOR_IDS[1]
+            ? context.predictorLabels[1]
+            : predictorId
+);
+
+const getPredictorSymbol = (predictorId) => (
+    predictorId === INTERNAL_PREDICTOR_IDS[0]
+        ? 'X1'
+        : predictorId === INTERNAL_PREDICTOR_IDS[1]
+            ? 'X2'
+            : predictorId
+);
+
+const getSlopeSymbol = (predictorId) => (
+    predictorId === INTERNAL_PREDICTOR_IDS[0]
+        ? 'b₁'
+        : predictorId === INTERNAL_PREDICTOR_IDS[1]
+            ? 'b₂'
+            : 'b'
+);
+
+const findCoefficient = (stats, predictorId) =>
+    stats?.coefficients?.find((coefficient) => coefficient.id === predictorId) || null;
+
+const formatSignedDifference = (value, digits = 3) => {
+    const numeric = Number(value);
+
+    if (!Number.isFinite(numeric)) {
+        return '--';
+    }
+
+    return `${numeric >= 0 ? '+' : '-'}${formatStat(Math.abs(numeric), digits)}`;
+};
+
 const buildEquationText = ({ stats, outcomeLabel = 'Y' }) => {
     if (!stats?.ok) {
         return 'Regression equation unavailable';
@@ -146,6 +377,113 @@ const buildEquationText = ({ stats, outcomeLabel = 'Y' }) => {
         .map((coefficient) => `${coefficient.estimate >= 0 ? '+' : '-'} ${formatStat(Math.abs(coefficient.estimate), 3)} * ${coefficient.label}`);
 
     return `${outcomeLabel} = ${formatStat(stats.intercept, 3)} ${terms.join(' ')}`;
+};
+
+const buildLessonEquationText = ({ stats, context }) => {
+    if (!stats?.ok) {
+        return 'Live equation unavailable';
+    }
+
+    const predictorOne = getContextualPredictorLabel(context, INTERNAL_PREDICTOR_IDS[0]);
+    const predictorTwo = getContextualPredictorLabel(context, INTERNAL_PREDICTOR_IDS[1]);
+    const coefficientOne = findCoefficient(stats, INTERNAL_PREDICTOR_IDS[0]);
+    const coefficientTwo = findCoefficient(stats, INTERNAL_PREDICTOR_IDS[1]);
+
+    if (!coefficientOne || !coefficientTwo) {
+        return 'Live equation unavailable';
+    }
+
+    return `Ŷ = ${formatStat(stats.intercept, 2)} ${coefficientOne.estimate >= 0 ? '+' : '-'} ${formatStat(Math.abs(coefficientOne.estimate), 2)}(${predictorOne}) ${coefficientTwo.estimate >= 0 ? '+' : '-'} ${formatStat(Math.abs(coefficientTwo.estimate), 2)}(${predictorTwo})`;
+};
+
+const buildLessonSymbolicEquation = (context) => (
+    `Ŷ = b₀ + b₁(${getContextualPredictorLabel(context, INTERNAL_PREDICTOR_IDS[0])}) + b₂(${getContextualPredictorLabel(context, INTERNAL_PREDICTOR_IDS[1])})`
+);
+
+const buildLessonSubstitutedEquation = ({ stats, prediction }) => {
+    if (!stats?.ok || !prediction) {
+        return 'Substituted prediction unavailable';
+    }
+
+    const predictorOne = INTERNAL_PREDICTOR_IDS[0];
+    const predictorTwo = INTERNAL_PREDICTOR_IDS[1];
+    const coefficientOne = findCoefficient(stats, predictorOne);
+    const coefficientTwo = findCoefficient(stats, predictorTwo);
+    const valueOne = prediction.predictorValues?.[predictorOne];
+    const valueTwo = prediction.predictorValues?.[predictorTwo];
+
+    if (!coefficientOne || !coefficientTwo) {
+        return 'Substituted prediction unavailable';
+    }
+
+    return `Ŷ = ${formatStat(stats.intercept, 2)} ${coefficientOne.estimate >= 0 ? '+' : '-'} ${formatStat(Math.abs(coefficientOne.estimate), 2)}(${formatStat(valueOne, 2)}) ${coefficientTwo.estimate >= 0 ? '+' : '-'} ${formatStat(Math.abs(coefficientTwo.estimate), 2)}(${formatStat(valueTwo, 2)}) = ${formatStat(prediction.fitted, 2)}`;
+};
+
+const buildLessonDiagnostics = ({ stats }) => {
+    if (!stats?.ok) {
+        return [];
+    }
+
+    const overlapCorrelation = Math.abs(stats.predictorCorrelationMatrix?.[0]?.values?.[1] || 0);
+    const leverageCutoff = (2 * (stats.predictorCount + 1)) / Math.max(1, stats.n);
+    const cooksCutoff = 4 / Math.max(1, stats.n);
+
+    return [
+        {
+            id: 'linearity',
+            label: 'Linearity',
+            status: stats.residualSpreadRatio > 2.25 ? 'Watch closely' : 'Looks reasonable',
+            what: 'The fitted mean should change in a roughly straight-line way as the predictors change.',
+            check: 'Use the partial-effect views and the residual plot. Curved patterns or systematic waves suggest the additive straight-line model is incomplete.',
+            ifFails: 'The fitted line or plane can miss important structure, so slopes become oversimplified summaries.',
+            doNext: 'Transform variables, add polynomial terms, or consider whether an interaction or another model form is needed.',
+        },
+        {
+            id: 'independence',
+            label: 'Independence of errors',
+            status: 'Needs design context',
+            what: 'Residuals from one case should not depend on residuals from another case.',
+            check: 'Think about how the data were collected. Repeated measures, clustered classrooms, or time-series data often violate independence.',
+            ifFails: 'Standard errors and p values can look more certain than they really are.',
+            doNext: 'Use a model that matches the design, such as mixed models, generalized estimating equations, or time-series methods.',
+        },
+        {
+            id: 'homoscedasticity',
+            label: 'Homoscedasticity',
+            status: stats.residualSpreadRatio > 2.25 ? 'Residual spread changes' : 'Residual spread is fairly even',
+            what: 'The residual spread should stay fairly similar across the fitted range.',
+            check: `In this sample, the residual spread ratio is about ${formatStat(stats.residualSpreadRatio, 2)}. Funnel shapes in the residual plot are the main warning sign.`,
+            ifFails: 'Confidence intervals and p values can become less trustworthy, especially for coefficient tests.',
+            doNext: 'Try transformations, robust standard errors, or a model that allows changing variance.',
+        },
+        {
+            id: 'normality',
+            label: 'Normality of residuals',
+            status: Math.abs(stats.residualSkewness) > 1 ? 'Residuals are skewed' : 'Residuals are fairly balanced',
+            what: 'For small samples, the residuals should be reasonably symmetric and not dominated by extreme tails.',
+            check: `This sample has residual skewness ${formatStat(stats.residualSkewness, 2)}. A Q-Q plot or histogram is the usual visual check.`,
+            ifFails: 'Coefficient estimates can still be useful, but small-sample p values and intervals become more sensitive to unusual cases.',
+            doNext: 'Inspect outliers, consider transformations, and rely more on plots and robust methods when needed.',
+        },
+        {
+            id: 'multicollinearity',
+            label: 'Multicollinearity',
+            status: stats.maxVIF >= 5 ? 'High overlap' : stats.maxVIF >= 2.5 ? 'Moderate overlap' : 'Low overlap',
+            what: 'Predictors should not duplicate the same information too heavily.',
+            check: `Max VIF is ${formatStat(stats.maxVIF, 2)} and |r| between the two predictors is ${formatStat(overlapCorrelation, 2)}.`,
+            ifFails: 'R^2 can stay high while the individual slopes become unstable, noisy, or even flip direction.',
+            doNext: 'Drop redundant predictors, combine them, collect more varied data, or center variables before adding interactions.',
+        },
+        {
+            id: 'influence',
+            label: 'Influential points / outliers',
+            status: stats.influence?.maxCooksDistance > cooksCutoff || stats.maxLeverage > leverageCutoff ? 'Influential case detected' : 'No obvious influence alarm',
+            what: 'A case can matter a lot because it has a large residual, unusual predictor values, or both.',
+            check: `Max leverage is ${formatStat(stats.maxLeverage, 3)} and max Cook's D is ${formatStat(stats.influence?.maxCooksDistance, 3)}.`,
+            ifFails: 'One case can noticeably move the slopes, standard errors, and even the overall fit statistics.',
+            doNext: 'Inspect that row carefully, verify the data entry, compare the model with and without the case, and explain any decision transparently.',
+        },
+    ];
 };
 
 const buildPredictionInputsFromStats = (stats, previous = {}) => {
@@ -197,6 +535,7 @@ const MultipleRegressionPage = ({
     initialPowerMode,
 }) => {
     const [lessonScenario, setLessonScenario] = useState('balanced');
+    const [lessonContextId, setLessonContextId] = useState('abstract');
     const [lessonBeta1, setLessonBeta1] = useState(1.1);
     const [lessonBeta2, setLessonBeta2] = useState(0.8);
     const [lessonPredictorCorrelation, setLessonPredictorCorrelation] = useState(0.35);
@@ -209,6 +548,9 @@ const MultipleRegressionPage = ({
     const [lessonGenerationKey, setLessonGenerationKey] = useState(0);
     const [lessonSelectedPointId, setLessonSelectedPointId] = useState(null);
     const [lessonPredictionInputs, setLessonPredictionInputs] = useState({});
+    const [lessonMainView, setLessonMainView] = useState('observed');
+
+    const lessonContext = useMemo(() => getLessonContext(lessonContextId), [lessonContextId]);
 
     const lessonDataset = useMemo(() => buildMultipleRegressionTutorDataset({
         sampleSize: lessonSampleSize,
@@ -218,13 +560,31 @@ const MultipleRegressionPage = ({
         noise: lessonNoise,
         includeOutlier: lessonOutlierOn,
         generationKey: lessonGenerationKey,
-    }), [lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonOutlierOn, lessonGenerationKey]);
+        contextConfig: lessonContext.datasetConfig,
+    }), [lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonOutlierOn, lessonGenerationKey, lessonContext]);
+
+    const lessonBaselineDataset = useMemo(() => buildMultipleRegressionTutorDataset({
+        sampleSize: lessonSampleSize,
+        beta1: lessonBeta1,
+        beta2: lessonBeta2,
+        predictorCorrelation: lessonPredictorCorrelation,
+        noise: lessonNoise,
+        includeOutlier: false,
+        generationKey: lessonGenerationKey,
+        contextConfig: lessonContext.datasetConfig,
+    }), [lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonGenerationKey, lessonContext]);
 
     const lessonStats = useMemo(() => calculateMultipleRegressionStats({
         outcomeValues: lessonDataset.outcomeValues,
         predictorColumns: lessonDataset.predictorColumns,
         confidenceLevel: 0.95,
     }), [lessonDataset]);
+
+    const lessonBaselineStats = useMemo(() => calculateMultipleRegressionStats({
+        outcomeValues: lessonBaselineDataset.outcomeValues,
+        predictorColumns: lessonBaselineDataset.predictorColumns,
+        confidenceLevel: 0.95,
+    }), [lessonBaselineDataset]);
 
     const lessonPrediction = useMemo(() => calculateMultipleRegressionPrediction({
         stats: lessonStats,
@@ -235,6 +595,79 @@ const MultipleRegressionPage = ({
     const lessonSelectedPair = useMemo(
         () => lessonStats?.pairs?.find((pair) => pair.id === lessonSelectedPointId || pair.index === lessonSelectedPointId) || null,
         [lessonStats, lessonSelectedPointId]
+    );
+    const lessonDiagnostics = useMemo(
+        () => buildLessonDiagnostics({ stats: lessonStats }),
+        [lessonStats]
+    );
+    const lessonPredictorLabels = useMemo(() => ({
+        [INTERNAL_PREDICTOR_IDS[0]]: getContextualPredictorLabel(lessonContext, INTERNAL_PREDICTOR_IDS[0]),
+        [INTERNAL_PREDICTOR_IDS[1]]: getContextualPredictorLabel(lessonContext, INTERNAL_PREDICTOR_IDS[1]),
+    }), [lessonContext]);
+    const lessonEquationText = useMemo(
+        () => buildLessonEquationText({ stats: lessonStats, context: lessonContext }),
+        [lessonStats, lessonContext]
+    );
+    const lessonSymbolicEquation = useMemo(
+        () => buildLessonSymbolicEquation(lessonContext),
+        [lessonContext]
+    );
+    const lessonSubstitutedEquation = useMemo(
+        () => buildLessonSubstitutedEquation({ stats: lessonStats, prediction: lessonPrediction, context: lessonContext }),
+        [lessonStats, lessonPrediction, lessonContext]
+    );
+    const lessonOutlierComparison = useMemo(() => {
+        if (!lessonOutlierOn || !lessonStats?.ok || !lessonBaselineStats?.ok) {
+            return null;
+        }
+
+        return {
+            metrics: [
+                {
+                    id: 'r_squared',
+                    label: 'R^2',
+                    before: lessonBaselineStats.rSquared,
+                    after: lessonStats.rSquared,
+                    tooltipKey: 'rSquared',
+                },
+                {
+                    id: 'adjusted_r_squared',
+                    label: 'Adjusted R^2',
+                    before: lessonBaselineStats.adjustedRSquared,
+                    after: lessonStats.adjustedRSquared,
+                    tooltipKey: 'adjustedRSquared',
+                },
+            ],
+            coefficients: lessonStats.coefficients.map((coefficient) => {
+                const baselineCoefficient = lessonBaselineStats.coefficients.find((item) => item.id === coefficient.id);
+                return {
+                    id: coefficient.id,
+                    label: coefficient.id === 'intercept'
+                        ? 'Intercept'
+                        : `Slope for ${lessonPredictorLabels[coefficient.id]} (${getSlopeSymbol(coefficient.id)})`,
+                    estimateBefore: baselineCoefficient?.estimate,
+                    estimateAfter: coefficient.estimate,
+                    seBefore: baselineCoefficient?.standardError,
+                    seAfter: coefficient.standardError,
+                };
+            }),
+            influentialCase: lessonStats.influence?.influentialPoint || null,
+        };
+    }, [lessonOutlierOn, lessonStats, lessonBaselineStats, lessonPredictorLabels]);
+    const lessonMainViews = useMemo(() => ([
+        { id: 'observed', label: 'Observed vs Fitted' },
+        { id: 'partial_x1', label: `Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}` },
+        { id: 'partial_x2', label: `Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}` },
+        { id: 'residual', label: 'Residual Plot' },
+        { id: 'plane', label: '3D Plane View' },
+    ]), [lessonPredictorLabels]);
+    const lessonOverlapCorrelation = Math.abs(lessonStats?.predictorCorrelationMatrix?.[0]?.values?.[1] || 0);
+    const lessonSelectedIsInfluential = Boolean(
+        lessonSelectedPair
+        && (
+            lessonSelectedPair.id === lessonStats?.influence?.influentialPoint?.id
+            || lessonSelectedPair.index === lessonStats?.influence?.influentialIndex
+        )
     );
 
     useEffect(() => {
@@ -250,6 +683,12 @@ const MultipleRegressionPage = ({
         });
         setLessonPredictionInputs((previous) => buildPredictionInputsFromStats(lessonStats, previous));
     }, [lessonStats]);
+
+    useEffect(() => {
+        if (lessonOutlierOn && lessonStats?.influence?.influentialPoint?.id != null) {
+            setLessonSelectedPointId(lessonStats.influence.influentialPoint.id);
+        }
+    }, [lessonOutlierOn, lessonStats?.influence?.influentialPoint?.id]);
 
     const applyScenario = (scenarioId) => {
         const scenario = TUTOR_SCENARIOS.find((item) => item.id === scenarioId);
@@ -1005,7 +1444,10 @@ const MultipleRegressionPage = ({
                     <div>
                         <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Multiple regression tutor / lessons</h3>
                         <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            This first slice is an interactive concept page rather than a formal lesson engine. Use the controls to see what changes when the model has more than one predictor: conditional coefficients, shared variance, prediction, residuals, and collinearity.
+                            This lesson page is about the logic of multiple regression: what the equation does, what “holding the other predictor constant” means, why predictor overlap matters, and how fit, prediction, and interpretation answer different questions.
+                        </p>
+                        <p className={`mt-3 text-sm max-w-3xl ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                            Active example preset: <span className={`font-black ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{lessonContext.headline}</span>. {lessonContext.supportingText}
                         </p>
                     </div>
                 </div>
@@ -1013,16 +1455,125 @@ const MultipleRegressionPage = ({
 
             <div className="grid lg:grid-cols-12 gap-8 items-start">
                 <div className="lg:col-span-8 space-y-6">
-                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28 z-10">
-                        <ObservedFittedPlot
-                            stats={lessonStats}
-                            darkMode={darkMode}
-                            selectedPointId={lessonSelectedPointId}
-                            onPointSelect={setLessonSelectedPointId}
-                            predictionTarget={lessonPrediction}
-                            subtitle="The model predicts Y from the whole predictor profile at once. Click a point to inspect one case, or change X1 and X2 below to see how the fitted mean moves."
-                            yLabel="Observed Outcome"
-                        />
+                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28 z-10 space-y-5">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                    Main teaching view
+                                </div>
+                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    {lessonMainViews.find((view) => view.id === lessonMainView)?.label || 'Observed vs Fitted'}
+                                </h3>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {lessonMainViews.map((view) => (
+                                    <button
+                                        key={view.id}
+                                        onClick={() => setLessonMainView(view.id)}
+                                        className={`rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest transition-colors ${lessonMainView === view.id ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300' : (darkMode ? 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:text-slate-900')}`}
+                                    >
+                                        {view.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className={`rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                        Live regression equation
+                                    </div>
+                                    <p className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                        {lessonEquationText}
+                                    </p>
+                                    <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        {lessonSymbolicEquation}
+                                    </p>
+                                </div>
+                                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-amber-500/10 text-amber-200 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                    Additive model only
+                                </div>
+                            </div>
+                            <p className={`mt-3 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                Each slope is conditional: it tells the change in predicted {lessonContext.outcomeLabel} for a 1-unit increase in one predictor while the other predictor is held constant.
+                            </p>
+                            <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                This model assumes the effect of {lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]} does not depend on {lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}, and vice versa. That would require an interaction term.
+                            </p>
+                        </div>
+
+                        {lessonMainView === 'observed' && (
+                            <ObservedFittedPlot
+                                stats={lessonStats}
+                                darkMode={darkMode}
+                                selectedPointId={lessonSelectedPointId}
+                                onPointSelect={setLessonSelectedPointId}
+                                predictionTarget={lessonPrediction}
+                                title="Observed vs Fitted"
+                                subtitle={`The whole predictor profile maps onto one fitted value. Click a sample case to compare its observed ${lessonContext.outcomeLabel} with the fitted mean.`}
+                                yLabel={`Observed ${lessonContext.outcomeLabel}`}
+                            />
+                        )}
+
+                        {lessonMainView === 'partial_x1' && (
+                            <MultipleRegressionConditionalEffectPlot
+                                stats={lessonStats}
+                                darkMode={darkMode}
+                                focusPredictorId={INTERNAL_PREDICTOR_IDS[0]}
+                                focusLabel={lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}
+                                outcomeLabel={lessonContext.outcomeLabel}
+                                heldValues={lessonPredictionInputs}
+                                selectedPointId={lessonSelectedPointId}
+                                onPointSelect={setLessonSelectedPointId}
+                                predictionTarget={lessonPrediction}
+                                title={`Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}`}
+                                subtitle={`${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]} is held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[1]], 2)} in this view, so the green line is the conditional slope for ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}.`}
+                            />
+                        )}
+
+                        {lessonMainView === 'partial_x2' && (
+                            <MultipleRegressionConditionalEffectPlot
+                                stats={lessonStats}
+                                darkMode={darkMode}
+                                focusPredictorId={INTERNAL_PREDICTOR_IDS[1]}
+                                focusLabel={lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}
+                                outcomeLabel={lessonContext.outcomeLabel}
+                                heldValues={lessonPredictionInputs}
+                                selectedPointId={lessonSelectedPointId}
+                                onPointSelect={setLessonSelectedPointId}
+                                predictionTarget={lessonPrediction}
+                                title={`Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}`}
+                                subtitle={`${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]} is held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[0]], 2)} in this view, so the green line is the conditional slope for ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}.`}
+                            />
+                        )}
+
+                        {lessonMainView === 'residual' && (
+                            <RegressionResidualPlot
+                                stats={lessonStats}
+                                darkMode={darkMode}
+                                highlightPointIndex={lessonSelectedPointId}
+                                title="Residual Plot"
+                                subtitle={`Residuals are observed ${lessonContext.outcomeLabel} minus fitted ${lessonContext.outcomeLabel}. Patternless scatter around zero supports the additive linear model.`}
+                            />
+                        )}
+
+                        {lessonMainView === 'plane' && (
+                            <MultipleRegressionPlanePlot
+                                stats={lessonStats}
+                                darkMode={darkMode}
+                                predictorLabels={[
+                                    lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]],
+                                    lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]],
+                                ]}
+                                outcomeLabel={lessonContext.outcomeLabel}
+                                selectedPointId={lessonSelectedPointId}
+                                onPointSelect={setLessonSelectedPointId}
+                                predictionTarget={lessonPrediction}
+                                title="3D Regression Plane"
+                                subtitle="The plane is the fitted mean from the model. Vertical distance from a real point to the plane is the residual."
+                            />
+                        )}
                     </Card>
 
                     {lessonShowResiduals && lessonStats?.ok && (
@@ -1031,134 +1582,348 @@ const MultipleRegressionPage = ({
                                 stats={lessonStats}
                                 darkMode={darkMode}
                                 highlightPointIndex={lessonSelectedPointId}
-                                subtitle="Residuals are observed Y - fitted Y. Patternless residuals support the linear conditional-mean story; patterns suggest the model is missing something."
+                                title="Pinned Residual Plot"
+                                subtitle="This extra residual panel stays visible while you look at the other main views."
                             />
                         </Card>
                     )}
 
-                    <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
-                        <MetricTile darkMode={darkMode} label="b1" value={formatStat(lessonStats?.coefficients?.find((coefficient) => coefficient.id === 'Predictor X1')?.estimate, 3)} detail="Conditional slope for X1" tone="primary" />
-                        <MetricTile darkMode={darkMode} label="b2" value={formatStat(lessonStats?.coefficients?.find((coefficient) => coefficient.id === 'Predictor X2')?.estimate, 3)} detail="Conditional slope for X2" tone="primary" />
-                        <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(lessonStats?.intercept, 3)} detail="Predicted Y when both predictors are 0" />
-                        <MetricTile darkMode={darkMode} label="R^2" value={formatStat(lessonStats?.rSquared, 3)} detail="Overall model fit" />
-                        <MetricTile darkMode={darkMode} label="Max VIF" value={formatStat(lessonStats?.maxVIF, 2)} detail={`${lessonStats?.collinearityLabel || 'Low'} overlap`} tone={lessonStats?.maxVIF >= 5 ? 'warning' : 'default'} />
-                    </div>
-
-                    <div className="grid xl:grid-cols-2 gap-6">
+                    {lessonStats?.ok && (
                         <Card darkMode={darkMode}>
-                            <div className="flex items-center gap-3 mb-4">
-                                <Target size={18} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
-                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                    Prediction playground
-                                </h3>
+                            <div className="flex items-start justify-between gap-4 mb-5">
+                                <div>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                        Model summary
+                                    </div>
+                                    <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                        Fit, prediction, and interpretation are different questions
+                                    </h3>
+                                    <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        R^2 and the F statistic summarize the whole model. The slopes explain conditional relationships. Predictions use the whole equation for a specific predictor profile.
+                                    </p>
+                                </div>
+                                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${lessonStats.maxVIF >= 5 ? (darkMode ? 'bg-amber-500/10 text-amber-200 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200') : (darkMode ? 'bg-slate-950 text-slate-400 border border-slate-800' : 'bg-slate-50 text-slate-600 border border-slate-200')}`}>
+                                    Predictor overlap |r| = {formatStat(lessonOverlapCorrelation, 2)}
+                                </div>
                             </div>
 
-                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Regression is fundamentally a prediction model. Pick a joint X1/X2 profile and the page will show the fitted mean outcome for that combination.
-                            </p>
-
-                            <div className="mt-5 space-y-4">
-                                {lessonStats?.predictorSummaries?.map((summary) => (
-                                    <label key={summary.label} className="block">
-                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                            {summary.label}
-                                        </span>
-                                        <input
-                                            type="range"
-                                            min={summary.min}
-                                            max={summary.max}
-                                            step={0.05}
-                                            value={lessonPredictionInputs?.[summary.label] ?? summary.mean}
-                                            onChange={(event) => setLessonPredictionInputs((previous) => ({
-                                                ...previous,
-                                                [summary.label]: Number(event.target.value),
-                                            }))}
-                                            className="mt-3 w-full"
-                                        />
-                                        <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                                            {formatStat(lessonPredictionInputs?.[summary.label] ?? summary.mean, 2)}
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-
-                            <div className="mt-6 grid md:grid-cols-3 gap-4">
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean Y</div>
-                                    <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonPrediction?.fitted, 3)}</p>
-                                </div>
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>95% Mean CI</div>
-                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>[{formatStat(lessonPrediction?.meanInterval?.lower, 3)}, {formatStat(lessonPrediction?.meanInterval?.upper, 3)}]</p>
-                                </div>
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>95% Prediction Interval</div>
-                                    <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>[{formatStat(lessonPrediction?.predictionInterval?.lower, 3)}, {formatStat(lessonPrediction?.predictionInterval?.upper, 3)}]</p>
-                                </div>
+                            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                <MetricTile
+                                    darkMode={darkMode}
+                                    label={<TooltipLabel darkMode={darkMode} label="Intercept" tooltipKey="intercept" />}
+                                    value={formatStat(lessonStats.intercept, 3)}
+                                    detail={`Predicted ${lessonContext.outcomeLabel} when both predictors are 0. Most meaningful when 0 is realistic or the predictors are centered.`}
+                                />
+                                <MetricTile
+                                    darkMode={darkMode}
+                                    label={<TooltipLabel darkMode={darkMode} label="R^2" tooltipKey="rSquared" />}
+                                    value={formatStat(lessonStats.rSquared, 3)}
+                                    detail={lessonOutlierComparison ? `Δ ${formatSignedDifference(lessonStats.rSquared - lessonBaselineStats.rSquared, 3)} after adding the influential case.` : 'Overall model fit.'}
+                                    tone={lessonOutlierComparison ? 'warning' : 'primary'}
+                                />
+                                <MetricTile
+                                    darkMode={darkMode}
+                                    label={<TooltipLabel darkMode={darkMode} label="Adjusted R^2" tooltipKey="adjustedRSquared" />}
+                                    value={formatStat(lessonStats.adjustedRSquared, 3)}
+                                    detail={lessonOutlierComparison ? `Δ ${formatSignedDifference(lessonStats.adjustedRSquared - lessonBaselineStats.adjustedRSquared, 3)} after adding the influential case.` : 'Fit after a small complexity penalty.'}
+                                    tone={lessonOutlierComparison ? 'warning' : 'default'}
+                                />
+                                <MetricTile
+                                    darkMode={darkMode}
+                                    label={<TooltipLabel darkMode={darkMode} label="F statistic" tooltipKey="fStatistic" />}
+                                    value={formatStat(lessonStats.modelF, 3)}
+                                    detail={`Model p ${formatPValue(lessonStats.modelPValue)}`}
+                                />
+                                <MetricTile
+                                    darkMode={darkMode}
+                                    label={<TooltipLabel darkMode={darkMode} label="Model p-value" tooltipKey="pValue" />}
+                                    value={formatPValue(lessonStats.modelPValue)}
+                                    detail="Omnibus evidence that the full model explains more than a flat mean-only model."
+                                />
+                                <MetricTile
+                                    darkMode={darkMode}
+                                    label="Sample size (n)"
+                                    value={`${lessonStats.n}`}
+                                    detail={`Max VIF ${formatStat(lessonStats.maxVIF, 2)} | RMSE ${formatStat(lessonStats.rmse, 2)}`}
+                                    tone={lessonStats.maxVIF >= 5 ? 'warning' : 'default'}
+                                />
                             </div>
                         </Card>
+                    )}
 
-                        <Card darkMode={darkMode}>
-                            <div className="flex items-center gap-3 mb-4">
-                                <Info size={18} className={darkMode ? 'text-sky-300' : 'text-sky-700'} />
-                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                    One case under the model
-                                </h3>
+                    <Card darkMode={darkMode}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <Target size={18} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
+                            <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                Prediction playground
+                            </h3>
+                        </div>
+                        <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            The custom predictor profile is a hypothetical combination of predictor values. The selected sample case is one actual observed row from the sample. They are not meant to match unless you happen to choose the same values.
+                        </p>
+
+                        <div className="mt-6 grid xl:grid-cols-2 gap-6 items-start">
+                            <div className={`rounded-2xl border p-5 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                    Custom predictor profile
+                                </div>
+                                <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                    Hypothetical combination of predictor values. Use this to see what the equation predicts for a profile you choose.
+                                </p>
+
+                                <div className="mt-5 space-y-4">
+                                    {lessonStats?.predictorSummaries?.map((summary) => (
+                                        <label key={summary.label} className="block">
+                                            <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                {lessonPredictorLabels[summary.label]}
+                                            </span>
+                                            <input
+                                                type="range"
+                                                min={summary.min}
+                                                max={summary.max}
+                                                step={0.05}
+                                                value={lessonPredictionInputs?.[summary.label] ?? summary.mean}
+                                                onChange={(event) => setLessonPredictionInputs((previous) => ({
+                                                    ...previous,
+                                                    [summary.label]: Number(event.target.value),
+                                                }))}
+                                                className="mt-3 w-full"
+                                            />
+                                            <div className={`mt-2 flex items-center justify-between gap-3 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                <span className="font-black">{formatStat(lessonPredictionInputs?.[summary.label] ?? summary.mean, 2)}</span>
+                                                <span className={darkMode ? 'text-slate-500' : 'text-slate-500'}>
+                                                    Observed range {formatStat(summary.min, 2)} to {formatStat(summary.max, 2)}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                <div className={`mt-5 rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                        Substitute into the equation
+                                    </div>
+                                    <p className={`text-sm font-black leading-relaxed ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                        {lessonSubstitutedEquation}
+                                    </p>
+                                </div>
+
+                                <div className="mt-5 grid md:grid-cols-3 gap-4">
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                                            Predicted {lessonContext.outcomeLabel}
+                                        </div>
+                                        <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonPrediction?.fitted, 3)}</p>
+                                    </div>
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            <TooltipLabel darkMode={darkMode} label="95% CI for mean response" tooltipKey="meanInterval" />
+                                        </div>
+                                        <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            [{formatStat(lessonPrediction?.meanInterval?.lower, 3)}, {formatStat(lessonPrediction?.meanInterval?.upper, 3)}]
+                                        </p>
+                                    </div>
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            <TooltipLabel darkMode={darkMode} label="95% PI for single new case" tooltipKey="predictionInterval" />
+                                        </div>
+                                        <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            [{formatStat(lessonPrediction?.predictionInterval?.lower, 3)}, {formatStat(lessonPrediction?.predictionInterval?.upper, 3)}]
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                    The fitted mean is about the model&apos;s average prediction for this profile. The prediction interval is wider because one new case can still land above or below that mean.
+                                </p>
+
+                                {lessonPrediction?.isExtrapolation && (
+                                    <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-amber-500/10 border-amber-500/20 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                                        At least one predictor value is outside the observed sample range, so this is an extrapolation rather than an interpolation.
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-4">
-                                {lessonStats?.predictorSummaries?.map((summary) => (
-                                    <div key={summary.label} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{summary.label}</div>
-                                        <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.predictors?.[summary.label], 3)}</p>
+                            <div className={`rounded-2xl border p-5 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+                                            Selected sample case
+                                        </div>
+                                        <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            Actual observed row from the sample. Click a point in the main visual to inspect one case under the fitted model.
+                                        </p>
+                                    </div>
+                                    {lessonSelectedIsInfluential && (
+                                        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-amber-500/10 text-amber-200 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                            Influential case
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-5 grid md:grid-cols-2 gap-4">
+                                    {lessonStats?.predictorSummaries?.map((summary) => (
+                                        <div key={summary.label} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                            <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                {lessonPredictorLabels[summary.label]}
+                                            </div>
+                                            <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                {formatStat(lessonSelectedPair?.predictors?.[summary.label], 3)}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Observed {lessonContext.outcomeLabel}
+                                        </div>
+                                        <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {formatStat(lessonSelectedPair?.y, 3)}
+                                        </p>
+                                    </div>
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Fitted {lessonContext.outcomeLabel}
+                                        </div>
+                                        <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {formatStat(lessonSelectedPair?.fitted, 3)}
+                                        </p>
+                                    </div>
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+                                            <TooltipLabel darkMode={darkMode} label="Residual" tooltipKey="residual" />
+                                        </div>
+                                        <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {formatStat(lessonSelectedPair?.residual, 3)}
+                                        </p>
+                                    </div>
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            <TooltipLabel darkMode={darkMode} label="Leverage" tooltipKey="leverage" />
+                                        </div>
+                                        <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {formatStat(lessonSelectedPair?.leverage, 3)}
+                                        </p>
+                                    </div>
+                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            <TooltipLabel darkMode={darkMode} label="Cook's D" tooltipKey="cooksDistance" />
+                                        </div>
+                                        <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {formatStat(lessonSelectedPair?.cooksDistance, 3)}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                    Residual = observed {lessonContext.outcomeLabel} - fitted {lessonContext.outcomeLabel}. This case does not need to match the custom predictor profile unless you happened to choose the same predictor values yourself.
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {lessonOutlierComparison && (
+                        <Card darkMode={darkMode}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <AlertTriangle size={18} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
+                                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    What changed when the influential case was added
+                                </h3>
+                            </div>
+                            <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                This comparison uses the same underlying sample before and after adding one influential case. Notice that the fitted model can move even though most rows stay the same.
+                            </p>
+
+                            <div className="mt-5 grid md:grid-cols-2 gap-4">
+                                {lessonOutlierComparison.metrics.map((metric) => (
+                                    <div key={metric.id} className={`rounded-xl border p-4 ${darkMode ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-amber-200' : 'text-amber-700'}`}>
+                                            <TooltipLabel darkMode={darkMode} label={metric.label} tooltipKey={metric.tooltipKey} />
+                                        </div>
+                                        <p className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                            {formatStat(metric.before, 3)} to {formatStat(metric.after, 3)}
+                                        </p>
+                                        <p className={`mt-2 text-sm ${darkMode ? 'text-amber-100' : 'text-amber-700'}`}>
+                                            Delta {formatSignedDifference(metric.after - metric.before, 3)}
+                                        </p>
                                     </div>
                                 ))}
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed Y</div>
-                                    <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.y, 3)}</p>
-                                </div>
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Fitted Y</div>
-                                    <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.fitted, 3)}</p>
-                                </div>
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Residual</div>
-                                    <p className={`mt-2 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(lessonSelectedPair?.residual, 3)}</p>
-                                </div>
                             </div>
 
-                            <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Residual = observed Y - fitted Y. Multiple regression is about the fitted model and the remaining errors around it, not only about whether variables move together.
-                            </p>
+                            <div className="mt-5 grid md:grid-cols-2 gap-4">
+                                {lessonOutlierComparison.coefficients.map((coefficient) => (
+                                    <div key={coefficient.id} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                        <h4 className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                            {coefficient.label}
+                                        </h4>
+                                        <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            Estimate: {formatStat(coefficient.estimateBefore, 3)} to {formatStat(coefficient.estimateAfter, 3)} ({formatSignedDifference((coefficient.estimateAfter || 0) - (coefficient.estimateBefore || 0), 3)})
+                                        </p>
+                                        <p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            SE: {formatStat(coefficient.seBefore, 3)} to {formatStat(coefficient.seAfter, 3)} ({formatSignedDifference((coefficient.seAfter || 0) - (coefficient.seBefore || 0), 3)})
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={`mt-5 rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    The most influential case in this version has leverage {formatStat(lessonStats.influence?.influentialPoint?.leverage, 3)} and Cook&apos;s D {formatStat(lessonStats.influence?.influentialPoint?.cooksDistance, 3)}.
+                                </p>
+                            </div>
                         </Card>
-                    </div>
+                    )}
 
                     {lessonShowPartialEffects && lessonStats?.ok && (
                         <Card darkMode={darkMode}>
                             <div className="flex items-center gap-3 mb-4">
                                 <TrendingUp size={18} className={darkMode ? 'text-emerald-300' : 'text-emerald-700'} />
                                 <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                    Partial effect summaries
+                                    How to interpret the slopes
                                 </h3>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-4">
-                                {lessonStats.coefficients.filter((coefficient) => coefficient.id !== 'intercept').map((coefficient) => (
-                                    <div key={coefficient.id} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <h4 className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{coefficient.label}</h4>
-                                            <div className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${coefficient.vif >= 5 ? (darkMode ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200') : (darkMode ? 'bg-slate-900 border border-slate-800 text-slate-400' : 'bg-white border border-slate-200 text-slate-600')}`}>
-                                                VIF {formatStat(coefficient.vif, 2)}
+                                {lessonStats.coefficients.filter((coefficient) => coefficient.id !== 'intercept').map((coefficient) => {
+                                    const otherPredictorId = coefficient.id === INTERNAL_PREDICTOR_IDS[0] ? INTERNAL_PREDICTOR_IDS[1] : INTERNAL_PREDICTOR_IDS[0];
+                                    const signFlip = Math.sign(coefficient.zeroOrderCorrelation || 0) !== Math.sign(coefficient.estimate || 0);
+
+                                    return (
+                                        <div key={coefficient.id} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                                        <TooltipLabel darkMode={darkMode} label={`Slope for ${lessonPredictorLabels[coefficient.id]} (${getSlopeSymbol(coefficient.id)})`} tooltipKey="slope" />
+                                                    </div>
+                                                    <p className={`mt-2 text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                        {formatStat(coefficient.estimate, 3)}
+                                                    </p>
+                                                </div>
+                                                <div className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${coefficient.vif >= 5 ? (darkMode ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200') : (darkMode ? 'bg-slate-900 border border-slate-800 text-slate-400' : 'bg-white border border-slate-200 text-slate-600')}`}>
+                                                    VIF {formatStat(coefficient.vif, 2)}
+                                                </div>
                                             </div>
+                                            <p className={`mt-3 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                Change in predicted {lessonContext.outcomeLabel} for a 1-unit increase in {lessonPredictorLabels[coefficient.id]}, holding {lessonPredictorLabels[otherPredictorId]} constant.
+                                            </p>
+                                            {signFlip && (
+                                                <div className={`mt-4 rounded-xl border p-3 ${darkMode ? 'bg-amber-500/10 border-amber-500/20 text-amber-100' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                                                    The simple X-Y correlation and the conditional slope point in different directions here. That can happen when the predictors overlap strongly.
+                                                </div>
+                                            )}
+                                            <details className={`mt-4 rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                <summary className={`cursor-pointer text-sm font-black ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                    More detail
+                                                </summary>
+                                                <div className={`mt-4 space-y-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                    <p><TooltipLabel darkMode={darkMode} label="Zero-order correlation" tooltipKey="zeroOrderCorrelation" />: {formatStat(coefficient.zeroOrderCorrelation, 3)}</p>
+                                                    <p><TooltipLabel darkMode={darkMode} label="Standardized beta" tooltipKey="standardizedBeta" />: {formatStat(coefficient.standardizedBeta, 3)}</p>
+                                                    <p><TooltipLabel darkMode={darkMode} label="Partial R^2" tooltipKey="partialRSquared" />: {formatStat(coefficient.partialRSquared, 3)}</p>
+                                                    <p><TooltipLabel darkMode={darkMode} label="Standard error" tooltipKey="standardError" />: {formatStat(coefficient.standardError, 3)}</p>
+                                                </div>
+                                            </details>
                                         </div>
-                                        <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                            {coefficient.interpretation}
-                                        </p>
-                                        <p className={`mt-3 text-xs font-bold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                            Zero-order r {formatStat(coefficient.zeroOrderCorrelation, 3)} | Standardized beta {formatStat(coefficient.standardizedBeta, 3)} | Partial R^2 {formatStat(coefficient.partialRSquared, 3)}
-                                        </p>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </Card>
                     )}
@@ -1173,30 +1938,58 @@ const MultipleRegressionPage = ({
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[760px] text-sm">
+                                <table className="w-full min-w-[880px] text-sm">
                                     <thead>
                                         <tr className={darkMode ? 'text-slate-500' : 'text-slate-500'}>
                                             <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">Term</th>
                                             <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">Estimate</th>
-                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">SE</th>
-                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">t</th>
-                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">p</th>
-                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">Std. Beta</th>
-                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">VIF</th>
+                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]"><TooltipLabel darkMode={darkMode} label="SE" tooltipKey="standardError" /></th>
+                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]"><TooltipLabel darkMode={darkMode} label="t" tooltipKey="tStatistic" /></th>
+                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]"><TooltipLabel darkMode={darkMode} label="p" tooltipKey="pValue" /></th>
+                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]"><TooltipLabel darkMode={darkMode} label="Standardized beta" tooltipKey="standardizedBeta" /></th>
+                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]"><TooltipLabel darkMode={darkMode} label="VIF" tooltipKey="vif" /></th>
+                                            <th className="text-left pb-3 font-black uppercase tracking-widest text-[10px]">95% CI</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {lessonStats.coefficients.map((coefficient) => (
-                                            <tr key={coefficient.id} className={`border-t ${darkMode ? 'border-slate-800 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                                                <td className="py-3 font-bold">{coefficient.label}</td>
-                                                <td className="py-3">{formatStat(coefficient.estimate, 3)}</td>
-                                                <td className="py-3">{formatStat(coefficient.standardError, 3)}</td>
-                                                <td className="py-3">{formatStat(coefficient.tStatistic, 3)}</td>
-                                                <td className="py-3">p {formatPValue(coefficient.pValue)}</td>
-                                                <td className="py-3">{coefficient.standardizedBeta == null ? '--' : formatStat(coefficient.standardizedBeta, 3)}</td>
-                                                <td className="py-3">{coefficient.vif == null ? '--' : formatStat(coefficient.vif, 2)}</td>
-                                            </tr>
-                                        ))}
+                                        {lessonStats.coefficients.map((coefficient) => {
+                                            const baselineCoefficient = lessonBaselineStats?.coefficients?.find((item) => item.id === coefficient.id);
+                                            const rowChanged = lessonOutlierOn && baselineCoefficient && (
+                                                Math.abs((coefficient.estimate || 0) - (baselineCoefficient.estimate || 0)) > 0.0001
+                                                || Math.abs((coefficient.standardError || 0) - (baselineCoefficient.standardError || 0)) > 0.0001
+                                            );
+
+                                            return (
+                                                <tr key={coefficient.id} className={`border-t ${darkMode ? 'border-slate-800 text-slate-200' : 'border-slate-200 text-slate-700'} ${rowChanged ? (darkMode ? 'bg-amber-500/5' : 'bg-amber-50/50') : ''}`}>
+                                                    <td className="py-3 font-bold">
+                                                        {coefficient.id === 'intercept'
+                                                            ? 'Intercept'
+                                                            : `Slope for ${lessonPredictorLabels[coefficient.id]} (${getSlopeSymbol(coefficient.id)})`}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        <div>{formatStat(coefficient.estimate, 3)}</div>
+                                                        {rowChanged && (
+                                                            <div className={`text-[10px] font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+                                                                Delta {formatSignedDifference((coefficient.estimate || 0) - (baselineCoefficient?.estimate || 0), 3)}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        <div>{formatStat(coefficient.standardError, 3)}</div>
+                                                        {rowChanged && (
+                                                            <div className={`text-[10px] font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+                                                                Delta {formatSignedDifference((coefficient.standardError || 0) - (baselineCoefficient?.standardError || 0), 3)}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">{formatStat(coefficient.tStatistic, 3)}</td>
+                                                    <td className="py-3">p {formatPValue(coefficient.pValue)}</td>
+                                                    <td className="py-3">{coefficient.standardizedBeta == null ? '--' : formatStat(coefficient.standardizedBeta, 3)}</td>
+                                                    <td className="py-3">{coefficient.vif == null ? '--' : formatStat(coefficient.vif, 2)}</td>
+                                                    <td className="py-3">[{formatStat(coefficient.confidenceInterval?.lower, 3)}, {formatStat(coefficient.confidenceInterval?.upper, 3)}]</td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -1214,6 +2007,24 @@ const MultipleRegressionPage = ({
                         </div>
 
                         <div>
+                            <div className={`text-[11px] font-black uppercase tracking-widest mb-3 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                Example presets
+                            </div>
+                            <div className="grid gap-2">
+                                {LESSON_CONTEXTS.map((context) => (
+                                    <button
+                                        key={context.id}
+                                        onClick={() => setLessonContextId(context.id)}
+                                        className={`rounded-xl border px-4 py-3 text-left transition-colors ${lessonContextId === context.id ? 'border-indigo-500 bg-indigo-500/10' : (darkMode ? 'bg-slate-950 border-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-200 hover:border-slate-300')}`}
+                                    >
+                                        <div className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{context.buttonLabel}</div>
+                                        <div className={`text-sm mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>{context.description}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-6">
                             <div className={`text-[11px] font-black uppercase tracking-widest mb-3 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
                                 Quick scenarios
                             </div>
@@ -1234,7 +2045,7 @@ const MultipleRegressionPage = ({
                         <div className="mt-6 space-y-5">
                             <label className="block">
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    Strength of X1
+                                    Strength of {getPredictorSymbol(INTERNAL_PREDICTOR_IDS[0])}
                                 </span>
                                 <input type="range" min={-1.5} max={1.5} step={0.05} value={lessonBeta1} onChange={(event) => setLessonBeta1(Number(event.target.value))} className="mt-3 w-full" />
                                 <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{formatStat(lessonBeta1, 2)}</div>
@@ -1242,7 +2053,7 @@ const MultipleRegressionPage = ({
 
                             <label className="block">
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    Strength of X2
+                                    Strength of {getPredictorSymbol(INTERNAL_PREDICTOR_IDS[1])}
                                 </span>
                                 <input type="range" min={-1.5} max={1.5} step={0.05} value={lessonBeta2} onChange={(event) => setLessonBeta2(Number(event.target.value))} className="mt-3 w-full" />
                                 <div className={`mt-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{formatStat(lessonBeta2, 2)}</div>
@@ -1288,7 +2099,16 @@ const MultipleRegressionPage = ({
                             </label>
                             <label className={`flex items-center justify-between rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
                                 <span className="font-bold text-sm">Show residual plot</span>
-                                <input type="checkbox" checked={lessonShowResiduals} onChange={(event) => setLessonShowResiduals(event.target.checked)} />
+                                <input
+                                    type="checkbox"
+                                    checked={lessonShowResiduals}
+                                    onChange={(event) => {
+                                        setLessonShowResiduals(event.target.checked);
+                                        if (event.target.checked) {
+                                            setLessonMainView('residual');
+                                        }
+                                    }}
+                                />
                             </label>
                         </div>
 
@@ -1301,7 +2121,7 @@ const MultipleRegressionPage = ({
                         </button>
 
                         <p className={`mt-4 text-xs font-bold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                            On larger screens, the main visual stays pinned while you adjust the controls.
+                            The example preset changes labels and value scales. The scenario buttons change overlap, slope patterns, and noise.
                         </p>
                     </Card>
 
@@ -1315,23 +2135,81 @@ const MultipleRegressionPage = ({
 
                         <div className="space-y-3">
                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Conditional slopes</div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Coefficients are conditional</div>
                                 <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                    Each coefficient answers: how does predicted Y change as one predictor changes while the others are held constant?
+                                    Each slope shows the change in predicted {lessonContext.outcomeLabel} for one predictor while the other predictor stays fixed.
                                 </p>
                             </div>
                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Shared variance</div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predictors can overlap</div>
                                 <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                    When X1 and X2 overlap heavily, the model can still predict well overall while individual coefficients become more unstable.
+                                    The current predictor overlap is |r| = {formatStat(lessonOverlapCorrelation, 2)}. Predictors can share variance and still both matter, but heavy overlap makes the individual slopes less stable.
                                 </p>
                             </div>
                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Prediction vs explanation</div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Fit, prediction, and interpretation differ</div>
                                 <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                    A model can have useful predictive fit without making every coefficient easy to interpret, especially when predictors are correlated.
+                                    High R^2 means the whole model predicts well overall. It does not guarantee that each coefficient is stable, precise, or easy to explain.
                                 </p>
                             </div>
+                            <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Additive effects only</div>
+                                <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    This page models additive effects only. If the effect of one predictor depends on the level of the other predictor, the model needs an interaction term.
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card darkMode={darkMode}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <CheckCircle size={18} className={darkMode ? 'text-emerald-300' : 'text-emerald-700'} />
+                            <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                Assumptions and diagnostics
+                            </h3>
+                        </div>
+                        <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Use these checks as practical questions, not a rigid checklist. Expand any item for what it means, how to check it, what happens if it fails, and what students should do next.
+                        </p>
+
+                        <div className="mt-5 space-y-3">
+                            {lessonDiagnostics.map((item) => {
+                                const toneClass = item.status.includes('Watch') || item.status.includes('High') || item.status.includes('detected') || item.status.includes('changes') || item.status.includes('skewed')
+                                    ? (darkMode ? 'text-amber-200 bg-amber-500/10 border-amber-500/20' : 'text-amber-700 bg-amber-50 border-amber-200')
+                                    : item.status.includes('Needs')
+                                        ? (darkMode ? 'text-slate-300 bg-slate-950 border-slate-800' : 'text-slate-600 bg-slate-50 border-slate-200')
+                                        : (darkMode ? 'text-emerald-200 bg-emerald-500/10 border-emerald-500/20' : 'text-emerald-700 bg-emerald-50 border-emerald-200');
+
+                                return (
+                                    <details key={item.id} className={`rounded-2xl border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                        <summary className="cursor-pointer list-none px-5 py-4">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div>
+                                                    <div className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.label}</div>
+                                                    <div className={`mt-1 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>{item.what}</div>
+                                                </div>
+                                                <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${toneClass}`}>
+                                                    {item.status}
+                                                </div>
+                                            </div>
+                                        </summary>
+                                        <div className={`px-5 pb-5 text-sm space-y-4 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            <div>
+                                                <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>How to check it</div>
+                                                <p>{item.check}</p>
+                                            </div>
+                                            <div>
+                                                <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>What happens if it fails</div>
+                                                <p>{item.ifFails}</p>
+                                            </div>
+                                            <div>
+                                                <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>What students should do</div>
+                                                <p>{item.doNext}</p>
+                                            </div>
+                                        </div>
+                                    </details>
+                                );
+                            })}
                         </div>
                     </Card>
                 </div>
