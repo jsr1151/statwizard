@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
+import DataTransformWorkbench from './DataTransformWorkbench.jsx';
 import VariableBrowser from './VariableBrowser.jsx';
 import {
     addDerivedVariableToDataset,
@@ -291,6 +292,39 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         () => getRecommendedVariableGroups(editorDataset),
         [editorDataset]
     );
+    const recommendedWorkbenchGroups = useMemo(() => (
+        recommendedGroups.map((group) => {
+            const config = recommendedConfigs[group.id] || {};
+            const defaultSelectedColumnIds = group.columns.map((column) => column.id);
+            const selectedColumnIds = (config.selectedColumnIds || defaultSelectedColumnIds)
+                .filter((columnId) => getDatasetColumn(editorDataset, columnId));
+            const selectedColumns = selectedColumnIds
+                .map((columnId) => getDatasetColumn(editorDataset, columnId))
+                .filter(Boolean);
+            const reverseColumnIds = (config.reverseColumnIds || []).filter((columnId) => selectedColumnIds.includes(columnId));
+            const sourcePool = group.numericOnly ? numericColumns : (editorDataset?.columns || []);
+            const availableColumns = sourcePool.filter((column) => !selectedColumnIds.includes(column.id));
+            const bounds = selectedColumns.reduce((accumulator, column) => {
+                const numericBounds = getObservedBounds(editorDataset, column.id);
+
+                return {
+                    min: accumulator.min == null ? numericBounds.min : Math.min(accumulator.min, numericBounds.min ?? accumulator.min),
+                    max: accumulator.max == null ? numericBounds.max : Math.max(accumulator.max, numericBounds.max ?? accumulator.max),
+                };
+            }, { min: null, max: null });
+
+            return {
+                ...group,
+                selectedColumnIds,
+                selectedColumns,
+                availableColumns,
+                reverseColumnIds,
+                minimum: config.minimum ?? bounds.min ?? '',
+                maximum: config.maximum ?? bounds.max ?? '',
+                bounds,
+            };
+        })
+    ), [editorDataset, numericColumns, recommendedConfigs, recommendedGroups]);
     const derivedOptions = useMemo(() => {
         const sourceColumns = activeOperation.needsNumeric ? numericColumns : (editorDataset?.columns || []);
         return sourceColumns.filter((column) => matchesColumnSearch(column, derivedSearchQuery));
@@ -384,6 +418,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                 groupId,
                 {
                     ...config,
+                    selectedColumnIds: (config?.selectedColumnIds || []).filter((item) => item !== columnId),
                     reverseColumnIds: (config?.reverseColumnIds || []).filter((item) => item !== columnId),
                 },
             ])
@@ -943,15 +978,64 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }));
     };
 
+    const handleToggleRecommendedColumn = (group, columnId) => {
+        const currentItems = (recommendedConfigs[group.id]?.selectedColumnIds || group.columns.map((column) => column.id));
+        const nextSelectedColumnIds = currentItems.includes(columnId)
+            ? currentItems.filter((item) => item !== columnId)
+            : [...currentItems, columnId];
+
+        updateRecommendedConfig(group.id, {
+            selectedColumnIds: nextSelectedColumnIds,
+            reverseColumnIds: (recommendedConfigs[group.id]?.reverseColumnIds || []).filter((item) => nextSelectedColumnIds.includes(item)),
+        });
+    };
+
+    const handleAddRecommendedColumn = (group, columnId) => {
+        if (!columnId) {
+            return;
+        }
+
+        const currentItems = (recommendedConfigs[group.id]?.selectedColumnIds || group.columns.map((column) => column.id));
+
+        if (currentItems.includes(columnId)) {
+            return;
+        }
+
+        updateRecommendedConfig(group.id, {
+            selectedColumnIds: [...currentItems, columnId],
+        });
+    };
+
+    const handleToggleRecommendedReverseColumn = (group, columnId) => {
+        const currentItems = recommendedConfigs[group.id]?.reverseColumnIds || [];
+
+        updateRecommendedConfig(group.id, {
+            reverseColumnIds: currentItems.includes(columnId)
+                ? currentItems.filter((item) => item !== columnId)
+                : [...currentItems, columnId],
+        });
+    };
+
     const handleApplyRecommendedAction = (group, actionId) => {
         if (!editorDataset) {
             return;
         }
 
-        const groupColumnIds = group.columns.map((column) => column.id);
+        const groupColumnIds = group.selectedColumnIds || group.columns.map((column) => column.id);
+
+        if (!groupColumnIds.length) {
+            setProblem(`Choose at least one variable for the ${group.prefix} recommendation before applying it.`);
+            return;
+        }
+
         let nextDataset = editorDataset;
 
         if (actionId === 'average') {
+            if (groupColumnIds.length < 2) {
+                setProblem('Select at least two variables before creating an average.');
+                return;
+            }
+
             nextDataset = addDerivedVariableToDataset(editorDataset, {
                 operation: 'mean',
                 columns: groupColumnIds,
@@ -960,6 +1044,11 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }
 
         if (actionId === 'sum') {
+            if (groupColumnIds.length < 2) {
+                setProblem('Select at least two variables before creating a sum.');
+                return;
+            }
+
             nextDataset = addDerivedVariableToDataset(editorDataset, {
                 operation: 'sum',
                 columns: groupColumnIds,
@@ -968,6 +1057,11 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }
 
         if (actionId === 'scale') {
+            if (groupColumnIds.length < 2) {
+                setProblem('Select at least two variables before creating a scale score.');
+                return;
+            }
+
             nextDataset = addDerivedVariableToDataset(editorDataset, {
                 operation: 'mean',
                 columns: groupColumnIds,
@@ -987,10 +1081,15 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             return;
         }
 
-        const groupConfig = recommendedConfigs[group.id] || {};
-        const reverseColumnIds = groupConfig.reverseColumnIds || [];
-        const minimum = Number(groupConfig.minimum);
-        const maximum = Number(groupConfig.maximum);
+        const reverseColumnIds = group.reverseColumnIds || [];
+        const selectedColumnIds = group.selectedColumnIds || [];
+        const minimum = Number(group.minimum);
+        const maximum = Number(group.maximum);
+
+        if (selectedColumnIds.length < 2) {
+            setProblem('Select at least two variables before building a reverse-coded averaged scale score.');
+            return;
+        }
 
         if (reverseColumnIds.length === 0) {
             setProblem('Choose at least one item to reverse code before creating the averaged scale score.');
@@ -1023,7 +1122,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             }
         });
 
-        const averagedColumnIds = group.columns.map((column) => replacementColumnIds[column.id] || column.id);
+        const averagedColumnIds = selectedColumnIds.map((columnId) => replacementColumnIds[columnId] || columnId);
 
         nextDataset = addDerivedVariableToDataset(nextDataset, {
             operation: 'mean',
@@ -1433,6 +1532,54 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                 />
                             </Card>
 
+                            <DataTransformWorkbench
+                                darkMode={darkMode}
+                                dataset={editorDataset}
+                                operationOptions={DERIVED_OPERATION_OPTIONS}
+                                activeOperation={activeOperation}
+                                derivedDraft={derivedDraft}
+                                setDerivedDraft={setDerivedDraft}
+                                derivedSearchQuery={derivedSearchQuery}
+                                setDerivedSearchQuery={setDerivedSearchQuery}
+                                derivedOptions={derivedOptions}
+                                onDerivedOperationChange={handleDerivedOperationChange}
+                                onToggleDerivedColumn={toggleDerivedColumn}
+                                onApplyDerivedVariable={handleApplyDerivedVariable}
+                                recommendedGroups={recommendedWorkbenchGroups}
+                                onToggleRecommendedColumn={handleToggleRecommendedColumn}
+                                onAddRecommendedColumn={handleAddRecommendedColumn}
+                                onToggleRecommendedReverseColumn={handleToggleRecommendedReverseColumn}
+                                onUpdateRecommendedConfig={updateRecommendedConfig}
+                                onApplyRecommendedAction={handleApplyRecommendedAction}
+                                onApplyRecommendedReverseAverage={handleApplyRecommendedReverseAverage}
+                                numericColumns={numericColumns}
+                                categoricalColumns={categoricalColumns}
+                                reverseCodeDraft={reverseCodeDraft}
+                                setReverseCodeDraft={setReverseCodeDraft}
+                                onSelectReverseSource={handleSelectReverseSource}
+                                reverseBounds={reverseBounds}
+                                reverseCodePreviewRows={reverseCodePreviewRows}
+                                onApplyReverseCode={handleApplyReverseCode}
+                                meanCenterDraft={meanCenterDraft}
+                                setMeanCenterDraft={setMeanCenterDraft}
+                                onSelectMeanCenterSource={handleSelectMeanCenterSource}
+                                onApplyMeanCenter={handleApplyMeanCenter}
+                                recodeDraft={recodeDraft}
+                                setRecodeDraft={setRecodeDraft}
+                                onSelectRecodeSource={handleSelectRecodeSource}
+                                recodeLevels={recodeLevels}
+                                recodePreviewRows={recodePreviewRows}
+                                onApplyRecode={handleApplyRecode}
+                                reshapeDraft={reshapeDraft}
+                                setReshapeDraft={setReshapeDraft}
+                                reshapePreviewDataset={reshapePreviewDataset}
+                                onToggleReshapeColumn={handleToggleReshapeColumn}
+                                onApplyReshape={handleApplyReshape}
+                                formatDatasetValue={formatDatasetValue}
+                            />
+
+                            {false && (
+                                <>
                             <Card darkMode={darkMode}>
                                 <div className="flex items-center gap-3 mb-4">
                                     <FlaskConical size={18} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
@@ -1841,6 +1988,8 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                     </div>
                                 </Card>
                             </div>
+                                </>
+                            )}
                         </>
                     )}
                 </div>
