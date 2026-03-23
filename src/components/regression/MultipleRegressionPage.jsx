@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
     Calculator,
+    ChevronDown,
+    ChevronUp,
     CheckCircle,
     Database,
     FileUp,
@@ -549,6 +551,9 @@ const MultipleRegressionPage = ({
     const [lessonSelectedPointId, setLessonSelectedPointId] = useState(null);
     const [lessonPredictionInputs, setLessonPredictionInputs] = useState({});
     const [lessonMainView, setLessonMainView] = useState('observed');
+    const [lessonFloatVisualMinimized, setLessonFloatVisualMinimized] = useState(false);
+    const [lessonShouldFloatVisual, setLessonShouldFloatVisual] = useState(false);
+    const lessonMainVisualRef = useRef(null);
 
     const lessonContext = useMemo(() => getLessonContext(lessonContextId), [lessonContextId]);
 
@@ -669,6 +674,101 @@ const MultipleRegressionPage = ({
             || lessonSelectedPair.index === lessonStats?.influence?.influentialIndex
         )
     );
+    const renderLessonMainVisual = ({ compact = false } = {}) => {
+        const observedSubtitle = compact
+            ? `Live view of observed versus fitted ${lessonContext.outcomeLabel}.`
+            : `The whole predictor profile maps onto one fitted value. Click a sample case to compare its observed ${lessonContext.outcomeLabel} with the fitted mean.`;
+        const partialX1Subtitle = compact
+            ? `${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]} held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[1]], 2)}.`
+            : `${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]} is held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[1]], 2)} in this view, so the green line is the conditional slope for ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}.`;
+        const partialX2Subtitle = compact
+            ? `${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]} held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[0]], 2)}.`
+            : `${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]} is held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[0]], 2)} in this view, so the green line is the conditional slope for ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}.`;
+
+        if (lessonMainView === 'partial_x1') {
+            return (
+                <MultipleRegressionConditionalEffectPlot
+                    stats={lessonStats}
+                    darkMode={darkMode}
+                    focusPredictorId={INTERNAL_PREDICTOR_IDS[0]}
+                    focusLabel={lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}
+                    outcomeLabel={lessonContext.outcomeLabel}
+                    heldValues={lessonPredictionInputs}
+                    selectedPointId={lessonSelectedPointId}
+                    onPointSelect={setLessonSelectedPointId}
+                    predictionTarget={lessonPrediction}
+                    title={`Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}`}
+                    subtitle={partialX1Subtitle}
+                />
+            );
+        }
+
+        if (lessonMainView === 'partial_x2') {
+            return (
+                <MultipleRegressionConditionalEffectPlot
+                    stats={lessonStats}
+                    darkMode={darkMode}
+                    focusPredictorId={INTERNAL_PREDICTOR_IDS[1]}
+                    focusLabel={lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}
+                    outcomeLabel={lessonContext.outcomeLabel}
+                    heldValues={lessonPredictionInputs}
+                    selectedPointId={lessonSelectedPointId}
+                    onPointSelect={setLessonSelectedPointId}
+                    predictionTarget={lessonPrediction}
+                    title={`Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}`}
+                    subtitle={partialX2Subtitle}
+                />
+            );
+        }
+
+        if (lessonMainView === 'residual') {
+            return (
+                <RegressionResidualPlot
+                    stats={lessonStats}
+                    darkMode={darkMode}
+                    highlightPointIndex={lessonSelectedPointId}
+                    title="Residual Plot"
+                    subtitle={compact
+                        ? `Residuals for ${lessonContext.outcomeLabel} around the fitted model.`
+                        : `Residuals are observed ${lessonContext.outcomeLabel} minus fitted ${lessonContext.outcomeLabel}. Patternless scatter around zero supports the additive linear model.`}
+                />
+            );
+        }
+
+        if (lessonMainView === 'plane') {
+            return (
+                <MultipleRegressionPlanePlot
+                    stats={lessonStats}
+                    darkMode={darkMode}
+                    predictorLabels={[
+                        lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]],
+                        lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]],
+                    ]}
+                    outcomeLabel={lessonContext.outcomeLabel}
+                    selectedPointId={lessonSelectedPointId}
+                    onPointSelect={setLessonSelectedPointId}
+                    predictionTarget={lessonPrediction}
+                    title="3D Regression Plane"
+                    subtitle={compact
+                        ? 'The fitted plane follows your scroll here.'
+                        : 'The plane is the fitted mean from the model. Vertical distance from a real point to the plane is the residual.'}
+                />
+            );
+        }
+
+        return (
+            <ObservedFittedPlot
+                stats={lessonStats}
+                darkMode={darkMode}
+                selectedPointId={lessonSelectedPointId}
+                onPointSelect={setLessonSelectedPointId}
+                predictionTarget={lessonPrediction}
+                title="Observed vs Fitted"
+                subtitle={observedSubtitle}
+                yLabel={`Observed ${lessonContext.outcomeLabel}`}
+            />
+        );
+    };
 
     useEffect(() => {
         if (!lessonStats?.ok) {
@@ -689,6 +789,40 @@ const MultipleRegressionPage = ({
             setLessonSelectedPointId(lessonStats.influence.influentialPoint.id);
         }
     }, [lessonOutlierOn, lessonStats?.influence?.influentialPoint?.id]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return undefined;
+        }
+
+        const updateFloatingVisualState = () => {
+            const card = lessonMainVisualRef.current;
+
+            if (!card) {
+                setLessonShouldFloatVisual(false);
+                return;
+            }
+
+            const rect = card.getBoundingClientRect();
+            const stillVisible = rect.bottom > 140 && rect.top < (window.innerHeight - 140);
+            setLessonShouldFloatVisual(!stillVisible);
+        };
+
+        updateFloatingVisualState();
+        window.addEventListener('scroll', updateFloatingVisualState, { passive: true });
+        window.addEventListener('resize', updateFloatingVisualState);
+
+        return () => {
+            window.removeEventListener('scroll', updateFloatingVisualState);
+            window.removeEventListener('resize', updateFloatingVisualState);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!lessonShouldFloatVisual) {
+            setLessonFloatVisualMinimized(false);
+        }
+    }, [lessonShouldFloatVisual]);
 
     const applyScenario = (scenarioId) => {
         const scenario = TUTOR_SCENARIOS.find((item) => item.id === scenarioId);
@@ -1455,7 +1589,8 @@ const MultipleRegressionPage = ({
 
             <div className="grid lg:grid-cols-12 gap-8 items-start">
                 <div className="lg:col-span-8 space-y-6">
-                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28 z-10 space-y-5">
+                    <div ref={lessonMainVisualRef}>
+                        <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28 z-10 space-y-5">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
@@ -1577,78 +1712,9 @@ const MultipleRegressionPage = ({
                             </div>
                         </div>
 
-                        {lessonMainView === 'observed' && (
-                            <ObservedFittedPlot
-                                stats={lessonStats}
-                                darkMode={darkMode}
-                                selectedPointId={lessonSelectedPointId}
-                                onPointSelect={setLessonSelectedPointId}
-                                predictionTarget={lessonPrediction}
-                                title="Observed vs Fitted"
-                                subtitle={`The whole predictor profile maps onto one fitted value. Click a sample case to compare its observed ${lessonContext.outcomeLabel} with the fitted mean.`}
-                                yLabel={`Observed ${lessonContext.outcomeLabel}`}
-                            />
-                        )}
-
-                        {lessonMainView === 'partial_x1' && (
-                            <MultipleRegressionConditionalEffectPlot
-                                stats={lessonStats}
-                                darkMode={darkMode}
-                                focusPredictorId={INTERNAL_PREDICTOR_IDS[0]}
-                                focusLabel={lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}
-                                outcomeLabel={lessonContext.outcomeLabel}
-                                heldValues={lessonPredictionInputs}
-                                selectedPointId={lessonSelectedPointId}
-                                onPointSelect={setLessonSelectedPointId}
-                                predictionTarget={lessonPrediction}
-                                title={`Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}`}
-                                subtitle={`${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]} is held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[1]], 2)} in this view, so the green line is the conditional slope for ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]}.`}
-                            />
-                        )}
-
-                        {lessonMainView === 'partial_x2' && (
-                            <MultipleRegressionConditionalEffectPlot
-                                stats={lessonStats}
-                                darkMode={darkMode}
-                                focusPredictorId={INTERNAL_PREDICTOR_IDS[1]}
-                                focusLabel={lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}
-                                outcomeLabel={lessonContext.outcomeLabel}
-                                heldValues={lessonPredictionInputs}
-                                selectedPointId={lessonSelectedPointId}
-                                onPointSelect={setLessonSelectedPointId}
-                                predictionTarget={lessonPrediction}
-                                title={`Partial Effect of ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}`}
-                                subtitle={`${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]]} is held at ${formatStat(lessonPredictionInputs?.[INTERNAL_PREDICTOR_IDS[0]], 2)} in this view, so the green line is the conditional slope for ${lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]]}.`}
-                            />
-                        )}
-
-                        {lessonMainView === 'residual' && (
-                            <RegressionResidualPlot
-                                stats={lessonStats}
-                                darkMode={darkMode}
-                                highlightPointIndex={lessonSelectedPointId}
-                                title="Residual Plot"
-                                subtitle={`Residuals are observed ${lessonContext.outcomeLabel} minus fitted ${lessonContext.outcomeLabel}. Patternless scatter around zero supports the additive linear model.`}
-                            />
-                        )}
-
-                        {lessonMainView === 'plane' && (
-                            <MultipleRegressionPlanePlot
-                                stats={lessonStats}
-                                darkMode={darkMode}
-                                predictorLabels={[
-                                    lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[0]],
-                                    lessonPredictorLabels[INTERNAL_PREDICTOR_IDS[1]],
-                                ]}
-                                outcomeLabel={lessonContext.outcomeLabel}
-                                selectedPointId={lessonSelectedPointId}
-                                onPointSelect={setLessonSelectedPointId}
-                                predictionTarget={lessonPrediction}
-                                title="3D Regression Plane"
-                                subtitle="The plane is the fitted mean from the model. Vertical distance from a real point to the plane is the residual."
-                            />
-                        )}
-                    </Card>
+                        {renderLessonMainVisual()}
+                        </Card>
+                    </div>
 
                     {lessonShowResiduals && lessonStats?.ok && (
                         <Card darkMode={darkMode}>
@@ -2352,6 +2418,39 @@ const MultipleRegressionPage = ({
                     </Card>
                 </div>
             </div>
+
+            {lessonShouldFloatVisual && (
+                <div className="fixed z-40 bottom-4 right-4 left-4 sm:left-auto sm:w-[26rem] xl:w-[30rem] pointer-events-none">
+                    <div className={`pointer-events-auto rounded-3xl border shadow-2xl ${darkMode ? 'bg-slate-950/95 border-slate-800 backdrop-blur-xl' : 'bg-white/95 border-slate-200 backdrop-blur-xl'}`}>
+                        <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                            <div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                    Live graph dock
+                                </div>
+                                <p className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                    {lessonMainViews.find((view) => view.id === lessonMainView)?.label || 'Observed vs Fitted'}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setLessonFloatVisualMinimized((previous) => !previous)}
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'}`}
+                            >
+                                {lessonFloatVisualMinimized ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                {lessonFloatVisualMinimized ? 'Show' : 'Minimize'}
+                            </button>
+                        </div>
+
+                        {!lessonFloatVisualMinimized && (
+                            <div className="p-3 max-h-[70vh] overflow-auto">
+                                <div className={`mb-3 rounded-2xl border px-4 py-3 text-sm ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                    This dock follows your scroll so lower sliders can still update the graph in view.
+                                </div>
+                                {renderLessonMainVisual({ compact: true })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
