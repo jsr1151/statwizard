@@ -25,9 +25,10 @@ import MultipleRegressionPlanePlot from './MultipleRegressionPlanePlot';
 import {
     buildMultipleRegressionGuidance,
     buildMultipleRegressionInterpretation,
-    buildMultipleRegressionTutorDataset,
+    buildMultipleRegressionTutorBaseDataset,
     calculateMultipleRegressionPrediction,
     calculateMultipleRegressionStats,
+    deriveMultipleRegressionTutorDataset,
 } from '../../stats/multipleRegression.js';
 import { rSquaredToFSquared } from '../../stats/regression.js';
 import { parseDelimitedTable } from '../../utils/delimitedTable.js';
@@ -559,27 +560,31 @@ const MultipleRegressionPage = ({
 
     const lessonContext = useMemo(() => getLessonContext(lessonContextId), [lessonContextId]);
 
-    const lessonDataset = useMemo(() => buildMultipleRegressionTutorDataset({
+    const lessonBaseDataset = useMemo(() => buildMultipleRegressionTutorBaseDataset({
+        generationKey: lessonGenerationKey,
+    }), [lessonGenerationKey]);
+
+    const lessonDataset = useMemo(() => deriveMultipleRegressionTutorDataset({
+        baseDataset: lessonBaseDataset,
         sampleSize: lessonSampleSize,
         beta1: lessonBeta1,
         beta2: lessonBeta2,
         predictorCorrelation: lessonPredictorCorrelation,
         noise: lessonNoise,
         includeOutlier: lessonOutlierOn,
-        generationKey: lessonGenerationKey,
         contextConfig: lessonContext.datasetConfig,
-    }), [lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonOutlierOn, lessonGenerationKey, lessonContext]);
+    }), [lessonBaseDataset, lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonOutlierOn, lessonContext]);
 
-    const lessonBaselineDataset = useMemo(() => buildMultipleRegressionTutorDataset({
+    const lessonBaselineDataset = useMemo(() => deriveMultipleRegressionTutorDataset({
+        baseDataset: lessonBaseDataset,
         sampleSize: lessonSampleSize,
         beta1: lessonBeta1,
         beta2: lessonBeta2,
         predictorCorrelation: lessonPredictorCorrelation,
         noise: lessonNoise,
         includeOutlier: false,
-        generationKey: lessonGenerationKey,
         contextConfig: lessonContext.datasetConfig,
-    }), [lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonGenerationKey, lessonContext]);
+    }), [lessonBaseDataset, lessonSampleSize, lessonBeta1, lessonBeta2, lessonPredictorCorrelation, lessonNoise, lessonContext]);
 
     const lessonStats = useMemo(() => calculateMultipleRegressionStats({
         outcomeValues: lessonDataset.outcomeValues,
@@ -2327,7 +2332,7 @@ const MultipleRegressionPage = ({
                         </button>
 
                         <p className={`mt-4 text-xs font-bold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                            The example preset changes labels and value scales. The scenario buttons change overlap, slope patterns, and noise.
+                            Strength, overlap, noise, sample size, and the outlier toggle now modify the same active sample. Use regenerate when you want a fresh draw.
                         </p>
                     </Card>
 

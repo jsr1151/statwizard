@@ -3,6 +3,8 @@ import { studentTCDF, studentTCriticalValue } from '../power/tMath.js';
 
 const EPSILON = 1e-12;
 const DEFAULT_CONFIDENCE_LEVEL = 0.95;
+const DEFAULT_MULTIPLE_TUTOR_POOL_SIZE = 180;
+const MULTIPLE_TUTOR_LATENT_SPREAD = 1.45;
 
 const roundTo = (value, decimals = 4) => {
     const factor = 10 ** decimals;
@@ -312,6 +314,62 @@ const buildInfluenceSummary = ({
         maxAbsoluteStandardizedResidual: maxStdResidual,
         influentialPoint: influentialIndex >= 0 ? pairs[influentialIndex] : null,
     };
+};
+
+const takeNestedTutorRows = (rows = [], targetCount = rows.length) => {
+    if (rows.length <= targetCount) {
+        return rows.map((row, index) => ({
+            ...row,
+            id: index,
+        }));
+    }
+
+    const selected = new Set([0, rows.length - 1]);
+
+    while (selected.size < targetCount) {
+        const ordered = Array.from(selected).sort((left, right) => left - right);
+        let bestGap = -1;
+        let bestIndex = null;
+
+        for (let index = 0; index < ordered.length - 1; index += 1) {
+            const left = ordered[index];
+            const right = ordered[index + 1];
+
+            if (right - left <= 1) {
+                continue;
+            }
+
+            const candidate = Math.floor((left + right) / 2);
+            const gap = right - left;
+
+            if (!selected.has(candidate) && gap > bestGap) {
+                bestGap = gap;
+                bestIndex = candidate;
+            }
+        }
+
+        if (bestIndex == null) {
+            for (let index = 0; index < rows.length; index += 1) {
+                if (!selected.has(index)) {
+                    bestIndex = index;
+                    break;
+                }
+            }
+        }
+
+        if (bestIndex == null) {
+            break;
+        }
+
+        selected.add(bestIndex);
+    }
+
+    return rows
+        .filter((_, index) => selected.has(index))
+        .map((row, index) => ({
+            ...row,
+            id: index,
+        }));
 };
 
 export const calculateMultipleRegressionStats = ({
@@ -721,14 +779,43 @@ export const buildMultipleRegressionGuidance = (stats) => {
     return guidance.slice(0, 5);
 };
 
-export const buildMultipleRegressionTutorDataset = ({
+export const buildMultipleRegressionTutorBaseDataset = ({
+    generationKey = 0,
+    poolSize = DEFAULT_MULTIPLE_TUTOR_POOL_SIZE,
+}) => {
+    const resolvedPoolSize = Math.max(48, Math.round(Number(poolSize) || DEFAULT_MULTIPLE_TUTOR_POOL_SIZE));
+    const random = createSeededRandom(hashSeedParts(
+        'multiple-regression-tutor-base',
+        resolvedPoolSize,
+        generationKey
+    ));
+    const sourceRows = Array.from({ length: resolvedPoolSize }, (_, index) => ({
+        id: index,
+        x1Unit: sampleStandardNormal(random),
+        x2Unit: sampleStandardNormal(random),
+        residualUnit: sampleStandardNormal(random),
+    }))
+        .sort((left, right) => left.x1Unit - right.x1Unit)
+        .map((row, index) => ({
+            ...row,
+            order: index,
+        }));
+
+    return {
+        sourceRows,
+        generationKey,
+        poolSize: resolvedPoolSize,
+    };
+};
+
+export const deriveMultipleRegressionTutorDataset = ({
+    baseDataset = null,
     sampleSize = 80,
     beta1 = 1.1,
     beta2 = 0.8,
     predictorCorrelation = 0.35,
     noise = 1.1,
     includeOutlier = false,
-    generationKey = 0,
     contextConfig = {},
 }) => {
     const resolvedContext = {
@@ -741,31 +828,29 @@ export const buildMultipleRegressionTutorDataset = ({
         x2Scale: 1,
         ...contextConfig,
     };
+    const sourceRows = Array.isArray(baseDataset?.sourceRows) ? baseDataset.sourceRows : [];
+
+    if (!sourceRows.length) {
+        return {
+            predictorColumns: [
+                { name: 'Predictor X1', numericValues: [] },
+                { name: 'Predictor X2', numericValues: [] },
+            ],
+            outcomeValues: [],
+            rows: [],
+        };
+    }
+
     const resolvedSampleSize = Math.max(24, Math.round(Number(sampleSize) || 80));
     const rho = clampToRange(Number(predictorCorrelation) || 0, -0.92, 0.92);
-    const random = createSeededRandom(hashSeedParts(
-        'multiple-regression-tutor',
-        resolvedSampleSize,
-        beta1,
-        beta2,
-        rho,
-        noise,
-        resolvedContext.yBase,
-        resolvedContext.signalScale,
-        resolvedContext.noiseScale,
-        resolvedContext.x1Mean,
-        resolvedContext.x1Scale,
-        resolvedContext.x2Mean,
-        resolvedContext.x2Scale,
-        generationKey
-    ));
     const scale = Math.sqrt(Math.max(EPSILON, 1 - (rho ** 2)));
-    const rows = Array.from({ length: resolvedSampleSize }, (_, index) => {
-        const latentX1 = sampleStandardNormal(random) * 1.5;
-        const latentX2 = ((rho * latentX1) / 1.5) + (scale * sampleStandardNormal(random) * 1.2);
+    const visibleRows = takeNestedTutorRows(sourceRows, Math.min(resolvedSampleSize, sourceRows.length));
+    const rows = visibleRows.map((row, index) => {
+        const latentX1 = row.x1Unit * MULTIPLE_TUTOR_LATENT_SPREAD;
+        const latentX2 = ((rho * row.x1Unit) + (scale * row.x2Unit)) * MULTIPLE_TUTOR_LATENT_SPREAD;
         const x1 = resolvedContext.x1Mean + (latentX1 * resolvedContext.x1Scale);
         const x2 = resolvedContext.x2Mean + (latentX2 * resolvedContext.x2Scale);
-        const residual = sampleStandardNormal(random) * (Number(noise) || 1.1) * resolvedContext.noiseScale;
+        const residual = row.residualUnit * (Number(noise) || 1.1) * resolvedContext.noiseScale;
         const y = resolvedContext.yBase
             + ((latentX1 * Number(beta1)) + (latentX2 * Number(beta2))) * resolvedContext.signalScale
             + residual;
@@ -780,8 +865,8 @@ export const buildMultipleRegressionTutorDataset = ({
     });
 
     if (includeOutlier) {
-        const outlierLatentX1 = 3.4;
-        const outlierLatentX2 = (rho * outlierLatentX1) + (scale * -1.9);
+        const outlierLatentX1 = 2.8 * MULTIPLE_TUTOR_LATENT_SPREAD;
+        const outlierLatentX2 = ((rho * 2.8) + (scale * -1.9)) * MULTIPLE_TUTOR_LATENT_SPREAD;
         const outlierX1 = resolvedContext.x1Mean + (outlierLatentX1 * resolvedContext.x1Scale);
         const outlierX2 = resolvedContext.x2Mean + (outlierLatentX2 * resolvedContext.x2Scale);
         const outlierExpected = resolvedContext.yBase
@@ -804,4 +889,30 @@ export const buildMultipleRegressionTutorDataset = ({
         outcomeValues: rows.map((row) => row.y),
         rows,
     };
+};
+
+export const buildMultipleRegressionTutorDataset = ({
+    sampleSize = 80,
+    beta1 = 1.1,
+    beta2 = 0.8,
+    predictorCorrelation = 0.35,
+    noise = 1.1,
+    includeOutlier = false,
+    generationKey = 0,
+    contextConfig = {},
+}) => {
+    const baseDataset = buildMultipleRegressionTutorBaseDataset({
+        generationKey,
+    });
+
+    return deriveMultipleRegressionTutorDataset({
+        baseDataset,
+        sampleSize,
+        beta1,
+        beta2,
+        predictorCorrelation,
+        noise,
+        includeOutlier,
+        contextConfig,
+    });
 };
