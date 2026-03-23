@@ -92,13 +92,43 @@ const ANALYSIS_OPTIONS = [
         id: 'pearson_correlation',
         label: 'Pearson Correlation',
         summary: 'Load two numeric variables into the correlation calculator.',
-        minNumericColumns: 2,
+        isCompatible: ({ numericCount }) => numericCount >= 2,
+        buildDetail: ({ numericCount }) => `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
     },
     {
         id: 'multiple_regression',
         label: 'Multiple Regression',
         summary: 'Load one numeric outcome plus at least two numeric predictors into the regression calculator.',
-        minNumericColumns: 3,
+        isCompatible: ({ numericCount }) => numericCount >= 3,
+        buildDetail: ({ numericCount }) => `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
+    },
+    {
+        id: 'independent_t_test',
+        label: 'Independent Samples t-Test',
+        summary: 'Load one numeric outcome plus one categorical grouping variable with exactly 2 levels.',
+        isCompatible: ({ numericCount, binaryCategoricalCount }) => numericCount >= 1 && binaryCategoricalCount >= 1,
+        buildDetail: ({ numericCount, binaryCategoricalCount }) => `${numericCount} numeric and ${binaryCategoricalCount} binary grouping variable${binaryCategoricalCount === 1 ? '' : 's'} detected.`,
+    },
+    {
+        id: 'paired_t_test',
+        label: 'Paired Samples t-Test',
+        summary: 'Load two numeric variables into the paired-samples calculator.',
+        isCompatible: ({ numericCount }) => numericCount >= 2,
+        buildDetail: ({ numericCount }) => `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
+    },
+    {
+        id: 'one_way_anova',
+        label: 'One-Way ANOVA',
+        summary: 'Load one numeric outcome plus one categorical grouping variable with 2 or more levels.',
+        isCompatible: ({ numericCount, categoricalCount }) => numericCount >= 1 && categoricalCount >= 1,
+        buildDetail: ({ numericCount, categoricalCount }) => `${numericCount} numeric and ${categoricalCount} categorical variable${categoricalCount === 1 ? '' : 's'} detected.`,
+    },
+    {
+        id: 'factorial_anova',
+        label: 'Factorial ANOVA',
+        summary: 'Load one numeric outcome plus two categorical factors into the factorial ANOVA calculator.',
+        isCompatible: ({ numericCount, categoricalCount }) => numericCount >= 1 && categoricalCount >= 2,
+        buildDetail: ({ numericCount, categoricalCount }) => `${numericCount} numeric and ${categoricalCount} categorical variable${categoricalCount === 1 ? '' : 's'} detected.`,
     },
 ];
 
@@ -210,11 +240,22 @@ const buildRecodePreviewRows = (dataset, columnId, mappings) => {
 
 const getAnalysisCompatibility = (dataset) => {
     const numericCount = (dataset?.columns || []).filter((column) => column.summary?.detectedType === 'numeric').length;
+    const categoricalColumns = (dataset?.columns || []).filter((column) => ['categorical', 'text'].includes(column.summary?.detectedType));
+    const categoricalCount = categoricalColumns.filter((column) => (column.summary?.uniqueCount || 0) >= 2).length;
+    const binaryCategoricalCount = categoricalColumns.filter((column) => (column.summary?.uniqueCount || 0) === 2).length;
 
     return ANALYSIS_OPTIONS.map((analysis) => ({
         ...analysis,
-        compatible: numericCount >= analysis.minNumericColumns,
-        detail: `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
+        compatible: analysis.isCompatible({
+            numericCount,
+            categoricalCount,
+            binaryCategoricalCount,
+        }),
+        detail: analysis.buildDetail({
+            numericCount,
+            categoricalCount,
+            binaryCategoricalCount,
+        }),
     })).sort((left, right) => Number(right.compatible) - Number(left.compatible));
 };
 

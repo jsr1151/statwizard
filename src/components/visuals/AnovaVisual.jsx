@@ -7,7 +7,7 @@ import FSamplingDist from './FSamplingDist';
 import GroupsMeansView from './GroupsMeansView';
 import VarianceDecomposition from './VarianceDecomposition';
 
-const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor }) => {
+const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor, datasetSeed = null }) => {
   const [localShowValues, setLocalShowValues] = useState(propShowValues);
   useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
@@ -35,6 +35,15 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   const [showSpread, setShowSpread] = useState(true);
   const [manualF, setManualF] = useState(null);
   const [highlightTarget, setHighlightTarget] = useState(null);
+
+  useEffect(() => {
+    if (!datasetSeed?.key || !Array.isArray(datasetSeed.groups) || datasetSeed.groups.length < 2) {
+      return;
+    }
+
+    setAnovaMode('data');
+    setGroups(datasetSeed.groups);
+  }, [datasetSeed?.key]);
 
   const anovaStats = useMemo(() => calculateAnova(groups), [groups]);
 

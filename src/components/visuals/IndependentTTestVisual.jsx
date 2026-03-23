@@ -7,7 +7,7 @@ import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
 import IndependentTTestPlots from './IndependentTTestPlots';
-const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate }) => {
+const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null }) => {
   const [group1, setGroup1] = useState({ xBar: 12, s: 2.5, n: 30, raw: "" });
   const [group2, setGroup2] = useState({ xBar: 10, s: 2.5, n: 30, raw: "" });
   const [testType, setTestType] = useState('student'); // 'student' (pooled) or 'welch'
@@ -40,6 +40,28 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
     yLabel: 'Outcome'
   });
   const svgRef = useRef(null);
+
+  useEffect(() => {
+    if (!datasetSeed?.key) {
+      return;
+    }
+
+    setInputMode('raw');
+    setGroup1((previous) => ({
+      ...previous,
+      xBar: Number.isFinite(datasetSeed.group1?.xBar) ? datasetSeed.group1.xBar : previous.xBar,
+      s: Number.isFinite(datasetSeed.group1?.s) ? datasetSeed.group1.s : previous.s,
+      n: Number.isFinite(datasetSeed.group1?.n) ? datasetSeed.group1.n : previous.n,
+      raw: datasetSeed.group1?.raw || previous.raw,
+    }));
+    setGroup2((previous) => ({
+      ...previous,
+      xBar: Number.isFinite(datasetSeed.group2?.xBar) ? datasetSeed.group2.xBar : previous.xBar,
+      s: Number.isFinite(datasetSeed.group2?.s) ? datasetSeed.group2.s : previous.s,
+      n: Number.isFinite(datasetSeed.group2?.n) ? datasetSeed.group2.n : previous.n,
+      raw: datasetSeed.group2?.raw || previous.raw,
+    }));
+  }, [datasetSeed?.key]);
 
   // --- Calculations ---
   const delta = group1.xBar - group2.xBar;

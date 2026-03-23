@@ -41,9 +41,19 @@ const VariableRolePicker = ({
 
         return (dataset.columns || []).filter((column) => {
             const typeAllowed = !role.allowedTypes?.length || role.allowedTypes.includes(column.summary?.detectedType);
-            return typeAllowed && !excludeIds.includes(column.id);
+            const passesColumnFilter = typeof role.columnFilter === 'function'
+                ? role.columnFilter({ column, dataset, selection })
+                : true;
+
+            return typeAllowed && passesColumnFilter && !excludeIds.includes(column.id);
         });
     };
+
+    const getOptionDetail = (role, column) => (
+        typeof role.describeOption === 'function'
+            ? role.describeOption({ column, dataset, selection })
+            : ''
+    );
 
     if (!dataset) {
         return (
@@ -72,16 +82,21 @@ const VariableRolePicker = ({
                                 className={`w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
                             >
                                 <option value="">{role.placeholder || 'Select variable'}</option>
-                                {options.map((column) => (
-                                    <option key={`${role.id}-${column.id}`} value={column.id}>
-                                        {column.label}
-                                    </option>
-                                ))}
+                                {options.map((column) => {
+                                    const optionDetail = getOptionDetail(role, column);
+
+                                    return (
+                                        <option key={`${role.id}-${column.id}`} value={column.id}>
+                                            {optionDetail ? `${column.label} (${optionDetail})` : column.label}
+                                        </option>
+                                    );
+                                })}
                             </select>
                         ) : (
                             <div className="space-y-2">
                                 {options.map((column) => {
                                     const checked = Array.isArray(currentValue) && currentValue.includes(column.id);
+                                    const optionDetail = getOptionDetail(role, column);
 
                                     return (
                                         <label key={`${role.id}-${column.id}`} className="block cursor-pointer">
@@ -104,8 +119,9 @@ const VariableRolePicker = ({
                                                     <div className="min-w-0">
                                                         <div className="font-bold">{column.label}</div>
                                                         <div className={`mt-1 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                                                            {column.summary?.detectedType} • missing {column.summary?.missingCount || 0}
-                                                            {column.originalName && column.originalName !== column.label ? ` • raw: ${column.originalName}` : ''}
+                                                            {column.summary?.detectedType} - missing {column.summary?.missingCount || 0}
+                                                            {column.originalName && column.originalName !== column.label ? ` - raw: ${column.originalName}` : ''}
+                                                            {optionDetail ? ` - ${optionDetail}` : ''}
                                                         </div>
                                                     </div>
                                                 </div>

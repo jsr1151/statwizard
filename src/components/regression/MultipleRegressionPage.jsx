@@ -22,6 +22,7 @@ import RegressionResidualPlot from './RegressionResidualPlot';
 import ObservedFittedPlot from './ObservedFittedPlot';
 import MultipleRegressionConditionalEffectPlot from './MultipleRegressionConditionalEffectPlot';
 import MultipleRegressionPlanePlot from './MultipleRegressionPlanePlot';
+import AnalysisAssumptionsSection from '../analysis/AnalysisAssumptionsSection.jsx';
 import VariableRolePicker from '../data/VariableRolePicker.jsx';
 import {
     buildMultipleRegressionGuidance,
@@ -1247,6 +1248,17 @@ const MultipleRegressionPage = ({
                     initialMode={initialPowerMode}
                 />
             </div>
+        );
+    }
+
+    if (section === 'assumptions') {
+        return (
+            <AnalysisAssumptionsSection
+                darkMode={darkMode}
+                title="Multiple regression assumptions"
+                description="Review the assumptions before trusting the observed coefficients, confidence intervals, and model-fit summaries. Use this page as a practical checklist rather than a rigid pass/fail gate."
+                assumptions={assumptions}
+            />
         );
     }
 

@@ -25,14 +25,37 @@ const hasAnyTag = (column, expectedTags = []) => {
 const getNumericColumns = (dataset) =>
     (dataset?.columns || []).filter((column) => column.summary?.detectedType === 'numeric');
 
+const getCategoricalColumns = (dataset) =>
+    (dataset?.columns || []).filter((column) => ['categorical', 'text'].includes(column.summary?.detectedType));
+
+const getUsableLevelCount = (column) => Number(column?.summary?.uniqueCount || 0);
+
 const rankPredictorColumns = (columns = []) => [...columns].sort((left, right) => {
     const leftScore = Number(hasAnyTag(left, ['predictor', 'independent', 'covariate', 'feature']));
     const rightScore = Number(hasAnyTag(right, ['predictor', 'independent', 'covariate', 'feature']));
     return rightScore - leftScore;
 });
 
+const rankGroupingColumns = (columns = []) => [...columns].sort((left, right) => {
+    const leftScore = Number(hasAnyTag(left, ['group', 'grouping', 'factor', 'condition', 'treatment']));
+    const rightScore = Number(hasAnyTag(right, ['group', 'grouping', 'factor', 'condition', 'treatment']));
+
+    if (rightScore !== leftScore) {
+        return rightScore - leftScore;
+    }
+
+    return getUsableLevelCount(left) - getUsableLevelCount(right);
+});
+
+const findPreferredOutcomeColumn = (numericColumns = []) => (
+    numericColumns.find((column) => hasAnyTag(column, ['outcome', 'dependent', 'criterion']))
+    || numericColumns[numericColumns.length - 1]
+    || null
+);
+
 export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
     const numericColumns = getNumericColumns(dataset);
+    const categoricalColumns = getCategoricalColumns(dataset);
 
     if (analysisId === 'pearson_correlation') {
         if (numericColumns.length < 2) {
@@ -60,8 +83,7 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
             return null;
         }
 
-        const preferredOutcome = numericColumns.find((column) => hasAnyTag(column, ['outcome', 'dependent', 'criterion']))
-            || numericColumns[numericColumns.length - 1];
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
         const predictorColumns = rankPredictorColumns(
             numericColumns.filter((column) => column.id !== preferredOutcome?.id)
         );
@@ -70,6 +92,81 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
             datasetId: dataset.id,
             outcome: preferredOutcome?.id || '',
             predictors: predictorColumns.slice(0, 3).map((column) => column.id),
+        };
+    }
+
+    if (analysisId === 'independent_t_test') {
+        const groupingCandidates = rankGroupingColumns(
+            categoricalColumns.filter((column) => getUsableLevelCount(column) === 2)
+        );
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
+
+        if (!preferredOutcome || !groupingCandidates.length) {
+            return null;
+        }
+
+        return {
+            datasetId: dataset.id,
+            outcome: preferredOutcome.id,
+            grouping: groupingCandidates[0].id,
+        };
+    }
+
+    if (analysisId === 'paired_t_test') {
+        if (numericColumns.length < 2) {
+            return null;
+        }
+
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
+        const fallbackColumns = rankPredictorColumns(
+            numericColumns.filter((column) => column.id !== preferredOutcome?.id)
+        );
+        const first = preferredOutcome || numericColumns[0];
+        const second = fallbackColumns[0] || numericColumns.find((column) => column.id !== first?.id) || numericColumns[1];
+
+        if (!first || !second || first.id === second.id) {
+            return null;
+        }
+
+        return {
+            datasetId: dataset.id,
+            first: first.id,
+            second: second.id,
+        };
+    }
+
+    if (analysisId === 'one_way_anova') {
+        const groupingCandidates = rankGroupingColumns(
+            categoricalColumns.filter((column) => getUsableLevelCount(column) >= 2)
+        );
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
+
+        if (!preferredOutcome || !groupingCandidates.length) {
+            return null;
+        }
+
+        return {
+            datasetId: dataset.id,
+            outcome: preferredOutcome.id,
+            grouping: groupingCandidates[0].id,
+        };
+    }
+
+    if (analysisId === 'factorial_anova') {
+        const factorCandidates = rankGroupingColumns(
+            categoricalColumns.filter((column) => getUsableLevelCount(column) >= 2)
+        );
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
+
+        if (!preferredOutcome || factorCandidates.length < 2) {
+            return null;
+        }
+
+        return {
+            datasetId: dataset.id,
+            outcome: preferredOutcome.id,
+            factorA: factorCandidates[0].id,
+            factorB: factorCandidates[1].id,
         };
     }
 

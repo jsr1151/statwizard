@@ -12,7 +12,7 @@ import { FACTORIAL_PRESETS } from '../../data/factorialPresets';
 
 import { ChevronRight, Info, AlertTriangle, HelpCircle } from 'lucide-react';
 
-const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpdate }) => {
+const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpdate, datasetSeed = null }) => {
     const [localShowValues, setLocalShowValues] = useState(propShowValues);
     useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
@@ -42,6 +42,18 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     const [expandedEffect, setExpandedEffect] = useState(null);
 
     const factors = useMemo(() => [factorA, factorB], [factorA, factorB]);
+
+    useEffect(() => {
+        if (!datasetSeed?.key || !datasetSeed.factorA || !datasetSeed.factorB || !datasetSeed.cellData) {
+            return;
+        }
+
+        setFactorA(datasetSeed.factorA);
+        setFactorB(datasetSeed.factorB);
+        setOutcomeLabel(datasetSeed.outcomeLabel || 'Outcome Variable');
+        setCellData(datasetSeed.cellData);
+        setActiveTab('table');
+    }, [datasetSeed?.key]);
 
     // --- CALCULATIONS ---
     const results = useMemo(() => calculateFactorialAnova(factorA, factorB, cellData, ssType), [factorA, factorB, cellData, ssType]);

@@ -73,6 +73,12 @@ import EffectSizePanel from './components/power/EffectSizePanel';
 import PearsonCorrelationPage from './components/correlation/PearsonCorrelationPage';
 import SimpleLinearRegressionPage from './components/regression/SimpleLinearRegressionPage';
 import MultipleRegressionPage from './components/regression/MultipleRegressionPage';
+import AnalysisSectionTabs from './components/analysis/AnalysisSectionTabs';
+import AnalysisAssumptionsSection from './components/analysis/AnalysisAssumptionsSection.jsx';
+import IndependentTTestPage from './components/analysis/IndependentTTestPage.jsx';
+import PairedTTestPage from './components/analysis/PairedTTestPage.jsx';
+import OneWayAnovaPage from './components/analysis/OneWayAnovaPage.jsx';
+import FactorialAnovaPage from './components/analysis/FactorialAnovaPage.jsx';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -89,6 +95,17 @@ const generateAIResponse = async (prompt) => {
         }, 1000);
     });
 };
+
+const STRUCTURED_RESULT_STEP_IDS = new Set([
+    'correlation_result',
+    'regression_result',
+    'multiple_regression_result',
+    'res_indep_ttest',
+    'res_paired_ttest',
+    'res_one_way_anova',
+    'res_factorial_anova',
+    'res_ancova',
+]);
 
 // --- MAIN APP ---
 export default function App() {
@@ -211,8 +228,38 @@ export default function App() {
     const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
     const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
     const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
+    const isIndependentTTestPage = currentStepId === 'res_indep_ttest';
+    const isPairedTTestPage = currentStepId === 'res_paired_ttest';
+    const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
+    const isFactorialAnovaPage = currentStepId === 'res_factorial_anova';
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
+    const isStructuredResultPage = isResult && (STRUCTURED_RESULT_STEP_IDS.has(currentStepId) || Boolean(currentTestConfig));
+
+    const availableResultSections = useMemo(() => {
+        if (!isStructuredResultPage) {
+            return [];
+        }
+
+        const sections = [
+            { id: 'lessons', label: 'Tutor', icon: BookOpen },
+            { id: 'calculator', label: 'Calculator', icon: Calculator },
+        ];
+
+        if (currentTestConfig || isFactorialAnovaPage) {
+            sections.push({ id: 'effect_size', label: 'Effect Size', icon: Sigma });
+        }
+
+        if ((currentStep?.assumptions || []).length > 0) {
+            sections.push({ id: 'assumptions', label: 'Assumptions', icon: CheckCircle });
+        }
+
+        if (currentTestConfig) {
+            sections.push({ id: 'power', label: 'Power Analysis', icon: BarChart2 });
+        }
+
+        return sections;
+    }, [currentStep?.assumptions, currentTestConfig, isFactorialAnovaPage, isStructuredResultPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -224,13 +271,13 @@ export default function App() {
     }, [currentStepId]);
 
     useEffect(() => {
-        if (pendingPowerLaunch?.stepId === currentStepId) {
+        if (pendingPowerLaunch?.stepId === currentStepId && currentTestConfig) {
             setActiveResultSection('power');
             return;
         }
 
-        setActiveResultSection(currentTestConfig ? 'lessons' : 'calculator');
-    }, [currentStepId, pendingPowerLaunch, currentTestConfig]);
+        setActiveResultSection(isStructuredResultPage ? 'lessons' : 'calculator');
+    }, [currentStepId, pendingPowerLaunch, currentTestConfig, isStructuredResultPage]);
 
     useEffect(() => {
         if (appMode !== 'wizard') {
@@ -484,6 +531,17 @@ export default function App() {
     };
 
     const showStructuredCalculator = Boolean(currentTestConfig) && activeResultSection === 'calculator';
+    const handleResultSectionChange = (nextSection) => {
+        setActiveResultSection(nextSection);
+
+        if (nextSection !== 'power') {
+            setPendingPowerLaunch(null);
+        }
+
+        if (nextSection !== 'lessons') {
+            setActiveTutorScript(null);
+        }
+    };
 
     return (
         <ErrorBoundary>
@@ -524,11 +582,15 @@ export default function App() {
                             <DataManagerPage
                                 darkMode={darkMode}
                                 onOpenAnalysis={(analysisId) => {
-                                    const nextStepId = analysisId === 'pearson_correlation'
-                                        ? 'correlation_result'
-                                        : analysisId === 'multiple_regression'
-                                            ? 'multiple_regression_result'
-                                            : null;
+                                    const nextStepIdByAnalysisId = {
+                                        pearson_correlation: 'correlation_result',
+                                        multiple_regression: 'multiple_regression_result',
+                                        independent_t_test: 'res_indep_ttest',
+                                        paired_t_test: 'res_paired_ttest',
+                                        one_way_anova: 'res_one_way_anova',
+                                        factorial_anova: 'res_factorial_anova',
+                                    };
+                                    const nextStepId = nextStepIdByAnalysisId[analysisId] || null;
 
                                     if (!nextStepId) {
                                         return;
@@ -603,47 +665,13 @@ export default function App() {
                                                 </div>
                                             )}
 
-                                            {currentTestConfig && (
-                                                <div className={`rounded-xl border p-2 flex flex-wrap gap-2 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                                    <button
-                                                        onClick={() => {
-                                                            setActiveResultSection('lessons');
-                                                            setPendingPowerLaunch(null);
-                                                        }}
-                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'lessons' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
-                                                    >
-                                                        <BookOpen className="w-4 h-4" /> Tutor / Lessons
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setActiveResultSection('calculator');
-                                                            setPendingPowerLaunch(null);
-                                                            setActiveTutorScript(null);
-                                                        }}
-                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'calculator' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
-                                                    >
-                                                        <Calculator className="w-4 h-4" /> Test Calculator
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setActiveResultSection('effect_size');
-                                                            setPendingPowerLaunch(null);
-                                                            setActiveTutorScript(null);
-                                                        }}
-                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'effect_size' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
-                                                    >
-                                                        <Sigma className="w-4 h-4" /> Effect Size
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setActiveResultSection('power');
-                                                            setActiveTutorScript(null);
-                                                        }}
-                                                        className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeResultSection === 'power' ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')}`}
-                                                    >
-                                                        <BarChart2 className="w-4 h-4" /> Power Analysis
-                                                    </button>
-                                                </div>
+                                            {availableResultSections.length > 0 && (
+                                                <AnalysisSectionTabs
+                                                    darkMode={darkMode}
+                                                    sections={availableResultSections}
+                                                    activeSection={activeResultSection}
+                                                    onChange={handleResultSectionChange}
+                                                />
                                             )}
 
                                             {isPearsonCorrelationPage ? (
@@ -676,6 +704,60 @@ export default function App() {
                                                     testConfig={currentTestConfig}
                                                     initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
                                                     onOpenDataManager={() => setAppMode('data_manager')}
+                                                />
+                                            ) : isIndependentTTestPage ? (
+                                                <IndependentTTestPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                    onOpenDataManager={() => setAppMode('data_manager')}
+                                                    onTutorUpdate={setActiveTutorScript}
+                                                />
+                                            ) : isPairedTTestPage ? (
+                                                <PairedTTestPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                    onOpenDataManager={() => setAppMode('data_manager')}
+                                                    onTutorUpdate={setActiveTutorScript}
+                                                />
+                                            ) : isOneWayAnovaPage ? (
+                                                <OneWayAnovaPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                    onOpenDataManager={() => setAppMode('data_manager')}
+                                                    onTutorUpdate={setActiveTutorScript}
+                                                    tutor={anovaTutor}
+                                                    showValues={showEquationValues}
+                                                />
+                                            ) : isFactorialAnovaPage ? (
+                                                <FactorialAnovaPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    onOpenDataManager={() => setAppMode('data_manager')}
+                                                />
+                                            ) : activeResultSection === 'assumptions' && (currentStep?.assumptions || []).length > 0 ? (
+                                                <AnalysisAssumptionsSection
+                                                    darkMode={darkMode}
+                                                    title={`${currentStep?.title || 'Analysis'} assumptions`}
+                                                    description="Review the assumptions before trusting the observed analysis results. Use this page as a practical checklist rather than a rigid pass/fail gate."
+                                                    assumptions={currentStep?.assumptions || []}
                                                 />
                                             ) : activeResultSection === 'power' && currentTestConfig ? (
                                                 <PowerAnalysisTab

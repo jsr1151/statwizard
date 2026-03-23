@@ -6,7 +6,7 @@ import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
-const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate }) => {
+const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null }) => {
   const [group1, setGroup1] = useState({ name: "Condition 1", raw: "12, 14, 11, 15, 13, 16, 14, 12, 15, 14" });
   const [group2, setGroup2] = useState({ name: "Condition 2", raw: "10, 11, 12, 11, 10, 13, 12, 11, 11, 12" });
   const [summaryData, setSummaryData] = useState({ mean1: 14.0, sd1: 1.6, mean2: 11.3, sd2: 1.1, n: 10, r: 0.8 });
@@ -17,6 +17,24 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
   const [displayMode, setDisplayMode] = useState('sampling'); // 'sampling', 'difference', 'paired'
   const [showCI, setShowCI] = useState(false);
   const [ciType, setCiType] = useState('two-sided');
+
+  useEffect(() => {
+    if (!datasetSeed?.key) {
+      return;
+    }
+
+    setInputMode('raw');
+    setGroup1((previous) => ({
+      ...previous,
+      name: datasetSeed.group1?.label || previous.name,
+      raw: datasetSeed.group1?.raw || previous.raw,
+    }));
+    setGroup2((previous) => ({
+      ...previous,
+      name: datasetSeed.group2?.label || previous.name,
+      raw: datasetSeed.group2?.raw || previous.raw,
+    }));
+  }, [datasetSeed?.key]);
 
   const stats = useMemo(() => {
     let n1 = 0, n2 = 0, dBar = 0, sd = 0, r = 0, n = 0;

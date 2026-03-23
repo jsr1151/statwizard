@@ -17,6 +17,7 @@ import AssumptionItem from '../formula/AssumptionItem';
 import PowerAnalysisTab from '../power/PowerAnalysisTab';
 import RegressionResidualPlot from './RegressionResidualPlot';
 import RegressionScatterplot from './RegressionScatterplot';
+import AnalysisAssumptionsSection from '../analysis/AnalysisAssumptionsSection.jsx';
 import {
     buildRegressionGuidance,
     buildRegressionInterpretation,
@@ -441,6 +442,17 @@ const SimpleLinearRegressionPage = ({
                     initialMode={initialPowerMode}
                 />
             </div>
+        );
+    }
+
+    if (section === 'assumptions') {
+        return (
+            <AnalysisAssumptionsSection
+                darkMode={darkMode}
+                title="Simple linear regression assumptions"
+                description="Review the assumptions before trusting the observed slope, confidence interval, and model-fit summaries. Use this page as a practical checklist rather than a rigid pass/fail gate."
+                assumptions={assumptions}
+            />
         );
     }
 

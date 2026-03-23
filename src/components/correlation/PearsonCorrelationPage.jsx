@@ -16,6 +16,7 @@ import {
 import PearsonScatterplot from './PearsonScatterplot';
 import PowerAnalysisTab from '../power/PowerAnalysisTab';
 import AssumptionItem from '../formula/AssumptionItem';
+import AnalysisAssumptionsSection from '../analysis/AnalysisAssumptionsSection.jsx';
 import VariableRolePicker from '../data/VariableRolePicker.jsx';
 import {
     buildCorrelationGuidance,
@@ -440,6 +441,17 @@ const PearsonCorrelationPage = ({
                     initialMode={initialPowerMode}
                 />
             </div>
+        );
+    }
+
+    if (section === 'assumptions') {
+        return (
+            <AnalysisAssumptionsSection
+                darkMode={darkMode}
+                title="Pearson correlation assumptions"
+                description="Review the assumptions before trusting the observed correlation coefficient and its inference. Use this page as a practical checklist rather than a rigid pass/fail gate."
+                assumptions={assumptions}
+            />
         );
     }
 
