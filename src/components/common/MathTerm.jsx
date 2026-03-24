@@ -2,7 +2,8 @@ import React from 'react';
 import { MATH_TERMS } from '../../data/mathTerms';
 
 const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
-    const actualTerm = term.replace(/[\{\}]/g, '');
+    const safeTerm = typeof term === 'string' ? term : '';
+    const actualTerm = safeTerm.replace(/[\{\}]/g, '');
     const isCalculable = MATH_TERMS[actualTerm];
 
     // Standardize terms for display with proper subscripts
@@ -67,7 +68,7 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/delta/g, "Δ");
     };
 
-    const cleanTerm = getCleanTerm(term.replace(/[\{\}]/g, ''));
+    const cleanTerm = getCleanTerm(safeTerm.replace(/[\{\}]/g, ''));
     const isNumber = typeof value === 'number';
     const valDisplay = isNumber ? value.toFixed(2) : value;
     const displayValue = (showValue && value !== undefined) ? valDisplay : cleanTerm;
@@ -76,7 +77,7 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
 
     return (
         <span
-            onClick={(e) => { e.stopPropagation(); if (isCalculable) onInfo(actualTerm); }}
+            onClick={(e) => { e.stopPropagation(); if (isCalculable && typeof onInfo === 'function') onInfo(actualTerm); }}
             onMouseEnter={() => onHover && onHover(actualTerm)}
             onMouseLeave={() => onHover && onHover(null)}
             title={tooltip}

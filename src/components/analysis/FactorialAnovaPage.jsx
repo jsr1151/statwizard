@@ -43,11 +43,8 @@ const FactorialEffectCard = ({ darkMode, label, effect }) => (
         <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
             {label}
         </div>
-        <div className={`mt-2 text-2xl font-black relative text-transparent select-none ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-            <span className={`absolute inset-0 select-text ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Partial eta squared = {formatStat(effect?.pes, 3)}
-            </span>
-            Partial η² = {formatStat(effect?.pes, 3)}
+        <div className={`mt-2 text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            Partial eta squared = {formatStat(effect?.pes, 3)}
         </div>
         <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
             F({formatStat(effect?.df, 0)}, {formatStat(effect?.errorDf, 0)}) = {formatStat(effect?.f, 2)}, p {formatPValue(effect?.p)}

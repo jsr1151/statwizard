@@ -117,6 +117,15 @@ const EFFECT_SIZE_SECTION_STEP_IDS = new Set([
     'res_ancova',
 ]);
 
+const SAFE_GENERIC_EQUATION_STEP_IDS = new Set([
+    'res_central_tendency',
+    'res_variability',
+    'res_frequency',
+    'res_ztest',
+    'res_onesample_ttest',
+    'res_rm_anova',
+]);
+
 // --- MAIN APP ---
 export default function App() {
     // --- 1. CORE REFS (Top priority to avoid TDZ/hoisting issues) ---
@@ -408,6 +417,129 @@ export default function App() {
     // --- SYMBOL KEY LOGIC ---
     let relevantSymbols = SYMBOL_KEYS.sd;
     if (displayFormulaId && SYMBOL_KEYS[displayFormulaId]) relevantSymbols = SYMBOL_KEYS[displayFormulaId];
+    const safeRelevantSymbols = Array.isArray(relevantSymbols) ? relevantSymbols : [];
+    const useSafeGenericEquationCard = SAFE_GENERIC_EQUATION_STEP_IDS.has(currentStepId);
+
+    const renderSafeGenericEquationBody = () => {
+        const labelClass = darkMode ? 'text-slate-500' : 'text-slate-500';
+        const textClass = darkMode ? 'text-slate-100' : 'text-slate-900';
+        const cardClass = darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100';
+
+        if (displayFormulaId === 'mean') {
+            return (
+                <div className="flex flex-col items-center gap-6 w-full">
+                    <div className={`text-xs font-black uppercase tracking-widest ${labelClass}`}>Central Tendency Reference</div>
+                    <div className={`text-xl md:text-2xl font-serif text-center ${textClass}`}>
+                        x̄ = Σx / n
+                    </div>
+                    <div className="grid gap-3 w-full md:grid-cols-2">
+                        <div className={`rounded-xl border p-4 text-center ${cardClass}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>Median</div>
+                            <div className={`mt-2 text-lg font-serif ${textClass}`}>Middle ordered value</div>
+                        </div>
+                        <div className={`rounded-xl border p-4 text-center ${cardClass}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>Mode</div>
+                            <div className={`mt-2 text-lg font-serif ${textClass}`}>Most frequent value</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (displayFormulaId === 'sd') {
+            return (
+                <div className="flex flex-col items-center gap-6 w-full">
+                    <div className={`text-xs font-black uppercase tracking-widest ${labelClass}`}>Sample Standard Deviation</div>
+                    <div className={`text-xl md:text-2xl font-serif text-center ${textClass}`}>
+                        s = √(Σ(x - x̄)² / (n - 1))
+                    </div>
+                    <div className={`rounded-xl border p-4 text-center w-full ${cardClass}`}>
+                        <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>Spread Summary</div>
+                        <div className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                            Larger values of s mean scores sit farther from the mean on average.
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (displayFormulaId === 'percentage') {
+            return (
+                <div className="flex flex-col items-center gap-6 w-full">
+                    <div className={`text-xs font-black uppercase tracking-widest ${labelClass}`}>Relative Frequency</div>
+                    <div className={`text-xl md:text-2xl font-serif text-center ${textClass}`}>
+                        rf = f / N
+                    </div>
+                    <div className={`rounded-xl border p-4 text-center w-full ${cardClass}`}>
+                        <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>Quick Read</div>
+                        <div className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                            Use absolute frequency for counts, relative frequency for proportions, and cumulative frequency for running totals.
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (displayFormulaId === 'z_test') {
+            return (
+                <div className="flex flex-col items-center gap-4 w-full">
+                    <div className={`text-xs font-black uppercase tracking-widest ${labelClass}`}>One-Sample Z Test</div>
+                    <div className={`text-xl md:text-2xl font-serif text-center ${textClass}`}>
+                        z = (x̄ - μ) / SE
+                    </div>
+                    <div className={`text-lg font-serif text-center ${textClass}`}>
+                        SE = σ / √n
+                    </div>
+                </div>
+            );
+        }
+
+        if (displayFormulaId === 't_onesample') {
+            return (
+                <div className="flex flex-col items-center gap-4 w-full">
+                    <div className={`text-xs font-black uppercase tracking-widest ${labelClass}`}>One-Sample T Test</div>
+                    <div className={`text-xl md:text-2xl font-serif text-center ${textClass}`}>
+                        t = (x̄ - μ) / SE
+                    </div>
+                    <div className={`text-lg font-serif text-center ${textClass}`}>
+                        SE = s / √n
+                    </div>
+                    <div className={`text-sm font-bold uppercase tracking-widest ${labelClass}`}>
+                        df = n - 1
+                    </div>
+                </div>
+            );
+        }
+
+        if (displayFormulaId === 'anova') {
+            return (
+                <div className="flex flex-col items-center gap-4 w-full">
+                    <div className={`text-xs font-black uppercase tracking-widest ${labelClass}`}>ANOVA Core Equations</div>
+                    <div className="grid gap-3 w-full">
+                        <div className={`rounded-xl border p-4 text-center ${cardClass}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>F Ratio</div>
+                            <div className={`mt-2 text-xl font-serif ${textClass}`}>F = MS_between / MS_error</div>
+                        </div>
+                        <div className={`rounded-xl border p-4 text-center ${cardClass}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>Mean Squares</div>
+                            <div className={`mt-2 text-base font-serif ${textClass}`}>MS_between = SS_between / df_between</div>
+                            <div className={`mt-1 text-base font-serif ${textClass}`}>MS_error = SS_error / df_error</div>
+                        </div>
+                        <div className={`rounded-xl border p-4 text-center ${cardClass}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest ${labelClass}`}>Effect Size</div>
+                            <div className={`mt-2 text-base font-serif ${textClass}`}>η² = SS_between / SS_total</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                Equation reference unavailable for this page.
+            </div>
+        );
+    };
 
     const renderEquationPanel = () => {
         if (!displayFormulaId || displayFormulaId === 'none') {
@@ -421,12 +553,14 @@ export default function App() {
                     <div className="flex gap-2">
                         {showEquationPanel && (
                             <>
-                                <button
-                                    onClick={() => setShowEquationValues(!showEquationValues)}
-                                    className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-all font-bold ${showEquationValues ? 'bg-indigo-600 text-white' : (darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100')}`}
-                                >
-                                    {showEquationValues ? 'HIDE VALUES' : 'SHOW VALUES'}
-                                </button>
+                                {!useSafeGenericEquationCard && (
+                                    <button
+                                        onClick={() => setShowEquationValues(!showEquationValues)}
+                                        className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-all font-bold ${showEquationValues ? 'bg-indigo-600 text-white' : (darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100')}`}
+                                    >
+                                        {showEquationValues ? 'HIDE VALUES' : 'SHOW VALUES'}
+                                    </button>
+                                )}
                                 <button onClick={() => setSymbolKeyOpen(!symbolKeyOpen)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}><Info className="w-3 h-3" /> Symbol Key</button>
                             </>
                         )}
@@ -442,7 +576,7 @@ export default function App() {
 
                 {showEquationPanel && symbolKeyOpen && (
                     <div className="bg-slate-800 text-slate-200 text-xs p-3 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2">
-                        {relevantSymbols.map((s, i) => {
+                        {safeRelevantSymbols.map((s, i) => {
                             const isHovered = hoveredTerm && (
                                 hoveredTerm === s.key ||
                                 hoveredTerm.startsWith(s.key + '_') ||
@@ -461,30 +595,36 @@ export default function App() {
 
                 {showEquationPanel ? (
                     <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
-                        <ErrorBoundary>
-                            {!activeMathTerm ? (
-                                <div className="animate-in fade-in zoom-in-95 duration-200">
-                                    <FormulaDisplay
-                                        type={displayFormulaId}
-                                        onInfo={pushMathTerm}
-                                        onHover={setHoveredTerm}
-                                        darkMode={darkMode}
-                                        showValues={showEquationValues}
-                                        stats={currentStats}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
-                                    <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                                        {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
-                                        <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                        {useSafeGenericEquationCard ? (
+                            <div className="w-full animate-in fade-in zoom-in-95 duration-200">
+                                {renderSafeGenericEquationBody()}
+                            </div>
+                        ) : (
+                            <ErrorBoundary>
+                                {!activeMathTerm ? (
+                                    <div className="animate-in fade-in zoom-in-95 duration-200">
+                                        <FormulaDisplay
+                                            type={displayFormulaId}
+                                            onInfo={pushMathTerm}
+                                            onHover={setHoveredTerm}
+                                            darkMode={darkMode}
+                                            showValues={showEquationValues}
+                                            stats={currentStats}
+                                        />
                                     </div>
-                                    <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                    <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                    <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
-                                </div>
-                            )}
-                        </ErrorBoundary>
+                                ) : (
+                                    <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
+                                        <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                                            {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
+                                            <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                                        </div>
+                                        <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                        <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                        <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
+                                    </div>
+                                )}
+                            </ErrorBoundary>
+                        )}
                     </div>
                 ) : (
                     <div className={`px-6 py-5 flex-1 flex items-center justify-center text-center ${darkMode ? 'bg-slate-950 text-slate-400' : 'bg-white text-slate-600'}`}>
