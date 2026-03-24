@@ -130,16 +130,16 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
         <g transform={`translate(${width - 160}, 60)`} className="select-none">
           <rect x="0" y="0" width="130" height="50" rx="8" fill={darkMode ? "#0f172a" : "#fff"} stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
           <g transform="translate(10, 15)">
-            <ProgressiveTooltip as="g" term="Alpha Region" title="The Rejection Zone" desc="The area under the curve that represents the alpha level (e.g., 5%)." pedagogy="If your F-ratio falls in this red area, we reject the null hypothesis." darkMode={darkMode}>
+            <ProgressiveTooltip as="g" term="Rejection Region" title="The Rejection Zone" desc="The area under the curve that represents alpha, the cutoff for rejecting the null hypothesis." pedagogy="If your F-ratio falls in this red area, the result is statistically significant at the current alpha level." darkMode={darkMode}>
               <rect width="8" height="8" rx="2" fill="#ef4444" opacity="0.6" className="cursor-help" />
             </ProgressiveTooltip>
-            <text x="14" y="8" className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>α region</text>
+            <text x="14" y="8" className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>Reject H0</text>
           </g>
           <g transform="translate(10, 32)">
-            <ProgressiveTooltip as="g" term="P-Value" title="Observed Tail" desc="The probability of getting a result as extreme as yours by random chance." pedagogy="Area = p. If this area is smaller than alpha, we have a significant finding." darkMode={darkMode}>
+            <ProgressiveTooltip as="g" term="Observed Tail Area" title="Observed Tail" desc="The shaded tail area for your observed F ratio, which corresponds to the p-value." pedagogy="If this blue tail area is smaller than the red rejection region, the result is statistically significant." darkMode={darkMode}>
               <rect width="8" height="8" rx="2" fill="#6366f1" opacity="0.6" className="cursor-help" />
             </ProgressiveTooltip>
-            <text x="14" y="8" className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>p-value tail</text>
+            <text x="14" y="8" className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'fill-slate-400' : 'fill-slate-500'}`}>Observed p</text>
           </g>
         </g>
 
@@ -170,10 +170,9 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
 
         {/* ZOOM INDICATOR / Large F Handling */}
         {safeFVal > currentMaxX && (
-          <g transform={`translate(${width - 100}, ${baselineY - 100})`} className="animate-pulse">
-            <rect x="-60" y="-20" width="120" height="40" rx="20" fill="#f59e0b" className="shadow-lg" />
-            <path d="M 20,-5 L 35,0 L 20,5 Z" fill="white" />
-            <text y="5" x="-10" textAnchor="middle" className="fill-white text-[10px] font-black uppercase tracking-widest">F is off-chart</text>
+          <g transform={`translate(${width - 120}, ${baselineY - 126})`} className="animate-pulse">
+            <rect x="-74" y="-18" width="148" height="36" rx="18" fill="#f59e0b" className="shadow-lg" />
+            <text y="5" textAnchor="middle" className="fill-white text-[10px] font-black uppercase tracking-widest">F extends past view</text>
           </g>
         )}
       </svg>

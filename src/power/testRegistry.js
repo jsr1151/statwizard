@@ -480,7 +480,7 @@ const oneWayAnovaEffectTransform = {
     fields: [
         {
             id: 'etaSquared',
-            label: 'Eta Squared (eta^2)',
+            label: 'Eta Squared (η²)',
             type: 'number',
             step: 0.001,
             min: 0,
@@ -505,10 +505,12 @@ const oneWayAnovaEffectTransform = {
             ok: true,
             effectSize,
             metricLabel: "Cohen's f",
-            summary: `f = sqrt(eta^2 / (1 - eta^2)) = ${effectSize.toFixed(4)}`,
+            summary: `Cohen's f converts η² into the omnibus standardized ANOVA effect size: ${effectSize.toFixed(4)}.`,
+            formulaDisplay: 'f = √(η² / (1 - η²))',
+            formulaNote: 'Use eta squared from the omnibus ANOVA, then divide by the unexplained share before taking the square root.',
             support: [
                 {
-                    label: 'Eta Squared',
+                    label: 'Eta Squared (η²)',
                     value: eta2.toFixed(4),
                 },
             ],
@@ -547,10 +549,12 @@ const ancovaEffectTransform = {
             ok: true,
             effectSize,
             metricLabel: "Cohen's f",
-            summary: `f = sqrt(partial eta^2 / (1 - partial eta^2)) = ${effectSize.toFixed(4)}`,
+            summary: `Cohen's f converts partial η² from the adjusted group effect into a standardized ANCOVA effect size: ${effectSize.toFixed(4)}.`,
+            formulaDisplay: 'f = √(partial η² / (1 - partial η²))',
+            formulaNote: 'Use the partial eta squared for the adjusted group term after controlling for the covariate.',
             support: [
                 {
-                    label: 'Partial Eta Squared',
+                    label: 'Partial Eta Squared (η²p)',
                     value: eta2.toFixed(4),
                 },
             ],

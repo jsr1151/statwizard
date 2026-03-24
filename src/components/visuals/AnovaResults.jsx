@@ -104,7 +104,7 @@ const AnovaResults = ({
                         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
                             <div className="text-center md:text-left">
                                 <h6 className={`text-[12px] font-black uppercase tracking-[0.3em] flex items-center justify-center md:justify-start gap-3 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}><Sparkles size={18} /> Pairwise Post-Hoc Comparisons</h6>
-                                <p className={`text-[10px] font-medium mt-2 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`}>Tukey's HSD ($p$-adj) for identifying specific group differences</p>
+                                <p className={`text-[10px] font-medium mt-2 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`}>Tukey&apos;s HSD adjusted p-values for identifying which group means differ.</p>
                             </div>
                             <button onClick={() => setShowPostHoc(!showPostHoc)} className={`text-[10px] font-black uppercase tracking-widest px-8 py-4 rounded-2xl transition-all ${showPostHoc ? 'bg-rose-500/20 text-rose-400 border border-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.15)]' : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/30'}`}>
                                 {showPostHoc ? 'Close Analysis' : 'Run Pairwise Tests'}
@@ -145,7 +145,7 @@ const AnovaResults = ({
 
                                             <div className="flex items-center gap-3 min-w-[160px] justify-end">
                                                 <div className="flex flex-col items-end mr-3">
-                                                    <span className={`text-[8px] font-black uppercase tracking-widest ${ph.sig ? 'text-emerald-400' : 'text-slate-600'}`}>p-adj</span>
+                                                    <span className={`text-[8px] font-black uppercase tracking-widest ${ph.sig ? 'text-emerald-400' : 'text-slate-600'}`}>Adj. p</span>
                                                     <span className={`text-[10px] font-black tabular-nums ${ph.sig ? 'text-emerald-400' : 'text-slate-500'}`}>{ph.pAdj < 0.001 ? '< .001' : ph.pAdj.toFixed(3)}</span>
                                                 </div>
                                                 <div className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-transform duration-300 ${ph.sig

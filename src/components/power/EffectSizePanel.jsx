@@ -86,6 +86,22 @@ const EffectSizePanel = ({ testConfig, currentStats, darkMode }) => {
                                 <p className={`mt-3 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{result.summary}</p>
                             </div>
 
+                            {result.formulaDisplay && (
+                                <div className={`rounded-xl border p-5 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        Conversion Formula
+                                    </div>
+                                    <div className={`mt-3 text-2xl font-serif ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                        {result.formulaDisplay}
+                                    </div>
+                                    {result.formulaNote && (
+                                        <p className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            {result.formulaNote}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="grid md:grid-cols-2 gap-4">
                                 {result.support?.map((item) => (
                                     <div key={item.label} className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>

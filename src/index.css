@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
 @layer utilities {
+    .text-\[6px\],
+    .text-\[7px\],
+    .text-\[8px\],
+    .text-\[9px\] {
+        font-size: 0.72rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .text-\[10px\] {
+        font-size: 0.8rem !important;
+        line-height: 1.25 !important;
+    }
+
     .animate-bounce-subtle {
         animation: bounce-subtle 3s infinite;
     }
@@ -19,7 +32,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 0.6rem 0.75rem;
+        padding: 0.8rem 1rem;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: thin;
@@ -28,8 +41,8 @@
     }
 
     .eq-text {
-        font-size: clamp(14px, 1.6vw, 22px);
-        line-height: normal;
+        font-size: clamp(15px, 1.8vw, 24px);
+        line-height: 1.25;
     }
 
     /* Reduce visual noise for math terms */
@@ -42,6 +55,19 @@
     .sym-link:hover {
         border-bottom-color: currentColor;
     }
+}
+
+html {
+    font-size: 15px;
+}
+
+body {
+    line-height: 1.5;
+}
+
+svg text {
+    paint-order: stroke;
+    text-rendering: geometricPrecision;
 }
 
 @keyframes bounce-subtle {

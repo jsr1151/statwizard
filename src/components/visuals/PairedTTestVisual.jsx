@@ -6,17 +6,24 @@ import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
-const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null }) => {
+const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null, mode = 'lessons' }) => {
   const [group1, setGroup1] = useState({ name: "Condition 1", raw: "12, 14, 11, 15, 13, 16, 14, 12, 15, 14" });
   const [group2, setGroup2] = useState({ name: "Condition 2", raw: "10, 11, 12, 11, 10, 13, 12, 11, 11, 12" });
   const [summaryData, setSummaryData] = useState({ mean1: 14.0, sd1: 1.6, mean2: 11.3, sd2: 1.1, n: 10, r: 0.8 });
-  const [inputMode, setInputMode] = useState('raw');
+  const [inputMode, setInputMode] = useState(mode === 'calculator' ? 'raw' : 'summary');
   const [alpha, setAlpha] = useState(0.05);
   const [tails, setTails] = useState(2);
   const [h1Direction, setH1Direction] = useState('greater');
   const [displayMode, setDisplayMode] = useState('sampling'); // 'sampling', 'difference', 'paired'
-  const [showCI, setShowCI] = useState(false);
+  const [showCI] = useState(true);
   const [ciType, setCiType] = useState('two-sided');
+  const allowRawInput = mode === 'calculator';
+
+  useEffect(() => {
+    if (!allowRawInput && inputMode === 'raw') {
+      setInputMode('summary');
+    }
+  }, [allowRawInput, inputMode]);
 
   useEffect(() => {
     if (!datasetSeed?.key) {
@@ -38,6 +45,8 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
 
   const stats = useMemo(() => {
     let n1 = 0, n2 = 0, dBar = 0, sd = 0, r = 0, n = 0;
+    let mean1 = summaryData.mean1, mean2 = summaryData.mean2;
+    let sd1 = summaryData.sd1, sd2 = summaryData.sd2;
     let diffs = [];
     let raw1 = [], raw2 = [];
 
@@ -52,10 +61,12 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
         diffs = d;
         dBar = d.reduce((a, b) => a + b, 0) / n;
         sd = n > 1 ? Math.sqrt(d.reduce((a, b) => a + Math.pow(b - dBar, 2), 0) / (n - 1)) : 0;
-        const m1 = raw1.slice(0, n).reduce((a, b) => a + b, 0) / n;
-        const m2 = raw2.slice(0, n).reduce((a, b) => a + b, 0) / n;
-        const num = raw1.slice(0, n).reduce((acc, v, i) => acc + (v - m1) * (raw2[i] - m2), 0);
-        const den = Math.sqrt(raw1.slice(0, n).reduce((acc, v) => acc + Math.pow(v - m1, 2), 0) * raw2.slice(0, n).reduce((acc, v) => acc + Math.pow(v - m2, 2), 0));
+        mean1 = raw1.slice(0, n).reduce((a, b) => a + b, 0) / n;
+        mean2 = raw2.slice(0, n).reduce((a, b) => a + b, 0) / n;
+        sd1 = n > 1 ? Math.sqrt(raw1.slice(0, n).reduce((acc, v) => acc + Math.pow(v - mean1, 2), 0) / (n - 1)) : 0;
+        sd2 = n > 1 ? Math.sqrt(raw2.slice(0, n).reduce((acc, v) => acc + Math.pow(v - mean2, 2), 0) / (n - 1)) : 0;
+        const num = raw1.slice(0, n).reduce((acc, v, i) => acc + (v - mean1) * (raw2[i] - mean2), 0);
+        const den = Math.sqrt(raw1.slice(0, n).reduce((acc, v) => acc + Math.pow(v - mean1, 2), 0) * raw2.slice(0, n).reduce((acc, v) => acc + Math.pow(v - mean2, 2), 0));
         r = den === 0 ? 0 : num / den;
       }
     } else {
@@ -82,7 +93,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
     ciUpper = ciType === 'two-sided' ? dBar + ciBound : (h1Direction === 'greater' ? Infinity : dBar + ciBound);
 
     return {
-      n, n1, n2, dBar, sd, se, t: tScore, df, p: pValue, r, dz,
+      n, n1, n2, mean1, mean2, sd1, sd2, dBar, sd, se, t: tScore, df, p: pValue, r, dz,
       isSignificant: pValue < alpha, tCrit, diffs, raw1, raw2,
       ciLower, ciUpper, ciType, alpha, tails, h1Direction
     };
@@ -150,10 +161,16 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
 
                   {/* Critical Value Lines */}
                   {(stats.tails === 2 || stats.h1Direction === 'greater') && (
-                    <line x1={tCritX} y1="0" x2={tCritX} y2="-120" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" />
+                    <>
+                      <line x1={tCritX} y1="0" x2={tCritX} y2="-120" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" />
+                      <text x={tCritX} y="-124" textAnchor="middle" className="text-[7px] font-bold fill-rose-400">+tcrit</text>
+                    </>
                   )}
                   {(stats.tails === 2 || stats.h1Direction === 'less') && (
-                    <line x1={-tCritX} y1="0" x2={-tCritX} y2="-120" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" />
+                    <>
+                      <line x1={-tCritX} y1="0" x2={-tCritX} y2="-120" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" />
+                      <text x={-tCritX} y="-124" textAnchor="middle" className="text-[7px] font-bold fill-rose-400">-tcrit</text>
+                    </>
                   )}
 
                   {/* Observed t marker */}
@@ -164,7 +181,10 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                       <rect x="-20" y="-8" width="40" height="16" rx="4" fill={darkMode ? "#1e1b4b" : "white"} stroke="#6366f1" strokeWidth="1" />
                       <text textAnchor="middle" dy="2" className="text-[9px] font-black fill-indigo-500">t = {stats.t.toFixed(2)}</text>
                     </g>
-                    <text y="-124" textAnchor="middle" className="text-[7px] font-bold fill-indigo-400/80">d̄ = {stats.dBar.toFixed(2)}</text>
+                    <g transform="translate(0, 18)">
+                      <rect x="-23" y="-8" width="46" height="16" rx="6" fill={darkMode ? 'rgba(15,23,42,0.82)' : 'rgba(255,255,255,0.92)'} stroke="#818cf8" strokeWidth="1" />
+                      <text textAnchor="middle" dy="2" className="text-[7px] font-bold fill-indigo-300">d̄ = {stats.dBar.toFixed(2)}</text>
+                    </g>
                   </g>
                   <text x="0" y="30" textAnchor="middle" className={`text-[6px] font-bold uppercase ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>t-score Units (df = {stats.df})</text>
                 </g>
@@ -173,15 +193,15 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
             {displayMode === 'difference' && (
               <g transform="translate(30, 20)">
                 <line x1="120" y1="0" x2="120" y2="130" stroke={darkMode ? "#475569" : "#cbd5e1"} strokeWidth="1" strokeDasharray="2,2" />
-                <text x="120" y="-5" textAnchor="middle" className="text-[6px] fill-slate-500 font-bold uppercase">Zero Reference (No Change)</text>
+                <text x="120" y="-5" textAnchor="middle" className="text-[7px] fill-slate-500 font-bold uppercase">Zero Change</text>
                 {stats.diffs.map((d, i) => (
                   <circle key={i} cx={(d / (stats.sd || 1)) * 30 + 120} cy={120 - (i * 5)} r="3" fill="#818cf8" opacity="0.6" />
                 ))}
                 <line x1={(stats.dBar / (stats.sd || 1)) * 30 + 120} y1="0" x2={(stats.dBar / (stats.sd || 1)) * 30 + 120} y2="130" stroke="#6366f1" strokeWidth="2" />
                 <text x={(stats.dBar / (stats.sd || 1)) * 30 + 120} y="145" textAnchor="middle" className="text-[10px] font-black fill-indigo-500">d̄ = {stats.dBar.toFixed(2)}</text>
                 {/* Axis Labels */}
-                <text x="120" y="160" textAnchor="middle" className={`text-[6px] font-bold uppercase ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>Difference Score (d = X₁ − X₂)</text>
-                <text transform="translate(-10, 65) rotate(-90)" textAnchor="middle" className={`text-[6px] font-bold uppercase ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>Pair</text>
+                <text x="120" y="160" textAnchor="middle" className={`text-[8px] font-bold uppercase ${darkMode ? 'fill-slate-500' : 'fill-slate-500'}`}>Difference Score (X₁ - X₂)</text>
+                <text transform="translate(-10, 65) rotate(-90)" textAnchor="middle" className={`text-[8px] font-bold uppercase ${darkMode ? 'fill-slate-500' : 'fill-slate-500'}`}>Paired Case</text>
               </g>
             )}
             {displayMode === 'paired' && (
@@ -210,7 +230,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
             </div>
             {displayMode === 'sampling' && (
               <div className={`px-2 py-0.5 rounded-lg border text-[7px] font-bold ${darkMode ? 'bg-slate-900/80 border-slate-700 text-slate-400' : 'bg-white/80 border-slate-200 text-slate-500 font-mono shadow-sm'}`}>
-                t_crit = ±{stats.tCrit.toFixed(2)}
+                Critical t = ±{stats.tCrit.toFixed(2)}
               </div>
             )}
           </div>
@@ -221,9 +241,11 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
             <div className={`p-4 rounded-xl border-2 transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex justify-between items-center mb-4">
                 <h5 className="text-[10px] font-black uppercase text-indigo-400 flex items-center gap-2 pt-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> Condition 1</h5>
-                <button onClick={() => setInputMode(inputMode === 'summary' ? 'raw' : 'summary')} className="text-[8px] font-black text-slate-500 hover:text-indigo-400 underline uppercase tracking-widest">{inputMode === 'summary' ? 'Paste Data' : 'Use Summary Stats'}</button>
+                {allowRawInput && (
+                  <button onClick={() => setInputMode(inputMode === 'summary' ? 'raw' : 'summary')} className="text-[8px] font-black text-slate-500 hover:text-indigo-400 underline uppercase tracking-widest">{inputMode === 'summary' ? 'Paste Data' : 'Use Summary Stats'}</button>
+                )}
               </div>
-              {inputMode === 'summary' ? (
+              {inputMode === 'summary' || !allowRawInput ? (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Mean (͸1)</label>
@@ -243,7 +265,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                 <h5 className="text-[10px] font-black uppercase text-emerald-400 flex items-center gap-2 pt-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Condition 2</h5>
                 <button onClick={handleSwap} className="text-[8px] font-black text-slate-500 hover:text-indigo-400 flex items-center gap-1 uppercase tracking-widest pt-1"><RefreshCw size={10} /> Swap Conditions</button>
               </div>
-              {inputMode === 'summary' ? (
+              {inputMode === 'summary' || !allowRawInput ? (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Mean (͸2)</label>
@@ -279,7 +301,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Threshold ($\alpha$)</span>
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Significance Level (α)</span>
               <select value={alpha} onChange={e => setAlpha(parseFloat(e.target.value))} className={`p-2 rounded text-xs font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                 <option value={0.01}>0.01 (Conservative)</option>
                 <option value={0.05}>0.05 (Standard)</option>
@@ -297,28 +319,26 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               <div className="flex flex-col gap-1 animate-in slide-in-from-left-2 duration-300">
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Direction ($H_1$)</span>
                 <div className={`p-1 rounded flex transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white border'}`}>
-                  <button onClick={() => setH1Direction('greater')} className={`flex-1 py-1 text-[10px] font-bold rounded ${h1Direction === 'greater' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{"C1 > C2"}</button>
                   <button onClick={() => setH1Direction('less')} className={`flex-1 py-1 text-[10px] font-bold rounded ${h1Direction === 'less' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{"C1 < C2"}</button>
+                  <button onClick={() => setH1Direction('greater')} className={`flex-1 py-1 text-[10px] font-bold rounded ${h1Direction === 'greater' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{"C1 > C2"}</button>
                 </div>
               </div>
             )}
             <div className="flex flex-col gap-1">
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Reporting CI</span>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowCI(!showCI)} className={`flex-1 py-2 text-[10px] font-black rounded border transition-all uppercase tracking-widest ${showCI ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg' : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white text-slate-400')}`}>
-                  {showCI ? (ciType === 'two-sided' ? 'Two-Sided CI' : 'One-Sided Bound') : 'Show Confidence'}
-                </button>
-                {showCI && (
-                  <select value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
-                    <option value="two-sided">Two-Sided</option>
-                    <option value="one-sided">One-Sided</option>
-                  </select>
-                )}
+                <div className={`flex-1 py-2 px-3 text-[10px] font-black rounded border uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                  {ciType === 'two-sided' ? 'Two-Sided CI' : 'One-Sided Bound'}
+                </div>
+                <select value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
+                  <option value="two-sided">Two-Sided</option>
+                  <option value="one-sided">One-Sided</option>
+                </select>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4">
             <div className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white shadow-sm'}`}>
               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Test Stats</span>
               <div className="flex items-baseline gap-2">
@@ -334,7 +354,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                   <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{stats.dz.toFixed(3)}</span>
                   <span className="text-[7px] font-bold text-slate-600 uppercase">Cohen's d_z</span>
                 </div>
-                {inputMode === 'raw' && (
+                {inputMode === 'raw' && allowRawInput && (
                   <div className="flex flex-col items-center group relative cursor-help">
                     <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{stats.r.toFixed(3)}</span>
                     <span className="text-[7px] font-bold text-slate-600 uppercase border-b border-dotted border-slate-400">Correlation (r)</span>
@@ -347,6 +367,19 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               <span className="text-[8px] font-bold text-indigo-500 mt-1 uppercase tracking-tighter">
                 {Math.abs(stats.dz) < 0.2 ? 'Negligible' : Math.abs(stats.dz) < 0.5 ? 'Small' : Math.abs(stats.dz) < 0.8 ? 'Medium' : 'Large'} Effect
               </span>
+            </div>
+            <div className={`p-4 rounded-xl border flex flex-col justify-center transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white shadow-sm'}`}>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Condition Summaries</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[8px] font-bold text-indigo-400 uppercase">C1</span>
+                  <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>M = {stats.mean1.toFixed(2)}, SD = {stats.sd1.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[8px] font-bold text-emerald-400 uppercase">C2</span>
+                  <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>M = {stats.mean2.toFixed(2)}, SD = {stats.sd2.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
             <div className={`p-4 rounded-xl border flex flex-col items-center justify-center relative overflow-hidden transition-colors ${showCI ? (darkMode ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50 border-indigo-100') : (darkMode ? 'bg-slate-950 border-slate-800 opacity-50' : 'bg-white opacity-50')}`}>
               <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">{(1 - alpha) * 100}% Confidence Interval</span>

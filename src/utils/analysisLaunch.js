@@ -152,6 +152,27 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
         };
     }
 
+    if (analysisId === 'ancova') {
+        const groupingCandidates = rankGroupingColumns(
+            categoricalColumns.filter((column) => getUsableLevelCount(column) >= 2)
+        );
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
+        const covariateCandidates = rankPredictorColumns(
+            numericColumns.filter((column) => column.id !== preferredOutcome?.id)
+        );
+
+        if (!preferredOutcome || !groupingCandidates.length || !covariateCandidates.length) {
+            return null;
+        }
+
+        return {
+            datasetId: dataset.id,
+            outcome: preferredOutcome.id,
+            grouping: groupingCandidates[0].id,
+            covariate: covariateCandidates[0].id,
+        };
+    }
+
     if (analysisId === 'factorial_anova') {
         const factorCandidates = rankGroupingColumns(
             categoricalColumns.filter((column) => getUsableLevelCount(column) >= 2)

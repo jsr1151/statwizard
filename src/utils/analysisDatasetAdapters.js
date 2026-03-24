@@ -332,6 +332,130 @@ export const buildOneWayAnovaDatasetSetup = (dataset, {
     });
 };
 
+export const buildAncovaDatasetSetup = (dataset, {
+    outcomeColumnId,
+    groupingColumnId,
+    covariateColumnId,
+}) => {
+    const outcomeColumn = getDatasetColumn(dataset, outcomeColumnId);
+    const groupingColumn = getDatasetColumn(dataset, groupingColumnId);
+    const covariateColumn = getDatasetColumn(dataset, covariateColumnId);
+    const errors = [];
+
+    if (!dataset) {
+        errors.push('Choose a saved dataset to begin.');
+    }
+
+    if (!outcomeColumnId) {
+        errors.push('Dependent variable must be numeric.');
+    }
+
+    if (!groupingColumnId) {
+        errors.push('Grouping variable must be categorical with 2 or more levels.');
+    }
+
+    if (!covariateColumnId) {
+        errors.push('Covariate must be numeric.');
+    }
+
+    if (outcomeColumnId && covariateColumnId && outcomeColumnId === covariateColumnId) {
+        errors.push('Outcome and covariate must be different variables.');
+    }
+
+    if (groupingColumnId && covariateColumnId && groupingColumnId === covariateColumnId) {
+        errors.push('Grouping variable and covariate must be different variables.');
+    }
+
+    if (outcomeColumn && outcomeColumn.summary?.detectedType !== 'numeric') {
+        errors.push('Dependent variable must be numeric.');
+    }
+
+    if (covariateColumn && covariateColumn.summary?.detectedType !== 'numeric') {
+        errors.push('Covariate must be numeric.');
+    }
+
+    if (groupingColumn && !['categorical', 'text'].includes(groupingColumn.summary?.detectedType)) {
+        errors.push('Grouping variable must be categorical.');
+    }
+
+    const levels = getUsableCategoryLevels(dataset, groupingColumnId);
+
+    if (groupingColumn && levels.length < 2) {
+        errors.push('Grouping variable must have 2 or more usable levels.');
+    }
+
+    if (errors.length) {
+        return buildValidationResponse(errors, {
+            levels,
+            usableRows: 0,
+            totalRows: dataset?.rowCount || dataset?.rows?.length || 0,
+            droppedRows: dataset?.rowCount || dataset?.rows?.length || 0,
+        });
+    }
+
+    const groupedRows = new Map(levels.map((level) => [level, { xValues: [], yValues: [] }]));
+
+    (dataset.rows || []).forEach((row) => {
+        const groupValue = toDisplayValue(row?.[groupingColumnId]);
+        const numericOutcome = parseNumericValue(row?.[outcomeColumnId]);
+        const numericCovariate = parseNumericValue(row?.[covariateColumnId]);
+
+        if (!groupedRows.has(groupValue) || numericOutcome == null || numericCovariate == null) {
+            return;
+        }
+
+        groupedRows.get(groupValue).xValues.push(numericCovariate);
+        groupedRows.get(groupValue).yValues.push(numericOutcome);
+    });
+
+    const groups = levels.map((level, index) => {
+        const values = groupedRows.get(level) || { xValues: [], yValues: [] };
+
+        return {
+            id: `ancova_group_${index + 1}`,
+            label: level,
+            color: GROUP_COLORS[index % GROUP_COLORS.length],
+            xRaw: values.xValues.join('\n'),
+            yRaw: values.yValues.join('\n'),
+            collapsed: false,
+        };
+    });
+
+    if (!groups.length || groups.some((group) => {
+        const covariateCount = group.xRaw ? group.xRaw.split('\n').filter(Boolean).length : 0;
+        const outcomeCount = group.yRaw ? group.yRaw.split('\n').filter(Boolean).length : 0;
+        return Math.min(covariateCount, outcomeCount) < 2;
+    })) {
+        return buildValidationResponse(['Each group needs at least 2 usable rows after excluding missing values.'], {
+            levels,
+            usableRows: 0,
+            totalRows: dataset.rowCount || dataset.rows.length,
+            droppedRows: dataset.rowCount || dataset.rows.length,
+        });
+    }
+
+    const usableRows = groups.reduce((sum, group) => (
+        sum + Math.min(
+            group.xRaw.split('\n').filter(Boolean).length,
+            group.yRaw.split('\n').filter(Boolean).length,
+        )
+    ), 0);
+    const totalRows = dataset.rowCount || dataset.rows.length;
+
+    return buildValidationResponse([], {
+        levels,
+        usableRows,
+        totalRows,
+        droppedRows: Math.max(0, totalRows - usableRows),
+        seed: {
+            key: buildSeedKey(dataset.id, outcomeColumnId, groupingColumnId, covariateColumnId, usableRows, levels.length),
+            outcomeLabel: outcomeColumn?.label || 'Outcome Variable',
+            covariateName: covariateColumn?.label || 'Covariate',
+            groups,
+        },
+    });
+};
+
 export const buildFactorialAnovaDatasetSetup = (dataset, {
     outcomeColumnId,
     factorAColumnId,

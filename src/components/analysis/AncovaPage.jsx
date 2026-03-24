@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calculator, Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
-import PairedTTestVisual from '../visuals/PairedTTestVisual.jsx';
+import AncovaVisual from '../visuals/AncovaVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
 import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
-import { buildPairedTTestDatasetSetup } from '../../utils/analysisDatasetAdapters.js';
+import { buildAncovaDatasetSetup } from '../../utils/analysisDatasetAdapters.js';
 import { getDatasetColumn } from '../../utils/datasetImport.js';
 
 const Card = ({ darkMode, children, className = '' }) => (
@@ -16,9 +16,7 @@ const Card = ({ darkMode, children, className = '' }) => (
     </div>
 );
 
-const noop = () => {};
-
-const PairedTTestPage = ({
+const AncovaPage = ({
     section,
     darkMode,
     currentStats,
@@ -27,7 +25,7 @@ const PairedTTestPage = ({
     testConfig,
     initialPowerMode,
     onOpenDataManager,
-    onTutorUpdate,
+    showValues = false,
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const {
@@ -36,12 +34,13 @@ const PairedTTestPage = ({
         selectedDatasetId,
         setSelectedDatasetId,
     } = useAnalysisDatasetSelection({
-        analysisId: 'paired_t_test',
+        analysisId: 'ancova',
         datasets,
     });
     const [roleSelection, setRoleSelection] = useState({
-        first: '',
-        second: '',
+        outcome: '',
+        grouping: '',
+        covariate: '',
     });
 
     useEffect(() => {
@@ -50,74 +49,87 @@ const PairedTTestPage = ({
         }
 
         setRoleSelection((previous) => ({
-            first: launchPayload?.first || previous.first,
-            second: launchPayload?.second || previous.second,
+            outcome: launchPayload?.outcome || previous.outcome,
+            grouping: launchPayload?.grouping || previous.grouping,
+            covariate: launchPayload?.covariate || previous.covariate,
         }));
     }, [launchPayload, selectedDataset]);
 
     const roles = useMemo(() => ([
         {
-            id: 'first',
-            label: 'Paired variable 1',
+            id: 'outcome',
+            label: 'Dependent variable',
             selection: 'single',
             allowedTypes: ['numeric'],
-            placeholder: 'Select first numeric variable',
-            emptyOptionsText: 'This dataset does not currently have any numeric variables for the first paired measure.',
+            placeholder: 'Select numeric dependent variable',
+            emptyOptionsText: 'This dataset does not currently have any numeric variables for the dependent role.',
         },
         {
-            id: 'second',
-            label: 'Paired variable 2',
+            id: 'grouping',
+            label: 'Grouping variable',
+            selection: 'single',
+            allowedTypes: ['categorical', 'text'],
+            placeholder: 'Select grouping variable',
+            columnFilter: ({ column }) => (column.summary?.uniqueCount || 0) >= 2,
+            describeOption: ({ column }) => `${column.summary?.uniqueCount || 0} levels`,
+            emptyOptionsText: 'This dataset does not currently have a categorical variable with 2 or more usable levels.',
+        },
+        {
+            id: 'covariate',
+            label: 'Covariate',
             selection: 'single',
             allowedTypes: ['numeric'],
-            excludeRoleIds: ['first'],
-            placeholder: 'Select second numeric variable',
-            emptyOptionsText: 'Choose a different numeric variable for the second paired measure.',
+            excludeRoleIds: ['outcome'],
+            placeholder: 'Select numeric covariate',
+            emptyOptionsText: 'Choose a different numeric variable for the covariate role.',
         },
     ]), []);
 
-    const datasetSetup = useMemo(() => buildPairedTTestDatasetSetup(selectedDataset, {
-        firstColumnId: roleSelection.first,
-        secondColumnId: roleSelection.second,
+    const datasetSetup = useMemo(() => buildAncovaDatasetSetup(selectedDataset, {
+        outcomeColumnId: roleSelection.outcome,
+        groupingColumnId: roleSelection.grouping,
+        covariateColumnId: roleSelection.covariate,
     }), [selectedDataset, roleSelection]);
 
     const warningMessages = useMemo(() => {
         const warnings = [];
-        const firstColumn = getDatasetColumn(selectedDataset, roleSelection.first);
-        const secondColumn = getDatasetColumn(selectedDataset, roleSelection.second);
+        const outcomeColumn = getDatasetColumn(selectedDataset, roleSelection.outcome);
+        const covariateColumn = getDatasetColumn(selectedDataset, roleSelection.covariate);
 
-        if ((firstColumn?.summary?.issues || []).includes('Non-numeric entries') || (secondColumn?.summary?.issues || []).includes('Non-numeric entries')) {
-            warnings.push('One or both paired variables contain unsupported values, so those rows will be excluded.');
+        if ((outcomeColumn?.summary?.issues || []).includes('Non-numeric entries')) {
+            warnings.push('Some dependent-variable entries are not numeric and will be excluded from the ANCOVA.');
+        }
+
+        if ((covariateColumn?.summary?.issues || []).includes('Non-numeric entries')) {
+            warnings.push('Some covariate entries are not numeric and will be excluded from the ANCOVA.');
         }
 
         if (datasetSetup.ok && datasetSetup.droppedRows > 0) {
-            warnings.push(`${datasetSetup.droppedRows} row${datasetSetup.droppedRows === 1 ? '' : 's'} were excluded because a paired value was missing or unsupported.`);
+            warnings.push(`${datasetSetup.droppedRows} row${datasetSetup.droppedRows === 1 ? '' : 's'} were excluded because of missing or unsupported values.`);
         }
 
         return warnings;
-    }, [datasetSetup.droppedRows, datasetSetup.ok, roleSelection.first, roleSelection.second, selectedDataset]);
+    }, [datasetSetup.droppedRows, datasetSetup.ok, roleSelection.covariate, roleSelection.outcome, selectedDataset]);
 
     const successMessages = datasetSetup.ok
-        ? ['The saved dataset has been preloaded into the paired-samples calculator below.']
+        ? ['The saved dataset has been preloaded into the ANCOVA calculator below.']
         : [];
 
     const summaryItems = datasetSetup.ok ? [
         {
-            label: 'Usable pairs',
+            label: 'Usable rows',
             value: `${datasetSetup.usableRows}`,
-            detail: 'Rows where both paired numeric values are present.',
+            detail: 'Rows where the outcome, grouping variable, and covariate are all usable.',
+        },
+        {
+            label: 'Groups',
+            value: `${datasetSetup.levels.length}`,
+            detail: datasetSetup.levels.join(', '),
         },
         {
             label: 'Dropped rows',
             value: `${datasetSetup.droppedRows}`,
-            detail: 'Rows removed because one side of the pair was missing or unsupported.',
-        },
-        {
-            label: 'Variables',
-            value: '2',
-            detail: [roleSelection.first, roleSelection.second]
-                .map((columnId) => getDatasetColumn(selectedDataset, columnId)?.label)
-                .filter(Boolean)
-                .join(' vs '),
+            detail: 'Rows removed because of missing or unsupported values.',
         },
     ] : [];
 
@@ -130,9 +142,9 @@ const PairedTTestPage = ({
                             <Target size={20} />
                         </div>
                         <div>
-                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Paired-samples t-test power planning</h3>
+                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>ANCOVA power planning</h3>
                             <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Power stays on the shared planning surface. Calculator mode handles observed paired data; this tab handles design targets like alpha, power, effect size, and the number of paired observations.
+                                Power stays on the shared planning surface. Calculator mode handles observed grouped data plus the covariate; this tab handles design targets like alpha, power, adjusted-group effect size, and total sample size.
                             </p>
                         </div>
                     </div>
@@ -162,8 +174,8 @@ const PairedTTestPage = ({
         return (
             <AnalysisAssumptionsSection
                 darkMode={darkMode}
-                title="Paired-samples t-test assumptions"
-                description="Review the assumptions before trusting the observed paired t statistic. The calculator tab uses your saved dataset; this section explains what to check and what to do if those assumptions look weak."
+                title="ANCOVA assumptions"
+                description="Review the assumptions before trusting the adjusted group effect. The calculator tab uses your saved dataset; this section explains what to check, especially linearity and homogeneity of regression slopes."
                 assumptions={assumptions}
                 summaryItems={summaryItems}
             />
@@ -175,8 +187,8 @@ const PairedTTestPage = ({
             <div className="space-y-8">
                 <AnalysisDatasetWorkspace
                     darkMode={darkMode}
-                    title="Load a saved dataset into the paired-samples calculator"
-                    description="Choose a saved dataset, map two numeric repeated measures, and the calculator below will preload those paired values immediately."
+                    title="Load a saved dataset into the ANCOVA calculator"
+                    description="Choose a saved dataset, map one numeric outcome, one grouping variable, and one numeric covariate, and the calculator below will preload those values immediately."
                     datasets={datasets}
                     selectedDatasetId={selectedDatasetId}
                     onSelectDatasetId={setSelectedDatasetId}
@@ -184,7 +196,7 @@ const PairedTTestPage = ({
                     roles={roles}
                     roleSelection={roleSelection}
                     onRoleSelectionChange={setRoleSelection}
-                    emptyMessage="Save a dataset in Data Manager first, then come back here to run the paired-samples t-test."
+                    emptyMessage="Save a dataset in Data Manager first, then come back here to run the ANCOVA."
                     validationMessages={datasetSetup.errors}
                     warningMessages={warningMessages}
                     successMessages={successMessages}
@@ -198,16 +210,16 @@ const PairedTTestPage = ({
                             <Calculator size={20} />
                         </div>
                         <div>
-                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Paired-samples calculator</h3>
+                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>ANCOVA calculator</h3>
                             <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                The saved-dataset mapping preloads the calculator, but you can still inspect or adjust the values inside the workspace if you want to compare alternative paired inputs.
+                                The saved-dataset mapping preloads the group data and covariate directly into the ANCOVA workspace, so Calculator mode stays focused on observed adjusted results instead of toy inputs.
                             </p>
                         </div>
                     </div>
 
-                    <PairedTTestVisual
+                    <AncovaVisual
                         darkMode={darkMode}
-                        onTutorUpdate={onTutorUpdate || noop}
+                        showValues={showValues}
                         onStatsUpdate={onStatsChange}
                         mode="calculator"
                         datasetSeed={datasetSetup.seed}
@@ -225,17 +237,17 @@ const PairedTTestPage = ({
                         <Sparkles size={20} />
                     </div>
                     <div>
-                        <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Paired-samples t-test tutor / lessons</h3>
+                        <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>ANCOVA tutor / lessons</h3>
                         <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            Tutor mode keeps a teaching example in view so you can focus on paired differences, within-person change, and how the paired design affects uncertainty. Switch to Calculator when you want to run the same test on your saved dataset.
+                            Tutor mode keeps a teaching example in view so you can focus on adjustment, parallel slopes, and how the covariate changes the group comparison. Switch to Test Calculator when you want to run the same model on your saved dataset.
                         </p>
                     </div>
                 </div>
             </Card>
 
-            <PairedTTestVisual
+            <AncovaVisual
                 darkMode={darkMode}
-                onTutorUpdate={onTutorUpdate || noop}
+                showValues={showValues}
                 onStatsUpdate={onStatsChange}
                 mode="lessons"
             />
@@ -243,4 +255,4 @@ const PairedTTestPage = ({
     );
 };
 
-export default PairedTTestPage;
+export default AncovaPage;

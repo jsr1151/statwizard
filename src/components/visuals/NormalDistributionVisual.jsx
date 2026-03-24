@@ -7,7 +7,7 @@ import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
 const NormalDistributionVisual = ({ highlight = null, label = "Distribution", type = "z", darkMode, tutorLevel = 'tutor', showTutor: showTutorProp = true, onTutorUpdate, onStatsUpdate, powerViewConfig = null }) => {
-  const [showTutor, setShowTutor] = useState(showTutorProp);
+  const showTutor = showTutorProp;
   const [val, setVal] = useState(0);
   const [alpha, setAlpha] = useState(powerViewConfig?.alpha ?? 0.05);
   const [tails, setTails] = useState(powerViewConfig?.tails ?? 2);
@@ -16,11 +16,11 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   const [showPModal, setShowPModal] = useState(false);
   const [showPowerLabels, setShowPowerLabels] = useState(powerViewConfig?.showPowerLabels ?? true);
   const [hoveredRegion, setHoveredRegion] = useState(null);
-  const [calcMode, setCalcMode] = useState(powerViewConfig?.calcMode ?? false);
+  const [calcMode, setCalcMode] = useState(powerViewConfig?.calcMode ?? !showTutorProp);
   const [calcData, setCalcData] = useState(() => ({ xBar: 105, mu: 100, sigma: 15, n: 30, ...(powerViewConfig?.calcData || {}) }));
   const [h1Direction, setH1Direction] = useState(powerViewConfig?.h1Direction || 'greater'); // 'greater' or 'less'
-  const [precision, setPrecision] = useState(2);
-  const [showCI, setShowCI] = useState(false);
+  const precision = 3;
+  const [showCI] = useState(true);
   const [altH1Dir, setAltH1Dir] = useState(powerViewConfig?.h1Direction || 'greater'); // For two-tailed power view
   const [showBothH1, setShowBothH1] = useState(powerViewConfig?.showBothH1 ?? false);
   const [targetEffect, setTargetEffect] = useState(powerViewConfig?.targetEffect ?? 0.5); // Hypothesized Cohen's d for H1
@@ -36,12 +36,12 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
       if (df !== newDf) setDf(newDf);
     }
   }, [calcData.n, type, calcMode, df]);
-  const [showTailGap, setShowTailGap] = useState(false);
   const [isHovering, setIsHovering] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const svgRef = useRef(null);
   const isPowerCompactPreset = powerViewConfig?.uiPreset === 'power_compact';
   const powerMeta = powerViewConfig?.powerMeta || null;
+  const showTailReference = type === 't' && df <= 15;
 
   useEffect(() => {
     if (!powerViewConfig) return;
@@ -70,6 +70,16 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
     setVisualMode('power');
     setShowPModal(false);
   }, [isPowerCompactPreset]);
+
+  useEffect(() => {
+    if (!showTutorProp && !isPowerCompactPreset) {
+      setCalcMode(true);
+    }
+
+    if (showTutorProp && dataInputMode === 'raw') {
+      setDataInputMode('summary');
+    }
+  }, [dataInputMode, isPowerCompactPreset, showTutorProp]);
 
   // --- REORGANIZED CALCULATIONS ---
 
@@ -138,8 +148,6 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
         df: df,
         se: stdError,
         "SE": stdError,
-        "SEz": stdError,
-        "SEt": stdError,
         z: val,
         t: val,
         p: pTail,
@@ -191,7 +199,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
     setCalcData(prev => ({ ...prev, n, xBar: parseFloat(mean.toFixed(precision)), sigma: parseFloat(sd.toFixed(3)) }));
   };
 
-  const reportString = `One-sample z-test, z = ${val.toFixed(precision)}, p = ${pTail < 0.001 ? '< .001' : pTail.toFixed(precision === 2 ? 3 : 4)}, α = ${alpha}, ${isSignificant ? 'reject H₀' : 'fail to reject H₀'}. (x̄=${calcData.xBar}, μ₀=${calcData.mu}, n=${calcData.n}, σ=${calcData.sigma})`;
+  const reportString = `One-sample ${type === 't' ? 't' : 'z'} test, ${type === 't' ? 't' : 'z'} = ${val.toFixed(precision)}, p = ${pTail < 0.001 ? '< .001' : pTail.toFixed(3)}, α = ${alpha}, ${isSignificant ? 'reject H₀' : 'fail to reject H₀'}. (x̄=${calcData.xBar}, μ₀=${calcData.mu}, n=${calcData.n}, ${type === 't' ? 's' : 'σ'}=${calcData.sigma})`;
 
   const stdDev = 35;
   const mean = 150;
@@ -219,7 +227,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
     ? (plotDirection === 'greater' ? 1 : -1)
     : (isPowerCompactPreset ? 1 : (altH1Dir === 'greater' ? 1 : -1));
   const altMeanZ = h1Sign * plotNoncentrality;
-  const altDistributionCenter = mean + altMeanZ * stdDev;
+  const altDistributionCenter = mean + ((plotTails === 2 && plotShowBothH1 ? plotNoncentrality : altMeanZ) * stdDev);
 
   // --- HOOKS ---
 
@@ -338,14 +346,22 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
     return getGaussianPoints(mean + altMeanZ * stdDev, stdDev, 120, 300);
   }, [altMeanZ, mean, stdDev, df, type]);
 
+  const altPointsPos = useMemo(() => {
+    if (type === 't') return getTPoints(mean + plotNoncentrality * stdDev, stdDev, df, 120, 300);
+    return getGaussianPoints(mean + plotNoncentrality * stdDev, stdDev, 120, 300);
+  }, [plotNoncentrality, mean, stdDev, df, type]);
+
   const altPointsNeg = useMemo(() => {
     if (type === 't') return getTPoints(mean - plotNoncentrality * stdDev, stdDev, df, 120, 300);
     return getGaussianPoints(mean - plotNoncentrality * stdDev, stdDev, 120, 300);
   }, [plotNoncentrality, mean, stdDev, df, type]);
 
+  const primaryAltPoints = plotTails === 2 && plotShowBothH1 ? altPointsPos : altPoints;
+  const secondaryAltPoints = plotTails === 2 && plotShowBothH1 ? altPointsNeg : altPoints;
+
   const pathData = pointsToPath(points);
   const zPathData = pointsToPath(zPoints);
-  const altPathData = pointsToPath(altPoints);
+  const altPathData = pointsToPath(primaryAltPoints);
   const altPathDataNeg = pointsToPath(altPointsNeg);
 
   const getOpacity = (part) => {
@@ -425,7 +441,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
             <path d={pathData} fill="url(#curveGradient)" stroke="#4f46e5" strokeWidth="3" opacity={getOpacity('curve')} />
 
             {/* Tail Gap Overlay (Normal Distribution as Reference) */}
-            {type === 't' && showTailGap && (
+            {type === 't' && showTailReference && (
               <path d={zPathData} fill="none" stroke={darkMode ? "#475569" : "#cbd5e1"} strokeWidth="1" strokeDasharray="3,3" opacity="0.6" className="animate-in fade-in duration-500" />
             )}
 
@@ -436,25 +452,25 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                 {plotTails === 2 ? (
                   <>
                     <path d={`M ${mean + Math.abs(plotCriticalValue) * stdDev},150 ` +
-                      altPoints.filter(p => p[0] >= mean + Math.abs(plotCriticalValue) * stdDev)
+                      primaryAltPoints.filter(p => p[0] >= mean + Math.abs(plotCriticalValue) * stdDev)
                         .map((p, i) => (i === 0 ? `L ${p[0]},${p[1]}` : `L ${p[0]},${p[1]}`))
                         .join(' ') + ` L 300,150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
                     <path d={`M 0,150 ` +
-                      (plotShowBothH1 ? altPointsNeg : altPoints).filter(p => p[0] <= mean - Math.abs(plotCriticalValue) * stdDev)
+                      secondaryAltPoints.filter(p => p[0] <= mean - Math.abs(plotCriticalValue) * stdDev)
                         .map(p => `L ${p[0]},${p[1]}`).join(' ') +
                       ` L ${mean - Math.abs(plotCriticalValue) * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
                   </>
                 ) : (
                   plotDirection === 'greater'
                     ? <path d={`M ${mean + plotCriticalValue * stdDev},150 ` +
-                      altPoints.filter(p => p[0] >= mean + plotCriticalValue * stdDev)
+                      primaryAltPoints.filter(p => p[0] >= mean + plotCriticalValue * stdDev)
                         .map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L 300,150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
-                    : <path d={`M 0,150 ` + altPoints.filter(p => p[0] <= mean + plotCriticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + plotCriticalValue * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
+                    : <path d={`M 0,150 ` + primaryAltPoints.filter(p => p[0] <= mean + plotCriticalValue * stdDev).map(p => `L ${p[0]},${p[1]}`).join(' ') + ` L ${mean + plotCriticalValue * stdDev},150 Z`} fill="url(#diagonalHatch)" onMouseEnter={() => setHoveredRegion('power')} onMouseLeave={() => setHoveredRegion(null)} className="cursor-help" stroke="none" />
                 )}
 
                 {/* Beta: Area under H1 that falls in H0 non-rejection region (The entire interval) */}
                 <path d={`M ${mean - (plotTails === 1 ? (plotDirection === 'greater' ? 4 : Math.abs(plotCriticalValue)) : Math.abs(plotCriticalValue)) * stdDev},150 ` +
-                  altPoints.filter(p => {
+                  primaryAltPoints.filter(p => {
                     const z = (p[0] - mean) / stdDev;
                     if (plotTails === 2) return z > -Math.abs(plotCriticalValue) && z < Math.abs(plotCriticalValue);
                     return plotDirection === 'greater' ? z < plotCriticalValue : z > plotCriticalValue;
@@ -494,7 +510,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   <g transform="translate(150, 20)">
                   <rect x="-40" y="-8" width="80" height="12" rx="2" fill="#1e293b" fillOpacity="0.8" />
                   <text textAnchor="middle" className="text-[6px] fill-slate-300 font-black tracking-widest uppercase">
-                    Reject if Z {plotTails === 2 ? '±' : ''}{plotDirection === 'greater' ? '≥' : '≤'} {plotTails === 2 ? Math.abs(plotCriticalValue).toFixed(3) : plotCriticalValue.toFixed(3)}
+                    Reject if {type === 'z' ? 'Z' : 'T'} {plotTails === 2 ? '±' : ''}{plotDirection === 'greater' ? '≥' : '≤'} {plotTails === 2 ? Math.abs(plotCriticalValue).toFixed(3) : plotCriticalValue.toFixed(3)}
                   </text>
                   </g>
                 )}
@@ -789,7 +805,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
         {!isPowerCompactPreset && (
         <div className={`w-full p-4 rounded-b-lg border-x border-b space-y-4 shadow-xl relative z-10 transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-900 text-white border-slate-800'}`}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1.5 col-span-1">
               <label className={`text-[9px] font-black uppercase tracking-widest block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Significance (α)</label>
               <div className={`flex p-1 rounded-lg border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'}`}>
@@ -808,19 +824,29 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
             </div>
 
             <div className="space-y-1.5 col-span-1">
-              <label className={`text-[9px] font-black uppercase tracking-widest block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Precision</label>
-              <div className={`flex p-1 rounded-lg border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'}`}>
-                {[2, 3].map(p => (
-                  <button key={p} onClick={() => setPrecision(p)} className={`flex-1 py-1 rounded text-[10px] font-bold transition-all ${precision === p ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{p} dec</button>
-                ))}
+              <label className={`text-[9px] font-black uppercase tracking-widest block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Confidence Interval</label>
+              <div className={`rounded-lg border px-3 py-3 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-black text-white">
+                    {ciType === 'two-sided'
+                      ? `[${ciLower === -Infinity ? '-∞' : ciLower.toFixed(precision)}, ${ciUpper === Infinity ? '∞' : ciUpper.toFixed(precision)}]`
+                      : (h1Direction === 'greater'
+                        ? `[${ciLower === -Infinity ? '-∞' : ciLower.toFixed(precision)}, ∞)`
+                        : `(-∞, ${ciUpper === Infinity ? '∞' : ciUpper.toFixed(precision)}]`)}
+                  </span>
+                  <select
+                    value={ciType}
+                    onChange={(e) => setCiType(e.target.value)}
+                    className={`rounded px-2 py-1 text-[10px] font-black uppercase border ${darkMode ? 'bg-slate-900 border-slate-700 text-indigo-300' : 'bg-slate-900 border-slate-700 text-white'}`}
+                  >
+                    <option value="two-sided">Two-Sided</option>
+                    <option value="one-sided">One-Sided</option>
+                  </select>
+                </div>
+                <p className="mt-2 text-[8px] text-slate-400 leading-tight">
+                  The interval stays in view and updates with the current statistic, alpha level, and tail setup.
+                </p>
               </div>
-            </div>
-
-            <div className="space-y-1.5 col-span-1">
-              <label className={`text-[9px] font-black uppercase tracking-widest block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Estimation</label>
-              <button onClick={() => setShowCI(!showCI)} className={`w-full py-2 rounded-lg text-[10px] font-black uppercase transition-all ${showCI ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'bg-slate-950 text-slate-500 border border-slate-800 hover:text-slate-300' : 'bg-slate-800 text-slate-500 border border-slate-700 hover:text-slate-300')}`}>
-                {showCI ? 'Hide CI' : 'Show 95% CI'}
-              </button>
             </div>
           </div>
 
@@ -840,16 +866,12 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   {df < 10 ? <span><Sparkles className="inline w-3 h-3 mr-1 text-amber-500" /> <b>Tip:</b> Watch how low $df$ makes the tails much "heavier" (higher).</span> : "Notice how the T-distribution looks more like the Z-distribution as $df$ increases."}
                 </div>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowTailGap(!showTailGap)}
-                  className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${showTailGap ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}
-                >
-                  {showTailGap ? 'Hide Normal Overlay' : 'Show Tail Gap'}
-                </button>
-                <div className={`flex-1 p-2 rounded-lg bg-slate-950/50 border border-slate-800 transition-opacity ${showTailGap ? 'opacity-100' : 'opacity-40'}`}>
-                  <div className="text-[7px] font-black text-indigo-400 uppercase mb-1">Gap Explanation</div>
-                  <div className="text-[8px] text-slate-400 leading-tight">The gap shows how much additional area is in the T-tails vs Normal tails.</div>
+              <div className="rounded-lg border p-3 bg-slate-950/50 border-slate-800">
+                <div className="text-[8px] font-black text-indigo-400 uppercase mb-1">Normal Comparison</div>
+                <div className="text-[8px] text-slate-400 leading-tight">
+                  {showTailReference
+                    ? 'A dashed normal reference appears automatically here because low df makes the t tails visibly heavier.'
+                    : 'As df increases, the t distribution approaches the normal curve, so the extra overlay stays hidden to keep the plot readable.'}
                 </div>
               </div>
             </div>
@@ -860,16 +882,16 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
               <label className={`text-[9px] font-black uppercase tracking-widest block mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Hypothesis Direction (H₁)</label>
               <div className={`flex p-1 rounded-lg border max-w-[300px] ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'}`}>
                 <button
-                  onClick={() => setH1Direction('greater')}
-                  className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all ${h1Direction === 'greater' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
-                >
-                  μ &gt; μ₀ (Right Tail)
-                </button>
-                <button
                   onClick={() => setH1Direction('less')}
                   className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all ${h1Direction === 'less' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
                 >
                   μ &lt; μ₀ (Left Tail)
+                </button>
+                <button
+                  onClick={() => setH1Direction('greater')}
+                  className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all ${h1Direction === 'greater' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}
+                >
+                  μ &gt; μ₀ (Right Tail)
                 </button>
               </div>
             </div>
@@ -878,11 +900,15 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
           <div className={`pt-2 border-t flex flex-col gap-4 ${darkMode ? 'border-slate-800' : 'border-slate-800'}`}>
             <div className={`flex justify-between items-center p-1.5 rounded-lg border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-800/50 border-slate-700'}`}>
-              <div className={`text-[8px] font-black uppercase tracking-widest px-2 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Input Mode</div>
-              <div className="flex gap-1">
-                <button onClick={() => setCalcMode(false)} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${!calcMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Direct Z-Score</button>
-                <button onClick={() => setCalcMode(true)} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${calcMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Step-by-Step Calculator</button>
-              </div>
+              <div className={`text-[8px] font-black uppercase tracking-widest px-2 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{showTutor ? 'Input Mode' : 'Calculator Mode'}</div>
+              {showTutor ? (
+                <div className="flex gap-1">
+                  <button onClick={() => setCalcMode(false)} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${!calcMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Direct {type === 'z' ? 'Z' : 'T'}-Score</button>
+                  <button onClick={() => setCalcMode(true)} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${calcMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Step-by-Step Calculator</button>
+                </div>
+              ) : (
+                <span className="px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest bg-indigo-600 text-white shadow-lg">Observed Data Workflow</span>
+              )}
             </div>
 
             {!calcMode ? (
@@ -906,10 +932,12 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex gap-2 p-1 bg-slate-900 rounded-lg border border-slate-800 w-fit">
                   <button onClick={() => setDataInputMode('summary')} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${dataInputMode === 'summary' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Summary Stats</button>
-                  <button onClick={() => setDataInputMode('raw')} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${dataInputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Paste Data</button>
+                  {!showTutor && (
+                    <button onClick={() => setDataInputMode('raw')} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${dataInputMode === 'raw' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Paste Data</button>
+                  )}
                 </div>
 
-                {dataInputMode === 'raw' && (
+                {dataInputMode === 'raw' && !showTutor && (
                   <div className="space-y-2 animate-in zoom-in-95 duration-200">
                     <div className="flex justify-between items-center">
                       <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Enter Raw Data</span>
@@ -928,7 +956,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   {[
                     { label: 'Sample Mean (x̄)', key: 'xBar' },
                     { label: 'Hyp. Mean (μ)', key: 'mu' },
-                    { label: 'Pop. SD (σ)', key: 'sigma' },
+                    { label: type === 'z' ? 'Pop. SD (σ)' : 'Sample SD (s)', key: 'sigma' },
                     { label: 'Sample Size (n)', key: 'n' }
                   ].map(param => (
                     <div key={param.key} className={`border p-2 rounded-xl flex flex-col gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-900 border-slate-700'}`}>

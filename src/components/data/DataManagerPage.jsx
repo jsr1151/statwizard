@@ -124,6 +124,13 @@ const ANALYSIS_OPTIONS = [
         buildDetail: ({ numericCount, categoricalCount }) => `${numericCount} numeric and ${categoricalCount} categorical variable${categoricalCount === 1 ? '' : 's'} detected.`,
     },
     {
+        id: 'ancova',
+        label: 'ANCOVA',
+        summary: 'Load one numeric outcome, one categorical grouping variable, and one numeric covariate.',
+        isCompatible: ({ numericCount, categoricalCount }) => numericCount >= 2 && categoricalCount >= 1,
+        buildDetail: ({ numericCount, categoricalCount }) => `${numericCount} numeric and ${categoricalCount} categorical variable${categoricalCount === 1 ? '' : 's'} detected.`,
+    },
+    {
         id: 'factorial_anova',
         label: 'Factorial ANOVA',
         summary: 'Load one numeric outcome plus two categorical factors into the factorial ANOVA calculator.',

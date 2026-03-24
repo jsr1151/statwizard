@@ -44,7 +44,7 @@ const FactorialEffectCard = ({ darkMode, label, effect }) => (
             {label}
         </div>
         <div className={`mt-2 text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-            eta_p^2 = {formatStat(effect?.pes, 3)}
+            Partial η² = {formatStat(effect?.pes, 3)}
         </div>
         <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
             F({formatStat(effect?.df, 0)}, {formatStat(effect?.errorDf, 0)}) = {formatStat(effect?.f, 2)}, p {formatPValue(effect?.p)}

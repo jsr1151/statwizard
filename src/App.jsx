@@ -79,6 +79,7 @@ import IndependentTTestPage from './components/analysis/IndependentTTestPage.jsx
 import PairedTTestPage from './components/analysis/PairedTTestPage.jsx';
 import OneWayAnovaPage from './components/analysis/OneWayAnovaPage.jsx';
 import FactorialAnovaPage from './components/analysis/FactorialAnovaPage.jsx';
+import AncovaPage from './components/analysis/AncovaPage.jsx';
 
 // --- Tutor Components ---
 import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
@@ -102,6 +103,15 @@ const STRUCTURED_RESULT_STEP_IDS = new Set([
     'multiple_regression_result',
     'res_indep_ttest',
     'res_paired_ttest',
+    'res_one_way_anova',
+    'res_factorial_anova',
+    'res_ancova',
+]);
+
+const EFFECT_SIZE_SECTION_STEP_IDS = new Set([
+    'correlation_result',
+    'regression_result',
+    'multiple_regression_result',
     'res_one_way_anova',
     'res_factorial_anova',
     'res_ancova',
@@ -137,6 +147,7 @@ export default function App() {
     const [showHistory, setShowHistory] = useState(false);
     const [activeResultSection, setActiveResultSection] = useState('calculator');
     const [pendingPowerLaunch, setPendingPowerLaunch] = useState(null);
+    const [showEquationPanel, setShowEquationPanel] = useState(true);
 
     // --- 3. STATE WITH INITIALIZERS / SIDE EFFECTS ---
     const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => {
@@ -232,6 +243,7 @@ export default function App() {
     const isPairedTTestPage = currentStepId === 'res_paired_ttest';
     const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
     const isFactorialAnovaPage = currentStepId === 'res_factorial_anova';
+    const isAncovaPage = currentStepId === 'res_ancova';
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
     const isStructuredResultPage = isResult && (STRUCTURED_RESULT_STEP_IDS.has(currentStepId) || Boolean(currentTestConfig));
@@ -242,11 +254,11 @@ export default function App() {
         }
 
         const sections = [
-            { id: 'lessons', label: 'Tutor', icon: BookOpen },
-            { id: 'calculator', label: 'Calculator', icon: Calculator },
+            { id: 'lessons', label: 'Tutor / Lessons', icon: BookOpen },
+            { id: 'calculator', label: 'Test Calculator', icon: Calculator },
         ];
 
-        if (currentTestConfig || isFactorialAnovaPage) {
+        if (EFFECT_SIZE_SECTION_STEP_IDS.has(currentStepId)) {
             sections.push({ id: 'effect_size', label: 'Effect Size', icon: Sigma });
         }
 
@@ -259,7 +271,7 @@ export default function App() {
         }
 
         return sections;
-    }, [currentStep?.assumptions, currentTestConfig, isFactorialAnovaPage, isStructuredResultPage]);
+    }, [currentStep?.assumptions, currentStepId, currentTestConfig, isStructuredResultPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -268,6 +280,7 @@ export default function App() {
         setVariabilityTab('sd');
         setProbabilityTab('basics');
         setSymbolKeyOpen(false);
+        setShowEquationPanel(true);
     }, [currentStepId]);
 
     useEffect(() => {
@@ -390,11 +403,7 @@ export default function App() {
 
     // --- SYMBOL KEY LOGIC ---
     let relevantSymbols = SYMBOL_KEYS.sd;
-    if (displayFormulaId === 'percentage') relevantSymbols = SYMBOL_KEYS.percentage;
-    if (displayFormulaId === 'mean') relevantSymbols = SYMBOL_KEYS.standard;
-    if (displayFormulaId === 'range') relevantSymbols = SYMBOL_KEYS.range;
-    if (displayFormulaId === 'z_test' || displayFormulaId === 't_onesample') relevantSymbols = SYMBOL_KEYS.sd_pop;
-    if (displayFormulaId === 'anova') relevantSymbols = SYMBOL_KEYS.anova;
+    if (displayFormulaId && SYMBOL_KEYS[displayFormulaId]) relevantSymbols = SYMBOL_KEYS[displayFormulaId];
 
     const renderResultVisualizer = ({ teachingMode = true } = {}) => {
         if (displayVisualType === 'anova') {
@@ -588,6 +597,7 @@ export default function App() {
                                         independent_t_test: 'res_indep_ttest',
                                         paired_t_test: 'res_paired_ttest',
                                         one_way_anova: 'res_one_way_anova',
+                                        ancova: 'res_ancova',
                                         factorial_anova: 'res_factorial_anova',
                                     };
                                     const nextStepId = nextStepIdByAnalysisId[analysisId] || null;
@@ -752,6 +762,18 @@ export default function App() {
                                                     assumptions={currentStep?.assumptions || []}
                                                     onOpenDataManager={() => setAppMode('data_manager')}
                                                 />
+                                            ) : isAncovaPage ? (
+                                                <AncovaPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    currentStats={currentStats}
+                                                    onStatsChange={setCurrentStats}
+                                                    assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                    onOpenDataManager={() => setAppMode('data_manager')}
+                                                    showValues={showEquationValues}
+                                                />
                                             ) : activeResultSection === 'assumptions' && (currentStep?.assumptions || []).length > 0 ? (
                                                 <AnalysisAssumptionsSection
                                                     darkMode={darkMode}
@@ -801,23 +823,34 @@ export default function App() {
                                             <>
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
                                                 {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && (
-                                                    <div className="lg:col-span-4 flex flex-col gap-6">
+                                                    <div className="lg:col-span-5 flex flex-col gap-6">
                                                         {displayFormulaId && displayFormulaId !== 'none' && (
-                                                            <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[250px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                                            <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[180px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                                 <div className={`px-4 py-2 border-b flex justify-between items-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                                                     <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><Calculator className="w-4 h-4" /> The Equation</h3>
                                                                     <div className="flex gap-2">
+                                                                        {showEquationPanel && (
+                                                                            <>
+                                                                                <button
+                                                                                    onClick={() => setShowEquationValues(!showEquationValues)}
+                                                                                    className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-all font-bold ${showEquationValues ? 'bg-indigo-600 text-white' : (darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100')}`}
+                                                                                >
+                                                                                    {showEquationValues ? 'HIDE VALUES' : 'SHOW VALUES'}
+                                                                                </button>
+                                                                                <button onClick={() => setSymbolKeyOpen(!symbolKeyOpen)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}><Info className="w-3 h-3" /> Symbol Key</button>
+                                                                            </>
+                                                                        )}
                                                                         <button
-                                                                            onClick={() => setShowEquationValues(!showEquationValues)}
-                                                                            className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-all font-bold ${showEquationValues ? 'bg-indigo-600 text-white' : (darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100')}`}
+                                                                            onClick={() => setShowEquationPanel((previous) => !previous)}
+                                                                            className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}
                                                                         >
-                                                                            {showEquationValues ? 'HIDE VALUES' : 'SHOW VALUES'}
+                                                                            {showEquationPanel ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                                                            {showEquationPanel ? 'Hide Equation' : 'Show Equation'}
                                                                         </button>
-                                                                        <button onClick={() => setSymbolKeyOpen(!symbolKeyOpen)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}><Info className="w-3 h-3" /> Symbol Key</button>
                                                                     </div>
                                                                 </div>
 
-                                                                {symbolKeyOpen && (
+                                                                {showEquationPanel && symbolKeyOpen && (
                                                                     <div className="bg-slate-800 text-slate-200 text-xs p-3 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2">
                                                                         {relevantSymbols.map((s, i) => {
                                                                             const isHovered = hoveredTerm && (
@@ -836,30 +869,36 @@ export default function App() {
                                                                     </div>
                                                                 )}
 
-                                                                <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
-                                                                    {!activeMathTerm ? (
-                                                                        <div className="animate-in fade-in zoom-in-95 duration-200">
-                                                                            <FormulaDisplay
-                                                                                type={displayFormulaId}
-                                                                                onInfo={pushMathTerm}
-                                                                                onHover={setHoveredTerm}
-                                                                                darkMode={darkMode}
-                                                                                showValues={showEquationValues}
-                                                                                stats={currentStats}
-                                                                            />
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
-                                                                            <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                                                                                {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
-                                                                                <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                                                                {showEquationPanel ? (
+                                                                    <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
+                                                                        {!activeMathTerm ? (
+                                                                            <div className="animate-in fade-in zoom-in-95 duration-200">
+                                                                                <FormulaDisplay
+                                                                                    type={displayFormulaId}
+                                                                                    onInfo={pushMathTerm}
+                                                                                    onHover={setHoveredTerm}
+                                                                                    darkMode={darkMode}
+                                                                                    showValues={showEquationValues}
+                                                                                    stats={currentStats}
+                                                                                />
                                                                             </div>
-                                                                            <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                                                            <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                                                            <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                                        ) : (
+                                                                            <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
+                                                                                <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                                                                                    {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
+                                                                                    <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                                                                                </div>
+                                                                                <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                                                                <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                                                                <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className={`px-6 py-5 flex-1 flex items-center justify-center text-center ${darkMode ? 'bg-slate-950 text-slate-400' : 'bg-white text-slate-600'}`}>
+                                                                        Expand the equation box when you want the notation, symbol key, or worked formula details in view.
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
 
@@ -882,7 +921,7 @@ export default function App() {
                                                     </div>
                                                 )}
 
-                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst') ? 'lg:col-span-12' : 'lg:col-span-8'}>
+                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst') ? 'lg:col-span-12' : 'lg:col-span-7'}>
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
                                                         <div className={`flex-1 flex items-stretch justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>

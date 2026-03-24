@@ -4,6 +4,7 @@ import { Maximize2, Minimize2, Trash2 } from 'lucide-react';
 const AncovaDatasetEditor = ({
     covariateName,
     setCovariateName,
+    covariateNameLocked = false,
     groups,
     updateGroup,
     parseRaw,
@@ -17,12 +18,23 @@ const AncovaDatasetEditor = ({
                 <p className={`text-xs mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>A covariate is a continuous variable used to adjust group means. Enter X (Covariate) and Y (Outcome) for each participant.</p>
                 <div className="flex items-center gap-3">
                     <label className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Covariate Name</label>
-                    <input
-                        value={covariateName}
-                        onChange={(e) => setCovariateName(e.target.value)}
-                        placeholder="e.g. Baseline Stress"
-                        className={`px-3 py-1.5 rounded-lg text-sm font-bold border outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-indigo-500'}`}
-                    />
+                    {covariateNameLocked ? (
+                        <div className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-800'}`}>
+                            {covariateName}
+                        </div>
+                    ) : (
+                        <input
+                            value={covariateName}
+                            onChange={(e) => setCovariateName(e.target.value)}
+                            placeholder="e.g. Baseline Stress"
+                            className={`px-3 py-1.5 rounded-lg text-sm font-bold border outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-indigo-500'}`}
+                        />
+                    )}
+                    {covariateNameLocked && (
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                            Mapped From Dataset
+                        </span>
+                    )}
                 </div>
             </div>
 

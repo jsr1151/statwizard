@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 
-const WIDTH = 760;
-const HEIGHT = 320;
+const WIDTH = 920;
+const HEIGHT = 380;
 const MARGIN = {
     top: 28,
-    right: 28,
-    bottom: 56,
-    left: 72,
+    right: 34,
+    bottom: 60,
+    left: 78,
 };
 
 const formatTick = (value) => {

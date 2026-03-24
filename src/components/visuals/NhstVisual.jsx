@@ -136,7 +136,7 @@ const CIWidget = ({ darkMode }) => {
                         <input type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
                     </div>
                     <div className="space-y-1">
-                        <span className="text-[9px] font-black uppercase text-slate-500">Precision (Width)</span>
+                        <span className="text-[9px] font-black uppercase text-slate-500">Interval Width</span>
                         <input type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
                     </div>
                 </div>

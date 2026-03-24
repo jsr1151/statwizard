@@ -212,6 +212,7 @@ const IndependentTTestPage = ({
                         darkMode={darkMode}
                         onTutorUpdate={onTutorUpdate || noop}
                         onStatsUpdate={onStatsChange}
+                        mode="calculator"
                         datasetSeed={datasetSetup.seed}
                     />
                 </Card>
@@ -239,6 +240,7 @@ const IndependentTTestPage = ({
                 darkMode={darkMode}
                 onTutorUpdate={onTutorUpdate || noop}
                 onStatsUpdate={onStatsChange}
+                mode="lessons"
             />
         </div>
     );

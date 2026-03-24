@@ -45,9 +45,10 @@ const THEMES = [
     }
 ];
 
-export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tutor }) {
+export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tutor, datasetSeed = null, mode = 'lessons' }) {
     const [groups, setGroups] = useState(INITIAL_GROUPS);
     const [covariateName, setCovariateName] = useState('Baseline Score');
+    const [outcomeLabel, setOutcomeLabel] = useState('Outcome Variable');
     const [activeTab, setActiveTab] = useState('DATA');
     const [alpha, setAlpha] = useState(0.05);
     const [activeEq, setActiveEq] = useState('group');
@@ -63,6 +64,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
     const [calcDf1, setCalcDf1] = useState(2);
     const [calcDf2, setCalcDf2] = useState(25);
     const [calcF, setCalcF] = useState(3.5);
+    const isCalculatorView = mode === 'calculator';
 
     // Initialize parsed data for INITIAL_GROUPS
     useEffect(() => {
@@ -72,6 +74,37 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
             yValues: g.yRaw.split(/\n|,|\s/).map(v => parseFloat(v)).filter(v => !isNaN(v))
         })));
     }, []);
+
+    useEffect(() => {
+        if (!datasetSeed?.key || !Array.isArray(datasetSeed.groups) || datasetSeed.groups.length < 2) {
+            return;
+        }
+
+        setCovariateName(datasetSeed.covariateName || 'Covariate');
+        setOutcomeLabel(datasetSeed.outcomeLabel || 'Outcome Variable');
+        setGroups(datasetSeed.groups.map((group, index) => ({
+            ...group,
+            id: group.id || `ancova_dataset_group_${index + 1}`,
+            color: group.color || COLORS[index % COLORS.length],
+            xValues: String(group.xRaw || '')
+                .split(/\n|,|\s/)
+                .map((value) => parseFloat(value))
+                .filter((value) => !isNaN(value)),
+            yValues: String(group.yRaw || '')
+                .split(/\n|,|\s/)
+                .map((value) => parseFloat(value))
+                .filter((value) => !isNaN(value)),
+        })));
+        setAncovaMode('data');
+        setManualF(null);
+        setActiveTab('PLOT');
+    }, [datasetSeed?.key]);
+
+    useEffect(() => {
+        if (isCalculatorView && ancovaMode !== 'data') {
+            setAncovaMode('data');
+        }
+    }, [ancovaMode, isCalculatorView]);
 
     const updateGroup = (id, field, value) => {
         setGroups(groups.map(g => g.id === id ? { ...g, [field]: value } : g));
@@ -324,6 +357,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                             <AncovaDatasetEditor
                                 covariateName={covariateName}
                                 setCovariateName={setCovariateName}
+                                covariateNameLocked={isCalculatorView && Boolean(datasetSeed?.key)}
                                 groups={groups}
                                 updateGroup={updateGroup}
                                 parseRaw={parseRaw}
@@ -336,28 +370,30 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                             >
                                 <Plus size={16} /> Add Group Level
                             </button>
-                            <div className={`mt-8 w-full p-6 rounded-2xl border-2 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
-                                <h3 className={`text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                    <Sparkles size={16} /> Study Themes
-                                </h3>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    {THEMES.map(theme => (
-                                        <button
-                                            key={theme.id}
-                                            onClick={() => loadPreset(theme)}
-                                            className={`p-4 rounded-xl border-2 text-left transition-all hover:scale-[1.02] active:scale-95 flex items-start gap-4 ${darkMode ? 'border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30' : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'}`}
-                                        >
-                                            <div className={`p-3 rounded-lg ${darkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
-                                                <theme.icon size={20} />
-                                            </div>
-                                            <div>
-                                                <div className={`font-bold mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{theme.label}</div>
-                                                <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{theme.desc}</div>
-                                            </div>
-                                        </button>
-                                    ))}
+                            {!isCalculatorView && (
+                                <div className={`mt-8 w-full p-6 rounded-2xl border-2 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+                                    <h3 className={`text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                        <Sparkles size={16} /> Study Themes
+                                    </h3>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        {THEMES.map(theme => (
+                                            <button
+                                                key={theme.id}
+                                                onClick={() => loadPreset(theme)}
+                                                className={`p-4 rounded-xl border-2 text-left transition-all hover:scale-[1.02] active:scale-95 flex items-start gap-4 ${darkMode ? 'border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30' : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'}`}
+                                            >
+                                                <div className={`p-3 rounded-lg ${darkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                                    <theme.icon size={20} />
+                                                </div>
+                                                <div>
+                                                    <div className={`font-bold mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{theme.label}</div>
+                                                    <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{theme.desc}</div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
@@ -501,7 +537,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                             <div className={`mt-6 rounded-xl border p-4 flex flex-col md:flex-row justify-between items-center gap-4 group transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
                                 <div className={`text-[11px] font-mono break-words leading-relaxed max-w-[85%] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                     <span className="text-indigo-500 font-bold tracking-widest mr-2 uppercase text-[9px]">Report Line</span>
-                                    A one-way ANCOVA was conducted to determine a statistically significant difference between {stats.k} groups on the outcome variable controlling for {covariateName}.
+                                    A one-way ANCOVA was conducted to determine a statistically significant difference between {stats.k} groups on {outcomeLabel} while controlling for {covariateName}.
                                     {stats.pInt < alpha ? (
                                         " There was a significant interaction between the covariate and the group, F(" + stats.dfInt + ", " + (stats.nTotal - 2 * stats.k) + ") = " + stats.Fint.toFixed(2) + ", p " + (stats.pInt < 0.001 ? '< .001' : "= " + stats.pInt.toFixed(3).replace(/^0/, '')) + ", indicating that the homogeneity of regression slopes assumption was violated."
                                     ) : (
@@ -612,7 +648,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
 
                                     {/* Axis Labels */}
                                     <text x="400" y="435" textAnchor="middle" className={`text-xs uppercase font-bold tracking-widest ${darkMode ? 'fill-emerald-400' : 'fill-emerald-600'}`}>Covariate: {covariateName}</text>
-                                    <text transform="translate(-30, 200) rotate(-90)" textAnchor="middle" className={`text-xs uppercase font-bold tracking-widest ${darkMode ? 'fill-indigo-400' : 'fill-indigo-600'}`}>Outcome Variable</text>
+                                    <text transform="translate(-30, 200) rotate(-90)" textAnchor="middle" className={`text-xs uppercase font-bold tracking-widest ${darkMode ? 'fill-indigo-400' : 'fill-indigo-600'}`}>{outcomeLabel}</text>
 
                                     {/* Adjustment Line */}
                                     {showAdjustedMeans && (
@@ -857,13 +893,19 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                             <Sigma size={14} className={darkMode ? 'text-indigo-400 animate-pulse' : 'text-indigo-600'} />
                                             ANCOVA {ancovaMode.toUpperCase()}
                                         </h6>
-                                        <div className="flex p-1 rounded-2xl bg-slate-900 border border-slate-800">
-                                            {['data', 'calc'].map(m => (
-                                                <button key={m} onClick={() => setAncovaMode(m)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${ancovaMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
-                                                    {m === 'data' ? 'Compute' : 'Explore'}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {isCalculatorView ? (
+                                            <div className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-600 text-white">
+                                                Compute
+                                            </div>
+                                        ) : (
+                                            <div className="flex p-1 rounded-2xl bg-slate-900 border border-slate-800">
+                                                {['data', 'calc'].map(m => (
+                                                    <button key={m} onClick={() => setAncovaMode(m)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${ancovaMode === m ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
+                                                        {m === 'data' ? 'Compute' : 'Explore'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="flex bg-slate-800/50 p-1.5 rounded-xl border border-slate-700">
@@ -874,7 +916,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                     </div>
                                 </div>
 
-                                {ancovaMode === 'calc' && (
+                                {ancovaMode === 'calc' && !isCalculatorView && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-indigo-500/5 border-2 border-indigo-500/10 rounded-[2.5rem]">
                                         {[
                                             { label: 'df1', val: calcDf1, min: 1, max: 50, setter: setCalcDf1 },

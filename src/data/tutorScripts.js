@@ -152,7 +152,7 @@ export const TUTOR_SCRIPTS = {
                 whatChanged: "The shape of the T-distribution is adjusting.",
                 why: "Lower $df$ creates 'fatter tails' because we have more uncertainty about the population spread. Larger samples ($n$) increase $df$, making the curve converge to the Normal distribution!",
                 math: `df = ${next.n} - 1 = ${next.df}`,
-                tryNext: "Watch the 'Tail Gap' shrink as you increase the sample size ($n$)."
+                tryNext: "Watch the t curve move closer to the normal reference as you increase the sample size ($n$)."
             })
         },
         {
@@ -223,7 +223,7 @@ export const TUTOR_SCRIPTS = {
                 now: "Updating the T-statistic.",
                 whatChanged: `The calculated t-score is now ${next.val.toFixed(3)}.`,
                 why: "The t-score tells you how many standard errors the sample mean is from the null. As the t-score increases, the evidence against H₀ gets stronger.",
-                math: `t = ({x̄} - {μ}) / {SEt} = ${next.val.toFixed(3)}`,
+                math: `t = ({x̄} - {μ}) / {SE} = ${next.val.toFixed(3)}`,
                 tryNext: "Try to push the red dot into the shaded Rejection Region."
             })
         },

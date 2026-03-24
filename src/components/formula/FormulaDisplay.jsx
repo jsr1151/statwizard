@@ -134,24 +134,24 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <span className="font-bold mr-3 italic">t</span>
           <span className="mr-3">=</span>
           <div className="flex flex-col items-center">
-            <div className={`border-b-2 px-2 pb-1 mb-1 w-full text-center ${borderCol}`}>
+          <div className={`border-b-2 px-2 pb-1 mb-1 w-full text-center ${borderCol}`}>
               {calc("dBar", getV('dBar'))}
             </div>
             <div className="pt-1">
-              {calc("SE_paired", getV('se'))}
+              {calc("SE", getV('se'))}
             </div>
           </div>
         </div>
         <div className={`mt-3 pt-3 border-t border-dashed ${darkMode ? 'border-slate-700' : 'border-slate-200'} w-full flex flex-col items-center gap-2`}>
           <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Standard Error of Differences</div>
           <div className={`flex items-center text-sm md:text-base font-serif ${textCol}`}>
-            <span>{calc("SE_paired", getV('se'))}</span>
+            <span>{calc("SE", getV('se'))}</span>
             <span className="mx-2">=</span>
             <div className="flex flex-col items-center">
               <span className={`border-b ${borderCol} px-1`}>{calc("sd_diff", getV('sd'))}</span>
               <div className="flex items-center">
                 <span className="text-xs mr-1">√</span>
-                <span>{calc("n_pairs", getV('n'))}</span>
+                <span>{calc("n", getV('n'))}</span>
               </div>
             </div>
           </div>
@@ -159,7 +159,36 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
       </div>
     );
   }
-  if (type === 'z_test') return <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span className="font-bold mr-3 italic">z</span><span className="mr-3">=</span><div className="flex flex-col items-center"><div className={`border-b-2 px-2 pb-1 mb-1 w-full text-center group relative ${borderCol}`}>({calc("x̄", getV('xBar'))} - {calc("mu", getV('mu'))})</div><div className="pt-1 flex items-center group relative"><span className="mr-1">{calc("SEz", getV('se'))}</span></div></div></div>;
+  if (type === 'z_test') return (
+    <div className="flex flex-col items-center">
+      <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
+        <span className="font-bold mr-3 italic">z</span>
+        <span className="mr-3">=</span>
+        <div className="flex flex-col items-center">
+          <div className={`border-b-2 px-2 pb-1 mb-1 w-full text-center group relative ${borderCol}`}>
+            ({calc("x̄", getV('xBar'))} - {calc("mu", getV('mu'))})
+          </div>
+          <div className="pt-1 flex items-center group relative">
+            <span className="mr-1">{calc("SE", getV('se'))}</span>
+          </div>
+        </div>
+      </div>
+      <div className={`mt-3 pt-3 border-t border-dashed ${darkMode ? 'border-slate-700' : 'border-slate-200'} w-full flex flex-col items-center gap-2`}>
+        <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Standard Error</div>
+        <div className={`flex items-center text-sm md:text-base font-serif ${textCol}`}>
+          <span>{calc("SE", getV('se'))}</span>
+          <span className="mx-2">=</span>
+          <div className="flex flex-col items-center">
+            <span className={`border-b ${borderCol} px-1`}>{calc("sigma", getV('sigma'))}</span>
+            <div className="flex items-center">
+              <span className="text-xs mr-1">√</span>
+              <span>{calc("n", getV('n'))}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   if (type === 't_onesample') return (
     <div className="flex flex-col items-center">
       <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
@@ -170,7 +199,21 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             ({calc("x̄", getV('xBar'))} - {calc("mu", getV('mu'))})
           </div>
           <div className="pt-1 flex items-center group relative">
-            <span className="mr-1">{calc("SEt", getV('se'))}</span>
+            <span className="mr-1">{calc("SE", getV('se'))}</span>
+          </div>
+        </div>
+      </div>
+      <div className={`mt-3 pt-3 border-t border-dashed ${darkMode ? 'border-slate-700' : 'border-slate-200'} w-full flex flex-col items-center gap-2`}>
+        <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Standard Error</div>
+        <div className={`flex items-center text-sm md:text-base font-serif ${textCol}`}>
+          <span>{calc("SE", getV('se'))}</span>
+          <span className="mx-2">=</span>
+          <div className="flex flex-col items-center">
+            <span className={`border-b ${borderCol} px-1`}>{calc("s", getV('s'))}</span>
+            <div className="flex items-center">
+              <span className="text-xs mr-1">√</span>
+              <span>{calc("n", getV('n'))}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -641,7 +684,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
             <div className={`text-center font-serif ${textCol} whitespace-nowrap`}>
               <span>{calc("Ȳ_adj", undefined)}</span>
               <span className="mx-2">=</span>
-              <span>{calc("Ȳ", undefined)} - {calc("b_w", getV('b_w'))}({calc("X̄", undefined)} - {calc("X̄_grand", undefined)})</span>
+              <span>{calc("Ȳ", undefined)} - {calc("b_w", getV('b_w'))} ({calc("X̄", undefined)} - {calc("X̄_grand", undefined)})</span>
             </div>
           </div>
         </div>

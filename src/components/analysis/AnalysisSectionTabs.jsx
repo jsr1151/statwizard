@@ -16,7 +16,7 @@ const AnalysisSectionTabs = ({
                     key={section.id}
                     type="button"
                     onClick={() => onChange?.(section.id)}
-                    className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isActive
+                    className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg min-h-[3.25rem] text-sm font-black uppercase tracking-[0.18em] leading-tight text-center transition-all ${isActive
                         ? 'bg-indigo-600 text-white shadow-lg'
                         : (darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-white')
                     }`}

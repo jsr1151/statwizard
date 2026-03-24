@@ -7,7 +7,7 @@ import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
 import IndependentTTestPlots from './IndependentTTestPlots';
-const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null }) => {
+const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null, mode = 'lessons' }) => {
   const [group1, setGroup1] = useState({ xBar: 12, s: 2.5, n: 30, raw: "" });
   const [group2, setGroup2] = useState({ xBar: 10, s: 2.5, n: 30, raw: "" });
   const [testType, setTestType] = useState('student'); // 'student' (pooled) or 'welch'
@@ -18,8 +18,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const [ciType, setCiType] = useState('two-sided');
   const [visualMode, setVisualMode] = useState('p-value');
   const [targetEffect, setTargetEffect] = useState(0.5);
-  const [precision, setPrecision] = useState(2);
-  const [showCI, setShowCI] = useState(false);
+  const [showCI] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [displayVisual, setDisplayVisual] = useState('sampling'); // 'sampling', 'distribution', or 'plots'
   const [showWhiskers, setShowWhiskers] = useState(false);
@@ -40,6 +39,13 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
     yLabel: 'Outcome'
   });
   const svgRef = useRef(null);
+  const allowRawInput = mode === 'calculator';
+
+  useEffect(() => {
+    if (!allowRawInput && inputMode === 'raw') {
+      setInputMode('summary');
+    }
+  }, [allowRawInput, inputMode]);
 
   useEffect(() => {
     if (!datasetSeed?.key) {
@@ -247,14 +253,6 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
             <button onClick={() => setDisplayVisual('plots')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayVisual === 'plots' ? 'bg-amber-600 border-amber-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>Plots</button>
           </div>
 
-          {displayVisual === 'distribution' && (
-            <div className="absolute top-12 left-4 flex gap-2 z-10 animate-in fade-in slide-in-from-left-2 duration-300">
-              <button onClick={() => setShowWhiskers(!showWhiskers)} className={`px-2 py-1 rounded text-[7px] font-bold uppercase border transition-all ${showWhiskers ? 'bg-indigo-500 border-indigo-400 text-white' : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:text-white'}`}>Whiskers (SE)</button>
-              <button onClick={() => setShowCritGap(!showCritGap)} className={`px-2 py-1 rounded text-[7px] font-bold uppercase border transition-all ${showCritGap ? 'bg-indigo-500 border-indigo-400 text-white' : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:text-white'}`}>Crit. Gap</button>
-            </div>
-          )}
-
-
           {displayVisual === 'plots' ? (
             <IndependentTTestPlots
               group1={group1}
@@ -371,9 +369,10 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
 
                   {/* GAP and SE_delta */}
                   <path d={`M ${mean},70 L ${mean + (group1.xBar - group2.xBar) * (stdDev / se)},70`} stroke="#4f46e5" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                  <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se) / 2}, 60)`}>
-                    <text textAnchor="middle" className="text-[9px] font-black fill-indigo-500">{`Δ = ${delta.toFixed(2)} units`}</text>
-                    <text y="10" textAnchor="middle" className="text-[8px] font-bold fill-indigo-400">{`d = ${cohenD.toFixed(2)}`}</text>
+                  <g transform={`translate(${mean + (group1.xBar - group2.xBar) * (stdDev / se) / 2}, 58)`}>
+                    <rect x="-42" y="-13" width="84" height="28" rx="8" fill={darkMode ? 'rgba(15,23,42,0.82)' : 'rgba(255,255,255,0.92)'} stroke="#6366f1" strokeWidth="1" />
+                    <text textAnchor="middle" className="text-[9px] font-black fill-indigo-400">{`Δ = ${delta.toFixed(2)}`}</text>
+                    <text y="11" textAnchor="middle" className="text-[8px] font-bold fill-indigo-300">{`Cohen's d = ${cohenD.toFixed(2)}`}</text>
                   </g>
 
                   {showWhiskers && (
@@ -575,9 +574,11 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
             <div className={`p-4 rounded-xl border-2 transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex justify-between items-center mb-4">
                 <h5 className="text-[10px] font-black uppercase text-indigo-400 flex items-center gap-2 pt-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> Group 1</h5>
-                <button onClick={() => setInputMode(inputMode === 'summary' ? 'raw' : 'summary')} className="text-[8px] font-black text-slate-500 hover:text-indigo-400 underline uppercase tracking-widest">{inputMode === 'summary' ? 'Paste Data' : 'Settings'}</button>
+                {allowRawInput && (
+                  <button onClick={() => setInputMode(inputMode === 'summary' ? 'raw' : 'summary')} className="text-[8px] font-black text-slate-500 hover:text-indigo-400 underline uppercase tracking-widest">{inputMode === 'summary' ? 'Paste Data' : 'Summary Stats'}</button>
+                )}
               </div>
-              {inputMode === 'summary' ? (
+              {inputMode === 'summary' || !allowRawInput ? (
                 <div className="grid grid-cols-3 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">{"Mean (x̄₁)"}</label>
@@ -602,7 +603,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                 <h5 className="text-[10px] font-black uppercase text-emerald-400 flex items-center gap-2 pt-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Group 2</h5>
                 <button onClick={handleSwap} className="text-[8px] font-black text-slate-500 hover:text-indigo-400 flex items-center gap-1 uppercase tracking-widest pt-1"><RefreshCw size={10} /> Swap Groups</button>
               </div>
-              {inputMode === 'summary' ? (
+              {inputMode === 'summary' || !allowRawInput ? (
                 <div className="grid grid-cols-3 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">{"Mean (x̄₂)"}</label>
@@ -626,7 +627,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
-              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Threshold ($\alpha$)</span>
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Significance Level (α)</span>
               <select value={alpha} onChange={e => setAlpha(parseFloat(e.target.value))} className={`p-2 rounded text-xs font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                 <option value={0.01}>0.01 (Conservative)</option>
                 <option value={0.05}>0.05 (Standard)</option>
@@ -644,23 +645,21 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
               <div className="flex flex-col gap-1 animate-in slide-in-from-left-2 duration-300">
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">H₁ Direction</span>
                 <div className={`p-1 rounded flex transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white border'}`}>
-                  <button onClick={() => setH1Direction('greater')} className={`flex-1 py-1 text-[10px] font-bold rounded ${h1Direction === 'greater' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{"μ₁ > μ₂"}</button>
                   <button onClick={() => setH1Direction('less')} className={`flex-1 py-1 text-[10px] font-bold rounded ${h1Direction === 'less' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{"μ₁ < μ₂"}</button>
+                  <button onClick={() => setH1Direction('greater')} className={`flex-1 py-1 text-[10px] font-bold rounded ${h1Direction === 'greater' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{"μ₁ > μ₂"}</button>
                 </div>
               </div>
             )}
             <div className="flex flex-col gap-1">
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Reporting CI</span>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowCI(!showCI)} className={`flex-1 py-2 text-[10px] font-black rounded border transition-all uppercase tracking-widest ${showCI ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg' : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white text-slate-400')}`}>
-                  {showCI ? (ciType === 'two-sided' ? 'Two-Sided CI' : 'One-Sided Bound') : 'Show Confidence'}
-                </button>
-                {showCI && (
-                  <select value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
-                    <option value="two-sided">Two-Sided</option>
-                    <option value="one-sided">One-Sided</option>
-                  </select>
-                )}
+                <div className={`flex-1 py-2 px-3 text-[10px] font-black rounded border uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                  {ciType === 'two-sided' ? 'Two-Sided CI' : 'One-Sided Bound'}
+                </div>
+                <select value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
+                  <option value="two-sided">Two-Sided</option>
+                  <option value="one-sided">One-Sided</option>
+                </select>
               </div>
             </div>
           </div>
@@ -714,7 +713,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
             </div>
             <button
               onClick={() => {
-                const line = `${testType === 'student' ? '' : "Welch's "}Independent samples t-test, t(${df.toFixed(df === Math.floor(df) ? 0 : 2)}) = ${tScore.toFixed(2)}, p = ${pValue < 0.001 ? '< .001' : pValue.toFixed(3).replace(/^0/, '')}, d = {cohenD.toFixed(2)}${showCI ? `, 95% CI [${ciLower.toFixed(2)}, ${ciUpper.toFixed(2)}]` : ''}.`;
+                const line = `${testType === 'student' ? '' : "Welch's "}Independent samples t-test, t(${df.toFixed(df === Math.floor(df) ? 0 : 2)}) = ${tScore.toFixed(2)}, p = ${pValue < 0.001 ? '< .001' : pValue.toFixed(3).replace(/^0/, '')}, d = ${cohenD.toFixed(2)}${showCI ? `, 95% CI [${ciLower.toFixed(2)}, ${ciUpper.toFixed(2)}]` : ''}.`;
                 navigator.clipboard.writeText(line);
                 const btn = document.activeElement;
                 if (btn) { btn.innerText = "COPIED!"; setTimeout(() => btn.innerText = "COPY APA", 2000); }
