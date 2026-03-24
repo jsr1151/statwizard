@@ -461,28 +461,30 @@ export default function App() {
 
                 {showEquationPanel ? (
                     <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
-                        {!activeMathTerm ? (
-                            <div className="animate-in fade-in zoom-in-95 duration-200">
-                                <FormulaDisplay
-                                    type={displayFormulaId}
-                                    onInfo={pushMathTerm}
-                                    onHover={setHoveredTerm}
-                                    darkMode={darkMode}
-                                    showValues={showEquationValues}
-                                    stats={currentStats}
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
-                                <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                                    {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
-                                    <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                        <ErrorBoundary>
+                            {!activeMathTerm ? (
+                                <div className="animate-in fade-in zoom-in-95 duration-200">
+                                    <FormulaDisplay
+                                        type={displayFormulaId}
+                                        onInfo={pushMathTerm}
+                                        onHover={setHoveredTerm}
+                                        darkMode={darkMode}
+                                        showValues={showEquationValues}
+                                        stats={currentStats}
+                                    />
                                 </div>
-                                <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
+                                    <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                                        {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
+                                        <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                                    </div>
+                                    <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                    <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                    <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
+                                </div>
+                            )}
+                        </ErrorBoundary>
                     </div>
                 ) : (
                     <div className={`px-6 py-5 flex-1 flex items-center justify-center text-center ${darkMode ? 'bg-slate-950 text-slate-400' : 'bg-white text-slate-600'}`}>
@@ -585,43 +587,63 @@ export default function App() {
 
         if (displayVisualType === 'ttest') {
             return (
-                <NormalDistributionVisual
-                    type={displayFormulaId === 'z_test' ? 'z' : 't'}
-                    highlight={teachingMode && activeMathTermKey ? (displayFormulaId === 'z_test' ? 'z_score' : 't_score') : null}
-                    darkMode={darkMode}
-                    showTutor={teachingMode}
-                    onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
-                    onStatsUpdate={setCurrentStats}
-                />
+                <ErrorBoundary>
+                    <NormalDistributionVisual
+                        type={displayFormulaId === 'z_test' ? 'z' : 't'}
+                        highlight={teachingMode && activeMathTermKey ? (displayFormulaId === 'z_test' ? 'z_score' : 't_score') : null}
+                        darkMode={darkMode}
+                        showTutor={teachingMode}
+                        onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
+                        onStatsUpdate={setCurrentStats}
+                    />
+                </ErrorBoundary>
             );
         }
 
         if (displayVisualType === 'normal') {
             return (
-                <NormalDistributionVisual
-                    type="z"
-                    label="Standard Normal Distribution"
-                    highlight={teachingMode ? 'curve' : null}
-                    darkMode={darkMode}
-                    showTutor={teachingMode}
-                />
+                <ErrorBoundary>
+                    <NormalDistributionVisual
+                        type="z"
+                        label="Standard Normal Distribution"
+                        highlight={teachingMode ? 'curve' : null}
+                        darkMode={darkMode}
+                        showTutor={teachingMode}
+                    />
+                </ErrorBoundary>
             );
         }
 
         if (displayVisualType === 'variability') {
-            return <VariabilityVisual darkMode={darkMode} />;
+            return (
+                <ErrorBoundary>
+                    <VariabilityVisual darkMode={darkMode} />
+                </ErrorBoundary>
+            );
         }
 
         if (displayVisualType === 'frequency') {
-            return <FrequencyVisual darkMode={darkMode} />;
+            return (
+                <ErrorBoundary>
+                    <FrequencyVisual darkMode={darkMode} />
+                </ErrorBoundary>
+            );
         }
 
         if (displayVisualType === 'skew') {
-            return <ShapeVisual darkMode={darkMode} />;
+            return (
+                <ErrorBoundary>
+                    <ShapeVisual darkMode={darkMode} />
+                </ErrorBoundary>
+            );
         }
 
         if (displayVisualType === 'quartile') {
-            return <QuartileVisual darkMode={darkMode} />;
+            return (
+                <ErrorBoundary>
+                    <QuartileVisual darkMode={darkMode} />
+                </ErrorBoundary>
+            );
         }
 
         return null;

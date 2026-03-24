@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const POLL_INTERVAL = 30_000;     // Check every 30 seconds
+const POLL_INTERVAL = 10_000;     // Check every 10 seconds
 const RELOAD_DELAY = 3_000;      // Show toast for 3 seconds before reloading
 const VERSION_URL = import.meta.env.BASE_URL + 'version.json';
 
@@ -55,8 +55,19 @@ const useAutoReload = () => {
         checkForUpdate(); // Capture initial build ID immediately
         timerRef.current = setInterval(checkForUpdate, POLL_INTERVAL);
 
+        const handleVisibilityRefresh = () => {
+            if (!document.hidden) {
+                checkForUpdate();
+            }
+        };
+
+        window.addEventListener('focus', checkForUpdate);
+        document.addEventListener('visibilitychange', handleVisibilityRefresh);
+
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
+            window.removeEventListener('focus', checkForUpdate);
+            document.removeEventListener('visibilitychange', handleVisibilityRefresh);
         };
     }, [checkForUpdate]);
 
