@@ -8,6 +8,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   const borderCol = darkMode ? 'border-slate-700' : 'border-slate-800';
   const labelCol = darkMode ? 'text-slate-500' : 'text-slate-400';
   const textCol = darkMode ? 'text-slate-200' : 'text-slate-800';
+  const [ssWTab, setSsWTab] = useState('raw');
 
   const getV = (key) => stats ? stats[key] : undefined;
   const calc = (term, val) => <MathTerm term={term} value={val} showValue={showValues} onInfo={onInfo} onHover={onHover} darkMode={darkMode} />;
@@ -225,7 +226,6 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   if (type === 'anova') {
     const groupStats = getV('groupStats') || [];
     const grandM = getV('grandMean') || 0;
-    const [ssWTab, setSsWTab] = useState('raw'); // 'raw' or 'stats'
 
     const SigmaWithLimits = ({ top, bottom, className, term }) => (
       <div className={`inline-flex flex-col items-center leading-none mx-1 ${className}`}>
@@ -631,8 +631,8 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           >
             <div className={`text-[9px] font-black uppercase tracking-widest text-indigo-500 text-center flex items-center justify-center gap-1`}>
               <span>Partial Effect Size</span>
-              <span className="text-indigo-500 flex items-baseline normal-case tracking-normal" style={{ textTransform: 'none' }}>
-                (Partial <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '11px', marginLeft: '3px' }}>&eta;</span><sub className="text-[7px] ml-[1px]">p</sub><sup>2</sup>)
+              <span className="text-indigo-500 normal-case tracking-normal" style={{ textTransform: 'none' }}>
+                (partial eta squared)
               </span>
             </div>
             <div className={`text-[11px] ${labelCol} text-center leading-tight mb-1 px-6`}>

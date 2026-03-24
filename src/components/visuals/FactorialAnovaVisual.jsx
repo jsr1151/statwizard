@@ -639,9 +639,12 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                                                         {effect.pes.toFixed(2)}
                                                                     </span>
                                                                 </ProgressiveTooltip>
-                                                                <span className="text-[10px] font-black text-indigo-300 flex items-baseline" style={{ textTransform: 'none' }}>
+                                                                <span className="hidden" style={{ textTransform: 'none' }}>
                                                                     <span style={{ fontStyle: 'italic', fontFamily: 'Times New Roman, serif', fontSize: '13px' }}>&eta;</span>
                                                                     <sub className="text-[8px] ml-[1px]">p</sub>²
+                                                                </span>
+                                                                <span className="text-[8px] font-black text-indigo-300 uppercase tracking-widest">
+                                                                    Partial eta squared
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -857,17 +860,17 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                                 <p>
                                                     The primary analysis revealed {sigInt ? 'a significant' : 'no significant'} interaction between {factorA.label} and {factorB.label},
                                                     <em> F</em>({AxB.df}, {Err.df}) = {AxB.f.toFixed(2)}, <em>p</em> {AxB.p < .001 ? '< .001' : `= ${AxB.p.toFixed(3)}`},
-                                                    &eta;<sub>p</sub>&sup2; = {AxB.pes.toFixed(2)}.
+                                                    partial eta squared = {AxB.pes.toFixed(2)}.
                                                     {sigInt ? " This suggests that the effect of " + factorA.label + " depends significantly on the level of " + factorB.label + "." : " Both factors operated independently in their effect on the outcome."}
                                                 </p>
 
                                                 <p>
                                                     Regarding main effects, there was {sigA ? 'a significant' : 'no significant'} main effect of {factorA.label},
                                                     <em> F</em>({A.df}, {Err.df}) = {A.f.toFixed(2)}, <em>p</em> {A.p < .001 ? '< .001' : `= ${A.p.toFixed(3)}`},
-                                                    &eta;<sub>p</sub>&sup2; = {A.pes.toFixed(2)}.
+                                                    partial eta squared = {A.pes.toFixed(2)}.
                                                     Additionally, the main effect of {factorB.label} was {sigB ? 'significant' : 'not significant'},
                                                     <em> F</em>({B.df}, {Err.df}) = {B.f.toFixed(2)}, <em>p</em> {B.p < .001 ? '< .001' : `= ${B.p.toFixed(3)}`},
-                                                    &eta;<sub>p</sub>&sup2; = {B.pes.toFixed(2)}.
+                                                    partial eta squared = {B.pes.toFixed(2)}.
                                                 </p>
 
                                                 {sigInt && (

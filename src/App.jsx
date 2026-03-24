@@ -258,6 +258,10 @@ export default function App() {
             { id: 'calculator', label: 'Test Calculator', icon: Calculator },
         ];
 
+        if (currentStep?.formulaId && currentStep.formulaId !== 'none') {
+            sections.push({ id: 'equation', label: 'Equation', icon: Sigma });
+        }
+
         if (EFFECT_SIZE_SECTION_STEP_IDS.has(currentStepId)) {
             sections.push({ id: 'effect_size', label: 'Effect Size', icon: Sigma });
         }
@@ -271,7 +275,7 @@ export default function App() {
         }
 
         return sections;
-    }, [currentStep?.assumptions, currentStepId, currentTestConfig, isStructuredResultPage]);
+    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isStructuredResultPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -404,6 +408,90 @@ export default function App() {
     // --- SYMBOL KEY LOGIC ---
     let relevantSymbols = SYMBOL_KEYS.sd;
     if (displayFormulaId && SYMBOL_KEYS[displayFormulaId]) relevantSymbols = SYMBOL_KEYS[displayFormulaId];
+
+    const renderEquationPanel = () => {
+        if (!displayFormulaId || displayFormulaId === 'none') {
+            return null;
+        }
+
+        return (
+            <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[180px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className={`px-4 py-2 border-b flex justify-between items-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><Calculator className="w-4 h-4" /> The Equation</h3>
+                    <div className="flex gap-2">
+                        {showEquationPanel && (
+                            <>
+                                <button
+                                    onClick={() => setShowEquationValues(!showEquationValues)}
+                                    className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-all font-bold ${showEquationValues ? 'bg-indigo-600 text-white' : (darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100')}`}
+                                >
+                                    {showEquationValues ? 'HIDE VALUES' : 'SHOW VALUES'}
+                                </button>
+                                <button onClick={() => setSymbolKeyOpen(!symbolKeyOpen)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}><Info className="w-3 h-3" /> Symbol Key</button>
+                            </>
+                        )}
+                        <button
+                            onClick={() => setShowEquationPanel((previous) => !previous)}
+                            className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}
+                        >
+                            {showEquationPanel ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            {showEquationPanel ? 'Hide Equation' : 'Show Equation'}
+                        </button>
+                    </div>
+                </div>
+
+                {showEquationPanel && symbolKeyOpen && (
+                    <div className="bg-slate-800 text-slate-200 text-xs p-3 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2">
+                        {relevantSymbols.map((s, i) => {
+                            const isHovered = hoveredTerm && (
+                                hoveredTerm === s.key ||
+                                hoveredTerm.startsWith(s.key + '_') ||
+                                s.sym.includes(hoveredTerm)
+                            );
+                            return (
+                                <div key={i} className={`transition-all duration-200 rounded px-1 flex items-center gap-1 ${isHovered ? 'bg-indigo-500/30 text-white font-bold ring-1 ring-indigo-400' : ''}`}>
+                                    <span className="text-indigo-300 font-bold" dangerouslySetInnerHTML={{ __html: s.sym }} />
+                                    <span>=</span>
+                                    <span>{s.desc}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {showEquationPanel ? (
+                    <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
+                        {!activeMathTerm ? (
+                            <div className="animate-in fade-in zoom-in-95 duration-200">
+                                <FormulaDisplay
+                                    type={displayFormulaId}
+                                    onInfo={pushMathTerm}
+                                    onHover={setHoveredTerm}
+                                    darkMode={darkMode}
+                                    showValues={showEquationValues}
+                                    stats={currentStats}
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
+                                <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                                    {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
+                                    <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
+                                </div>
+                                <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
+                                <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className={`px-6 py-5 flex-1 flex items-center justify-center text-center ${darkMode ? 'bg-slate-950 text-slate-400' : 'bg-white text-slate-600'}`}>
+                        Expand the equation box when you want the notation, symbol key, or worked formula details in view.
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const renderResultVisualizer = ({ teachingMode = true } = {}) => {
         if (displayVisualType === 'anova') {
@@ -684,7 +772,24 @@ export default function App() {
                                                 />
                                             )}
 
-                                            {isPearsonCorrelationPage ? (
+                                            {activeResultSection === 'equation' && displayFormulaId && displayFormulaId !== 'none' ? (
+                                                <div className="space-y-8">
+                                                    <div className={`rounded-xl border p-6 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                                        <div className="flex flex-wrap items-start justify-between gap-4">
+                                                            <div>
+                                                                <h3 className={`text-sm font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                                    Equation Reference
+                                                                </h3>
+                                                                <p className={`text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                                    Open the formula card here whenever you want the notation, symbol key, or a worked reference alongside the structured lessons and calculator sections.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {renderEquationPanel()}
+                                                </div>
+                                            ) : isPearsonCorrelationPage ? (
                                                 <PearsonCorrelationPage
                                                     section={activeResultSection}
                                                     darkMode={darkMode}
@@ -824,83 +929,7 @@ export default function App() {
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
                                                 {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && (
                                                     <div className="lg:col-span-5 flex flex-col gap-6">
-                                                        {displayFormulaId && displayFormulaId !== 'none' && (
-                                                            <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[180px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                                                <div className={`px-4 py-2 border-b flex justify-between items-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                                                    <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><Calculator className="w-4 h-4" /> The Equation</h3>
-                                                                    <div className="flex gap-2">
-                                                                        {showEquationPanel && (
-                                                                            <>
-                                                                                <button
-                                                                                    onClick={() => setShowEquationValues(!showEquationValues)}
-                                                                                    className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-all font-bold ${showEquationValues ? 'bg-indigo-600 text-white' : (darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100')}`}
-                                                                                >
-                                                                                    {showEquationValues ? 'HIDE VALUES' : 'SHOW VALUES'}
-                                                                                </button>
-                                                                                <button onClick={() => setSymbolKeyOpen(!symbolKeyOpen)} className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}><Info className="w-3 h-3" /> Symbol Key</button>
-                                                                            </>
-                                                                        )}
-                                                                        <button
-                                                                            onClick={() => setShowEquationPanel((previous) => !previous)}
-                                                                            className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-indigo-400 bg-slate-800' : 'text-slate-500 hover:text-indigo-600 bg-slate-100'}`}
-                                                                        >
-                                                                            {showEquationPanel ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                                                            {showEquationPanel ? 'Hide Equation' : 'Show Equation'}
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-
-                                                                {showEquationPanel && symbolKeyOpen && (
-                                                                    <div className="bg-slate-800 text-slate-200 text-xs p-3 grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2">
-                                                                        {relevantSymbols.map((s, i) => {
-                                                                            const isHovered = hoveredTerm && (
-                                                                                hoveredTerm === s.key ||
-                                                                                hoveredTerm.startsWith(s.key + '_') ||
-                                                                                s.sym.includes(hoveredTerm)
-                                                                            );
-                                                                            return (
-                                                                                <div key={i} className={`transition-all duration-200 rounded px-1 flex items-center gap-1 ${isHovered ? 'bg-indigo-500/30 text-white font-bold ring-1 ring-indigo-400' : ''}`}>
-                                                                                    <span className="text-indigo-300 font-bold" dangerouslySetInnerHTML={{ __html: s.sym }} />
-                                                                                    <span>=</span>
-                                                                                    <span>{s.desc}</span>
-                                                                                </div>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                )}
-
-                                                                {showEquationPanel ? (
-                                                                    <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
-                                                                        {!activeMathTerm ? (
-                                                                            <div className="animate-in fade-in zoom-in-95 duration-200">
-                                                                                <FormulaDisplay
-                                                                                    type={displayFormulaId}
-                                                                                    onInfo={pushMathTerm}
-                                                                                    onHover={setHoveredTerm}
-                                                                                    darkMode={darkMode}
-                                                                                    showValues={showEquationValues}
-                                                                                    stats={currentStats}
-                                                                                />
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
-                                                                                <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                                                                                    {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
-                                                                                    <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
-                                                                                </div>
-                                                                                <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                                                                <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                                                                <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className={`px-6 py-5 flex-1 flex items-center justify-center text-center ${darkMode ? 'bg-slate-950 text-slate-400' : 'bg-white text-slate-600'}`}>
-                                                                        Expand the equation box when you want the notation, symbol key, or worked formula details in view.
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                                        {renderEquationPanel()}
 
                                                         {activeTutorScript && (
                                                             <TutorPanel

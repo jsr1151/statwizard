@@ -415,7 +415,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                   )}
 
                   {/* Overlap Readout */}
-                  <g transform="translate(280, 185)" className="cursor-help" title="Approximate overlap of the two raw-score curves (intuitive effect size cue).">
+                  <g transform="translate(280, 168)" className="cursor-help" title="Approximate overlap of the two raw-score curves (intuitive effect size cue).">
                     <text textAnchor="end" className={`text-[7px] font-bold ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>
                       {`Overlap ≈ ${overlapPct.toFixed(0)}%`}
                     </text>

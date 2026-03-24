@@ -155,7 +155,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                   {[-3, -2, -1, 0, 1, 2, 3].map(z => (
                     <g key={z} transform={`translate(${z * 35}, 0)`}>
                       <line y2="5" stroke={darkMode ? "#334155" : "#e2e8f0"} />
-                      <text y="15" textAnchor="middle" className="text-[6px] fill-slate-500 font-mono">{z}</text>
+                      <text y="12" textAnchor="middle" className="text-[6px] fill-slate-500 font-mono">{z}</text>
                     </g>
                   ))}
 
@@ -181,12 +181,12 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                       <rect x="-20" y="-8" width="40" height="16" rx="4" fill={darkMode ? "#1e1b4b" : "white"} stroke="#6366f1" strokeWidth="1" />
                       <text textAnchor="middle" dy="2" className="text-[9px] font-black fill-indigo-500">t = {stats.t.toFixed(2)}</text>
                     </g>
-                    <g transform="translate(0, 18)">
+                    <g transform="translate(0, 10)">
                       <rect x="-23" y="-8" width="46" height="16" rx="6" fill={darkMode ? 'rgba(15,23,42,0.82)' : 'rgba(255,255,255,0.92)'} stroke="#818cf8" strokeWidth="1" />
                       <text textAnchor="middle" dy="2" className="text-[7px] font-bold fill-indigo-300">d̄ = {stats.dBar.toFixed(2)}</text>
                     </g>
                   </g>
-                  <text x="0" y="30" textAnchor="middle" className={`text-[6px] font-bold uppercase ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>t-score Units (df = {stats.df})</text>
+                  <text x="0" y="22" textAnchor="middle" className={`text-[6px] font-bold uppercase ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>t-score Units (df = {stats.df})</text>
                 </g>
               );
             })()}
