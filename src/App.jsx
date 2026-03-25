@@ -67,7 +67,6 @@ import SearchView from './components/navigation/SearchView';
 import LessonsView from './components/navigation/LessonsView';
 import DataManagerPage from './components/data/DataManagerPage';
 import UpdateToast from './components/common/UpdateToast';
-import { HeroStatWizardArt } from './components/common/AppIcons';
 import PowerAnalysisHub from './components/power/PowerAnalysisHub';
 import PowerAnalysisTab from './components/power/PowerAnalysisTab';
 import EffectSizePanel from './components/power/EffectSizePanel';
@@ -815,7 +814,11 @@ export default function App() {
                         {appMode === 'menu' && (
                             <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
                                 <div className="mb-8 flex justify-center">
-                                    <HeroStatWizardArt className="w-full max-w-[540px]" />
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}statwizard.png`}
+                                        alt="StatWizard artwork"
+                                        className="w-full max-w-[540px]"
+                                    />
                                 </div>
                                 <h2 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                                     Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400">Data.</span>
