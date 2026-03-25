@@ -6,6 +6,8 @@ import {
     ArrowRight,
     CheckCircle,
     ChevronLeft,
+    ChevronUp,
+    ChevronDown,
     Sparkles,
     Calculator,
     Sigma,
@@ -294,6 +296,7 @@ export default function App() {
         setProbabilityTab('basics');
         setSymbolKeyOpen(false);
         setShowEquationPanel(true);
+        setActiveTutorScript(null);
     }, [currentStepId]);
 
     useEffect(() => {
@@ -995,29 +998,53 @@ export default function App() {
                                                     onOpenDataManager={() => setAppMode('data_manager')}
                                                 />
                                             ) : isIndependentTTestPage ? (
-                                                <IndependentTTestPage
-                                                    section={activeResultSection}
-                                                    darkMode={darkMode}
-                                                    currentStats={currentStats}
-                                                    onStatsChange={setCurrentStats}
-                                                    assumptions={currentStep?.assumptions || []}
-                                                    testConfig={currentTestConfig}
-                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
-                                                    onOpenDataManager={() => setAppMode('data_manager')}
-                                                    onTutorUpdate={setActiveTutorScript}
-                                                />
+                                                <div className="space-y-8">
+                                                    <IndependentTTestPage
+                                                        section={activeResultSection}
+                                                        darkMode={darkMode}
+                                                        currentStats={currentStats}
+                                                        onStatsChange={setCurrentStats}
+                                                        assumptions={currentStep?.assumptions || []}
+                                                        testConfig={currentTestConfig}
+                                                        initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                        onOpenDataManager={() => setAppMode('data_manager')}
+                                                        onTutorUpdate={setActiveTutorScript}
+                                                    />
+
+                                                    {activeResultSection === 'lessons' && activeTutorScript && (
+                                                        <TutorPanel
+                                                            script={activeTutorScript}
+                                                            level="tutor"
+                                                            inline={true}
+                                                            darkMode={darkMode}
+                                                            onClose={() => setActiveTutorScript(null)}
+                                                        />
+                                                    )}
+                                                </div>
                                             ) : isPairedTTestPage ? (
-                                                <PairedTTestPage
-                                                    section={activeResultSection}
-                                                    darkMode={darkMode}
-                                                    currentStats={currentStats}
-                                                    onStatsChange={setCurrentStats}
-                                                    assumptions={currentStep?.assumptions || []}
-                                                    testConfig={currentTestConfig}
-                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
-                                                    onOpenDataManager={() => setAppMode('data_manager')}
-                                                    onTutorUpdate={setActiveTutorScript}
-                                                />
+                                                <div className="space-y-8">
+                                                    <PairedTTestPage
+                                                        section={activeResultSection}
+                                                        darkMode={darkMode}
+                                                        currentStats={currentStats}
+                                                        onStatsChange={setCurrentStats}
+                                                        assumptions={currentStep?.assumptions || []}
+                                                        testConfig={currentTestConfig}
+                                                        initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                        onOpenDataManager={() => setAppMode('data_manager')}
+                                                        onTutorUpdate={setActiveTutorScript}
+                                                    />
+
+                                                    {activeResultSection === 'lessons' && activeTutorScript && (
+                                                        <TutorPanel
+                                                            script={activeTutorScript}
+                                                            level="tutor"
+                                                            inline={true}
+                                                            darkMode={darkMode}
+                                                            onClose={() => setActiveTutorScript(null)}
+                                                        />
+                                                    )}
+                                                </div>
                                             ) : isOneWayAnovaPage ? (
                                                 <OneWayAnovaPage
                                                     section={activeResultSection}
