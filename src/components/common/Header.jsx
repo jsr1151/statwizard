@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, Sparkles, Monitor } from 'lucide-react';
+import { WizardCurveMarkIcon } from './AppIcons';
 
 const Header = ({ onBack, onHome, canGoBack, darkMode, onToggleDarkMode }) => (
     <header className={`${darkMode ? 'bg-slate-950' : 'bg-slate-900'} text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-20 border-b ${darkMode ? 'border-slate-800' : 'border-slate-700/30'}`}>
@@ -9,7 +10,7 @@ const Header = ({ onBack, onHome, canGoBack, darkMode, onToggleDarkMode }) => (
                 className="flex items-center gap-3 group transition-transform active:scale-95 text-left"
             >
                 <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:rotate-6 transition-all duration-300">
-                    <Sparkles className="w-6 h-6 text-white" />
+                    <WizardCurveMarkIcon className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex flex-col">
                     <h1 className="text-xl font-black tracking-tighter leading-none group-hover:text-indigo-400 transition-colors">StatWizard</h1>
