@@ -1043,32 +1043,289 @@ export const meanCenterDatasetVariables = (dataset, columnIds = []) => columnIds
     dataset
 );
 
+const orderDatasetColumns = (dataset, columns = []) => {
+    const columnOrder = new Map((dataset?.columns || []).map((column, index) => [column.id, index]));
+
+    return [...columns].sort(
+        (left, right) => (columnOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (columnOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+    );
+};
+
+const tryParseGroupedWideLabel = (value) => {
+    const trimmed = String(value ?? '').trim();
+
+    if (!trimmed) {
+        return null;
+    }
+
+    const parentheticalMatch = trimmed.match(/^(.*?)[\s_-]*\(([^()]+)\)$/);
+
+    if (parentheticalMatch) {
+        const measureLabel = parentheticalMatch[1].trim().replace(/[\s_-]+$/, '').trim();
+        const keyValue = parentheticalMatch[2].trim();
+
+        if (measureLabel && keyValue) {
+            return { measureLabel, keyValue };
+        }
+    }
+
+    const parts = trimmed.split(/[\s_-]+/).filter(Boolean);
+
+    if (parts.length < 2) {
+        return null;
+    }
+
+    const keyValue = parts[parts.length - 1].trim();
+    const measureLabel = trimmed
+        .slice(0, trimmed.lastIndexOf(keyValue))
+        .replace(/[\s_-]+$/, '')
+        .trim();
+
+    if (!measureLabel || !keyValue) {
+        return null;
+    }
+
+    return { measureLabel, keyValue };
+};
+
+const getGroupedWidePivotDescriptor = (column) => {
+    const labelCandidates = normalizeTagList([
+        column?.label,
+        column?.originalName,
+    ]);
+
+    for (const candidate of labelCandidates) {
+        const parsed = tryParseGroupedWideLabel(candidate);
+
+        if (parsed) {
+            return {
+                column,
+                sourceLabel: candidate,
+                measureLabel: parsed.measureLabel,
+                measureKey: parsed.measureLabel.toLowerCase(),
+                keyValue: parsed.keyValue,
+                keyValueKey: parsed.keyValue.toLowerCase(),
+            };
+        }
+    }
+
+    return null;
+};
+
+export const analyzeWideToLongReshape = (dataset, {
+    pivotColumnIds = [],
+    idColumnIds = [],
+    keyColumnLabel = 'variable',
+    valueColumnLabel = 'value',
+    mode = 'single_value',
+} = {}) => {
+    const pivotColumns = orderDatasetColumns(dataset, pivotColumnIds
+        .map((columnId) => getDatasetColumn(dataset, columnId))
+        .filter(Boolean));
+    const idColumns = orderDatasetColumns(dataset, idColumnIds
+        .map((columnId) => getDatasetColumn(dataset, columnId))
+        .filter(Boolean));
+    const normalizedMode = mode === 'grouped_suffix' ? 'grouped_suffix' : 'single_value';
+    const nextKeyColumnLabel = String(keyColumnLabel ?? '').trim() || (normalizedMode === 'grouped_suffix' ? 'timepoint' : 'variable');
+    const nextValueColumnLabel = String(valueColumnLabel ?? '').trim() || 'value';
+    const overlapColumns = pivotColumns.filter((pivotColumn) => idColumns.some((idColumn) => idColumn.id === pivotColumn.id));
+    const errors = [];
+
+    if (overlapColumns.length) {
+        errors.push('Identifier columns and pivot columns must stay separate in the wide-to-long reshape.');
+    }
+
+    if (normalizedMode !== 'grouped_suffix') {
+        return {
+            ok: errors.length === 0,
+            errors,
+            mode: normalizedMode,
+            pivotColumns,
+            idColumns,
+            keyColumnLabel: nextKeyColumnLabel,
+            valueColumnLabel: nextValueColumnLabel,
+            keyLevels: [],
+            groupedMeasures: [],
+            parsedPivotColumns: [],
+            comboLookup: new Map(),
+        };
+    }
+
+    const invalidColumns = [];
+    const duplicatePairs = [];
+    const groupedMeasures = [];
+    const groupedMeasureLookup = new Map();
+    const keyLevels = [];
+    const keyLevelLookup = new Map();
+    const comboLookup = new Map();
+    const parsedPivotColumns = [];
+
+    pivotColumns.forEach((column) => {
+        const parsed = getGroupedWidePivotDescriptor(column);
+
+        if (!parsed) {
+            invalidColumns.push(column);
+            return;
+        }
+
+        parsedPivotColumns.push(parsed);
+
+        if (!groupedMeasureLookup.has(parsed.measureKey)) {
+            const measure = {
+                label: parsed.measureLabel,
+                key: parsed.measureKey,
+                sourceColumnIds: [],
+            };
+
+            groupedMeasureLookup.set(parsed.measureKey, measure);
+            groupedMeasures.push(measure);
+        }
+
+        groupedMeasureLookup.get(parsed.measureKey).sourceColumnIds.push(column.id);
+
+        if (!keyLevelLookup.has(parsed.keyValueKey)) {
+            keyLevelLookup.set(parsed.keyValueKey, parsed.keyValue);
+            keyLevels.push(parsed.keyValue);
+        }
+
+        const comboKey = `${parsed.measureKey}__${parsed.keyValueKey}`;
+
+        if (comboLookup.has(comboKey)) {
+            duplicatePairs.push({
+                existing: comboLookup.get(comboKey),
+                duplicate: parsed,
+            });
+            return;
+        }
+
+        comboLookup.set(comboKey, parsed);
+    });
+
+    if (invalidColumns.length) {
+        const invalidLabelList = invalidColumns
+            .slice(0, 4)
+            .map((column) => `"${column.label}"`)
+            .join(', ');
+        const suffixNote = invalidColumns.length > 4 ? ', ...' : '';
+        errors.push(`Grouped smart long format needs source columns that end with a shared suffix such as "Calmness T1" and "Calmness T2". Couldn't parse ${invalidLabelList}${suffixNote}.`);
+    }
+
+    if (duplicatePairs.length) {
+        const duplicateSummary = duplicatePairs
+            .slice(0, 3)
+            .map(({ existing, duplicate }) => `"${existing.column.label}" and "${duplicate.column.label}"`)
+            .join(', ');
+        const suffixNote = duplicatePairs.length > 3 ? ', ...' : '';
+        errors.push(`Some selected columns collapse into the same measure and key level after parsing: ${duplicateSummary}${suffixNote}.`);
+    }
+
+    if (parsedPivotColumns.length && keyLevels.length < 2) {
+        errors.push('Grouped smart long format needs at least two repeated-measures key levels, such as T1 and T2.');
+    }
+
+    return {
+        ok: errors.length === 0,
+        errors,
+        mode: normalizedMode,
+        pivotColumns,
+        idColumns,
+        keyColumnLabel: nextKeyColumnLabel,
+        valueColumnLabel: nextValueColumnLabel,
+        keyLevels,
+        groupedMeasures,
+        parsedPivotColumns,
+        comboLookup,
+    };
+};
+
 export const reshapeWideToLongDataset = (dataset, {
     pivotColumnIds = [],
     idColumnIds = [],
     keyColumnLabel = 'variable',
     valueColumnLabel = 'value',
-}) => {
-    const pivotColumns = pivotColumnIds
-        .map((columnId) => getDatasetColumn(dataset, columnId))
-        .filter(Boolean);
-    const idColumns = idColumnIds
-        .map((columnId) => getDatasetColumn(dataset, columnId))
-        .filter(Boolean);
+    mode = 'single_value',
+    analysis = null,
+} = {}) => {
+    const reshapePlan = analysis || analyzeWideToLongReshape(dataset, {
+        pivotColumnIds,
+        idColumnIds,
+        keyColumnLabel,
+        valueColumnLabel,
+        mode,
+    });
+
+    if (!reshapePlan.ok) {
+        return null;
+    }
 
     const keyColumnId = createId('column');
-    const valueColumnId = createId('column');
     const nextRows = [];
 
+    if (reshapePlan.mode === 'grouped_suffix') {
+        const measureColumns = reshapePlan.groupedMeasures.map((measure, index) => ({
+            id: createId('column'),
+            name: `long_measure_${index + 1}`,
+            originalName: measure.label,
+            label: measure.label,
+            derived: true,
+            transform: { type: 'wide_to_long_grouped_value', sourceColumnIds: measure.sourceColumnIds },
+            measureKey: measure.key,
+        }));
+
+        (dataset?.rows || []).forEach((row) => {
+            reshapePlan.keyLevels.forEach((keyValue) => {
+                const keyValueKey = String(keyValue).toLowerCase();
+                const nextRow = {
+                    __rowId: nextRows.length,
+                    [keyColumnId]: keyValue,
+                };
+
+                reshapePlan.idColumns.forEach((idColumn) => {
+                    nextRow[idColumn.id] = row?.[idColumn.id] ?? null;
+                });
+
+                measureColumns.forEach((measureColumn) => {
+                    const sourceDescriptor = reshapePlan.comboLookup.get(`${measureColumn.measureKey}__${keyValueKey}`);
+                    nextRow[measureColumn.id] = sourceDescriptor ? (row?.[sourceDescriptor.column.id] ?? null) : null;
+                });
+
+                nextRows.push(nextRow);
+            });
+        });
+
+        return refreshDatasetMetadata({
+            ...dataset,
+            name: `${dataset?.name || 'Dataset'} Long`,
+            rows: nextRows,
+            columns: [
+                ...reshapePlan.idColumns.map((column) => ({
+                    ...column,
+                    transform: column.transform || { type: 'import' },
+                })),
+                {
+                    id: keyColumnId,
+                    name: 'long_key',
+                    originalName: reshapePlan.keyColumnLabel,
+                    label: reshapePlan.keyColumnLabel,
+                    derived: true,
+                    transform: { type: 'wide_to_long_key', sourceColumnIds: reshapePlan.pivotColumns.map((column) => column.id) },
+                },
+                ...measureColumns.map(({ measureKey, ...column }) => column),
+            ],
+        });
+    }
+
+    const valueColumnId = createId('column');
+
     (dataset?.rows || []).forEach((row) => {
-        pivotColumns.forEach((pivotColumn) => {
+        reshapePlan.pivotColumns.forEach((pivotColumn) => {
             const nextRow = {
                 __rowId: nextRows.length,
                 [keyColumnId]: pivotColumn.label,
                 [valueColumnId]: row?.[pivotColumn.id] ?? null,
             };
 
-            idColumns.forEach((idColumn) => {
+            reshapePlan.idColumns.forEach((idColumn) => {
                 nextRow[idColumn.id] = row?.[idColumn.id] ?? null;
             });
 
@@ -1081,25 +1338,25 @@ export const reshapeWideToLongDataset = (dataset, {
         name: `${dataset?.name || 'Dataset'} Long`,
         rows: nextRows,
         columns: [
-            ...idColumns.map((column) => ({
+            ...reshapePlan.idColumns.map((column) => ({
                 ...column,
                 transform: column.transform || { type: 'import' },
             })),
             {
                 id: keyColumnId,
                 name: 'long_key',
-                originalName: keyColumnLabel,
-                label: keyColumnLabel,
+                originalName: reshapePlan.keyColumnLabel,
+                label: reshapePlan.keyColumnLabel,
                 derived: true,
-                transform: { type: 'wide_to_long_key', sourceColumnIds: pivotColumnIds },
+                transform: { type: 'wide_to_long_key', sourceColumnIds: reshapePlan.pivotColumns.map((column) => column.id) },
             },
             {
                 id: valueColumnId,
                 name: 'long_value',
-                originalName: valueColumnLabel,
-                label: valueColumnLabel,
+                originalName: reshapePlan.valueColumnLabel,
+                label: reshapePlan.valueColumnLabel,
                 derived: true,
-                transform: { type: 'wide_to_long_value', sourceColumnIds: pivotColumnIds },
+                transform: { type: 'wide_to_long_value', sourceColumnIds: reshapePlan.pivotColumns.map((column) => column.id) },
             },
         ],
     });

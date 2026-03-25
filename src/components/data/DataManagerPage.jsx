@@ -21,6 +21,7 @@ import DataTransformWorkbench from './DataTransformWorkbench.jsx';
 import VariableBrowser from './VariableBrowser.jsx';
 import {
     addDerivedVariableToDataset,
+    analyzeWideToLongReshape,
     autoDetectHeaderRow,
     buildDatasetCsv,
     buildDatasetExportRows,
@@ -81,6 +82,7 @@ const buildDefaultMeanCenterDraft = () => ({
 });
 
 const buildDefaultReshapeDraft = () => ({
+    mode: 'single_value',
     pivotColumnIds: [],
     idColumnIds: [],
     keyColumnLabel: 'timepoint',
@@ -401,8 +403,28 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         () => buildRecodePreviewRows(editorDataset, recodeDraft.sourceColumnId, recodeDraft.mappings),
         [editorDataset, recodeDraft.mappings, recodeDraft.sourceColumnId]
     );
-    const reshapePreviewDataset = useMemo(() => {
+    const reshapePlan = useMemo(() => {
         if (!editorDataset || reshapeDraft.pivotColumnIds.length === 0) {
+            return null;
+        }
+
+        return analyzeWideToLongReshape(editorDataset, {
+            pivotColumnIds: reshapeDraft.pivotColumnIds,
+            idColumnIds: reshapeDraft.idColumnIds,
+            keyColumnLabel: reshapeDraft.keyColumnLabel,
+            valueColumnLabel: reshapeDraft.valueColumnLabel,
+            mode: reshapeDraft.mode,
+        });
+    }, [
+        editorDataset,
+        reshapeDraft.idColumnIds,
+        reshapeDraft.keyColumnLabel,
+        reshapeDraft.mode,
+        reshapeDraft.pivotColumnIds,
+        reshapeDraft.valueColumnLabel,
+    ]);
+    const reshapePreviewDataset = useMemo(() => {
+        if (!editorDataset || !reshapePlan?.ok) {
             return null;
         }
 
@@ -411,8 +433,10 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             idColumnIds: reshapeDraft.idColumnIds,
             keyColumnLabel: reshapeDraft.keyColumnLabel || 'variable',
             valueColumnLabel: reshapeDraft.valueColumnLabel || 'value',
+            mode: reshapeDraft.mode,
+            analysis: reshapePlan,
         });
-    }, [editorDataset, reshapeDraft.idColumnIds, reshapeDraft.keyColumnLabel, reshapeDraft.pivotColumnIds, reshapeDraft.valueColumnLabel]);
+    }, [editorDataset, reshapeDraft.idColumnIds, reshapeDraft.keyColumnLabel, reshapeDraft.mode, reshapeDraft.pivotColumnIds, reshapeDraft.valueColumnLabel, reshapePlan]);
     const analysisMenuDataset = useMemo(() => {
         if (!analysisMenuDatasetId) {
             return null;
@@ -1000,8 +1024,8 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             return;
         }
 
-        if (reshapeDraft.pivotColumnIds.some((columnId) => reshapeDraft.idColumnIds.includes(columnId))) {
-            setProblem('Identifier columns and pivot columns must stay separate in the wide-to-long reshape.');
+        if (reshapePlan && !reshapePlan.ok) {
+            setProblem(reshapePlan.errors[0] || 'The selected wide-to-long settings could not be parsed.');
             return;
         }
 
@@ -1010,10 +1034,22 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             idColumnIds: reshapeDraft.idColumnIds,
             keyColumnLabel: reshapeDraft.keyColumnLabel,
             valueColumnLabel: reshapeDraft.valueColumnLabel,
+            mode: reshapeDraft.mode,
+            analysis: reshapePlan,
         });
 
+        if (!nextDataset) {
+            setProblem('The selected wide-to-long settings could not be applied.');
+            return;
+        }
+
         resetTransformDrafts();
-        applyDatasetEdit(nextDataset, 'Reshaped the dataset from wide to long format.');
+        applyDatasetEdit(
+            nextDataset,
+            reshapeDraft.mode === 'grouped_suffix'
+                ? 'Reshaped the dataset into grouped long format using a shared repeated-measures key.'
+                : 'Reshaped the dataset from wide to long format.'
+        );
     };
 
     const updateRecommendedConfig = (groupId, patch) => {
@@ -1620,6 +1656,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                 onApplyRecode={handleApplyRecode}
                                 reshapeDraft={reshapeDraft}
                                 setReshapeDraft={setReshapeDraft}
+                                reshapePlan={reshapePlan}
                                 reshapePreviewDataset={reshapePreviewDataset}
                                 onToggleReshapeColumn={handleToggleReshapeColumn}
                                 onApplyReshape={handleApplyReshape}
