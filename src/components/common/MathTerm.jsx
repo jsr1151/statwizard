@@ -43,6 +43,8 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/H_0/g, "H₀")
             .replace(/H_1/g, "H₁")
             .replace(/xBar/g, "x̄")
+            .replace(/\bx1\b/g, "x₁")
+            .replace(/\bx2\b/g, "x₂")
             .replace(/x̄1/g, "x̄₁")
             .replace(/x̄2/g, "x̄₂")
             .replace(/x̄j/g, "x̄<sub>j</sub>")

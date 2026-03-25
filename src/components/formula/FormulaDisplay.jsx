@@ -64,7 +64,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               ({calc("x̄1", getV('x1'))} - {calc("x̄2", getV('x2'))})
             </div>
             <div className="pt-1 flex items-center group relative">
-              <span className="mr-1">SE<sub>Δ</sub></span>
+              <span className="mr-1">{calc("SE_delta", getV('se'))}</span>
               {showValues && <span className="text-xs font-bold text-indigo-500 ml-1">({getV('se')?.toFixed(3)})</span>}
             </div>
           </div>
@@ -139,14 +139,14 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
               {calc("dBar", getV('dBar'))}
             </div>
             <div className="pt-1">
-              {calc("SE", getV('se'))}
+              {calc("SE_paired", getV('se'))}
             </div>
           </div>
         </div>
         <div className={`mt-3 pt-3 border-t border-dashed ${darkMode ? 'border-slate-700' : 'border-slate-200'} w-full flex flex-col items-center gap-2`}>
           <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Standard Error of Differences</div>
           <div className={`flex items-center text-sm md:text-base font-serif ${textCol}`}>
-            <span>{calc("SE", getV('se'))}</span>
+            <span>{calc("SE_paired", getV('se'))}</span>
             <span className="mx-2">=</span>
             <div className="flex flex-col items-center">
               <span className={`border-b ${borderCol} px-1`}>{calc("sd_diff", getV('sd'))}</span>
