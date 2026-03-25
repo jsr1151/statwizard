@@ -82,7 +82,8 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const seWelch = Math.sqrt(Math.pow(group1.s, 2) / group1.n + Math.pow(group2.s, 2) / group2.n);
 
   const se = testType === 'student' ? sePooled : seWelch;
-  const tScore = delta / se;
+  const rawTScore = se > 0 ? delta / se : 0;
+  const tScore = Number.isFinite(rawTScore) ? rawTScore : 0;
 
   // df calculation
   const dfStudent = group1.n + group2.n - 2;
@@ -91,6 +92,10 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const dfWelch = dfWelchDen > 0 ? dfWelchNum / dfWelchDen : 1;
 
   const df = testType === 'student' ? dfStudent : dfWelch;
+  const roundedDf = Math.max(1, Math.round(df));
+  const [displayTScore, setDisplayTScore] = useState(tScore);
+  const [comparisonDf, setComparisonDf] = useState(roundedDf);
+  const comparisonDfSyncRef = useRef(roundedDf);
 
   // Critical Value & p-value
   const getCritMap = (a, t, d) => {
@@ -119,6 +124,17 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const pValue = tails === 2
     ? (1 - tCDF(Math.abs(tScore), df)) * 2
     : (h1Direction === 'greater' ? (1 - tCDF(tScore, df)) : tCDF(tScore, df));
+  const previewPValue = tails === 2
+    ? (1 - tCDF(Math.abs(displayTScore), df)) * 2
+    : (h1Direction === 'greater' ? (1 - tCDF(displayTScore, df)) : tCDF(displayTScore, df));
+  const previewIsSignificant = tails === 2
+    ? Math.abs(displayTScore) >= (Math.abs(criticalValue) - 0.001)
+    : (h1Direction === 'greater' ? displayTScore >= (criticalValue - 0.001) : displayTScore <= (criticalValue + 0.001));
+  const previewDelta = displayTScore * se;
+  const samplingMarkerIsCustom = Math.abs(displayTScore - tScore) > 0.001;
+  const visualPValue = displayVisual === 'sampling' ? previewPValue : pValue;
+  const visualIsSignificant = displayVisual === 'sampling' ? previewIsSignificant : isSignificant;
+  const formattedDf = df.toFixed(df === Math.floor(df) ? 0 : 2);
 
   // CI
   const ciCrit = getCritMap(alpha, ciType === 'two-sided' ? 2 : 1, df);
@@ -159,6 +175,18 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
 
   // Tutor & Stats Update
   useEffect(() => {
+    setDisplayTScore(tScore);
+  }, [tScore]);
+
+  useEffect(() => {
+    if (comparisonDf === comparisonDfSyncRef.current) {
+      setComparisonDf(roundedDf);
+    }
+
+    comparisonDfSyncRef.current = roundedDf;
+  }, [comparisonDf, roundedDf]);
+
+  useEffect(() => {
     if (onStatsUpdate) {
       onStatsUpdate({
         delta, t: tScore, p: pValue, df, se, isSignificant, crit: criticalValue, d: cohenD, g: hedgesG,
@@ -181,6 +209,9 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
   const stdDev = 35;
   const points = getTPoints(mean, stdDev, df, 120, 300);
   const pathData = pointsToPath(points);
+  const comparisonPoints = getTPoints(mean, stdDev, comparisonDf, 120, 300);
+  const comparisonPathData = pointsToPath(comparisonPoints);
+  const showDfComparison = displayVisual === 'sampling' && comparisonDf !== roundedDf;
 
   // Group Distribution Helpers
   const combinedSD = Math.sqrt((group1.s ** 2 + group2.s ** 2) / 2);
@@ -200,7 +231,12 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
     const ctm = svg.getScreenCTM();
     if (!ctm) return;
     const svgP = pt.matrixTransform(ctm.inverse());
-    const newVal = (svgP.x - mean) / stdDev;
+    const clampedX = Math.max(mean - (4.25 * stdDev), Math.min(mean + (4.25 * stdDev), svgP.x));
+    const newVal = (clampedX - mean) / stdDev;
+    if (displayVisual === 'sampling') {
+      setDisplayTScore(parseFloat(newVal.toFixed(3)));
+      return;
+    }
     const newDelta = newVal * se;
     if (isNaN(newDelta)) return;
     setGroup1(prev => ({ ...prev, xBar: parseFloat((newDelta + group2.xBar).toFixed(2)) }));
@@ -281,7 +317,10 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                   </g>
                   <line x1="0" y1="150" x2="300" y2="150" stroke={darkMode ? "#334155" : "#94a3b8"} strokeWidth="2" />
                   <text x="150" y="180" textAnchor="middle" className={`text-[7px] font-bold uppercase transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>Test statistic (T)</text>
-                  <path d={pathData} fill="url(#indepGradient)" stroke="#4f46e5" strokeWidth="3" />
+                    {showDfComparison && (
+                      <path d={comparisonPathData} fill="none" stroke="#22d3ee" strokeWidth="2" strokeDasharray="6,4" opacity="0.9" />
+                    )}
+                    <path d={pathData} fill="url(#indepGradient)" stroke="#4f46e5" strokeWidth="3" />
 
                   {/* Shading */}
                   {tails === 2 ? (
@@ -311,11 +350,14 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                   )}
 
                   <g className="cursor-grab active:cursor-grabbing marker-group" onPointerDown={(e) => { e.preventDefault(); setIsDragging(true); e.target.setPointerCapture(e.pointerId); }}>
-                    <line x1={mean + tScore * stdDev} y1="30" x2={mean + tScore * stdDev} y2="150" stroke="#4f46e5" strokeWidth="2" strokeDasharray="4,2" opacity="0.5" />
-                    <circle cx={mean + tScore * stdDev} cy="148" r="7" fill="#4f46e5" stroke="white" strokeWidth="2" />
-                    <g transform={`translate(${mean + tScore * stdDev}, 165)`}>
-                      <text textAnchor="middle" className="text-[10px] font-black fill-indigo-500">{`Δ = ${delta.toFixed(2)}`}</text>
-                      <text y="12" textAnchor="middle" className="text-[9px] font-bold fill-indigo-400">{`t(${df.toFixed(0)}) = ${tScore.toFixed(3)}`}</text>
+                    <line x1={mean + displayTScore * stdDev} y1="30" x2={mean + displayTScore * stdDev} y2="150" stroke="#4f46e5" strokeWidth="2" strokeDasharray="4,2" opacity="0.5" />
+                    <circle cx={mean + displayTScore * stdDev} cy="148" r="7" fill="#4f46e5" stroke="white" strokeWidth="2" />
+                    <g transform={`translate(${mean + displayTScore * stdDev}, 165)`}>
+                      <text textAnchor="middle" className="text-[10px] font-black fill-indigo-500">{`${samplingMarkerIsCustom ? 'Preview' : 'Δ'} = ${(samplingMarkerIsCustom ? previewDelta : delta).toFixed(2)}`}</text>
+                      <text y="12" textAnchor="middle" className="text-[9px] font-bold fill-indigo-400">{`${samplingMarkerIsCustom ? 'Preview t' : `t(${formattedDf})`} = ${(samplingMarkerIsCustom ? displayTScore : tScore).toFixed(3)}`}</text>
+                      {samplingMarkerIsCustom && (
+                        <text y="24" textAnchor="middle" className="text-[8px] font-bold fill-slate-400">{`Calculated t = ${tScore.toFixed(3)}`}</text>
+                      )}
                     </g>
                   </g>
                 </>
@@ -426,9 +468,12 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
           )}
 
           <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-            <div className={`px-3 py-1.5 rounded-lg border flex flex-col items-center min-w-[100px] ${isSignificant ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-500/10 border-slate-500/30'}`}>
-              <span className={`text-[8px] font-black uppercase tracking-widest ${isSignificant ? 'text-emerald-500' : 'text-slate-400'}`}>{isSignificant ? 'Significant' : 'Not Significant'}</span>
-              <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>p = {pValue < 0.001 ? '< .001' : pValue.toFixed(3).replace(/^0/, '')}</span>
+            <div className={`px-3 py-1.5 rounded-lg border flex flex-col items-center min-w-[120px] ${visualIsSignificant ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-500/10 border-slate-500/30'}`}>
+              <span className={`text-[8px] font-black uppercase tracking-widest ${visualIsSignificant ? 'text-emerald-500' : 'text-slate-400'}`}>{displayVisual === 'sampling' && samplingMarkerIsCustom ? 'Preview' : (visualIsSignificant ? 'Significant' : 'Not Significant')}</span>
+              <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>p = {visualPValue < 0.001 ? '< .001' : visualPValue.toFixed(3).replace(/^0/, '')}</span>
+              {displayVisual === 'sampling' && samplingMarkerIsCustom && (
+                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-1">{`Calc t = ${tScore.toFixed(2)}`}</span>
+              )}
             </div>
             <div className={`px-3 py-1.5 rounded-lg border flex flex-col items-center min-w-[100px] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
@@ -442,6 +487,64 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
             </div>
           </div>
         </div>
+
+        {displayVisual === 'sampling' && (
+          <div className={`w-full p-4 border-b animate-in fade-in slide-in-from-top-2 duration-500 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_auto] items-end">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h5 className="text-[10px] font-black uppercase text-cyan-400 tracking-widest">Degrees of Freedom Explorer</h5>
+                  <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-950 text-slate-300 border border-slate-800' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>{`Computed df = ${formattedDf}`}</span>
+                  <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${darkMode ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20' : 'bg-cyan-50 text-cyan-700 border border-cyan-100'}`}>{`Compare curve = ${comparisonDf >= 100 ? '100+' : comparisonDf}`}</span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[2, 5, 10, 30, 100].map((presetDf) => (
+                    <button
+                      key={presetDf}
+                      onClick={() => setComparisonDf(presetDf)}
+                      className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${comparisonDf === presetDf ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}
+                    >
+                      {presetDf === 100 ? '100+' : presetDf}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setComparisonDf(roundedDf)}
+                    className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${comparisonDf === roundedDf ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}
+                  >
+                    Match computed
+                  </button>
+                </div>
+
+                <input
+                  type="range"
+                  min="1"
+                  max="120"
+                  step="1"
+                  value={comparisonDf}
+                  onChange={(event) => setComparisonDf(parseInt(event.target.value, 10))}
+                  className="w-full h-1.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-cyan-500"
+                />
+
+                <p className={`text-[10px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                  The solid curve stays tied to the computed df from your current groups. The dashed cyan curve lets you compare what heavier or lighter tails would look like without leaving this lesson.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 xl:items-end">
+                <button
+                  onClick={() => setDisplayTScore(tScore)}
+                  className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-white hover:border-indigo-500/40 hover:text-indigo-300' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-indigo-300 hover:text-indigo-700'}`}
+                >
+                  Reset t Marker
+                </button>
+                <div className={`rounded-xl border px-4 py-3 text-[10px] font-bold leading-relaxed ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+                  Drag the violet marker to preview alternate t values without rewriting the group means. Reset snaps it back to the score implied by the current inputs.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {
           displayVisual === 'plots' && (

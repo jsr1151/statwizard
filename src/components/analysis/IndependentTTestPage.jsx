@@ -3,7 +3,6 @@ import { Calculator, Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
 import IndependentTTestVisual from '../visuals/IndependentTTestVisual.jsx';
-import NormalDistributionVisual from '../visuals/NormalDistributionVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
@@ -125,13 +124,6 @@ const IndependentTTestPage = ({
         },
     ] : [];
 
-    const dfExplorerConfig = useMemo(() => ({
-        calcMode: false,
-        df: 5,
-        val: 0,
-        tails: 2,
-    }), []);
-
     if (section === 'power') {
         return (
             <div className="space-y-8">
@@ -250,28 +242,6 @@ const IndependentTTestPage = ({
                 onStatsUpdate={onStatsChange}
                 mode="lessons"
             />
-
-            <Card darkMode={darkMode}>
-                <div className="flex items-start gap-4 mb-6">
-                    <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                        <Sparkles size={20} />
-                    </div>
-                    <div>
-                        <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Degrees-of-freedom explorer</h3>
-                        <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            Use this side lesson to isolate the t distribution itself. Slide df up and down to watch the heavy tails shrink toward the normal curve as sample information grows.
-                        </p>
-                    </div>
-                </div>
-
-                <NormalDistributionVisual
-                    darkMode={darkMode}
-                    type="t"
-                    label="T distribution by degrees of freedom"
-                    onTutorUpdate={noop}
-                    powerViewConfig={dfExplorerConfig}
-                />
-            </Card>
         </div>
     );
 };

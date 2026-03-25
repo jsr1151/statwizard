@@ -347,15 +347,21 @@ export default function App() {
         setActiveTutorScript(null);
         setMathHistory([]);
     };
-    const pushMathTerm = (term) => setMathHistory([...mathHistory, term]);
+    const pushMathTerm = (term) => {
+        if (!term) {
+            return;
+        }
+
+        setMathHistory((previous) => [...previous, term]);
+    };
     const popMathTerm = () => {
-        const newHistory = [...mathHistory];
-        newHistory.pop();
-        setMathHistory(newHistory);
+        setMathHistory((previous) => previous.slice(0, -1));
     };
     const closeMath = () => setMathHistory([]);
+    const closeMathFromIndex = (index) => {
+        setMathHistory((previous) => previous.slice(0, index));
+    };
     const activeMathTermKey = mathHistory.length > 0 ? mathHistory[mathHistory.length - 1] : null;
-    const activeMathTerm = activeMathTermKey ? MATH_TERMS[activeMathTermKey] : null;
 
     const toggleDarkMode = () => setDarkMode(!darkMode);
 
@@ -544,6 +550,101 @@ export default function App() {
         );
     };
 
+    const formatMathTermHtml = (value = '') => value.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>");
+
+    const renderMathInspectorCard = (termKey, index) => {
+        const term = MATH_TERMS[termKey];
+
+        if (!term) {
+            return null;
+        }
+
+        const isLastCard = index === mathHistory.length - 1;
+
+        return (
+            <div
+                key={`${termKey}-${index}`}
+                className={`min-w-[280px] max-w-[340px] rounded-2xl border shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}
+            >
+                <div className={`flex items-start justify-between gap-3 border-b pb-3 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                    <div className="min-w-0">
+                        <div className={`text-[10px] font-black uppercase tracking-[0.24em] mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                            Term Detail {index + 1}
+                        </div>
+                        <h4
+                            className={`font-bold text-lg leading-tight ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`}
+                            dangerouslySetInnerHTML={{ __html: formatMathTermHtml(term.title) }}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                        {isLastCard && mathHistory.length > 1 && (
+                            <button
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    popMathTerm();
+                                }}
+                                className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-indigo-300 hover:bg-indigo-500/10' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                            >
+                                <ChevronLeft className="w-3 h-3" /> Back
+                            </button>
+                        )}
+                        <button
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                closeMathFromIndex(index);
+                            }}
+                            className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded transition-colors ${darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                        >
+                            Close <XCircle className="w-3 h-3" />
+                        </button>
+                    </div>
+                </div>
+
+                <p
+                    className={`text-[11px] font-bold uppercase tracking-[0.18em] ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}
+                    dangerouslySetInnerHTML={{ __html: formatMathTermHtml(term.desc) }}
+                />
+
+                <div className={`p-4 rounded-xl text-sm border break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-white text-slate-800 border-indigo-100'}`}>
+                    <CalculationText
+                        text={term.calc}
+                        onInfo={pushMathTerm}
+                        onHover={setHoveredTerm}
+                        darkMode={darkMode}
+                        showValues={showEquationValues}
+                        stats={currentStats}
+                    />
+                </div>
+            </div>
+        );
+    };
+
+    const renderInteractiveEquationWorkspace = () => (
+        <ErrorBoundary>
+            <div className={`w-full ${mathHistory.length > 0 ? 'grid gap-6 items-start lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.95fr)]' : ''}`}>
+                <div className="min-w-0 animate-in fade-in zoom-in-95 duration-200">
+                    <FormulaDisplay
+                        type={displayFormulaId}
+                        onInfo={pushMathTerm}
+                        onHover={setHoveredTerm}
+                        darkMode={darkMode}
+                        showValues={showEquationValues}
+                        stats={currentStats}
+                    />
+                </div>
+
+                {mathHistory.length > 0 && (
+                    <div className="w-full overflow-x-auto">
+                        <div className="flex gap-4 pb-2 min-w-full">
+                            {mathHistory.map((termKey, index) => renderMathInspectorCard(termKey, index))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </ErrorBoundary>
+    );
+
     const renderEquationPanel = () => {
         if (!displayFormulaId || displayFormulaId === 'none') {
             return null;
@@ -603,30 +704,7 @@ export default function App() {
                                 {renderSafeGenericEquationBody()}
                             </div>
                         ) : (
-                            <ErrorBoundary>
-                                {!activeMathTerm ? (
-                                    <div className="animate-in fade-in zoom-in-95 duration-200">
-                                        <FormulaDisplay
-                                            type={displayFormulaId}
-                                            onInfo={pushMathTerm}
-                                            onHover={setHoveredTerm}
-                                            darkMode={darkMode}
-                                            showValues={showEquationValues}
-                                            stats={currentStats}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
-                                        <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                                            {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
-                                            <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
-                                        </div>
-                                        <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                        <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                        <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
-                                    </div>
-                                )}
-                            </ErrorBoundary>
+                            renderInteractiveEquationWorkspace()
                         )}
                     </div>
                 ) : (
@@ -1165,28 +1243,7 @@ export default function App() {
                                                                 )}
 
                                                                 <div className={`p-8 flex flex-col items-center justify-center flex-1 transition-colors ${darkMode ? 'bg-slate-950' : 'bg-white'}`}>
-                                                                    {!activeMathTerm ? (
-                                                                        <div className="animate-in fade-in zoom-in-95 duration-200">
-                                                                            <FormulaDisplay
-                                                                                type={displayFormulaId}
-                                                                                onInfo={pushMathTerm}
-                                                                                onHover={setHoveredTerm}
-                                                                                darkMode={darkMode}
-                                                                                showValues={showEquationValues}
-                                                                                stats={currentStats}
-                                                                            />
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center text-center">
-                                                                            <div className={`w-full flex justify-between items-center mb-6 border-b pb-2 ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                                                                                {mathHistory.length > 1 ? (<button onClick={(e) => { e.stopPropagation(); popMathTerm() }} className="text-xs font-bold text-indigo-400 flex items-center gap-1 hover:bg-indigo-500/10 px-2 py-1 rounded"><ChevronLeft className="w-3 h-3" /> Back</button>) : <div />}
-                                                                                <button onClick={(e) => { e.stopPropagation(); closeMath() }} className={`text-xs font-bold flex items-center gap-1 transition-colors ${darkMode ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Close <XCircle className="w-3 h-3" /></button>
-                                                                            </div>
-                                                                            <h4 className={`font-bold text-xl leading-tight mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.title.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                                                            <p className={`text-xs font-bold uppercase tracking-wider mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-500'}`} dangerouslySetInnerHTML={{ __html: activeMathTerm.desc.replace(/\$(.*?)\$/g, "<sub>$1</sub>").replace(/\{(.*?)\}/g, "<sub>$1</sub>") }} />
-                                                                            <div className={`p-4 rounded-lg text-sm border inline-block mb-3 max-w-full break-words shadow-sm ${darkMode ? 'bg-indigo-950/20 text-slate-300 border-indigo-500/20' : 'bg-indigo-50/50 text-slate-800 border-indigo-100'}`}><CalculationText text={activeMathTerm.calc} onInfo={pushMathTerm} darkMode={darkMode} showValues={showEquationValues} stats={currentStats} /></div>
-                                                                        </div>
-                                                                    )}
+                                                                    {renderInteractiveEquationWorkspace()}
                                                                 </div>
                                                             </div>
                                                         )}
