@@ -601,6 +601,61 @@ export const buildDatasetFromGrid = ({
     });
 };
 
+export const buildDatasetFromColumnRecords = ({
+    rows = [],
+    columns = [],
+    datasetId,
+    datasetName,
+    sourceType = 'csv',
+    originalFileName = null,
+    fileType = 'CSV',
+    sheetName = null,
+    delimiter = null,
+    hasHeaderRow = true,
+    createdAt,
+}) => {
+    const preparedColumns = dedupeColumnLabels(
+        columns.map((column, index) => ({
+            id: column.id || createId('column'),
+            index,
+            sourceKey: String(column.sourceKey ?? column.name ?? column.originalName ?? column.label ?? `column_${index + 1}`),
+            name: String(column.name ?? column.originalName ?? column.label ?? `column_${index + 1}`),
+            originalName: String(column.originalName ?? column.name ?? column.label ?? `Column ${index + 1}`),
+            label: String(column.label ?? column.originalName ?? column.name ?? `Column ${index + 1}`),
+            derived: false,
+            transform: column.transform || { type: 'import' },
+        }))
+    );
+
+    const normalizedRows = rows.map((sourceRow, rowIndex) => {
+        const entry = { __rowId: rowIndex };
+
+        preparedColumns.forEach((column) => {
+            const rawValue = sourceRow instanceof Map
+                ? sourceRow.get(column.sourceKey)
+                : sourceRow?.[column.sourceKey];
+
+            entry[column.id] = normalizeCell(rawValue);
+        });
+
+        return entry;
+    });
+
+    return refreshDatasetMetadata({
+        id: datasetId || createId('dataset'),
+        name: datasetName || stripExtension(originalFileName),
+        sourceType,
+        originalFileName,
+        fileType,
+        sheetName,
+        delimiter,
+        hasHeaderRow,
+        createdAt: createdAt || new Date().toISOString(),
+        rows: normalizedRows,
+        columns: preparedColumns.map(({ sourceKey, ...column }) => column),
+    });
+};
+
 export const buildDatasetFromDelimitedText = ({
     text,
     datasetName,

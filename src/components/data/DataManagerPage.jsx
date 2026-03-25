@@ -24,6 +24,7 @@ import {
     analyzeWideToLongReshape,
     autoDetectHeaderRow,
     buildDatasetCsv,
+    buildDatasetFromColumnRecords,
     buildDatasetExportRows,
     buildDatasetFromGrid,
     deleteDatasetColumn,
@@ -590,6 +591,42 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                 setImportSession(session);
                 resetTransformDrafts();
                 rebuildEditorFromSession(session);
+            } else if (lowerName.endsWith('.sav')) {
+                const jsavvyModule = await import('jsavvy');
+                const Feeder = jsavvyModule.Feeder || jsavvyModule.default?.Feeder;
+                const SavParser = jsavvyModule.SavParser || jsavvyModule.default?.SavParser;
+                const Savvy = jsavvyModule.default?.Savvy;
+
+                if (!Feeder || !SavParser || !Savvy) {
+                    throw new Error('The SPSS importer is installed, but could not be loaded correctly.');
+                }
+
+                const parser = new SavParser();
+                const parsed = await parser.all(new Feeder(await file.arrayBuffer()));
+                const savvyDataset = new Savvy(parsed);
+                const nextDataset = buildDatasetFromColumnRecords({
+                    datasetName: stripExtension(file.name),
+                    sourceType: 'sav',
+                    originalFileName: file.name,
+                    fileType: 'SPSS (.sav)',
+                    hasHeaderRow: true,
+                    columns: savvyDataset.keys.map((key) => ({
+                        sourceKey: key,
+                        name: key,
+                        originalName: savvyDataset.names.get(key) || key,
+                        label: savvyDataset.labels.get(key) || savvyDataset.names.get(key) || key,
+                    })),
+                    rows: Array.from({ length: savvyDataset.n }, (_, index) => savvyDataset.row(index)),
+                });
+
+                setImportSession(null);
+                resetTransformDrafts();
+                setEditorDataset(nextDataset);
+                setIsDirty(true);
+                setFeedback({
+                    nextNotice: `Imported ${nextDataset.name} from SPSS with ${nextDataset.rowCount} rows and ${nextDataset.columnCount} variables.`,
+                    nextProblem: '',
+                });
             } else {
                 const parsed = parseDelimitedTextGrid(await file.text());
 
@@ -1263,17 +1300,17 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                             Prepare once, reuse everywhere
                         </h2>
                         <p className={`mt-3 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            Import CSV or Excel data, browse large variable sets without overwhelm, organize variables with editable chips, build derived variables and reshaped datasets, then launch the analysis page with the dataset already active.
+                            Import CSV, Excel, or SPSS data, browse large variable sets without overwhelm, organize variables with editable chips, build derived variables and reshaped datasets, then launch the analysis page with the dataset already active.
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
                         <label className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
                             <FileUp size={16} />
-                            Import CSV / Excel
+                            Import Data File
                             <input
                                 type="file"
-                                accept=".csv,.tsv,.txt,.xlsx"
+                                accept=".csv,.tsv,.txt,.xlsx,.sav"
                                 className="hidden"
                                 onChange={handleFileImport}
                             />
@@ -1331,7 +1368,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
 
                             {!isLoading && !datasets.length && (
                                 <div className={`rounded-xl border px-4 py-5 text-sm ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                                    No saved datasets yet. Import a CSV or Excel file to start your local library.
+                                    No saved datasets yet. Import a CSV, Excel, or SPSS file to start your local library.
                                 </div>
                             )}
 

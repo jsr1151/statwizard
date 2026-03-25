@@ -11,6 +11,7 @@
     "power:fixtures": "node scripts/check-power-fixtures.mjs"
   },
   "dependencies": {
+    "jsavvy": "^0.0.6",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
