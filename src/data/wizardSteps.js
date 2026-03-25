@@ -31,21 +31,20 @@ export const STEPS = {
     descriptive_type: {
         id: 'descriptive_type',
         title: "Descriptive Focus",
-        question: "What aspect of the data do you want to describe?",
-        description: "Descriptive statistics describe different features of a dataset.",
+        question: "What are you trying to describe?",
+        description: "Choose the part of the dataset you want to summarize first.",
         options: [
             { label: "Center of the data (Central Tendency)", value: 'center', next: 'res_central_tendency' },
             { label: "Spread/Diversity of the data (Variability)", value: 'spread', next: 'res_variability' },
-            { label: "Counts/Distribution (Frequency)", value: 'frequency', next: 'res_frequency' },
-            { label: "Likelihood & Chance (Probability)", value: 'probability', next: 'res_probability' },
-            { label: "Testing Logic (NHST)", value: 'nhst', next: 'res_nhst' }
+            { label: "Counts/Distribution (Frequency)", value: 'frequency', next: 'res_frequency' }
         ]
     },
 
     num_groups: {
         id: 'num_groups',
         title: "Study Design",
-        question: "How many distinct groups or conditions are you comparing?",
+        question: "How many groups are you comparing?",
+        description: "Start by counting the groups or conditions whose means you want to compare.",
         helpId: 'help_groups',
         options: [
             { label: "1 Group (e.g., Sample vs. Population)", value: '1_group', next: 'population_sd' },
@@ -69,16 +68,16 @@ export const STEPS = {
         title: "Counting Groups",
         question: "Select your scenario:",
         options: [
-            { label: "I am comparing Men vs. Women.", feedback: "That is 2 Groups.", targetValue: '2_groups' },
-            { label: "I am comparing Pre-test vs. Post-test scores.", feedback: "That is 2 Conditions (Timepoints).", targetValue: '2_groups' },
-            { label: "I am comparing a Placebo, a Low Dose, and a High Dose.", feedback: "That is 3 Groups.", targetValue: '3_groups' }
+            { label: "I am comparing one sample against a known benchmark or population value.", feedback: "That is a 1-group comparison.", targetValue: '1_group' },
+            { label: "I am comparing Men vs. Women or Pre-test vs. Post-test.", feedback: "That is a 2-group comparison.", targetValue: '2_groups' },
+            { label: "I am comparing a Placebo, a Low Dose, and a High Dose.", feedback: "That is 3 groups.", targetValue: '3_groups' }
         ]
     },
     dependency: {
         id: 'dependency',
         title: "Independence vs. Paired",
-        question: "Are the participants in your groups related or independent?",
-        description: "This determines if you need a 'Paired' or 'Independent' test.",
+        question: "Are the two groups independent from one another, or are they related/paired?",
+        description: "This separates independent-samples tests from paired or repeated-measures comparisons.",
         helpId: 'help_dependency',
         options: [
             { label: "Independent (Different people in each group)", value: 'independent', next: 'normality_indep' },
@@ -91,19 +90,20 @@ export const STEPS = {
         title: "Paired vs. Independent",
         question: "How were your participants measured?",
         options: [
-            { label: "I measured the SAME people twice (e.g., Before and After).", feedback: "This is a Paired/Related design (Within-Subjects).", targetValue: 'paired' },
-            { label: "I have two completely separate groups of people.", feedback: "This is an Independent design (Between-Subjects).", targetValue: 'independent' },
-            { label: "I recruited couples (Husband vs. Wife).", feedback: "Matched pairs count as Related.", targetValue: 'paired' }
+            { label: "I measured the SAME people twice (e.g., Before and After).", feedback: "This is a paired or related design.", targetValue: 'paired' },
+            { label: "I have two completely separate groups of people.", feedback: "This is an independent-groups design.", targetValue: 'independent' },
+            { label: "I recruited couples or matched pairs.", feedback: "Matched pairs count as related.", targetValue: 'paired' }
         ]
     },
     relationship_type: {
         id: 'relationship_type',
         title: "Relationship Type",
-        question: "Are you looking for an association or a prediction?",
+        question: "Are you trying to predict variable outcomes?",
+        description: "Choose prediction if one variable is meant to explain or forecast another. Choose association if you only want to know whether variables move together.",
         helpId: 'help_relationship',
         options: [
-            { label: "Association (Correlation)", value: 'correlation', next: 'correlation_result' },
-            { label: "Prediction (Regression)", value: 'regression', next: 'regression_type' }
+            { label: "No, I want to examine an association only", value: 'correlation', next: 'correlation_result' },
+            { label: "Yes, I want to predict an outcome variable", value: 'regression', next: 'regression_type' }
         ]
     },
     regression_type: {
@@ -121,14 +121,14 @@ export const STEPS = {
         title: "Correlation vs. Regression",
         question: "What is your main output?",
         options: [
-            { label: "I want to know if two variables move together.", feedback: "Use Correlation.", targetValue: 'correlation' },
-            { label: "I want to predict a specific score based on other variables.", feedback: "Use Regression.", targetValue: 'regression' }
+            { label: "I want to know if two variables move together.", feedback: "That is an association question, so start with correlation.", targetValue: 'correlation' },
+            { label: "I want to predict a specific score based on other variables.", feedback: "That is a prediction question, so move to regression.", targetValue: 'regression' }
         ]
     },
     normality_indep: {
         id: 'normality_indep',
         title: "Assumptions",
-        question: "Is your outcome variable normally distributed?",
+        question: "Is the data normally distributed?",
         helpId: 'help_normality',
         options: [
             { label: "Yes, Normal (Parametric)", value: 'normal', next: 'res_indep_ttest' },
@@ -138,7 +138,7 @@ export const STEPS = {
     normality_paired: {
         id: 'normality_paired',
         title: "Assumptions",
-        question: "Are the *difference scores* normally distributed?",
+        question: "Are the difference scores normally distributed?",
         helpId: 'help_normality',
         options: [
             { label: "Yes, Normal", value: 'normal', next: 'res_paired_ttest' },
@@ -151,20 +151,39 @@ export const STEPS = {
         title: "Checking Normality",
         question: "How does your data look?",
         options: [
-            { label: "It looks like a bell curve (symmetrical).", feedback: "Assume Normality.", targetValue: 'normal' },
-            { label: "I have a small sample size (<30) and it looks lopsided.", feedback: "Assume Non-Normal (Skewed).", targetValue: 'skewed' },
-            { label: "My data is ranked (1st, 2nd, 3rd) or a scale (1-5 stars).", feedback: "Ordinal data is treated as Non-Parametric.", targetValue: 'skewed' }
+            { label: "It looks like a bell curve (symmetrical).", feedback: "Assume normality.", targetValue: 'normal' },
+            { label: "I have a small sample size (<30) and it looks lopsided.", feedback: "Assume non-normality.", targetValue: 'skewed' },
+            { label: "My data is ranked (1st, 2nd, 3rd) or a scale (1-5 stars).", feedback: "Ordinal data is usually treated as non-parametric here.", targetValue: 'skewed' }
         ]
     },
     anova_branch: {
         id: 'anova_branch',
-        title: "ANOVA Design",
-        question: "How is your study structured?",
+        title: "Independent Variables",
+        question: "How many independent variables (factors) are you administering?",
+        description: "We separate one-factor designs from multi-factor designs first. Repeated-measures and covariate-adjusted versions can branch from the one-factor path.",
         options: [
-            { label: "One-Way (1 Factor, 3+ Groups)", value: 'indep', next: 'res_one_way_anova' },
-            { label: "Factorial (2+ Factors, e.g., 2x2)", value: 'factorial', next: 'res_factorial_anova' },
-            { label: "Repeated Measures (Same people)", value: 'repeated', next: 'res_rm_anova' },
-            { label: "ANCOVA (Groups + Continuous Covariate)", value: 'ancova', next: 'res_ancova' }
+            { label: "One factor / one independent variable", value: 'one_factor', next: 'one_factor_design' },
+            { label: "Two or more factors (factorial design)", value: 'factorial', next: 'res_factorial_anova' }
+        ]
+    },
+    one_factor_design: {
+        id: 'one_factor_design',
+        title: "One-Factor Design",
+        question: "Are the groups independent, or are the same participants measured repeatedly?",
+        description: "This is the key split between one-way ANOVA and repeated-measures ANOVA.",
+        options: [
+            { label: "Independent groups", value: 'independent', next: 'one_factor_covariate' },
+            { label: "Repeated measures / same participants across conditions", value: 'repeated', next: 'res_rm_anova' }
+        ]
+    },
+    one_factor_covariate: {
+        id: 'one_factor_covariate',
+        title: "Covariates",
+        question: "Are you controlling for a continuous covariate while comparing the groups?",
+        description: "If yes, the closest match here is ANCOVA rather than a standard one-way ANOVA.",
+        options: [
+            { label: "No, I only want to compare the groups", value: 'no_covariate', next: 'res_one_way_anova' },
+            { label: "Yes, I am adjusting for a continuous covariate", value: 'covariate', next: 'res_ancova' }
         ]
     },
 

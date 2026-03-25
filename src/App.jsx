@@ -884,8 +884,13 @@ export default function App() {
                                                 </button>
                                             )}
                                         </div>
-                                        <h2 className={`text-2xl md:text-4xl font-extrabold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currentStep?.title || currentStep?.question}</h2>
-                                        {currentStep?.description && <p className="text-lg md:text-xl font-light leading-relaxed max-w-3xl text-slate-600">{currentStep?.description}</p>}
+                                        {currentStep?.title && currentStep?.question && currentStep.title !== currentStep.question && (
+                                            <p className={`text-sm md:text-base font-black uppercase tracking-[0.25em] mb-3 ${darkMode ? 'text-indigo-400/80' : 'text-indigo-600'}`}>
+                                                {currentStep.title}
+                                            </p>
+                                        )}
+                                        <h2 className={`text-2xl md:text-4xl font-extrabold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{currentStep?.question || currentStep?.title}</h2>
+                                        {currentStep?.description && <p className={`text-lg md:text-xl font-light leading-relaxed max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{currentStep?.description}</p>}
                                         <div className="mt-8 grid gap-4">
                                             {currentStep?.options?.map((option, idx) => (
                                                 <button key={idx} onClick={() => handleOptionClick(option)} className={`flex items-center justify-between p-6 text-left border-2 rounded-xl transition-all duration-200 group ${darkMode ? 'border-slate-800 bg-slate-900/50 hover:border-indigo-500 hover:bg-indigo-500/10' : 'border-slate-100 bg-white hover:border-indigo-600 hover:bg-indigo-50 hover:shadow-md'}`}>
