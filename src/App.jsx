@@ -67,6 +67,7 @@ import SearchView from './components/navigation/SearchView';
 import LessonsView from './components/navigation/LessonsView';
 import DataManagerPage from './components/data/DataManagerPage';
 import UpdateToast from './components/common/UpdateToast';
+import { WizardCurveMarkIcon } from './components/common/AppIcons';
 import PowerAnalysisHub from './components/power/PowerAnalysisHub';
 import PowerAnalysisTab from './components/power/PowerAnalysisTab';
 import EffectSizePanel from './components/power/EffectSizePanel';
@@ -813,6 +814,14 @@ export default function App() {
                     <div className="mb-12">
                         {appMode === 'menu' && (
                             <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
+                                <div className="mb-8 flex justify-center">
+                                    <div className="relative">
+                                        <div className={`absolute inset-0 rounded-[2rem] blur-3xl opacity-70 ${darkMode ? 'bg-indigo-500/20' : 'bg-indigo-400/20'}`} />
+                                        <div className={`relative flex h-28 w-28 items-center justify-center rounded-[2rem] border transition-transform duration-500 ${darkMode ? 'border-indigo-500/30 bg-slate-900/90 shadow-[0_24px_60px_rgba(79,70,229,0.2)]' : 'border-indigo-200 bg-white/95 shadow-[0_24px_60px_rgba(99,102,241,0.18)]'}`}>
+                                            <WizardCurveMarkIcon className={`${darkMode ? 'text-indigo-300' : 'text-indigo-600'} h-16 w-16`} />
+                                        </div>
+                                    </div>
+                                </div>
                                 <h2 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                                     Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400">Data.</span>
                                 </h2>
