@@ -2791,7 +2791,7 @@ const MultipleRegressionPage = ({
             </div>
 
             {lessonShouldFloatVisual && (
-                <div className="fixed z-40 bottom-4 right-4 left-4 sm:left-auto sm:w-[26rem] xl:w-[30rem] pointer-events-none">
+                <div className="fixed z-40 bottom-4 left-4 right-4 sm:left-4 sm:right-auto sm:w-[26rem] xl:w-[30rem] pointer-events-none">
                     <div className={`pointer-events-auto rounded-3xl border shadow-2xl ${darkMode ? 'bg-slate-950/95 border-slate-800 backdrop-blur-xl' : 'bg-white/95 border-slate-200 backdrop-blur-xl'}`}>
                         <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                             <div>
