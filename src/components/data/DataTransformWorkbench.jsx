@@ -127,6 +127,7 @@ const DataTransformWorkbench = (props) => {
         onSelectReshapeCandidate,
         onToggleReshapeMeasureGroup,
         onSetReshapeAllowMultiple,
+        onUpdateReshapeKeyValueOverride,
         onApplyReshape,
         formatDatasetValue,
     } = props;
@@ -853,6 +854,30 @@ const DataTransformWorkbench = (props) => {
                                             className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-500'}`}
                                         />
                                     </label>
+
+                                    {!!selectedReshapeCandidate?.keyValues?.length && (
+                                        <div className="mt-4">
+                                            <Label darkMode={darkMode}>Manual grouping value labels</Label>
+                                            <div className="mt-3 space-y-3">
+                                                {selectedReshapeCandidate.keyValues.map((keyValue) => (
+                                                    <div key={`reshape-key-override-${keyValue}`} className="grid gap-3 md:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)]">
+                                                        <div className={`rounded-xl border px-4 py-3 text-sm font-bold ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                                            Detected: {keyValue}
+                                                        </div>
+                                                        <input
+                                                            value={reshapeDraft.keyValueOverrides?.[keyValue] || ''}
+                                                            onChange={(event) => onUpdateReshapeKeyValueOverride(keyValue, event.target.value)}
+                                                            placeholder={`Keep ${keyValue} or rename it`}
+                                                            className={`rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className={`mt-3 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                                Use this when the detected values should become factor labels like `Control` and `Treatment` instead of the raw source labels.
+                                            </div>
+                                        </div>
+                                    )}
                                 </Panel>
 
                                 <Panel darkMode={darkMode}>

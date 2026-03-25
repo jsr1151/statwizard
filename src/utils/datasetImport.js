@@ -1381,6 +1381,7 @@ export const buildSmartWideToLongReshapePlan = (dataset, {
     candidate = null,
     selectedMeasureGroupIds = [],
     keyColumnLabel = '',
+    keyValueOverrides = {},
     carryForwardColumnIds = [],
 } = {}) => {
     const errors = [];
@@ -1429,6 +1430,29 @@ export const buildSmartWideToLongReshapePlan = (dataset, {
 
     const keyLevels = Array.from(keyValueLookup.values())
         .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+    const normalizedKeyValueOverrides = Object.fromEntries(
+        Object.entries(keyValueOverrides || {})
+            .map(([sourceKeyValue, overrideValue]) => [String(sourceKeyValue), String(overrideValue ?? '').trim()])
+            .filter(([, overrideValue]) => overrideValue.length > 0)
+    );
+    const rawKeyLevels = [...keyLevels];
+    const outputKeyLevels = rawKeyLevels.map((keyValue) => normalizedKeyValueOverrides[keyValue] || keyValue);
+    const seenOutputLevels = new Set();
+
+    outputKeyLevels.forEach((outputKeyValue) => {
+        const normalized = outputKeyValue.toLowerCase();
+
+        if (seenOutputLevels.has(normalized)) {
+            errors.push('Manual grouping labels must stay unique so each reshaped level maps to a distinct row value.');
+            return;
+        }
+
+        seenOutputLevels.add(normalized);
+    });
+
+    const keyLevelDisplayLookup = new Map(
+        rawKeyLevels.map((keyValue) => [String(keyValue).toLowerCase(), normalizedKeyValueOverrides[keyValue] || keyValue])
+    );
 
     if (selectedMeasureGroups.length && keyLevels.length < 2) {
         errors.push('The selected repeated-measures variable needs at least two timepoints or key values to reshape into long format.');
@@ -1442,7 +1466,9 @@ export const buildSmartWideToLongReshapePlan = (dataset, {
         idColumns,
         keyColumnLabel: String(keyColumnLabel ?? '').trim() || candidate?.dimensionLabel || 'Timepoint',
         valueColumnLabel: 'value',
-        keyLevels,
+        rawKeyLevels,
+        keyLevels: outputKeyLevels,
+        keyLevelDisplayLookup,
         groupedMeasures,
         parsedPivotColumns,
         comboLookup,
@@ -1610,13 +1636,15 @@ export const reshapeWideToLongDataset = (dataset, {
             transform: { type: 'wide_to_long_grouped_value', sourceColumnIds: measure.sourceColumnIds },
             measureKey: measure.key,
         }));
+        const sourceKeyLevels = reshapePlan.rawKeyLevels || reshapePlan.keyLevels;
 
         (dataset?.rows || []).forEach((row) => {
-            reshapePlan.keyLevels.forEach((keyValue) => {
-                const keyValueKey = String(keyValue).toLowerCase();
+            sourceKeyLevels.forEach((sourceKeyValue) => {
+                const keyValueKey = String(sourceKeyValue).toLowerCase();
+                const outputKeyValue = reshapePlan.keyLevelDisplayLookup?.get(keyValueKey) || sourceKeyValue;
                 const nextRow = {
                     __rowId: nextRows.length,
-                    [keyColumnId]: keyValue,
+                    [keyColumnId]: outputKeyValue,
                 };
 
                 reshapePlan.idColumns.forEach((idColumn) => {

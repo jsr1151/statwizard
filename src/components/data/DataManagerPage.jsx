@@ -93,6 +93,7 @@ const buildDefaultReshapeDraft = () => ({
     smartCandidateId: '',
     selectedMeasureGroupIds: [],
     allowMultipleMeasureGroups: true,
+    keyValueOverrides: {},
 });
 
 const ANALYSIS_OPTIONS = [
@@ -433,6 +434,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             candidate: selectedReshapeCandidate,
             selectedMeasureGroupIds: reshapeDraft.selectedMeasureGroupIds,
             keyColumnLabel: reshapeDraft.keyColumnLabel,
+            keyValueOverrides: reshapeDraft.keyValueOverrides,
             carryForwardColumnIds: (editorDataset?.columns || [])
                 .filter((column) => !reshapeRepeatedColumnIds.includes(column.id))
                 .map((column) => column.id),
@@ -440,6 +442,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
     }, [
         editorDataset,
         reshapeDraft.keyColumnLabel,
+        reshapeDraft.keyValueOverrides,
         reshapeDraft.selectedMeasureGroupIds,
         reshapeRepeatedColumnIds,
         selectedReshapeCandidate,
@@ -502,6 +505,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             const nextCandidate = reshapeCandidates.find((candidate) => candidate.id === previous.smartCandidateId) || reshapeCandidates[0] || null;
             const nextCandidateId = nextCandidate?.id || '';
             const availableMeasureGroupIds = nextCandidate?.measureGroups.map((measureGroup) => measureGroup.id) || [];
+            const availableKeyValues = nextCandidate?.keyValues || [];
             let nextSelectedMeasureGroupIds = previous.selectedMeasureGroupIds
                 .filter((measureGroupId) => availableMeasureGroupIds.includes(measureGroupId));
 
@@ -519,10 +523,16 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                 && previous.smartCandidateId === nextCandidateId
                 ? previous.keyColumnLabel
                 : (nextCandidate?.dimensionLabel || '');
+            const nextKeyValueOverrides = Object.fromEntries(
+                Object.entries(previous.keyValueOverrides || {})
+                    .filter(([key]) => availableKeyValues.includes(key))
+            );
 
             if (
                 previous.smartCandidateId === nextCandidateId
                 && previous.keyColumnLabel === nextKeyColumnLabel
+                && Object.keys(previous.keyValueOverrides || {}).length === Object.keys(nextKeyValueOverrides).length
+                && Object.entries(previous.keyValueOverrides || {}).every(([key, value]) => nextKeyValueOverrides[key] === value)
                 && previous.selectedMeasureGroupIds.length === nextSelectedMeasureGroupIds.length
                 && previous.selectedMeasureGroupIds.every((measureGroupId, index) => measureGroupId === nextSelectedMeasureGroupIds[index])
             ) {
@@ -534,6 +544,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                 smartCandidateId: nextCandidateId,
                 keyColumnLabel: nextKeyColumnLabel,
                 selectedMeasureGroupIds: nextSelectedMeasureGroupIds,
+                keyValueOverrides: nextKeyValueOverrides,
             };
         });
     }, [reshapeCandidates]);
@@ -1253,6 +1264,16 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }));
     };
 
+    const handleUpdateReshapeKeyValueOverride = (sourceKeyValue, nextValue) => {
+        setReshapeDraft((previous) => ({
+            ...previous,
+            keyValueOverrides: {
+                ...(previous.keyValueOverrides || {}),
+                [sourceKeyValue]: nextValue,
+            },
+        }));
+    };
+
     const handleApplyReshape = () => {
         if (!editorDataset) {
             return;
@@ -1922,6 +1943,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                 onSelectReshapeCandidate={handleSelectReshapeCandidate}
                                 onToggleReshapeMeasureGroup={handleToggleReshapeMeasureGroup}
                                 onSetReshapeAllowMultiple={handleSetReshapeAllowMultiple}
+                                onUpdateReshapeKeyValueOverride={handleUpdateReshapeKeyValueOverride}
                                 onApplyReshape={handleApplyReshape}
                                 formatDatasetValue={formatDatasetValue}
                             />
