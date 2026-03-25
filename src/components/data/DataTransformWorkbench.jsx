@@ -8,19 +8,6 @@ const BUILDER_MODES = [
     ['recode', 'Recode categories'],
 ];
 
-const RESHAPE_MODES = [
-    {
-        id: 'single_value',
-        label: 'Single value column',
-        summary: 'Each selected wide column becomes one long row with one shared value column.',
-    },
-    {
-        id: 'grouped_suffix',
-        label: 'Group by suffix',
-        summary: 'Columns like "Calmness T1" and "Stress T1" become one shared timepoint row with separate measure columns.',
-    },
-];
-
 const Panel = ({ darkMode, children, className = '' }) => (
     <div className={`rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'} ${className}`}>
         {children}
@@ -133,9 +120,13 @@ const DataTransformWorkbench = (props) => {
         onApplyRecode,
         reshapeDraft,
         setReshapeDraft,
+        reshapeCandidates,
+        selectedReshapeCandidate,
         reshapePlan,
         reshapePreviewDataset,
-        onToggleReshapeColumn,
+        onSelectReshapeCandidate,
+        onToggleReshapeMeasureGroup,
+        onSetReshapeAllowMultiple,
         onApplyReshape,
         formatDatasetValue,
     } = props;
@@ -765,145 +756,137 @@ const DataTransformWorkbench = (props) => {
                     </div>
 
                     <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                        Choose how you want the wide columns reshaped, keep identifier columns separate, then preview the long-format result before saving it back into the dataset workspace.
+                        Pick the repeated-measures variable you want condensed into long format, let StatWizard create a smart grouping variable such as `Time`, and preview which columns will be copied forward automatically.
                     </p>
 
-                    <div className="flex flex-wrap gap-2">
-                        {RESHAPE_MODES.map((modeOption) => (
-                            <Pill
-                                key={modeOption.id}
-                                darkMode={darkMode}
-                                active={reshapeDraft.mode === modeOption.id}
-                                onClick={() => setReshapeDraft((previous) => ({ ...previous, mode: modeOption.id }))}
-                            >
-                                {modeOption.label}
-                            </Pill>
-                        ))}
-                    </div>
+                    {!reshapeCandidates.length && (
+                        <EmptyState darkMode={darkMode}>
+                            StatWizard did not detect a repeated-measures pattern yet. This smart reshape looks for labels such as `Confidence Time 1` / `Confidence Time 2`, `Calmness T1` / `Calmness T2`, or `Stress (Pre)` / `Stress (Post)`.
+                        </EmptyState>
+                    )}
 
-                    <div className={`rounded-xl border px-4 py-4 text-sm ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                        {RESHAPE_MODES.find((modeOption) => modeOption.id === reshapeDraft.mode)?.summary}
-                        {reshapeDraft.mode === 'grouped_suffix' && (
-                            <div className="mt-2 text-xs">
-                                Use this when the selected columns share a repeated suffix such as `T1/T2`, `Pre/Post`, or `Session_1/Session_2`.
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="grid gap-4 xl:grid-cols-2">
-                        <Panel darkMode={darkMode}>
-                            <div className={`mb-3 text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                1. Variables to reshape into long format
-                            </div>
-                            <div className="space-y-2 max-h-[18rem] overflow-y-auto pr-1">
-                                {(dataset?.columns || []).map((column) => {
-                                    const checked = reshapeDraft.pivotColumnIds.includes(column.id);
-                                    return (
-                                        <label
-                                            key={`reshape-pivot-${column.id}`}
-                                            className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${checked
-                                                ? (darkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-white' : 'bg-indigo-50 border-indigo-200 text-slate-900')
-                                                : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700')
-                                            }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={checked}
-                                                onChange={() => onToggleReshapeColumn(column.id, 'pivotColumnIds')}
-                                            />
-                                            <div className="min-w-0">
-                                                <div className="font-bold">{column.label}</div>
-                                                <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                                                    {column.summary?.detectedType}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                        </Panel>
-
-                        <Panel darkMode={darkMode}>
-                            <div className={`mb-3 text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                2. Identifier columns to preserve
-                            </div>
-                            <div className="space-y-2 max-h-[18rem] overflow-y-auto pr-1">
-                                {(dataset?.columns || []).map((column) => {
-                                    const checked = reshapeDraft.idColumnIds.includes(column.id);
-                                    return (
-                                        <label
-                                            key={`reshape-id-${column.id}`}
-                                            className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${checked
-                                                ? (darkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-white' : 'bg-indigo-50 border-indigo-200 text-slate-900')
-                                                : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700')
-                                            }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={checked}
-                                                onChange={() => onToggleReshapeColumn(column.id, 'idColumnIds')}
-                                            />
-                                            <div className="min-w-0">
-                                                <div className="font-bold">{column.label}</div>
-                                                <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                                                    {column.summary?.detectedType}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                        </Panel>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <label className="block">
-                            <Label darkMode={darkMode}>
-                                {reshapeDraft.mode === 'grouped_suffix' ? '3. Shared key column name' : '3. New key column name'}
-                            </Label>
-                            <input
-                                value={reshapeDraft.keyColumnLabel}
-                                onChange={(event) => setReshapeDraft((previous) => ({ ...previous, keyColumnLabel: event.target.value }))}
-                                placeholder={reshapeDraft.mode === 'grouped_suffix' ? 'timepoint' : 'variable'}
-                                className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                            />
-                        </label>
-                        {reshapeDraft.mode === 'single_value' ? (
-                            <label className="block">
-                                <Label darkMode={darkMode}>4. New value column name</Label>
-                                <input
-                                    value={reshapeDraft.valueColumnLabel}
-                                    onChange={(event) => setReshapeDraft((previous) => ({ ...previous, valueColumnLabel: event.target.value }))}
-                                    placeholder="value"
-                                    className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                                />
-                            </label>
-                        ) : (
+                    {reshapeCandidates.length > 0 && (
+                        <>
                             <Panel darkMode={darkMode}>
-                                <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                    4. Parsed measure columns
+                                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                                    <div>
+                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            1. Variable to condense into long format
+                                        </div>
+                                        <div className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            Default to one repeated-measures variable, or turn on multi-variable mode if you want several long-format columns created together.
+                                        </div>
+                                    </div>
+
+                                    <label className={`flex items-center justify-between gap-4 rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-700'}`}>
+                                        <div>
+                                            <div className="font-bold">Allow multiple long columns</div>
+                                            <div className={`mt-1 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                                Keep this off when you only need one condensed variable.
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={reshapeDraft.allowMultipleMeasureGroups}
+                                            onChange={(event) => onSetReshapeAllowMultiple(event.target.checked)}
+                                        />
+                                    </label>
                                 </div>
-                                {reshapePlan?.groupedMeasures?.length ? (
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        {reshapePlan.groupedMeasures.map((measure) => (
-                                            <span
-                                                key={`reshape-measure-${measure.key}`}
-                                                className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-300' : 'border-slate-200 bg-white text-slate-700'}`}
+
+                                <div className="mt-4 space-y-2 max-h-[18rem] overflow-y-auto pr-1">
+                                    {selectedReshapeCandidate?.measureGroups.map((measureGroup) => {
+                                        const checked = reshapeDraft.selectedMeasureGroupIds.includes(measureGroup.id);
+                                        return (
+                                            <label
+                                                key={`reshape-measure-group-${measureGroup.id}`}
+                                                className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${checked
+                                                    ? (darkMode ? 'bg-indigo-500/10 border-indigo-500/30 text-white' : 'bg-indigo-50 border-indigo-200 text-slate-900')
+                                                    : (darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700')
+                                                }`}
                                             >
-                                                {measure.label}
-                                            </span>
+                                                <input
+                                                    type={reshapeDraft.allowMultipleMeasureGroups ? 'checkbox' : 'radio'}
+                                                    name="reshape-measure-group"
+                                                    checked={checked}
+                                                    onChange={() => onToggleReshapeMeasureGroup(measureGroup.id)}
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="font-bold">{measureGroup.label}</div>
+                                                    <div className={`mt-1 text-xs ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
+                                                        Detected {selectedReshapeCandidate.dimensionLabel.toLowerCase()} values: {measureGroup.keyValues.join(', ')}
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </Panel>
+
+                            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                                <Panel darkMode={darkMode}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        2. Smart grouping variable to create
+                                    </div>
+                                    <div className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        StatWizard can infer a grouping variable from the selected wide columns and use it to build the long-format rows automatically.
+                                    </div>
+
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {reshapeCandidates.map((candidate) => (
+                                            <Pill
+                                                key={candidate.id}
+                                                darkMode={darkMode}
+                                                active={selectedReshapeCandidate?.id === candidate.id}
+                                                onClick={() => onSelectReshapeCandidate(candidate.id)}
+                                            >
+                                                {candidate.dimensionLabel}: {candidate.keyValues.join(', ')}
+                                            </Pill>
                                         ))}
                                     </div>
-                                ) : (
-                                    <div className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        Pick repeated-measures columns and this mode will split them into separate long-format measure columns automatically.
-                                    </div>
-                                )}
-                            </Panel>
-                        )}
-                    </div>
 
-                    {reshapePlan && !reshapePlan.ok && (
+                                    <label className="mt-4 block">
+                                        <Label darkMode={darkMode}>New grouping column name</Label>
+                                        <input
+                                            value={reshapeDraft.keyColumnLabel}
+                                            onChange={(event) => setReshapeDraft((previous) => ({ ...previous, keyColumnLabel: event.target.value }))}
+                                            placeholder={selectedReshapeCandidate?.dimensionLabel || 'Timepoint'}
+                                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                        />
+                                    </label>
+                                </Panel>
+
+                                <Panel darkMode={darkMode}>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                        3. Columns copied forward automatically
+                                    </div>
+                                    {reshapePlan?.idColumns?.length ? (
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {reshapePlan.idColumns.map((column) => (
+                                                <span
+                                                    key={`reshape-carry-column-${column.id}`}
+                                                    className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-300' : 'border-slate-200 bg-white text-slate-700'}`}
+                                                >
+                                                    {column.label}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                            No stable columns were detected outside the repeated-measures structure, so the reshaped result will mainly contain the new grouping variable and the selected long-format variables.
+                                        </div>
+                                    )}
+
+                                    {reshapePlan?.omittedMeasureGroups?.length > 0 && (
+                                        <div className={`mt-4 text-sm ${darkMode ? 'text-amber-200' : 'text-amber-700'}`}>
+                                            Not currently merged: {reshapePlan.omittedMeasureGroups.map((measureGroup) => measureGroup.label).join(', ')}
+                                        </div>
+                                    )}
+                                </Panel>
+                            </div>
+                        </>
+                    )}
+
+                    {reshapeCandidates.length > 0 && reshapePlan && !reshapePlan.ok && (
                         <Panel darkMode={darkMode} className={darkMode ? 'border-rose-500/30 bg-rose-500/10' : 'border-rose-200 bg-rose-50'}>
                             <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-rose-300' : 'text-rose-700'}`}>
                                 Reshape issue
@@ -914,12 +897,12 @@ const DataTransformWorkbench = (props) => {
                         </Panel>
                     )}
 
-                    {reshapeDraft.mode === 'grouped_suffix' && reshapePlan?.ok && (
+                    {reshapeCandidates.length > 0 && reshapePlan?.ok && (
                         <Panel darkMode={darkMode}>
                             <div className="grid gap-4 xl:grid-cols-[auto_1fr]">
                                 <div>
                                     <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                        Detected key levels
+                                        Detected {selectedReshapeCandidate?.dimensionLabel || 'grouping'} values
                                     </div>
                                     <div className={`mt-2 flex flex-wrap gap-2 text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                                         {reshapePlan.keyLevels.map((keyValue) => (
@@ -933,13 +916,13 @@ const DataTransformWorkbench = (props) => {
                                     </div>
                                 </div>
                                 <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                    Each original case becomes one row per detected key level. Shared prefixes become separate long-format value columns, so `Calmness T1` and `Stress T1` turn into one row where `{reshapeDraft.keyColumnLabel || 'timepoint'}` equals `T1`.
+                                    Each original case becomes one row per detected {selectedReshapeCandidate?.dimensionLabel?.toLowerCase() || 'grouping'} value. The selected repeated-measures variable becomes one long-format column, while stable columns such as participant ID or age are copied into each row automatically.
                                 </div>
                             </div>
                         </Panel>
                     )}
 
-                    {reshapePreviewDataset && (
+                    {reshapeCandidates.length > 0 && reshapePreviewDataset && (
                         <Panel darkMode={darkMode}>
                             <div className="grid gap-4 xl:grid-cols-[auto_auto_1fr]">
                                 <div>
@@ -959,9 +942,7 @@ const DataTransformWorkbench = (props) => {
                                     </div>
                                 </div>
                                 <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                    {reshapeDraft.mode === 'grouped_suffix'
-                                        ? 'Each original row becomes one row per detected key level, while the chosen identifier columns are copied and the parsed measure prefixes become separate long-format columns.'
-                                        : 'Each original row becomes one row per selected pivot variable, while the chosen identifier columns are copied into each long-format row.'}
+                                    The preview shows the selected long-format variable(s), the new grouping column, and every non-repeated column that will be copied forward into each reshaped row.
                                 </div>
                             </div>
 
@@ -995,12 +976,14 @@ const DataTransformWorkbench = (props) => {
                         </Panel>
                     )}
 
-                    <ActionButton darkMode={darkMode} primary onClick={onApplyReshape} className="w-full sm:w-auto">
-                        <span className="inline-flex items-center gap-2">
-                            <CheckCircle2 size={16} />
-                            Reshape to Long
-                        </span>
-                    </ActionButton>
+                    {reshapeCandidates.length > 0 && (
+                        <ActionButton darkMode={darkMode} primary onClick={onApplyReshape} className="w-full sm:w-auto">
+                            <span className="inline-flex items-center gap-2">
+                                <CheckCircle2 size={16} />
+                                Reshape to Long
+                            </span>
+                        </ActionButton>
+                    )}
                 </section>
             </div>
         </div>

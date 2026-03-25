@@ -1106,6 +1106,100 @@ const orderDatasetColumns = (dataset, columns = []) => {
     );
 };
 
+const titleCaseLabel = (value = '') => String(value)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const normalizeSmartDimensionLabel = (value = '') => {
+    const trimmed = String(value ?? '').trim().replace(/[_-]+/g, ' ');
+    const lower = trimmed.toLowerCase();
+
+    if (!trimmed) {
+        return 'Timepoint';
+    }
+
+    if (['t', 'tp', 'timepoint'].includes(lower)) {
+        return 'Timepoint';
+    }
+
+    if (lower === 'time') {
+        return 'Time';
+    }
+
+    if (['visit', 'wave', 'session', 'trial', 'condition', 'occasion'].includes(lower)) {
+        return titleCaseLabel(lower);
+    }
+
+    return titleCaseLabel(trimmed);
+};
+
+const tryParseSmartLongFormatLabel = (value) => {
+    const trimmed = String(value ?? '').trim();
+
+    if (!trimmed) {
+        return null;
+    }
+
+    const parentheticalMatch = trimmed.match(/^(.*?)\(([^()]+)\)$/);
+
+    if (parentheticalMatch) {
+        const measureLabel = parentheticalMatch[1].trim().replace(/[\s_-]+$/, '').trim();
+        const inside = parentheticalMatch[2].trim();
+        const detailedInsideMatch = inside.match(/^([A-Za-z][A-Za-z]*)[\s_-]*([^()\s_-]+)$/);
+
+        if (measureLabel && detailedInsideMatch) {
+            return {
+                measureLabel,
+                dimensionLabel: normalizeSmartDimensionLabel(detailedInsideMatch[1]),
+                keyValue: detailedInsideMatch[2].trim(),
+            };
+        }
+
+        if (measureLabel && inside) {
+            return {
+                measureLabel,
+                dimensionLabel: 'Occasion',
+                keyValue: inside,
+            };
+        }
+    }
+
+    const namedDimensionMatch = trimmed.match(/^(.*?)[\s_-]+([A-Za-z][A-Za-z]*)[\s_-]+([^()\s_-]+)$/);
+
+    if (namedDimensionMatch && namedDimensionMatch[1].trim()) {
+        return {
+            measureLabel: namedDimensionMatch[1].trim(),
+            dimensionLabel: normalizeSmartDimensionLabel(namedDimensionMatch[2]),
+            keyValue: namedDimensionMatch[3].trim(),
+        };
+    }
+
+    const compactDimensionMatch = trimmed.match(/^(.*?)[\s_-]+([A-Za-z]{1,12})(\d+)$/);
+
+    if (compactDimensionMatch && compactDimensionMatch[1].trim()) {
+        return {
+            measureLabel: compactDimensionMatch[1].trim(),
+            dimensionLabel: normalizeSmartDimensionLabel(compactDimensionMatch[2]),
+            keyValue: compactDimensionMatch[3].trim(),
+        };
+    }
+
+    const fallbackMatch = trimmed.match(/^(.*?)[\s_-]+([^()\s_-]+)$/);
+
+    if (fallbackMatch && fallbackMatch[1].trim()) {
+        return {
+            measureLabel: fallbackMatch[1].trim(),
+            dimensionLabel: 'Occasion',
+            keyValue: fallbackMatch[2].trim(),
+        };
+    }
+
+    return null;
+};
+
 const tryParseGroupedWideLabel = (value) => {
     const trimmed = String(value ?? '').trim();
 
@@ -1165,6 +1259,196 @@ const getGroupedWidePivotDescriptor = (column) => {
     }
 
     return null;
+};
+
+const getSmartLongFormatDescriptor = (column) => {
+    const labelCandidates = normalizeTagList([
+        column?.label,
+        column?.originalName,
+    ]);
+
+    for (const candidate of labelCandidates) {
+        const parsed = tryParseSmartLongFormatLabel(candidate);
+
+        if (parsed) {
+            const measureLabel = parsed.measureLabel.replace(/\s+/g, ' ').trim();
+            const dimensionLabel = normalizeSmartDimensionLabel(parsed.dimensionLabel);
+
+            if (!measureLabel || !dimensionLabel || !parsed.keyValue) {
+                continue;
+            }
+
+            return {
+                column,
+                sourceLabel: candidate,
+                measureLabel,
+                measureKey: measureLabel.toLowerCase(),
+                dimensionLabel,
+                dimensionKey: dimensionLabel.toLowerCase(),
+                keyValue: parsed.keyValue,
+                keyValueKey: parsed.keyValue.toLowerCase(),
+            };
+        }
+    }
+
+    return null;
+};
+
+export const getRecommendedLongFormatCandidates = (dataset) => {
+    const candidates = new Map();
+
+    orderDatasetColumns(dataset, dataset?.columns || []).forEach((column) => {
+        const descriptor = getSmartLongFormatDescriptor(column);
+
+        if (!descriptor) {
+            return;
+        }
+
+        const candidateKey = descriptor.dimensionKey;
+        const existingCandidate = candidates.get(candidateKey) || {
+            id: candidateKey,
+            dimensionLabel: descriptor.dimensionLabel,
+            dimensionKey: descriptor.dimensionKey,
+            keyValueLookup: new Map(),
+            measureGroupLookup: new Map(),
+            measureGroups: [],
+        };
+
+        if (!existingCandidate.keyValueLookup.has(descriptor.keyValueKey)) {
+            existingCandidate.keyValueLookup.set(descriptor.keyValueKey, descriptor.keyValue);
+        }
+
+        if (!existingCandidate.measureGroupLookup.has(descriptor.measureKey)) {
+            const measureGroup = {
+                id: descriptor.measureKey,
+                key: descriptor.measureKey,
+                label: descriptor.measureLabel,
+                columns: [],
+                columnIds: [],
+                keyValueLookup: new Map(),
+            };
+
+            existingCandidate.measureGroupLookup.set(descriptor.measureKey, measureGroup);
+            existingCandidate.measureGroups.push(measureGroup);
+        }
+
+        const measureGroup = existingCandidate.measureGroupLookup.get(descriptor.measureKey);
+        measureGroup.columns.push(descriptor);
+        measureGroup.columnIds.push(descriptor.column.id);
+        measureGroup.keyValueLookup.set(descriptor.keyValueKey, descriptor.keyValue);
+
+        candidates.set(candidateKey, existingCandidate);
+    });
+
+    return Array.from(candidates.values())
+        .map((candidate) => {
+            const measureGroups = candidate.measureGroups
+                .filter((measureGroup) => measureGroup.keyValueLookup.size >= 2)
+                .map((measureGroup) => ({
+                    id: measureGroup.id,
+                    key: measureGroup.key,
+                    label: measureGroup.label,
+                    columnIds: measureGroup.columnIds,
+                    keyValues: Array.from(measureGroup.keyValueLookup.values()).sort((left, right) => left.localeCompare(right, undefined, { numeric: true })),
+                    columns: measureGroup.columns,
+                }));
+
+            const keyValues = Array.from(candidate.keyValueLookup.values())
+                .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+
+            if (measureGroups.length === 0 || keyValues.length < 2) {
+                return null;
+            }
+
+            return {
+                id: `${candidate.id}__${keyValues.map((value) => value.toLowerCase()).join('|')}`,
+                dimensionLabel: candidate.dimensionLabel,
+                dimensionKey: candidate.dimensionKey,
+                keyValues,
+                measureGroups,
+                allColumnIds: measureGroups.flatMap((measureGroup) => measureGroup.columnIds),
+            };
+        })
+        .filter(Boolean)
+        .sort((left, right) => (
+            right.allColumnIds.length - left.allColumnIds.length
+            || right.measureGroups.length - left.measureGroups.length
+            || left.dimensionLabel.localeCompare(right.dimensionLabel)
+        ));
+};
+
+export const buildSmartWideToLongReshapePlan = (dataset, {
+    candidate = null,
+    selectedMeasureGroupIds = [],
+    keyColumnLabel = '',
+    carryForwardColumnIds = [],
+} = {}) => {
+    const errors = [];
+
+    if (!candidate) {
+        errors.push('No smart repeated-measures pattern was detected in this dataset yet.');
+    }
+
+    const selectedMeasureGroups = candidate
+        ? candidate.measureGroups.filter((measureGroup) => selectedMeasureGroupIds.includes(measureGroup.id))
+        : [];
+
+    if (candidate && !selectedMeasureGroups.length) {
+        errors.push('Choose at least one variable to condense into long format.');
+    }
+
+    const pivotColumns = orderDatasetColumns(dataset, selectedMeasureGroups
+        .flatMap((measureGroup) => measureGroup.columnIds)
+        .map((columnId) => getDatasetColumn(dataset, columnId))
+        .filter(Boolean));
+    const idColumns = orderDatasetColumns(dataset, carryForwardColumnIds
+        .map((columnId) => getDatasetColumn(dataset, columnId))
+        .filter(Boolean));
+    const groupedMeasures = [];
+    const parsedPivotColumns = [];
+    const keyValueLookup = new Map();
+    const comboLookup = new Map();
+
+    selectedMeasureGroups.forEach((measureGroup) => {
+        groupedMeasures.push({
+            label: measureGroup.label,
+            key: measureGroup.key,
+            sourceColumnIds: measureGroup.columnIds,
+        });
+
+        measureGroup.columns.forEach((descriptor) => {
+            parsedPivotColumns.push(descriptor);
+
+            if (!keyValueLookup.has(descriptor.keyValueKey)) {
+                keyValueLookup.set(descriptor.keyValueKey, descriptor.keyValue);
+            }
+
+            comboLookup.set(`${measureGroup.key}__${descriptor.keyValueKey}`, descriptor);
+        });
+    });
+
+    const keyLevels = Array.from(keyValueLookup.values())
+        .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+
+    if (selectedMeasureGroups.length && keyLevels.length < 2) {
+        errors.push('The selected repeated-measures variable needs at least two timepoints or key values to reshape into long format.');
+    }
+
+    return {
+        ok: errors.length === 0,
+        errors,
+        mode: 'smart_groups',
+        pivotColumns,
+        idColumns,
+        keyColumnLabel: String(keyColumnLabel ?? '').trim() || candidate?.dimensionLabel || 'Timepoint',
+        valueColumnLabel: 'value',
+        keyLevels,
+        groupedMeasures,
+        parsedPivotColumns,
+        comboLookup,
+        candidateLabel: candidate?.dimensionLabel || 'Timepoint',
+        omittedMeasureGroups: candidate?.measureGroups.filter((measureGroup) => !selectedMeasureGroupIds.includes(measureGroup.id)) || [],
+    };
 };
 
 export const analyzeWideToLongReshape = (dataset, {
@@ -1316,7 +1600,7 @@ export const reshapeWideToLongDataset = (dataset, {
     const keyColumnId = createId('column');
     const nextRows = [];
 
-    if (reshapePlan.mode === 'grouped_suffix') {
+    if (reshapePlan.mode === 'grouped_suffix' || reshapePlan.mode === 'smart_groups') {
         const measureColumns = reshapePlan.groupedMeasures.map((measure, index) => ({
             id: createId('column'),
             name: `long_measure_${index + 1}`,

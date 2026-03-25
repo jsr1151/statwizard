@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     AlertTriangle,
     ArrowRight,
@@ -21,8 +21,8 @@ import DataTransformWorkbench from './DataTransformWorkbench.jsx';
 import VariableBrowser from './VariableBrowser.jsx';
 import {
     addDerivedVariableToDataset,
-    analyzeWideToLongReshape,
     autoDetectHeaderRow,
+    buildSmartWideToLongReshapePlan,
     buildDatasetCsv,
     buildDatasetFromColumnRecords,
     buildDatasetExportRows,
@@ -31,6 +31,7 @@ import {
     formatDatasetValue,
     getDatasetColumn,
     getDatasetColumnValues,
+    getRecommendedLongFormatCandidates,
     getRecommendedVariableGroups,
     hydrateStoredDataset,
     isMissingValue,
@@ -83,11 +84,14 @@ const buildDefaultMeanCenterDraft = () => ({
 });
 
 const buildDefaultReshapeDraft = () => ({
-    mode: 'single_value',
+    mode: 'smart_groups',
     pivotColumnIds: [],
     idColumnIds: [],
-    keyColumnLabel: 'timepoint',
+    keyColumnLabel: '',
     valueColumnLabel: 'value',
+    smartCandidateId: '',
+    selectedMeasureGroupIds: [],
+    allowMultipleMeasureGroups: false,
 });
 
 const ANALYSIS_OPTIONS = [
@@ -404,25 +408,37 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         () => buildRecodePreviewRows(editorDataset, recodeDraft.sourceColumnId, recodeDraft.mappings),
         [editorDataset, recodeDraft.mappings, recodeDraft.sourceColumnId]
     );
+    const reshapeCandidates = useMemo(
+        () => getRecommendedLongFormatCandidates(editorDataset),
+        [editorDataset]
+    );
+    const selectedReshapeCandidate = useMemo(
+        () => reshapeCandidates.find((candidate) => candidate.id === reshapeDraft.smartCandidateId) || reshapeCandidates[0] || null,
+        [reshapeCandidates, reshapeDraft.smartCandidateId]
+    );
+    const reshapeRepeatedColumnIds = useMemo(
+        () => Array.from(new Set(reshapeCandidates.flatMap((candidate) => candidate.allColumnIds))),
+        [reshapeCandidates]
+    );
     const reshapePlan = useMemo(() => {
-        if (!editorDataset || reshapeDraft.pivotColumnIds.length === 0) {
+        if (!editorDataset || !selectedReshapeCandidate) {
             return null;
         }
 
-        return analyzeWideToLongReshape(editorDataset, {
-            pivotColumnIds: reshapeDraft.pivotColumnIds,
-            idColumnIds: reshapeDraft.idColumnIds,
+        return buildSmartWideToLongReshapePlan(editorDataset, {
+            candidate: selectedReshapeCandidate,
+            selectedMeasureGroupIds: reshapeDraft.selectedMeasureGroupIds,
             keyColumnLabel: reshapeDraft.keyColumnLabel,
-            valueColumnLabel: reshapeDraft.valueColumnLabel,
-            mode: reshapeDraft.mode,
+            carryForwardColumnIds: (editorDataset?.columns || [])
+                .filter((column) => !reshapeRepeatedColumnIds.includes(column.id))
+                .map((column) => column.id),
         });
     }, [
         editorDataset,
-        reshapeDraft.idColumnIds,
         reshapeDraft.keyColumnLabel,
-        reshapeDraft.mode,
-        reshapeDraft.pivotColumnIds,
-        reshapeDraft.valueColumnLabel,
+        reshapeDraft.selectedMeasureGroupIds,
+        reshapeRepeatedColumnIds,
+        selectedReshapeCandidate,
     ]);
     const reshapePreviewDataset = useMemo(() => {
         if (!editorDataset || !reshapePlan?.ok) {
@@ -430,14 +446,11 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }
 
         return reshapeWideToLongDataset(editorDataset, {
-            pivotColumnIds: reshapeDraft.pivotColumnIds,
-            idColumnIds: reshapeDraft.idColumnIds,
-            keyColumnLabel: reshapeDraft.keyColumnLabel || 'variable',
-            valueColumnLabel: reshapeDraft.valueColumnLabel || 'value',
-            mode: reshapeDraft.mode,
+            keyColumnLabel: reshapeDraft.keyColumnLabel || selectedReshapeCandidate?.dimensionLabel || 'Timepoint',
+            mode: 'smart_groups',
             analysis: reshapePlan,
         });
-    }, [editorDataset, reshapeDraft.idColumnIds, reshapeDraft.keyColumnLabel, reshapeDraft.mode, reshapeDraft.pivotColumnIds, reshapeDraft.valueColumnLabel, reshapePlan]);
+    }, [editorDataset, reshapeDraft.keyColumnLabel, reshapePlan, selectedReshapeCandidate?.dimensionLabel]);
     const analysisMenuDataset = useMemo(() => {
         if (!analysisMenuDatasetId) {
             return null;
@@ -462,6 +475,47 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         setNotice(nextNotice);
         setProblem(nextProblem);
     };
+
+    useEffect(() => {
+        setReshapeDraft((previous) => {
+            const nextCandidate = reshapeCandidates.find((candidate) => candidate.id === previous.smartCandidateId) || reshapeCandidates[0] || null;
+            const nextCandidateId = nextCandidate?.id || '';
+            const availableMeasureGroupIds = nextCandidate?.measureGroups.map((measureGroup) => measureGroup.id) || [];
+            let nextSelectedMeasureGroupIds = previous.selectedMeasureGroupIds
+                .filter((measureGroupId) => availableMeasureGroupIds.includes(measureGroupId));
+
+            if (!previous.allowMultipleMeasureGroups && nextSelectedMeasureGroupIds.length > 1) {
+                nextSelectedMeasureGroupIds = nextSelectedMeasureGroupIds.slice(0, 1);
+            }
+
+            if (!nextSelectedMeasureGroupIds.length && availableMeasureGroupIds.length) {
+                nextSelectedMeasureGroupIds = previous.allowMultipleMeasureGroups
+                    ? availableMeasureGroupIds
+                    : [availableMeasureGroupIds[0]];
+            }
+
+            const nextKeyColumnLabel = String(previous.keyColumnLabel ?? '').trim()
+                && previous.smartCandidateId === nextCandidateId
+                ? previous.keyColumnLabel
+                : (nextCandidate?.dimensionLabel || '');
+
+            if (
+                previous.smartCandidateId === nextCandidateId
+                && previous.keyColumnLabel === nextKeyColumnLabel
+                && previous.selectedMeasureGroupIds.length === nextSelectedMeasureGroupIds.length
+                && previous.selectedMeasureGroupIds.every((measureGroupId, index) => measureGroupId === nextSelectedMeasureGroupIds[index])
+            ) {
+                return previous;
+            }
+
+            return {
+                ...previous,
+                smartCandidateId: nextCandidateId,
+                keyColumnLabel: nextKeyColumnLabel,
+                selectedMeasureGroupIds: nextSelectedMeasureGroupIds,
+            };
+        });
+    }, [reshapeCandidates]);
 
     const resetTransformDrafts = () => {
         setDerivedDraft(buildDefaultDerivedDraft());
@@ -1051,13 +1105,63 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         });
     };
 
+    const handleSelectReshapeCandidate = (candidateId) => {
+        const candidate = reshapeCandidates.find((item) => item.id === candidateId) || null;
+        const defaultMeasureGroupIds = candidate?.measureGroups.map((measureGroup) => measureGroup.id) || [];
+
+        setReshapeDraft((previous) => ({
+            ...previous,
+            smartCandidateId: candidateId,
+            keyColumnLabel: candidate?.dimensionLabel || '',
+            selectedMeasureGroupIds: previous.allowMultipleMeasureGroups
+                ? defaultMeasureGroupIds
+                : defaultMeasureGroupIds.slice(0, 1),
+        }));
+    };
+
+    const handleToggleReshapeMeasureGroup = (measureGroupId) => {
+        setReshapeDraft((previous) => {
+            if (!previous.allowMultipleMeasureGroups) {
+                return {
+                    ...previous,
+                    selectedMeasureGroupIds: [measureGroupId],
+                };
+            }
+
+            const hasMeasureGroup = previous.selectedMeasureGroupIds.includes(measureGroupId);
+            const nextSelectedMeasureGroupIds = hasMeasureGroup
+                ? previous.selectedMeasureGroupIds.filter((item) => item !== measureGroupId)
+                : [...previous.selectedMeasureGroupIds, measureGroupId];
+
+            return {
+                ...previous,
+                selectedMeasureGroupIds: nextSelectedMeasureGroupIds,
+            };
+        });
+    };
+
+    const handleSetReshapeAllowMultiple = (allowMultipleMeasureGroups) => {
+        setReshapeDraft((previous) => ({
+            ...previous,
+            allowMultipleMeasureGroups,
+            selectedMeasureGroupIds: allowMultipleMeasureGroups
+                ? previous.selectedMeasureGroupIds
+                : previous.selectedMeasureGroupIds.slice(0, 1),
+        }));
+    };
+
     const handleApplyReshape = () => {
         if (!editorDataset) {
             return;
         }
 
-        if (reshapeDraft.pivotColumnIds.length === 0) {
-            setProblem('Choose at least one source variable to pivot into long format.');
+        if (!selectedReshapeCandidate) {
+            setProblem('No smart repeated-measures pattern was detected in this dataset yet.');
+            return;
+        }
+
+        if (reshapeDraft.selectedMeasureGroupIds.length === 0) {
+            setProblem('Choose at least one variable to condense into long format.');
             return;
         }
 
@@ -1067,11 +1171,8 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }
 
         const nextDataset = reshapeWideToLongDataset(editorDataset, {
-            pivotColumnIds: reshapeDraft.pivotColumnIds,
-            idColumnIds: reshapeDraft.idColumnIds,
-            keyColumnLabel: reshapeDraft.keyColumnLabel,
-            valueColumnLabel: reshapeDraft.valueColumnLabel,
-            mode: reshapeDraft.mode,
+            keyColumnLabel: reshapeDraft.keyColumnLabel || selectedReshapeCandidate.dimensionLabel,
+            mode: 'smart_groups',
             analysis: reshapePlan,
         });
 
@@ -1083,9 +1184,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         resetTransformDrafts();
         applyDatasetEdit(
             nextDataset,
-            reshapeDraft.mode === 'grouped_suffix'
-                ? 'Reshaped the dataset into grouped long format using a shared repeated-measures key.'
-                : 'Reshaped the dataset from wide to long format.'
+            'Reshaped the selected repeated-measures variables into long format.'
         );
     };
 
@@ -1693,9 +1792,13 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                 onApplyRecode={handleApplyRecode}
                                 reshapeDraft={reshapeDraft}
                                 setReshapeDraft={setReshapeDraft}
+                                reshapeCandidates={reshapeCandidates}
+                                selectedReshapeCandidate={selectedReshapeCandidate}
                                 reshapePlan={reshapePlan}
                                 reshapePreviewDataset={reshapePreviewDataset}
-                                onToggleReshapeColumn={handleToggleReshapeColumn}
+                                onSelectReshapeCandidate={handleSelectReshapeCandidate}
+                                onToggleReshapeMeasureGroup={handleToggleReshapeMeasureGroup}
+                                onSetReshapeAllowMultiple={handleSetReshapeAllowMultiple}
                                 onApplyReshape={handleApplyReshape}
                                 formatDatasetValue={formatDatasetValue}
                             />
