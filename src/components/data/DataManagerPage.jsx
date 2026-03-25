@@ -10,6 +10,7 @@ import {
     FlaskConical,
     Layers3,
     MoveVertical,
+    RotateCcw,
     Save,
     Sparkles,
     Table2,
@@ -91,7 +92,7 @@ const buildDefaultReshapeDraft = () => ({
     valueColumnLabel: 'value',
     smartCandidateId: '',
     selectedMeasureGroupIds: [],
-    allowMultipleMeasureGroups: false,
+    allowMultipleMeasureGroups: true,
 });
 
 const ANALYSIS_OPTIONS = [
@@ -171,6 +172,8 @@ const sanitizeFileName = (value = 'dataset') =>
         .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
         .replace(/\s+/g, '_')
     || 'dataset';
+
+const UNDO_HISTORY_LIMIT = 30;
 
 const normalizeSearch = (value) => String(value ?? '').trim().toLowerCase();
 
@@ -327,6 +330,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
     const [notice, setNotice] = useState('');
     const [problem, setProblem] = useState('');
     const [isDirty, setIsDirty] = useState(false);
+    const [undoStack, setUndoStack] = useState([]);
 
     const activeOperation = useMemo(
         () => DERIVED_OPERATION_OPTIONS.find((option) => option.id === derivedDraft.operation) || DERIVED_OPERATION_OPTIONS[0],
@@ -476,6 +480,23 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         setProblem(nextProblem);
     };
 
+    const clearUndoHistory = () => {
+        setUndoStack([]);
+    };
+
+    const pushUndoSnapshot = (dataset) => {
+        if (!dataset) {
+            return;
+        }
+
+        const snapshot = hydrateStoredDataset(dataset, { touch: false });
+
+        setUndoStack((previous) => ([
+            ...previous.slice(Math.max(0, previous.length - (UNDO_HISTORY_LIMIT - 1))),
+            snapshot,
+        ]));
+    };
+
     useEffect(() => {
         setReshapeDraft((previous) => {
             const nextCandidate = reshapeCandidates.find((candidate) => candidate.id === previous.smartCandidateId) || reshapeCandidates[0] || null;
@@ -516,6 +537,38 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             };
         });
     }, [reshapeCandidates]);
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'z') {
+                return;
+            }
+
+            const target = event.target;
+
+            if (target instanceof HTMLElement) {
+                const tagName = target.tagName;
+                const isEditable = target.isContentEditable || tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
+
+                if (isEditable) {
+                    return;
+                }
+            }
+
+            if (!undoStack.length || busy) {
+                return;
+            }
+
+            event.preventDefault();
+            handleUndoDatasetEdit();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [busy, undoStack]);
 
     const resetTransformDrafts = () => {
         setDerivedDraft(buildDefaultDerivedDraft());
@@ -564,10 +617,30 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
     };
 
     const applyDatasetEdit = (nextDataset, successMessage) => {
+        if (editorDataset) {
+            pushUndoSnapshot(editorDataset);
+        }
+
         setEditorDataset(nextDataset);
         setIsDirty(true);
         setFeedback({
             nextNotice: successMessage,
+            nextProblem: '',
+        });
+    };
+
+    const handleUndoDatasetEdit = () => {
+        if (!undoStack.length) {
+            return;
+        }
+
+        const previousDataset = undoStack[undoStack.length - 1];
+
+        setUndoStack((previous) => previous.slice(0, -1));
+        setEditorDataset(hydrateStoredDataset(previousDataset, { touch: false }));
+        setIsDirty(true);
+        setFeedback({
+            nextNotice: 'Undid the last dataset edit.',
             nextProblem: '',
         });
     };
@@ -593,6 +666,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
             createdAt: previousDataset?.createdAt,
         });
 
+        clearUndoHistory();
         setEditorDataset(nextDataset);
         setIsDirty(true);
         setFeedback({
@@ -675,6 +749,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
 
                 setImportSession(null);
                 resetTransformDrafts();
+                clearUndoHistory();
                 setEditorDataset(nextDataset);
                 setIsDirty(true);
                 setFeedback({
@@ -732,7 +807,33 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         }
     };
 
+    const handleSaveDatasetAsNew = async () => {
+        if (!editorDataset) {
+            return null;
+        }
+
+        setBusy(true);
+        setFeedback({ nextNotice: '', nextProblem: '' });
+
+        try {
+            const duplicated = await duplicateDataset(editorDataset);
+            clearUndoHistory();
+            setEditorDataset(duplicated);
+            setImportSession(null);
+            resetTransformDrafts();
+            setIsDirty(false);
+            setNotice(`${duplicated.name} was saved as a new dataset.`);
+            return duplicated;
+        } catch (duplicateError) {
+            setProblem(duplicateError instanceof Error ? duplicateError.message : 'Could not save the dataset as a new copy.');
+            return null;
+        } finally {
+            setBusy(false);
+        }
+    };
+
     const handleOpenSavedDataset = (dataset) => {
+        clearUndoHistory();
         setEditorDataset(hydrateStoredDataset(dataset));
         setImportSession(null);
         resetTransformDrafts();
@@ -759,6 +860,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                 setImportSession(null);
                 resetTransformDrafts();
                 setIsDirty(false);
+                clearUndoHistory();
             }
 
             setNotice(`${dataset.name} was removed from the local library.`);
@@ -775,6 +877,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
 
         try {
             const duplicated = await duplicateDataset(dataset);
+            clearUndoHistory();
             setEditorDataset(duplicated);
             setImportSession(null);
             resetTransformDrafts();
@@ -1420,6 +1523,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                             onClick={() => {
                                 setEditorDataset(null);
                                 setImportSession(null);
+                                clearUndoHistory();
                                 setDerivedDraft(buildDefaultDerivedDraft());
                                 setIsDirty(false);
                                 setFeedback({
@@ -1590,11 +1694,30 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
+                                            onClick={handleUndoDatasetEdit}
+                                            disabled={!undoStack.length}
+                                            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-widest disabled:cursor-not-allowed disabled:opacity-50 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                                        >
+                                            <RotateCcw size={16} />
+                                            Undo
+                                        </button>
+
+                                        <button
+                                            type="button"
                                             onClick={handleSaveDataset}
                                             className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-black uppercase tracking-widest ${darkMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
                                         >
                                             <Save size={16} />
                                             {editorIsSaved ? 'Save Updates' : 'Save Dataset'}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveDatasetAsNew}
+                                            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-widest ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}
+                                        >
+                                            <Copy size={16} />
+                                            Save As New
                                         </button>
 
                                         <button
