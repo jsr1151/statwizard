@@ -3,10 +3,10 @@ import React, { useMemo } from 'react';
 const WIDTH = 760;
 const HEIGHT = 360;
 const MARGIN = {
-    top: 24,
-    right: 60,
-    bottom: 72,
-    left: 64,
+    top: 30,
+    right: 72,
+    bottom: 78,
+    left: 72,
 };
 
 const formatTick = (value) => {
@@ -61,11 +61,11 @@ const MultipleRegressionPlanePlot = ({
         const x1Span = Math.max(1e-9, maxX1 - minX1);
         const x2Span = Math.max(1e-9, maxX2 - minX2);
         const ySpan = Math.max(1e-9, maxY - minY);
-        const planeWidth = WIDTH - MARGIN.left - MARGIN.right - 132;
-        const planeDepthX = 122;
-        const planeDepthY = 74;
-        const planeHeight = HEIGHT - MARGIN.top - MARGIN.bottom - 42;
-        const baseX = MARGIN.left + 26;
+        const planeWidth = WIDTH - MARGIN.left - MARGIN.right - 138;
+        const planeDepthX = 118;
+        const planeDepthY = 72;
+        const planeHeight = HEIGHT - MARGIN.top - MARGIN.bottom - 38;
+        const baseX = MARGIN.left + 34;
         const baseY = HEIGHT - MARGIN.bottom;
         const normalizeX1 = (value) => (value - minX1) / x1Span;
         const normalizeX2 = (value) => (value - minX2) / x2Span;
@@ -139,24 +139,24 @@ const MultipleRegressionPlanePlot = ({
                 x2: project(minX1, maxX2, minY),
                 y: project(minX1, minX2, maxY),
             },
-            x1Ticks: Array.from({ length: 4 }, (_, index) => {
-                const ratio = index / 3;
+            x1Ticks: Array.from({ length: 3 }, (_, index) => {
+                const ratio = index / 2;
                 const value = minX1 + (x1Span * ratio);
                 return {
                     value,
                     point: project(value, minX2, minY),
                 };
             }),
-            x2Ticks: Array.from({ length: 4 }, (_, index) => {
-                const ratio = index / 3;
+            x2Ticks: Array.from({ length: 3 }, (_, index) => {
+                const ratio = index / 2;
                 const value = minX2 + (x2Span * ratio);
                 return {
                     value,
                     point: project(minX1, value, minY),
                 };
             }),
-            yTicks: Array.from({ length: 4 }, (_, index) => {
-                const ratio = index / 3;
+            yTicks: Array.from({ length: 3 }, (_, index) => {
+                const ratio = index / 2;
                 const value = minY + (ySpan * ratio);
                 return {
                     value,
@@ -176,9 +176,13 @@ const MultipleRegressionPlanePlot = ({
 
     const axisColor = darkMode ? '#64748b' : '#94a3b8';
     const gridColor = darkMode ? 'rgba(148, 163, 184, 0.18)' : 'rgba(148, 163, 184, 0.3)';
-    const textColor = darkMode ? '#e2e8f0' : '#0f172a';
     const labelColor = darkMode ? '#94a3b8' : '#64748b';
     const planeOutline = darkMode ? 'rgba(99, 102, 241, 0.95)' : 'rgba(79, 70, 229, 0.9)';
+    const axisLegendItems = [
+        { label: 'X1 axis', value: predictorLabels[0], color: '#6366f1' },
+        { label: 'X2 axis', value: predictorLabels[1], color: '#10b981' },
+        { label: 'Y axis', value: outcomeLabel, color: '#38bdf8' },
+    ];
 
     return (
         <div className="space-y-4">
@@ -235,17 +239,17 @@ const MultipleRegressionPlanePlot = ({
                     <line x1={geometry.baseX} y1={geometry.baseY} x2={geometry.axisEnds.x2.x} y2={geometry.axisEnds.x2.y} stroke={axisColor} strokeWidth="2" />
                     <line x1={geometry.baseX} y1={geometry.baseY} x2={geometry.axisEnds.y.x} y2={geometry.axisEnds.y.y} stroke={axisColor} strokeWidth="2" />
 
-                    {geometry.x1Ticks.map((tick, index) => (
+                    {geometry.x1Ticks.map((tick) => (
                         <g key={`x1-${tick.value}`}>
-                            <text x={tick.point.x} y={tick.point.y + (index === geometry.x1Ticks.length - 1 ? 20 : 16)} textAnchor="middle" fill={labelColor} fontSize="10" fontWeight="700">
+                            <text x={tick.point.x} y={tick.point.y + 18} textAnchor="middle" fill={labelColor} fontSize="10" fontWeight="700">
                                 {formatTick(tick.value)}
                             </text>
                         </g>
                     ))}
 
-                    {geometry.x2Ticks.map((tick, index) => (
+                    {geometry.x2Ticks.map((tick) => (
                         <g key={`x2-${tick.value}`}>
-                            <text x={tick.point.x - 12} y={tick.point.y + (index === geometry.x2Ticks.length - 1 ? -2 : 6)} textAnchor="end" fill={labelColor} fontSize="10" fontWeight="700">
+                            <text x={tick.point.x - 16} y={tick.point.y + 5} textAnchor="end" fill={labelColor} fontSize="10" fontWeight="700">
                                 {formatTick(tick.value)}
                             </text>
                         </g>
@@ -295,16 +299,16 @@ const MultipleRegressionPlanePlot = ({
                         />
                     )}
 
-                    <text x={geometry.axisEnds.x1.x + 12} y={geometry.axisEnds.x1.y + 34} fill={textColor} fontSize="12" fontWeight="800">
-                        {predictorLabels[0]}
-                    </text>
-                    <text x={geometry.axisEnds.x2.x - 28} y={geometry.axisEnds.x2.y - 24} textAnchor="end" fill={textColor} fontSize="12" fontWeight="800">
-                        {predictorLabels[1]}
-                    </text>
-                    <text x={geometry.axisEnds.y.x - 20} y={geometry.axisEnds.y.y - 16} textAnchor="end" fill={textColor} fontSize="12" fontWeight="800">
-                        {outcomeLabel}
-                    </text>
                 </svg>
+                <div className={`grid gap-2 border-t px-4 py-3 text-[11px] sm:grid-cols-3 ${darkMode ? 'border-slate-800 bg-slate-900/70 text-slate-300' : 'border-slate-100 bg-slate-50 text-slate-700'}`}>
+                    {axisLegendItems.map((item) => (
+                        <div key={item.label} className="flex min-w-0 items-center gap-2">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                            <span className={`shrink-0 font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{item.label}</span>
+                            <span className="truncate font-bold">{item.value}</span>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
