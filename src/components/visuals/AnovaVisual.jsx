@@ -5,6 +5,7 @@ import AnovaDatasetEditor from './AnovaDatasetEditor';
 import AnovaResults from './AnovaResults';
 import FSamplingDist from './FSamplingDist';
 import GroupsMeansView from './GroupsMeansView';
+import AnovaPlotMaker from './AnovaPlotMaker';
 import VarianceDecomposition from './VarianceDecomposition';
 
 const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, onTutorUpdate, onStatsUpdate, tutor, datasetSeed = null }) => {
@@ -265,9 +266,9 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       {/* Visualizer Frame */}
       <div className={`w-full h-[600px] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
         <div className="absolute top-4 left-4 flex gap-2 z-40">
-          {['fDist', 'means', 'decomp', 'table'].map(tab => (
+          {['fDist', 'means', 'plots', 'decomp', 'table'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}>
-              {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : tab === 'decomp' ? 'Decomp' : 'Table'}
+              {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : tab === 'plots' ? 'Plots' : tab === 'decomp' ? 'Decomp' : 'Table'}
             </button>
           ))}
         </div>
@@ -287,6 +288,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
             />
           )}
           {activeTab === 'means' && <GroupsMeansView groups={groups} grandMean={renderModel.grandMean} darkMode={darkMode} showSpread={showSpread} />}
+          {activeTab === 'plots' && <AnovaPlotMaker groups={groups} grandMean={renderModel.grandMean || 0} darkMode={darkMode} />}
           {activeTab === 'decomp' && <VarianceDecomposition ssB={renderModel.ssB || 0} ssW={renderModel.ssW || 0} ssT={renderModel.ssT || 1} darkMode={darkMode} />}
           {activeTab === 'table' && (
             anovaMode !== 'data' || !renderModel.ssB ? (

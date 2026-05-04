@@ -35,7 +35,7 @@ Paired Samples t-Test:
 
 One-Way ANOVA:
 - ✅ ~~I think the tutor/lesson page should default to "Explore" mode instead of "Compute" mode~~
-- I know the means visualizer is basically this, but there should be an actual plot maker built in
+- ✅ ~~I know the means visualizer is basically this, but there should be an actual plot maker built in~~
 - ✅ ~~The effect size page only covers cohen's f, it does mention Eta squared, but the layout is a little confusing, like it lists eta squared twice and it doesn't explain what eta's squared is, or how it is calculated~~
 - ✅ ~~I'm thinking there should be a table view, like the one featured on the ANCOVA page, which explains what the table is telling you. You should also be able to hover over a cell of the table, and it explains what that cell indicates~~
 
