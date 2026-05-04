@@ -125,7 +125,6 @@ const SAFE_GENERIC_EQUATION_STEP_IDS = new Set([
     'res_variability',
     'res_frequency',
     'res_ztest',
-    'res_onesample_ttest',
     'res_rm_anova',
 ]);
 

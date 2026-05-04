@@ -10,6 +10,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   const textCol = darkMode ? 'text-slate-200' : 'text-slate-800';
   const [ssWTab, setSsWTab] = useState('raw');
   const [factorialEffectKey, setFactorialEffectKey] = useState('AxB');
+  const [oneSampleFocus, setOneSampleFocus] = useState('test');
 
   const getV = (key) => stats ? stats[key] : undefined;
   const calc = (term, val) => <MathTerm term={term} value={val} showValue={showValues} onInfo={onInfo} onHover={onHover} darkMode={darkMode} />;
@@ -191,39 +192,127 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
       </div>
     </div>
   );
-  if (type === 't_onesample') return (
-    <div className="flex flex-col items-center">
-      <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
-        <span className="font-bold mr-3 italic">t</span>
-        <span className="mr-3">=</span>
-        <div className="flex flex-col items-center">
-          <div className={`border-b-2 px-2 pb-1 mb-1 w-full text-center group relative ${borderCol}`}>
-            ({calc("x̄", getV('xBar'))} - {calc("mu", getV('mu'))})
-          </div>
-          <div className="pt-1 flex items-center group relative">
-            <span className="mr-1">{calc("SE", getV('se'))}</span>
-          </div>
+  if (type === 't_onesample') {
+    const xBar = getV('xBar');
+    const mu = getV('mu');
+    const s = getV('s');
+    const n = getV('n');
+    const se = getV('se');
+    const t = getV('t');
+    const df = getV('df');
+    const fmt = (value, digits = 3) => Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '--';
+    const focusCards = {
+      test: {
+        title: 'Test statistic',
+        detail: 'Compares the observed sample mean to the hypothesized mean in standard-error units.',
+        hover: 't',
+      },
+      se: {
+        title: 'Standard error',
+        detail: 'Shrinks when n increases and grows when the sample standard deviation is larger.',
+        hover: 'SE',
+      },
+      df: {
+        title: 'Degrees of freedom',
+        detail: 'A one-sample t test estimates one mean, so df is n - 1.',
+        hover: 'df',
+      },
+    };
+    const activeFocus = focusCards[oneSampleFocus] || focusCards.test;
+
+    return (
+      <div className="flex flex-col items-center gap-6 w-full max-w-full overflow-visible px-1">
+        <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} flex flex-wrap items-center justify-center gap-2`}>
+          {[
+            { id: 'test', label: 't statistic' },
+            { id: 'se', label: 'standard error' },
+            { id: 'df', label: 'df' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setOneSampleFocus(item.id)}
+              className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wide transition-all ${
+                oneSampleFocus === item.id
+                  ? 'bg-indigo-600 text-white shadow'
+                  : (darkMode ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900')
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-      </div>
-      <div className={`mt-3 pt-3 border-t border-dashed ${darkMode ? 'border-slate-700' : 'border-slate-200'} w-full flex flex-col items-center gap-2`}>
-        <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Standard Error</div>
-        <div className={`flex items-center text-sm md:text-base font-serif ${textCol}`}>
-          <span>{calc("SE", getV('se'))}</span>
-          <span className="mx-2">=</span>
-          <div className="flex flex-col items-center">
-            <span className={`border-b ${borderCol} px-1`}>{calc("s", getV('s'))}</span>
-            <div className="flex items-center">
-              <span className="text-xs mr-1">√</span>
-              <span>{calc("n", getV('n'))}</span>
+
+        <div
+          className="flex flex-col items-center w-full group cursor-help"
+          onMouseEnter={() => onHover && onHover(activeFocus.hover)}
+          onMouseLeave={() => onHover && onHover(null)}
+        >
+          <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1`}>{activeFocus.title}</div>
+          <p className={`text-[11px] ${labelCol} text-center leading-tight max-w-lg mb-3`}>{activeFocus.detail}</p>
+          <div className={`flex items-center text-xl md:text-3xl font-serif ${textCol} whitespace-nowrap bg-slate-500/5 p-4 rounded-2xl border ${borderCol} max-w-full overflow-visible`}>
+            <span className="font-bold mr-3 italic">t</span>
+            <span className="mr-3">=</span>
+            <div className="flex flex-col items-center">
+              <div className={`border-b-2 px-3 pb-1 mb-1 w-full text-center group relative ${borderCol}`}>
+                ({calc("x̄", xBar)} - {calc("mu", mu)})
+              </div>
+              <div className="pt-1 flex items-center group relative">
+                <span className="mr-1">{calc("SE", se)}</span>
+              </div>
             </div>
           </div>
         </div>
+
+        <div className={`w-full grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dashed ${darkMode ? 'border-slate-800' : 'border-slate-200'} pt-5`}>
+          <div
+            className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 transition-all cursor-help ${oneSampleFocus === 'se' ? 'border-indigo-500/50 bg-indigo-500/5' : (darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100')}`}
+            onMouseEnter={() => onHover && onHover('SE')}
+            onMouseLeave={() => onHover && onHover(null)}
+          >
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Standard Error</div>
+            <div className={`flex items-center text-base md:text-lg font-serif ${textCol}`}>
+              <span>{calc("SE", se)}</span>
+              <span className="mx-2">=</span>
+              <div className="flex flex-col items-center">
+                <span className={`border-b ${borderCol} px-2`}>{calc("s", s)}</span>
+                <div className="flex items-center">
+                  <span className="text-xs mr-1">√</span>
+                  <span>{calc("n", n)}</span>
+                </div>
+              </div>
+            </div>
+            <p className={`text-[10px] text-center leading-tight ${labelCol}`}>The denominator is the expected sampling noise for the sample mean.</p>
+          </div>
+
+          <div
+            className={`p-5 rounded-2xl border flex flex-col items-center gap-2 min-w-0 transition-all cursor-help ${oneSampleFocus === 'df' ? 'border-indigo-500/50 bg-indigo-500/5' : (darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-100')}`}
+            onMouseEnter={() => onHover && onHover('df')}
+            onMouseLeave={() => onHover && onHover(null)}
+          >
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol}`}>Degrees of Freedom</div>
+            <div className={`flex items-center text-base md:text-lg font-serif ${textCol}`}>
+              <span>{calc("df", df)}</span>
+              <span className="mx-2">=</span>
+              <span>{calc("n", n)} - 1</span>
+            </div>
+            <p className={`text-[10px] text-center leading-tight ${labelCol}`}>Lower df makes the t distribution heavier-tailed than the normal curve.</p>
+          </div>
+        </div>
+
+        {showValues && (
+          <div className={`w-full p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'} animate-in fade-in slide-in-from-top-2`}>
+            <div className="text-[8px] font-black uppercase tracking-widest text-indigo-500 mb-2 text-center">Worked substitution</div>
+            <div className={`text-[12px] md:text-sm font-serif text-center leading-relaxed ${textCol}`}>
+              t = ({fmt(xBar)} - {fmt(mu)}) / {fmt(se)} = {fmt(t)}
+              <span className={`block mt-1 text-[11px] font-sans font-bold uppercase tracking-widest ${labelCol}`}>
+                SE = {fmt(s)} / sqrt({fmt(n, 0)}) = {fmt(se)}; df = {fmt(df, 0)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
-      <div className={`mt-2 text-[10px] uppercase tracking-widest font-bold ${labelCol}`}>
-        with {calc("df", getV('df'))} Degrees of Freedom
-      </div>
-    </div>
-  );
+    );
+  }
   if (type === 'anova') {
     const groupStats = getV('groupStats') || [];
     const grandM = getV('grandMean') || 0;

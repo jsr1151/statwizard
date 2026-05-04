@@ -24,7 +24,7 @@ One Sample t-Test:
 - ✅ ~~In the calculator, errors/power button only shows the power curves when "Hide Alternative" button is toggled. This isn't how it should be~~
 - ✅ ~~Errors/Power visualizer is a little noisy and the legend on the side is cut off and tiny~~
 - ✅ ~~In the calculator, there's no way of using imported data like the other tests on the application, you can only paste in data~~
-- Equation page is not interactive like all other equation pages
+- ✅ ~~Equation page is not interactive like all other equation pages~~
 - ✅ ~~Power Analysis: adjusting alpha crashes the site~~
 
 Independent Samples t-Test:
