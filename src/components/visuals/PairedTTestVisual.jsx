@@ -7,6 +7,12 @@ import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
 import PairedTTestPlots from './PairedTTestPlots';
+const PAIRED_PLOT_DEFAULT_LABELS = {
+  paired: 'Score',
+  bar: 'Mean score',
+  change: 'Difference score',
+};
+
 const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null, mode = 'lessons' }) => {
   const [group1, setGroup1] = useState({ name: "Condition 1", raw: "12, 14, 11, 15, 13, 16, 14, 12, 15, 14" });
   const [group2, setGroup2] = useState({ name: "Condition 2", raw: "10, 11, 12, 11, 10, 13, 12, 11, 11, 12" });
@@ -29,6 +35,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
     yMax: null,
     yLabel: 'Score',
   });
+  const [plotYAxisCustomized, setPlotYAxisCustomized] = useState(false);
   const allowRawInput = mode === 'calculator';
 
   useEffect(() => {
@@ -126,6 +133,18 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
     } else {
       setSummaryData(prev => ({ ...prev, mean1: prev.mean2, sd1: prev.sd2, mean2: prev.mean1, sd2: prev.sd1 }));
     }
+  };
+
+  const handlePlotTypeChange = (nextType) => {
+    setPlotSettings((previous) => ({
+      ...previous,
+      type: nextType,
+      yMin: null,
+      yMax: null,
+      yLabel: plotYAxisCustomized
+        ? previous.yLabel
+        : (PAIRED_PLOT_DEFAULT_LABELS[nextType] || previous.yLabel),
+    }));
   };
 
   return (
@@ -283,7 +302,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                       { id: 'bar', label: 'Bars' },
                       { id: 'change', label: 'Change' },
                     ].map((option) => (
-                      <button key={option.id} onClick={() => setPlotSettings((previous) => ({ ...previous, type: option.id }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.type === option.id ? 'bg-amber-500 text-white' : 'text-slate-500'}`}>
+                      <button key={option.id} onClick={() => handlePlotTypeChange(option.id)} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.type === option.id ? 'bg-amber-500 text-white' : 'text-slate-500'}`}>
                         {option.label}
                       </button>
                     ))}
@@ -312,7 +331,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input type="text" value={plotSettings.yLabel} onChange={(event) => setPlotSettings((previous) => ({ ...previous, yLabel: event.target.value }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y-axis label" />
+                <input type="text" value={plotSettings.yLabel} onChange={(event) => { setPlotYAxisCustomized(true); setPlotSettings((previous) => ({ ...previous, yLabel: event.target.value })); }} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y-axis label" />
                 <input type="number" value={plotSettings.yMin ?? ''} onChange={(event) => setPlotSettings((previous) => ({ ...previous, yMin: event.target.value === '' ? null : parseFloat(event.target.value) }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y min" />
                 <input type="number" value={plotSettings.yMax ?? ''} onChange={(event) => setPlotSettings((previous) => ({ ...previous, yMax: event.target.value === '' ? null : parseFloat(event.target.value) }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y max" />
               </div>

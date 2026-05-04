@@ -37,23 +37,32 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
     const c1Error = conditionError(stats.sd1 || 0);
     const c2Error = conditionError(stats.sd2 || 0);
     const diffError = errorType === 'sd' ? stats.sd : errorType === 'se' ? stats.se : 0;
-    const observedValues = rawPairs.flatMap((pair) => [pair.first, pair.second, pair.difference]);
-    const allValues = [
-        ...observedValues,
-        stats.mean1,
-        stats.mean2,
-        stats.mean1 + c1Error,
-        stats.mean1 - c1Error,
-        stats.mean2 + c2Error,
-        stats.mean2 - c2Error,
-        stats.dBar + diffError,
-        stats.dBar - diffError,
-        0,
-    ].filter(Number.isFinite);
+    const scoreValues = rawPairs.flatMap((pair) => [pair.first, pair.second]);
+    const differenceValues = rawPairs.map((pair) => pair.difference);
+    const allValues = (type === 'change'
+        ? [
+            ...differenceValues,
+            stats.dBar + diffError,
+            stats.dBar - diffError,
+            0,
+        ]
+        : [
+            ...scoreValues,
+            stats.mean1,
+            stats.mean2,
+            stats.mean1 + c1Error,
+            stats.mean1 - c1Error,
+            stats.mean2 + c2Error,
+            stats.mean2 - c2Error,
+            0,
+        ]).filter(Number.isFinite);
     const dataMin = yMin !== null ? yMin : Math.min(...allValues);
     const dataMax = yMax !== null ? yMax : Math.max(...allValues);
     const span = Math.max(1, dataMax - dataMin);
-    const effectiveYMin = yMin !== null ? yMin : dataMin - (span * 0.15);
+    const autoYMin = type === 'change'
+        ? dataMin - (span * 0.18)
+        : (dataMin >= 0 ? 0 : dataMin - (span * 0.12));
+    const effectiveYMin = yMin !== null ? yMin : autoYMin;
     const effectiveYMax = yMax !== null ? yMax : dataMax + (span * 0.18);
     const yToPos = (value) => margin.top + plotHeight - ((value - effectiveYMin) / Math.max(1e-9, effectiveYMax - effectiveYMin)) * plotHeight;
     const x1 = margin.left + plotWidth * 0.32;
