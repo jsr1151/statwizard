@@ -176,6 +176,16 @@ const TOOLTIP_COPY = {
         title: 'Change in predicted Y for a 1-unit increase',
         desc: 'A slope tells how much the fitted mean changes for one predictor while the other predictor is held constant.',
     },
+    term: {
+        term: 'Term',
+        title: 'Which model part this row describes',
+        desc: 'The intercept is the baseline prediction. Each slope row describes one predictor after the other predictors are held constant.',
+    },
+    coefficientEstimate: {
+        term: 'Estimate',
+        title: 'The fitted coefficient value',
+        desc: 'For a slope, this is the expected change in the outcome for a 1-unit predictor increase while the other predictors stay fixed.',
+    },
     standardizedBeta: {
         term: 'Standardized beta',
         title: 'Slope after putting variables on a shared SD scale',
@@ -200,6 +210,11 @@ const TOOLTIP_COPY = {
         term: 'VIF',
         title: 'Variance inflation factor',
         desc: 'VIF shows how much predictor overlap is inflating the coefficient uncertainty. Larger values mean more multicollinearity.',
+    },
+    confidenceInterval: {
+        term: 'Confidence interval',
+        title: 'Plausible range for the coefficient',
+        desc: 'The interval shows a range of coefficient values compatible with the data. Intervals crossing 0 suggest weaker evidence for a nonzero coefficient.',
     },
     zeroOrderCorrelation: {
         term: 'Zero-order correlation',
@@ -279,6 +294,30 @@ const TooltipLabel = ({ darkMode, label, tooltipKey, className = '' }) => {
                 <Info size={12} className={darkMode ? 'text-slate-500' : 'text-slate-500'} />
             </span>
         </ProgressiveTooltip>
+    );
+};
+
+const RegressionTableCell = ({ darkMode, tooltipKey, children, className = '' }) => {
+    const tooltip = TOOLTIP_COPY[tooltipKey];
+
+    if (!tooltip) {
+        return <td className={`py-3 ${className}`}>{children}</td>;
+    }
+
+    return (
+        <td className={`py-3 ${className}`}>
+            <ProgressiveTooltip
+                as="div"
+                term={tooltip.term}
+                title={tooltip.title}
+                desc={tooltip.desc}
+                darkMode={darkMode}
+            >
+                <div className={`inline-flex flex-col rounded px-1 -ml-1 border-b border-dotted ${darkMode ? 'border-slate-600 hover:bg-slate-800/70' : 'border-slate-300 hover:bg-slate-100'}`}>
+                    {children}
+                </div>
+            </ProgressiveTooltip>
+        </td>
     );
 };
 
@@ -1851,14 +1890,14 @@ const MultipleRegressionPage = ({
                                             <tbody>
                                                 {calculatorStats.coefficients.map((coefficient) => (
                                                     <tr key={coefficient.id} className={`border-t ${darkMode ? 'border-slate-800 text-slate-200' : 'border-slate-200 text-slate-700'}`}>
-                                                        <td className="py-3 font-bold">{coefficient.label}</td>
-                                                        <td className="py-3">{formatStat(coefficient.estimate, 3)}</td>
-                                                        <td className="py-3">{formatStat(coefficient.standardError, 3)}</td>
-                                                        <td className="py-3">{formatStat(coefficient.tStatistic, 3)}</td>
-                                                        <td className="py-3">p {formatPValue(coefficient.pValue)}</td>
-                                                        <td className="py-3">{coefficient.standardizedBeta == null ? '--' : formatStat(coefficient.standardizedBeta, 3)}</td>
-                                                        <td className="py-3">{coefficient.vif == null ? '--' : formatStat(coefficient.vif, 2)}</td>
-                                                        <td className="py-3">[{formatStat(coefficient.confidenceInterval.lower, 3)}, {formatStat(coefficient.confidenceInterval.upper, 3)}]</td>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="term" className="font-bold">{coefficient.label}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="coefficientEstimate">{formatStat(coefficient.estimate, 3)}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="standardError">{formatStat(coefficient.standardError, 3)}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="tStatistic">{formatStat(coefficient.tStatistic, 3)}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="pValue">p {formatPValue(coefficient.pValue)}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="standardizedBeta">{coefficient.standardizedBeta == null ? '--' : formatStat(coefficient.standardizedBeta, 3)}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="vif">{coefficient.vif == null ? '--' : formatStat(coefficient.vif, 2)}</RegressionTableCell>
+                                                        <RegressionTableCell darkMode={darkMode} tooltipKey="confidenceInterval">[{formatStat(coefficient.confidenceInterval.lower, 3)}, {formatStat(coefficient.confidenceInterval.upper, 3)}]</RegressionTableCell>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -2447,32 +2486,32 @@ const MultipleRegressionPage = ({
 
                                             return (
                                                 <tr key={coefficient.id} className={`border-t ${darkMode ? 'border-slate-800 text-slate-200' : 'border-slate-200 text-slate-700'} ${rowChanged ? (darkMode ? 'bg-amber-500/5' : 'bg-amber-50/50') : ''}`}>
-                                                    <td className="py-3 font-bold">
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="term" className="font-bold">
                                                         {coefficient.id === 'intercept'
                                                             ? 'Intercept'
                                                             : `Slope for ${lessonPredictorLabels[coefficient.id]} (${getSlopeSymbol(coefficient.id)})`}
-                                                    </td>
-                                                    <td className="py-3">
+                                                    </RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="coefficientEstimate">
                                                         <div>{formatStat(coefficient.estimate, 3)}</div>
                                                         {rowChanged && (
                                                             <div className={`text-[10px] font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
                                                                 Delta {formatSignedDifference((coefficient.estimate || 0) - (baselineCoefficient?.estimate || 0), 3)}
                                                             </div>
                                                         )}
-                                                    </td>
-                                                    <td className="py-3">
+                                                    </RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="standardError">
                                                         <div>{formatStat(coefficient.standardError, 3)}</div>
                                                         {rowChanged && (
                                                             <div className={`text-[10px] font-bold ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>
                                                                 Delta {formatSignedDifference((coefficient.standardError || 0) - (baselineCoefficient?.standardError || 0), 3)}
                                                             </div>
                                                         )}
-                                                    </td>
-                                                    <td className="py-3">{formatStat(coefficient.tStatistic, 3)}</td>
-                                                    <td className="py-3">p {formatPValue(coefficient.pValue)}</td>
-                                                    <td className="py-3">{coefficient.standardizedBeta == null ? '--' : formatStat(coefficient.standardizedBeta, 3)}</td>
-                                                    <td className="py-3">{coefficient.vif == null ? '--' : formatStat(coefficient.vif, 2)}</td>
-                                                    <td className="py-3">[{formatStat(coefficient.confidenceInterval?.lower, 3)}, {formatStat(coefficient.confidenceInterval?.upper, 3)}]</td>
+                                                    </RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="tStatistic">{formatStat(coefficient.tStatistic, 3)}</RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="pValue">p {formatPValue(coefficient.pValue)}</RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="standardizedBeta">{coefficient.standardizedBeta == null ? '--' : formatStat(coefficient.standardizedBeta, 3)}</RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="vif">{coefficient.vif == null ? '--' : formatStat(coefficient.vif, 2)}</RegressionTableCell>
+                                                    <RegressionTableCell darkMode={darkMode} tooltipKey="confidenceInterval">[{formatStat(coefficient.confidenceInterval?.lower, 3)}, {formatStat(coefficient.confidenceInterval?.upper, 3)}]</RegressionTableCell>
                                                 </tr>
                                             );
                                         })}

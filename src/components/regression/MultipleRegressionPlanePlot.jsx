@@ -4,9 +4,9 @@ const WIDTH = 760;
 const HEIGHT = 360;
 const MARGIN = {
     top: 24,
-    right: 36,
-    bottom: 54,
-    left: 52,
+    right: 60,
+    bottom: 72,
+    left: 64,
 };
 
 const formatTick = (value) => {
@@ -235,17 +235,17 @@ const MultipleRegressionPlanePlot = ({
                     <line x1={geometry.baseX} y1={geometry.baseY} x2={geometry.axisEnds.x2.x} y2={geometry.axisEnds.x2.y} stroke={axisColor} strokeWidth="2" />
                     <line x1={geometry.baseX} y1={geometry.baseY} x2={geometry.axisEnds.y.x} y2={geometry.axisEnds.y.y} stroke={axisColor} strokeWidth="2" />
 
-                    {geometry.x1Ticks.map((tick) => (
+                    {geometry.x1Ticks.map((tick, index) => (
                         <g key={`x1-${tick.value}`}>
-                            <text x={tick.point.x} y={tick.point.y + 18} textAnchor="middle" fill={labelColor} fontSize="11" fontWeight="700">
+                            <text x={tick.point.x} y={tick.point.y + (index === geometry.x1Ticks.length - 1 ? 20 : 16)} textAnchor="middle" fill={labelColor} fontSize="10" fontWeight="700">
                                 {formatTick(tick.value)}
                             </text>
                         </g>
                     ))}
 
-                    {geometry.x2Ticks.map((tick) => (
+                    {geometry.x2Ticks.map((tick, index) => (
                         <g key={`x2-${tick.value}`}>
-                            <text x={tick.point.x - 10} y={tick.point.y + 6} textAnchor="end" fill={labelColor} fontSize="11" fontWeight="700">
+                            <text x={tick.point.x - 12} y={tick.point.y + (index === geometry.x2Ticks.length - 1 ? -2 : 6)} textAnchor="end" fill={labelColor} fontSize="10" fontWeight="700">
                                 {formatTick(tick.value)}
                             </text>
                         </g>
@@ -253,7 +253,7 @@ const MultipleRegressionPlanePlot = ({
 
                     {geometry.yTicks.map((tick) => (
                         <g key={`y-${tick.value}`}>
-                            <text x={tick.point.x - 10} y={tick.point.y + 4} textAnchor="end" fill={labelColor} fontSize="11" fontWeight="700">
+                            <text x={tick.point.x - 14} y={tick.point.y + 4} textAnchor="end" fill={labelColor} fontSize="10" fontWeight="700">
                                 {formatTick(tick.value)}
                             </text>
                         </g>
@@ -295,13 +295,13 @@ const MultipleRegressionPlanePlot = ({
                         />
                     )}
 
-                    <text x={geometry.axisEnds.x1.x + 8} y={geometry.axisEnds.x1.y + 8} fill={textColor} fontSize="13" fontWeight="800">
+                    <text x={geometry.axisEnds.x1.x + 12} y={geometry.axisEnds.x1.y + 34} fill={textColor} fontSize="12" fontWeight="800">
                         {predictorLabels[0]}
                     </text>
-                    <text x={geometry.axisEnds.x2.x - 10} y={geometry.axisEnds.x2.y - 10} textAnchor="end" fill={textColor} fontSize="13" fontWeight="800">
+                    <text x={geometry.axisEnds.x2.x - 28} y={geometry.axisEnds.x2.y - 24} textAnchor="end" fill={textColor} fontSize="12" fontWeight="800">
                         {predictorLabels[1]}
                     </text>
-                    <text x={geometry.axisEnds.y.x - 8} y={geometry.axisEnds.y.y - 8} textAnchor="end" fill={textColor} fontSize="13" fontWeight="800">
+                    <text x={geometry.axisEnds.y.x - 20} y={geometry.axisEnds.y.y - 16} textAnchor="end" fill={textColor} fontSize="12" fontWeight="800">
                         {outcomeLabel}
                     </text>
                 </svg>
