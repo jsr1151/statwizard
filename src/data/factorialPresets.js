@@ -25,6 +25,40 @@ export const FACTORIAL_PRESETS = [
             'a1_b2': { values: [448, 455, 462], inputMode: 'raw' },
             'a2_b1': { values: [380, 395, 385], inputMode: 'raw' },
             'a2_b2': { values: [385, 390, 380], inputMode: 'raw' }
+        },
+        extraLevels: {
+            A: [
+                {
+                    id: 'a3',
+                    label: "100mg",
+                    cells: {
+                        'a3_b1': { values: [418, 424, 416], inputMode: 'raw' },
+                        'a3_b2': { values: [420, 427, 414], inputMode: 'raw' },
+                        'a3_b3': { values: [422, 430, 426], inputMode: 'raw' },
+                        'a3_b4': { values: [408, 414, 410], inputMode: 'raw' }
+                    }
+                }
+            ],
+            B: [
+                {
+                    id: 'b3',
+                    label: "Electronic",
+                    cells: {
+                        'a1_b3': { values: [452, 466, 458], inputMode: 'raw' },
+                        'a2_b3': { values: [386, 398, 389], inputMode: 'raw' },
+                        'a3_b3': { values: [422, 430, 426], inputMode: 'raw' }
+                    }
+                },
+                {
+                    id: 'b4',
+                    label: "Quiet",
+                    cells: {
+                        'a1_b4': { values: [442, 448, 446], inputMode: 'raw' },
+                        'a2_b4': { values: [374, 382, 378], inputMode: 'raw' },
+                        'a3_b4': { values: [408, 414, 410], inputMode: 'raw' }
+                    }
+                }
+            ]
         }
     },
     {
@@ -39,6 +73,18 @@ export const FACTORIAL_PRESETS = [
             'a1_b2': { values: [4, 5, 4, 3], inputMode: 'raw' },
             'a2_b1': { values: [7, 8, 9, 8], inputMode: 'raw' },
             'a2_b2': { values: [4, 5, 3, 4], inputMode: 'raw' }
+        },
+        extraLevels: {
+            B: [
+                {
+                    id: 'b3',
+                    label: "Moderate",
+                    cells: {
+                        'a1_b3': { values: [5, 6, 5, 6], inputMode: 'raw' },
+                        'a2_b3': { values: [5, 6, 6, 5], inputMode: 'raw' }
+                    }
+                }
+            ]
         }
     },
     {
@@ -53,6 +99,30 @@ export const FACTORIAL_PRESETS = [
             'a1_b2': { values: [60, 65, 58], inputMode: 'raw' },
             'a2_b1': { values: [60, 62, 59], inputMode: 'raw' },
             'a2_b2': { values: [88, 91, 89], inputMode: 'raw' }
+        },
+        extraLevels: {
+            A: [
+                {
+                    id: 'a3',
+                    label: "Solo Online",
+                    cells: {
+                        'a3_b1': { values: [84, 86, 82], inputMode: 'raw' },
+                        'a3_b2': { values: [68, 71, 67], inputMode: 'raw' },
+                        'a3_b3': { values: [76, 78, 75], inputMode: 'raw' }
+                    }
+                }
+            ],
+            B: [
+                {
+                    id: 'b3',
+                    label: "Ambivert",
+                    cells: {
+                        'a1_b3': { values: [75, 78, 74], inputMode: 'raw' },
+                        'a2_b3': { values: [76, 79, 77], inputMode: 'raw' },
+                        'a3_b3': { values: [76, 78, 75], inputMode: 'raw' }
+                    }
+                }
+            ]
         }
     },
     {
@@ -67,6 +137,18 @@ export const FACTORIAL_PRESETS = [
             'a1_b2': { values: [60, 62, 58, 55], inputMode: 'raw' },
             'a2_b1': { values: [85, 88, 82, 84], inputMode: 'raw' },
             'a2_b2': { values: [80, 82, 78, 79], inputMode: 'raw' }
+        },
+        extraLevels: {
+            B: [
+                {
+                    id: 'b3',
+                    label: "1 Month",
+                    cells: {
+                        'a1_b3': { values: [50, 54, 52, 49], inputMode: 'raw' },
+                        'a2_b3': { values: [74, 76, 72, 75], inputMode: 'raw' }
+                    }
+                }
+            ]
         }
     }
 ];

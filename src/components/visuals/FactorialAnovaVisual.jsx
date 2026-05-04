@@ -43,6 +43,18 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     const [selectedPresetId, setSelectedPresetId] = useState('');
 
     const factors = useMemo(() => [factorA, factorB], [factorA, factorB]);
+    const selectedPreset = useMemo(() => (
+        FACTORIAL_PRESETS.find(p => p.id === selectedPresetId) || null
+    ), [selectedPresetId]);
+
+    const getNextPresetLevel = (factor) => {
+        const target = factor === 'A' ? factorA : factorB;
+        const presetLevels = selectedPreset?.extraLevels?.[factor] || [];
+        return presetLevels.find((level) => !target.levels.some((existing) => existing.id === level.id)) || null;
+    };
+
+    const nextPresetLevelA = getNextPresetLevel('A');
+    const nextPresetLevelB = getNextPresetLevel('B');
 
     useEffect(() => {
         if (!datasetSeed?.key || !datasetSeed.factorA || !datasetSeed.factorB || !datasetSeed.cellData) {
@@ -99,12 +111,30 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     const addLevel = (factor) => {
         const target = factor === 'A' ? factorA : factorB;
         const setter = factor === 'A' ? setFactorA : setFactorB;
+        const opposite = factor === 'A' ? factorB : factorA;
         if (target.levels.length >= 5) return;
 
-        const newId = `${factor.toLowerCase()}${target.levels.length + 1}`;
-        const newLevel = { id: newId, label: `${factor}${target.levels.length + 1}` };
+        const presetLevel = getNextPresetLevel(factor);
+        const suggestedId = presetLevel?.id || `${factor.toLowerCase()}${target.levels.length + 1}`;
+        const newId = target.levels.some((level) => level.id === suggestedId)
+            ? `${factor.toLowerCase()}${target.levels.length + 1}`
+            : suggestedId;
+        const newLevel = { id: newId, label: presetLevel?.label || `${factor}${target.levels.length + 1}` };
 
         setter({ ...target, levels: [...target.levels, newLevel] });
+        setCellData((previous) => {
+            const next = { ...previous };
+            opposite.levels.forEach((oppositeLevel) => {
+                const key = factor === 'A' ? `${newId}_${oppositeLevel.id}` : `${oppositeLevel.id}_${newId}`;
+                const presetCell = presetLevel?.cells?.[key];
+                if (!next[key]) {
+                    next[key] = presetCell
+                        ? { ...presetCell, values: [...(presetCell.values || [])] }
+                        : { values: [], summary: { mean: '0.0', sd: '0.0', n: '0' }, inputMode: 'raw' };
+                }
+            });
+            return next;
+        });
     };
 
     const removeLevel = (factor, id) => {
@@ -413,6 +443,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                 addLevel={addLevel}
                                 removeLevel={removeLevel}
                                 updateLevelLabel={updateLevelLabel}
+                                nextLevelLabelA={nextPresetLevelA?.label}
+                                nextLevelLabelB={nextPresetLevelB?.label}
                                 darkMode={darkMode}
                             />
                         </div>

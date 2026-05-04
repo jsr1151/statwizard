@@ -12,8 +12,13 @@ const FactorialDatasetEditor = ({
     addLevel,
     removeLevel,
     updateLevelLabel,
+    nextLevelLabelA,
+    nextLevelLabelB,
     darkMode
 }) => {
+    const addLabelA = nextLevelLabelA ? `ADD ${nextLevelLabelA}` : 'ADD LEVEL';
+    const addLabelB = nextLevelLabelB ? `ADD ${nextLevelLabelB}` : 'ADD LEVEL';
+
     return (
         <div className="flex flex-col gap-8 transition-opacity">
             {/* Factor Controls */}
@@ -28,7 +33,7 @@ const FactorialDatasetEditor = ({
                             <span className="text-[9px] font-bold text-slate-500 italic">Independent Levels</span>
                         </div>
                         <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-lg border border-indigo-500/20 text-[9px] font-black hover:bg-indigo-600/20 transition-all">
-                            <Plus size={12} /> ADD LEVEL
+                            <Plus size={12} /> {addLabelA}
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -60,7 +65,7 @@ const FactorialDatasetEditor = ({
                         </div>
                         <ProgressiveTooltip term="+ Level" title="Add Level" desc="Add a new category or condition to this factor." darkMode={darkMode}>
                             <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[9px] font-black hover:bg-emerald-600/20 transition-all">
-                                <Plus size={12} /> ADD LEVEL
+                                <Plus size={12} /> {addLabelB}
                             </button>
                         </ProgressiveTooltip>
                     </div>
@@ -87,10 +92,10 @@ const FactorialDatasetEditor = ({
             <div className={`flex flex-wrap items-center gap-4 p-4 rounded-2xl border-2 ${darkMode ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                 <div className="flex items-center gap-3">
                     <button onClick={() => addLevel('A')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600/20 transition-all border border-indigo-500/20">
-                        <Plus size={12} /> Add Factor A
+                        <Plus size={12} /> {nextLevelLabelA ? `Add ${nextLevelLabelA}` : 'Add Factor A'}
                     </button>
                     <button onClick={() => addLevel('B')} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600/10 text-emerald-400 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600/20 transition-all border border-emerald-500/20">
-                        <Plus size={12} /> Add Factor B
+                        <Plus size={12} /> {nextLevelLabelB ? `Add ${nextLevelLabelB}` : 'Add Factor B'}
                     </button>
                 </div>
 

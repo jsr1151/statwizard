@@ -46,7 +46,7 @@ ANCOVA:
 Factorial ANOVA:
 - Many of the same things as the ANCOVA...
 - ✅ ~~For the Data page, you should explain what is meant by themes, like give a brief description of what the study is testing, under each condition there should also be a brief description (e.g., "Factor B: Music" "Genre of music that participants listened to")~~
-- Some themes should have pre-built additional levels for independent variables, so I can add another level of music (e.g., electronic, quiet, etc.)
+- ✅ ~~Some themes should have pre-built additional levels for independent variables, so I can add another level of music (e.g., electronic, quiet, etc.)~~
 - Maybe also make some themes pre-set to 3 factors. Currently, only two way interactions can be learned. So maybe just one three-way
 - Should include an in-depth bar graph and plot maker, like in the other pages
 - ✅ ~~Factorial ANOVA Equation page only shows interaction equation. It does say "Showing" so it seems that you should be able to change it, but you can't as far as I'm aware.~~
