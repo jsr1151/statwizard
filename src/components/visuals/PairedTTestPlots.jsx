@@ -36,14 +36,12 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
     const conditionError = (sd) => errorType === 'sd' ? sd : errorType === 'se' ? sd / Math.sqrt(Math.max(1, stats.n)) : 0;
     const c1Error = conditionError(stats.sd1 || 0);
     const c2Error = conditionError(stats.sd2 || 0);
-    const diffError = errorType === 'sd' ? stats.sd : errorType === 'se' ? stats.se : 0;
     const scoreValues = rawPairs.flatMap((pair) => [pair.first, pair.second]);
     const differenceValues = rawPairs.map((pair) => pair.difference);
     const allValues = (type === 'change'
         ? [
             ...differenceValues,
-            stats.dBar + diffError,
-            stats.dBar - diffError,
+            stats.dBar,
             0,
         ]
         : [
@@ -69,6 +67,7 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
     const x2 = margin.left + plotWidth * 0.68;
     const xDiff = margin.left + plotWidth * 0.5;
     const baselineY = yToPos(Math.max(0, effectiveYMin));
+    const lineLabelY = Math.max(margin.top + 14, Math.min(yToPos(stats.mean1), yToPos(stats.mean2)) - 12);
 
     const tickValues = [0, 0.25, 0.5, 0.75, 1].map((ratio) => effectiveYMin + ((effectiveYMax - effectiveYMin) * ratio));
     const jitter = (index) => Math.sin(index * 9.7) * 10;
@@ -123,6 +122,15 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
                     </g>
                 ))}
 
+                {type === 'line' && (
+                    <>
+                        <line x1={x1} y1={yToPos(stats.mean1)} x2={x2} y2={yToPos(stats.mean2)} stroke={stats.mean2 >= stats.mean1 ? '#22c55e' : '#f97316'} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
+                        <text x={(x1 + x2) / 2} y={lineLabelY} textAnchor="middle" fontSize="10" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#475569'}>
+                            C2 - C1 = {(stats.mean2 - stats.mean1).toFixed(2)}
+                        </text>
+                    </>
+                )}
+
                 {type === 'change' && (
                     <>
                         <line x1={margin.left} y1={yToPos(0)} x2={margin.left + plotWidth} y2={yToPos(0)} stroke={darkMode ? '#64748b' : '#94a3b8'} strokeDasharray="4,3" />
@@ -130,16 +138,27 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
                             <circle key={`diff-${index}`} cx={xDiff + jitter(index)} cy={yToPos(pair.difference)} r="3.2" fill={differenceColor} opacity="0.62" />
                         ))}
                         <line x1={xDiff - 46} y1={yToPos(stats.dBar)} x2={xDiff + 46} y2={yToPos(stats.dBar)} stroke={differenceColor} strokeWidth="3" />
-                        {renderErrorBar(xDiff, stats.dBar, diffError)}
                     </>
                 )}
 
-                <circle cx={x1} cy={yToPos(stats.mean1)} r="5" fill={condition1Color} stroke={darkMode ? '#020617' : '#ffffff'} strokeWidth="2" />
-                <circle cx={x2} cy={yToPos(stats.mean2)} r="5" fill={condition2Color} stroke={darkMode ? '#020617' : '#ffffff'} strokeWidth="2" />
+                {type !== 'change' && (
+                    <>
+                        <circle cx={x1} cy={yToPos(stats.mean1)} r="5" fill={condition1Color} stroke={darkMode ? '#020617' : '#ffffff'} strokeWidth="2" />
+                        <circle cx={x2} cy={yToPos(stats.mean2)} r="5" fill={condition2Color} stroke={darkMode ? '#020617' : '#ffffff'} strokeWidth="2" />
+                    </>
+                )}
 
-                <text x={x1} y={margin.top + plotHeight + 22} textAnchor="middle" fontSize="11" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#0f172a'}>{group1.name || 'Condition 1'}</text>
-                <text x={x2} y={margin.top + plotHeight + 22} textAnchor="middle" fontSize="11" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#0f172a'}>{group2.name || 'Condition 2'}</text>
-                {type === 'change' && <text x={xDiff} y={height - 10} textAnchor="middle" fontSize="10" fontWeight="800" fill={darkMode ? '#fbbf24' : '#92400e'}>Mean difference = {stats.dBar.toFixed(2)}</text>}
+                {type !== 'change' ? (
+                    <>
+                        <text x={x1} y={margin.top + plotHeight + 22} textAnchor="middle" fontSize="11" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#0f172a'}>{group1.name || 'Condition 1'}</text>
+                        <text x={x2} y={margin.top + plotHeight + 22} textAnchor="middle" fontSize="11" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#0f172a'}>{group2.name || 'Condition 2'}</text>
+                    </>
+                ) : (
+                    <>
+                        <text x={xDiff} y={margin.top + plotHeight + 22} textAnchor="middle" fontSize="11" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#0f172a'}>Difference scores ({group1.name || 'Condition 1'} - {group2.name || 'Condition 2'})</text>
+                        <text x={xDiff} y={height - 10} textAnchor="middle" fontSize="10" fontWeight="800" fill={darkMode ? '#fbbf24' : '#92400e'}>Mean difference = {stats.dBar.toFixed(2)}</text>
+                    </>
+                )}
             </svg>
         </div>
     );

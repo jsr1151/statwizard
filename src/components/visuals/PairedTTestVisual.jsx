@@ -10,6 +10,7 @@ import PairedTTestPlots from './PairedTTestPlots';
 const PAIRED_PLOT_DEFAULT_LABELS = {
   paired: 'Score',
   bar: 'Mean score',
+  line: 'Mean score',
   change: 'Difference score',
 };
 
@@ -283,7 +284,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h5 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Paired plot maker</h5>
-                  <p className={`mt-1 text-[11px] ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Switch between paired lines, condition means, and change-score views.</p>
+                  <p className={`mt-1 text-[11px] ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Switch between paired lines, condition means, mean trends, and change-score views.</p>
                 </div>
                 <button
                   onClick={() => setPlotSettings((previous) => ({ ...previous, showGrid: !previous.showGrid }))}
@@ -293,13 +294,14 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Plot type</span>
                   <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
                     {[
                       { id: 'paired', label: 'Paired' },
                       { id: 'bar', label: 'Bars' },
+                      { id: 'line', label: 'Line' },
                       { id: 'change', label: 'Change' },
                     ].map((option) => (
                       <button key={option.id} onClick={() => handlePlotTypeChange(option.id)} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.type === option.id ? 'bg-amber-500 text-white' : 'text-slate-500'}`}>
@@ -308,21 +310,24 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Error bars</span>
-                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
-                    {['none', 'se', 'sd'].map((option) => (
-                      <button key={option} onClick={() => setPlotSettings((previous) => ({ ...previous, errorType: option }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.errorType === option ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
-                        {option}
-                      </button>
-                    ))}
+                {plotSettings.type === 'bar' && (
+                  <div className="space-y-2">
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Error bars</span>
+                    <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+                      {['none', 'se', 'sd'].map((option) => (
+                        <button key={option} onClick={() => setPlotSettings((previous) => ({ ...previous, errorType: option }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.errorType === option ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
+                          {option}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                {[
-                  ['condition1Color', 'C1'],
-                  ['condition2Color', 'C2'],
-                  ['differenceColor', 'Diff'],
-                ].map(([key, label]) => (
+                )}
+                {(plotSettings.type === 'change'
+                  ? [['differenceColor', 'Diff']]
+                  : [
+                    ['condition1Color', 'C1'],
+                    ['condition2Color', 'C2'],
+                  ]).map(([key, label]) => (
                   <div key={key} className="space-y-2">
                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label} color</span>
                     <input type="color" value={plotSettings[key]} onChange={(event) => setPlotSettings((previous) => ({ ...previous, [key]: event.target.value }))} className="w-full h-9 rounded cursor-pointer bg-transparent border-none" />
