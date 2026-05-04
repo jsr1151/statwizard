@@ -29,7 +29,7 @@ const PValueWidget = ({ darkMode }) => {
 
     return (
         <div className={`p-4 rounded-xl border flex flex-col gap-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <div className="h-40 relative flex items-end justify-center">
+            <div className="h-64 relative flex items-end justify-center">
                 <svg viewBox="0 0 300 150" className="w-full h-full overflow-visible">
                     {/* Base Axis */}
                     <line x1="0" y1="140" x2="300" y2="140" stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="2" />
@@ -97,8 +97,8 @@ const CIWidget = ({ darkMode }) => {
 
     return (
         <div className={`p-4 rounded-xl border flex flex-col gap-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <div className="h-32 flex items-center justify-center relative">
-                <svg viewBox="0 0 300 100" className="w-full">
+            <div className="h-52 flex items-center justify-center relative">
+                <svg viewBox="0 0 300 100" className="w-full h-full">
                     {/* Axis */}
                     <line x1="20" y1="70" x2="280" y2="70" stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
                     {[-2, -1, 0, 1, 2, 3].map(t => (
@@ -133,11 +133,11 @@ const CIWidget = ({ darkMode }) => {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <span className="text-[9px] font-black uppercase text-slate-500">Estimate: {estimate.toFixed(1)}</span>
-                        <input type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500" />
+                        <input type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-6 cursor-pointer accent-indigo-500" />
                     </div>
                     <div className="space-y-1">
                         <span className="text-[9px] font-black uppercase text-slate-500">Half-Width: ±{range.toFixed(1)}</span>
-                        <input type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500" />
+                        <input type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-6 cursor-pointer accent-indigo-500" />
                     </div>
                 </div>
                 <p className={`text-[9px] font-medium leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -174,17 +174,21 @@ const PowerWidget = ({ darkMode }) => {
 
     return (
         <div className={`p-4 rounded-xl border flex flex-col gap-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <div className="h-40 relative flex items-end justify-center">
+            <div className="h-64 relative flex items-end justify-center">
                 <svg viewBox="0 0 300 150" className="w-full h-full overflow-visible">
                     <line x1="0" y1="140" x2="300" y2="140" stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
 
+                    {/* Legend — fixed corners so labels never overlap regardless of effect size */}
+                    <line x1="6" y1="12" x2="18" y2="12" stroke={darkMode ? "#334155" : "#cbd5e1"} strokeWidth="1" strokeDasharray="3,3" />
+                    <text x="21" y="15" fontSize="7" fontWeight="bold" fill={darkMode ? "#475569" : "#94a3b8"}>H₀ (null)</text>
+                    <line x1="175" y1="12" x2="187" y2="12" stroke="#6366f1" strokeWidth="2" />
+                    <text x="190" y="15" fontSize="7" fontWeight="bold" fill="#6366f1">H₁ (real effect)</text>
+
                     {/* H0 Distribution */}
                     <path d={`M ${pointsH0[0][0]},${pointsH0[0][1] - 10} ` + pointsH0.slice(1).map(p => `L ${p[0]},${p[1] - 10}`).join(' ')} fill="none" stroke={darkMode ? "#334155" : "#cbd5e1"} strokeWidth="1" strokeDasharray="3,3" />
-                    <text x={meanH0} y="148" textAnchor="middle" className="text-[7px] font-bold fill-slate-400">NULL (H₀)</text>
 
                     {/* H1 Distribution */}
                     <path d={`M ${pointsH1[0][0]},${pointsH1[0][1] - 10} ` + pointsH1.slice(1).map(p => `L ${p[0]},${p[1] - 10}`).join(' ')} fill="none" stroke="#6366f1" strokeWidth="2" />
-                    <text x={meanH1} y="148" textAnchor="middle" className="text-[7px] font-bold fill-indigo-500">REAL EFFECT (H₁)</text>
 
                     {/* Cutoff / Alpha Line */}
                     <line x1={cutoff} y1="30" x2={cutoff} y2="140" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,2" />
