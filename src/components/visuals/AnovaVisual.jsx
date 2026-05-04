@@ -30,6 +30,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     setTimeout(() => setModeToast(null), 3000);
   };
   const [activeTab, setActiveTab] = useState('fDist');
+  const [hoveredCell, setHoveredCell] = useState(null);
   const [alpha, setAlpha] = useState(0.05);
   const [showPostHoc, setShowPostHoc] = useState(false);
   const [showSpread, setShowSpread] = useState(true);
@@ -264,9 +265,9 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       {/* Visualizer Frame */}
       <div className={`w-full h-[600px] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
         <div className="absolute top-4 left-4 flex gap-2 z-40">
-          {['fDist', 'means', 'decomp'].map(tab => (
+          {['fDist', 'means', 'decomp', 'table'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}>
-              {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : 'Decomp'}
+              {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : tab === 'decomp' ? 'Decomp' : 'Table'}
             </button>
           ))}
         </div>
@@ -287,6 +288,93 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
           )}
           {activeTab === 'means' && <GroupsMeansView groups={groups} grandMean={renderModel.grandMean} darkMode={darkMode} showSpread={showSpread} />}
           {activeTab === 'decomp' && <VarianceDecomposition ssB={renderModel.ssB || 0} ssW={renderModel.ssW || 0} ssT={renderModel.ssT || 1} darkMode={darkMode} />}
+          {activeTab === 'table' && (
+            anovaMode !== 'data' || !renderModel.ssB ? (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3">
+                <p className="text-xs font-black uppercase tracking-widest">Switch to Compute mode to see the ANOVA table.</p>
+              </div>
+            ) : (() => {
+              const cellDefs = {
+                ss_between: { label: 'SS Between', detail: 'Sum of Squares Between groups — how much of the total variance is explained by group membership. Larger = groups are more spread apart.' },
+                df_between: { label: 'df Between', detail: `Degrees of freedom for the between-groups effect = k − 1, where k is the number of groups (here k = ${renderModel.k || '?'}, so df = ${renderModel.df1}).` },
+                ms_between: { label: 'MS Between', detail: 'Mean Square Between = SS_between / df_between. This is the signal — the estimated variance due to group differences.' },
+                f: { label: 'F', detail: 'F = MS_between / MS_within. The ratio of signal to noise. A larger F means the groups differ more than chance alone would predict.' },
+                p: { label: 'p', detail: 'Probability of observing an F this large (or larger) if the null hypothesis were true. p < α means the result is statistically significant.' },
+                eta2: { label: 'η²', detail: 'Eta squared = SS_between / SS_total. The proportion of total variance explained by the grouping factor. η² = 0.06 means 6% of variance is accounted for by group.' },
+                ss_within: { label: 'SS Within', detail: 'Sum of Squares Within groups — unexplained variance, the "noise" left over after accounting for group membership.' },
+                df_within: { label: 'df Within', detail: `Degrees of freedom for the within-groups (error) term = N − k, where N is total observations and k is number of groups.` },
+                ms_within: { label: 'MS Within', detail: 'Mean Square Within = SS_within / df_within. The estimated variance within groups — used as the denominator of the F ratio.' },
+                ss_total: { label: 'SS Total', detail: 'Total Sum of Squares = SS_between + SS_within. Represents all the variance in the outcome across all observations.' },
+                df_total: { label: 'df Total', detail: 'Total degrees of freedom = N − 1, where N is the total number of observations.' },
+              };
+              const active = hoveredCell;
+              const Cell = ({ id, value, colorClass = '' }) => (
+                <td
+                  className={`py-3 px-4 text-right font-mono text-sm cursor-help transition-colors ${
+                    active === id ? (darkMode ? 'bg-indigo-950/60 text-indigo-300' : 'bg-indigo-50 text-indigo-700') : colorClass
+                  }`}
+                  onMouseEnter={() => setHoveredCell(id)}
+                  onMouseLeave={() => setHoveredCell(null)}
+                >
+                  {value}
+                </td>
+              );
+              return (
+                <div className="w-full h-full overflow-auto p-6 flex flex-col gap-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className={`border-b-2 text-[10px] uppercase tracking-widest ${darkMode ? 'border-slate-700 text-slate-500' : 'border-slate-300 text-slate-500'}`}>
+                          {['Source', 'SS', 'df', 'MS', 'F', 'p', 'η²'].map(h => (
+                            <th key={h} className={`py-3 px-4 font-bold ${h !== 'Source' ? 'text-right' : ''}`}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        <tr className={`border-b ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                          <td className="py-3 px-4 font-bold text-indigo-400">Between (Group)</td>
+                          <Cell id="ss_between" value={renderModel.ssB?.toFixed(2)} />
+                          <Cell id="df_between" value={renderModel.df1} />
+                          <Cell id="ms_between" value={renderModel.msB?.toFixed(2)} />
+                          <Cell id="f" value={renderModel.F?.toFixed(2)} colorClass={darkMode ? 'text-indigo-400 font-bold' : 'text-indigo-600 font-bold'} />
+                          <Cell id="p" value={renderModel.p < 0.001 ? '< .001' : renderModel.p?.toFixed(3)} colorClass={renderModel.p < renderModel.alpha ? (darkMode ? 'text-emerald-400 font-bold' : 'text-emerald-600 font-bold') : ''} />
+                          <Cell id="eta2" value={renderModel.eta2?.toFixed(3)} />
+                        </tr>
+                        <tr className={`border-b ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                          <td className="py-3 px-4 text-slate-500">Within (Error)</td>
+                          <Cell id="ss_within" value={renderModel.ssW?.toFixed(2)} />
+                          <Cell id="df_within" value={renderModel.df2} />
+                          <Cell id="ms_within" value={renderModel.msW?.toFixed(2)} />
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4 text-slate-500">Total</td>
+                          <Cell id="ss_total" value={renderModel.ssT?.toFixed(2)} />
+                          <Cell id="df_total" value={(renderModel.df1 + renderModel.df2)} />
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                          <td className="py-3 px-4 text-right text-slate-600">—</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className={`min-h-[64px] p-4 rounded-xl border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    {active ? (
+                      <>
+                        <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{cellDefs[active]?.label}</div>
+                        <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{cellDefs[active]?.detail}</p>
+                      </>
+                    ) : (
+                      <p className={`text-xs italic ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>Hover over any cell to see what it means.</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()
+          )}
         </div>
       </div>
 

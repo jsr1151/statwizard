@@ -31,6 +31,12 @@ const EffectSizePanel = ({ testConfig, currentStats, darkMode }) => {
                         {transform?.description || 'This effect-size helper will be added as the next slice for this test.'}
                     </p>
 
+                    {canCompute && transform.fields.some(f => f.id === 'etaSquared') && (
+                        <div className={`mt-4 p-3 rounded-xl border text-xs leading-relaxed ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                            <strong className={darkMode ? 'text-slate-300' : 'text-slate-700'}>η² (Eta Squared)</strong> = SS<sub>between</sub> / SS<sub>total</sub>. It tells you what proportion of the total variance in the outcome is explained by the group factor. A value of 0.06 means 6% of variance is explained by group membership.
+                        </div>
+                    )}
+
                     {canCompute && (
                         <div className="mt-6 grid gap-4">
                             {transform.fields.map((field) => (

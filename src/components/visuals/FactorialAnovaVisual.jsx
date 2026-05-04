@@ -40,6 +40,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     const [ssType, setSsType] = useState('III'); // 'I' (sequential), 'III' (unweighted)
     const [plotFocus, setPlotFocus] = useState('interaction'); // 'interaction', 'A', 'B'
     const [expandedEffect, setExpandedEffect] = useState(null);
+    const [selectedPresetId, setSelectedPresetId] = useState('');
 
     const factors = useMemo(() => [factorA, factorB], [factorA, factorB]);
 
@@ -88,7 +89,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     const loadPreset = (presetId) => {
         const preset = FACTORIAL_PRESETS.find(p => p.id === presetId);
         if (!preset) return;
-
+        setSelectedPresetId(presetId);
         setFactorA(preset.factorA);
         setFactorB(preset.factorB);
         setOutcomeLabel(preset.outcome);
@@ -375,6 +376,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                             <span className="text-[10px] font-black uppercase text-indigo-500/50 tracking-[0.2em] px-1 cursor-help">Study Themes</span>
                         </ProgressiveTooltip>
                         <select
+                            value={selectedPresetId}
                             onChange={(e) => {
                                 loadPreset(e.target.value);
                                 tutor.triggerEvent({ signal: 'theme_selected' });
@@ -386,6 +388,14 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
+                        {selectedPresetId && (() => {
+                            const p = FACTORIAL_PRESETS.find(x => x.id === selectedPresetId);
+                            return p ? (
+                                <div className="max-w-[220px] px-2 py-1.5 text-[10px] text-slate-400 leading-snug italic">
+                                    {p.description}
+                                </div>
+                            ) : null;
+                        })()}
                     </div>
                 </div>
 

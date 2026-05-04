@@ -476,7 +476,7 @@ const pairedTEffectTransform = {
 
 const oneWayAnovaEffectTransform = {
     primaryMetricLabel: "Cohen's f",
-    description: "For a one-way ANOVA, Cohen's f is the omnibus effect size derived from the share of variance explained across the groups.",
+    description: "Eta squared (η²) is the proportion of total variance explained by the grouping factor. Cohen's f converts η² into the standardized omnibus effect size used for power analysis. Enter η² from your ANOVA output to see Cohen's f and its interpretation.",
     fields: [
         {
             id: 'etaSquared',
@@ -510,8 +510,12 @@ const oneWayAnovaEffectTransform = {
             formulaNote: 'Use eta squared from the omnibus ANOVA, then divide by the unexplained share before taking the square root.',
             support: [
                 {
-                    label: 'Eta Squared (η²)',
-                    value: eta2.toFixed(4),
+                    label: "Cohen's f (result)",
+                    value: effectSize.toFixed(4),
+                },
+                {
+                    label: 'Benchmark',
+                    value: effectSize < 0.10 ? 'Negligible' : effectSize < 0.25 ? 'Small (f ≈ 0.10)' : effectSize < 0.40 ? 'Medium (f ≈ 0.25)' : 'Large (f ≈ 0.40)',
                 },
             ],
         };

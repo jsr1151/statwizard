@@ -9,6 +9,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   const labelCol = darkMode ? 'text-slate-500' : 'text-slate-400';
   const textCol = darkMode ? 'text-slate-200' : 'text-slate-800';
   const [ssWTab, setSsWTab] = useState('raw');
+  const [factorialEffectKey, setFactorialEffectKey] = useState('AxB');
 
   const getV = (key) => stats ? stats[key] : undefined;
   const calc = (term, val) => <MathTerm term={term} value={val} showValue={showValues} onInfo={onInfo} onHover={onHover} darkMode={darkMode} />;
@@ -490,7 +491,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   }
 
   if (type === 'factorial_anova') {
-    const effectKey = getV('expandedEffect') || 'AxB';
+    const effectKey = factorialEffectKey;
     const effects = getV('effects') || {};
     const factors = getV('factors') || [];
 
@@ -526,7 +527,25 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
         >
           <div className={`text-[10px] font-black uppercase tracking-widest ${labelCol} mb-1 flex items-center justify-between w-full max-w-sm`}>
             <span>The F-Ratio</span>
-            <span className="text-indigo-500 bg-indigo-500/10 px-2 rounded-full py-0.5 ml-2 font-bold">Showing: {effectItem.label || 'Interaction'}</span>
+            <div className="flex gap-1">
+              {[
+                { key: 'A', label: factors[0]?.label || 'Factor A' },
+                { key: 'B', label: factors[1]?.label || 'Factor B' },
+                { key: 'AxB', label: 'Interaction' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFactorialEffectKey(key)}
+                  className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide transition-all ${
+                    effectKey === key
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'bg-slate-700/50 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className={`flex items-center text-2xl md:text-3xl font-serif ${textCol} whitespace-nowrap bg-slate-500/5 p-4 rounded-2xl border ${borderCol} w-full max-w-sm justify-center transition-all duration-300 overflow-visible`}>
             <span className="font-bold mr-3 italic">F</span>
