@@ -6,6 +6,7 @@ import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
+import PairedTTestPlots from './PairedTTestPlots';
 const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsUpdate, datasetSeed = null, mode = 'lessons' }) => {
   const [group1, setGroup1] = useState({ name: "Condition 1", raw: "12, 14, 11, 15, 13, 16, 14, 12, 15, 14" });
   const [group2, setGroup2] = useState({ name: "Condition 2", raw: "10, 11, 12, 11, 10, 13, 12, 11, 11, 12" });
@@ -17,6 +18,17 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
   const [displayMode, setDisplayMode] = useState('sampling'); // 'sampling', 'difference', 'paired'
   const [showCI] = useState(true);
   const [ciType, setCiType] = useState('two-sided');
+  const [plotSettings, setPlotSettings] = useState({
+    type: 'paired',
+    errorType: 'se',
+    showGrid: true,
+    condition1Color: '#6366f1',
+    condition2Color: '#10b981',
+    differenceColor: '#f59e0b',
+    yMin: null,
+    yMax: null,
+    yLabel: 'Score',
+  });
   const allowRawInput = mode === 'calculator';
 
   useEffect(() => {
@@ -119,13 +131,22 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
   return (
     <div className="w-full flex">
       <div className="flex-1 flex flex-col items-center">
-        <div className={`w-full h-72 sticky top-4 z-20 flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100 shadow-inner'}`}>
+        <div className={`w-full ${displayMode === 'plots' ? 'h-96' : 'h-72'} sticky top-4 z-20 flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100 shadow-inner'}`}>
           <div className="absolute top-4 left-4 flex gap-2 z-10">
-            {['sampling', 'difference', 'paired'].map(m => (
+            {['sampling', 'difference', 'paired', 'plots'].map(m => (
               <button key={m} onClick={() => setDisplayMode(m)} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayMode === m ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>{m}</button>
             ))}
           </div>
 
+          {displayMode === 'plots' ? (
+            <PairedTTestPlots
+              stats={stats}
+              group1={group1}
+              group2={group2}
+              settings={plotSettings}
+              darkMode={darkMode}
+            />
+          ) : (
           <svg viewBox="-20 0 340 200" className="w-full h-full overflow-visible">
             <text x="150" y="192" textAnchor="middle" className={`text-[7px] font-bold uppercase transition-colors ${darkMode ? 'fill-slate-600' : 'fill-slate-400'}`}>{displayMode === 'sampling' ? "Sampling Distribution of t (H₀)" : (displayMode === 'difference' ? "Distribution of Difference Scores" : "Paired Observations Flow")}</text>
 
@@ -222,6 +243,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               </g>
             )}
           </svg>
+          )}
 
           <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-20">
             <div className={`px-3 py-1.5 rounded-xl border-2 flex flex-col items-center min-w-[110px] shadow-lg transition-all ${stats.isSignificant ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-500' : 'bg-slate-500/10 border-slate-500/40 text-slate-400'}`}>
@@ -237,6 +259,66 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
         </div>
 
         <div className={`w-full p-6 space-y-8 transition-colors ${darkMode ? 'bg-slate-900 shadow-inner' : 'bg-slate-50'}`}>
+          {displayMode === 'plots' && (
+            <div className={`rounded-xl border p-4 space-y-4 ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h5 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Paired plot maker</h5>
+                  <p className={`mt-1 text-[11px] ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>Switch between paired lines, condition means, and change-score views.</p>
+                </div>
+                <button
+                  onClick={() => setPlotSettings((previous) => ({ ...previous, showGrid: !previous.showGrid }))}
+                  className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${plotSettings.showGrid ? 'bg-emerald-600 border-emerald-500 text-white' : (darkMode ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
+                >
+                  Grid
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Plot type</span>
+                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+                    {[
+                      { id: 'paired', label: 'Paired' },
+                      { id: 'bar', label: 'Bars' },
+                      { id: 'change', label: 'Change' },
+                    ].map((option) => (
+                      <button key={option.id} onClick={() => setPlotSettings((previous) => ({ ...previous, type: option.id }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.type === option.id ? 'bg-amber-500 text-white' : 'text-slate-500'}`}>
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Error bars</span>
+                  <div className={`p-1 rounded-lg flex ${darkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+                    {['none', 'se', 'sd'].map((option) => (
+                      <button key={option} onClick={() => setPlotSettings((previous) => ({ ...previous, errorType: option }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${plotSettings.errorType === option ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {[
+                  ['condition1Color', 'C1'],
+                  ['condition2Color', 'C2'],
+                  ['differenceColor', 'Diff'],
+                ].map(([key, label]) => (
+                  <div key={key} className="space-y-2">
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{label} color</span>
+                    <input type="color" value={plotSettings[key]} onChange={(event) => setPlotSettings((previous) => ({ ...previous, [key]: event.target.value }))} className="w-full h-9 rounded cursor-pointer bg-transparent border-none" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input type="text" value={plotSettings.yLabel} onChange={(event) => setPlotSettings((previous) => ({ ...previous, yLabel: event.target.value }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y-axis label" />
+                <input type="number" value={plotSettings.yMin ?? ''} onChange={(event) => setPlotSettings((previous) => ({ ...previous, yMin: event.target.value === '' ? null : parseFloat(event.target.value) }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y min" />
+                <input type="number" value={plotSettings.yMax ?? ''} onChange={(event) => setPlotSettings((previous) => ({ ...previous, yMax: event.target.value === '' ? null : parseFloat(event.target.value) }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y max" />
+              </div>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-6">
             <div className={`p-4 rounded-xl border-2 transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
               <div className="flex justify-between items-center mb-4">

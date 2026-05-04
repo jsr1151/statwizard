@@ -22,7 +22,7 @@ One Sample t-Test:
 - ✅ ~~Tutor/lesson page doesn't need the equation box, since there's a tab for the equation~~
 - ✅ ~~Make sure visualizer is on screen even as the screen is scrolled downwards~~
 - ✅ ~~In the calculator, errors/power button only shows the power curves when "Hide Alternative" button is toggled. This isn't how it should be~~
-- Errors/Power visualizer is a little noisy and the legend on the side is cut off and tiny
+- ✅ ~~Errors/Power visualizer is a little noisy and the legend on the side is cut off and tiny~~
 - ✅ ~~In the calculator, there's no way of using imported data like the other tests on the application, you can only paste in data~~
 - Equation page is not interactive like all other equation pages
 - ✅ ~~Power Analysis: adjusting alpha crashes the site~~
@@ -31,7 +31,7 @@ Independent Samples t-Test:
 - ✅ ~~Visualizer should stay on page when you scroll down~~
 
 Paired Samples t-Test:
-- I think the paired visualizer should be a typical plot maker like the bar plot option, but paired can be an option as well as a line chart option (if this isn't already an option)
+- ✅ ~~I think the paired visualizer should be a typical plot maker like the bar plot option, but paired can be an option as well as a line chart option (if this isn't already an option)~~
 
 One-Way ANOVA:
 - ✅ ~~I think the tutor/lesson page should default to "Explore" mode instead of "Compute" mode~~
