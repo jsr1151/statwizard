@@ -49,7 +49,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
     const [groups, setGroups] = useState(INITIAL_GROUPS);
     const [covariateName, setCovariateName] = useState('Baseline Score');
     const [outcomeLabel, setOutcomeLabel] = useState('Outcome Variable');
-    const [activeTab, setActiveTab] = useState('DATA');
+    const [activeTab, setActiveTab] = useState('F-DIST');
     const [alpha, setAlpha] = useState(0.05);
     const [activeEq, setActiveEq] = useState('group');
 
@@ -341,7 +341,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
             <div className={`p-4 border-b shrink-0 transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-1 overflow-x-auto pb-1 custom-scrollbar">
-                        {['DATA', 'PLOT', 'TABLE', 'EXPLORER', 'F-DIST'].map(tab => (
+                        {['F-DIST', 'TABLE', 'EXPLORER', 'PLOT'].map(tab => (
                             <TabButton key={tab} active={activeTab === tab} onClick={() => setActiveTab(tab)} darkMode={darkMode}>
                                 {tab}
                             </TabButton>
@@ -352,51 +352,6 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
 
             <div className="flex-1 overflow-y-auto custom-scrollbar relative">
                 <div className="p-4 lg:p-6 pb-20">
-                    {activeTab === 'DATA' && (
-                        <div className="max-w-4xl mx-auto flex flex-col items-center">
-                            <AncovaDatasetEditor
-                                covariateName={covariateName}
-                                setCovariateName={setCovariateName}
-                                covariateNameLocked={isCalculatorView && Boolean(datasetSeed?.key)}
-                                groups={groups}
-                                updateGroup={updateGroup}
-                                parseRaw={parseRaw}
-                                removeGroup={removeGroup}
-                                darkMode={darkMode}
-                            />
-                            <button
-                                onClick={addGroup}
-                                className={`mt-6 px-6 py-3 rounded-xl border-2 border-dashed flex items-center gap-2 font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${darkMode ? 'border-slate-700 text-slate-400 hover:text-indigo-400 hover:border-indigo-500 hover:bg-indigo-950/30' : 'border-slate-300 text-slate-500 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50'}`}
-                            >
-                                <Plus size={16} /> Add Group Level
-                            </button>
-                            {!isCalculatorView && (
-                                <div className={`mt-8 w-full p-6 rounded-2xl border-2 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
-                                    <h3 className={`text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                        <Sparkles size={16} /> Study Themes
-                                    </h3>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        {THEMES.map(theme => (
-                                            <button
-                                                key={theme.id}
-                                                onClick={() => loadPreset(theme)}
-                                                className={`p-4 rounded-xl border-2 text-left transition-all hover:scale-[1.02] active:scale-95 flex items-start gap-4 ${darkMode ? 'border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30' : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'}`}
-                                            >
-                                                <div className={`p-3 rounded-lg ${darkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
-                                                    <theme.icon size={20} />
-                                                </div>
-                                                <div>
-                                                    <div className={`font-bold mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{theme.label}</div>
-                                                    <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{theme.desc}</div>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
                     {activeTab === 'TABLE' && stats.ready && (
                         <div className="max-w-4xl mx-auto space-y-8">
                             <div className="flex justify-between items-end">
@@ -955,6 +910,52 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                     />
                                 )}
                             </div>
+
+                            {/* Data Editor — shown when in Compute (data) mode */}
+                            {ancovaMode === 'data' && (
+                                <div className="flex flex-col items-center">
+                                    <AncovaDatasetEditor
+                                        covariateName={covariateName}
+                                        setCovariateName={setCovariateName}
+                                        covariateNameLocked={isCalculatorView && Boolean(datasetSeed?.key)}
+                                        groups={groups}
+                                        updateGroup={updateGroup}
+                                        parseRaw={parseRaw}
+                                        removeGroup={removeGroup}
+                                        darkMode={darkMode}
+                                    />
+                                    <button
+                                        onClick={addGroup}
+                                        className={`mt-6 px-6 py-3 rounded-xl border-2 border-dashed flex items-center gap-2 font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${darkMode ? 'border-slate-700 text-slate-400 hover:text-indigo-400 hover:border-indigo-500 hover:bg-indigo-950/30' : 'border-slate-300 text-slate-500 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50'}`}
+                                    >
+                                        <Plus size={16} /> Add Group Level
+                                    </button>
+                                    {!isCalculatorView && (
+                                        <div className={`mt-8 w-full p-6 rounded-2xl border-2 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+                                            <h3 className={`text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                <Sparkles size={16} /> Study Themes
+                                            </h3>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                {THEMES.map(theme => (
+                                                    <button
+                                                        key={theme.id}
+                                                        onClick={() => loadPreset(theme)}
+                                                        className={`p-4 rounded-xl border-2 text-left transition-all hover:scale-[1.02] active:scale-95 flex items-start gap-4 ${darkMode ? 'border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30' : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'}`}
+                                                    >
+                                                        <div className={`p-3 rounded-lg ${darkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                                            <theme.icon size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <div className={`font-bold mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{theme.label}</div>
+                                                            <div className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{theme.desc}</div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

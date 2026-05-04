@@ -89,25 +89,29 @@ const ShapeVisual = ({ darkMode }) => {
           <path d={path} fill={darkMode ? "rgba(99, 102, 241, 0.05)" : "rgba(99, 102, 241, 0.1)"} stroke="#4f46e5" strokeWidth="3" className="transition-all duration-100 ease-out" />
 
           {/* Markers */}
-          {markers.map((m, i) => (
-            <g key={i} className="transition-all duration-300">
-              <line
-                x1={m.x} y1="150" x2={m.x} y2="10"
-                stroke={m.color}
-                strokeWidth="2"
-                strokeDasharray="4 2"
-                className="opacity-60"
-              />
-              <text
-                x={m.x} y="8"
-                textAnchor="middle"
-                fill={m.color}
-                className="text-[7px] font-black uppercase tracking-tighter"
-              >
-                {m.label}
-              </text>
-            </g>
-          ))}
+          {markers.map((m, i) => {
+            const labelY = 8 + i * 12;
+            const lineY2 = labelY + 5;
+            return (
+              <g key={i} className="transition-all duration-300">
+                <line
+                  x1={m.x} y1="150" x2={m.x} y2={lineY2}
+                  stroke={m.color}
+                  strokeWidth="2"
+                  strokeDasharray="4 2"
+                  className="opacity-60"
+                />
+                <text
+                  x={m.x} y={labelY}
+                  textAnchor="middle"
+                  fill={m.color}
+                  className="text-[7px] font-black uppercase tracking-tighter"
+                >
+                  {m.label}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
       <div className={`w-full p-4 rounded-b-lg border-x border-b space-y-4 transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 shadow-indigo-500/5' : 'bg-slate-50 border-slate-200'}`}>

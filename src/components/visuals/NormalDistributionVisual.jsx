@@ -100,6 +100,16 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
         }
       };
       const dIdx = Math.min(df, 30);
+      if (!tcritMap[alpha]) {
+        const target = tails === 2 ? 1 - alpha / 2 : 1 - alpha;
+        let lo = 0, hi = 20;
+        for (let i = 0; i < 60; i++) {
+          const mid = (lo + hi) / 2;
+          if (tCDF(mid, df) < target) lo = mid; else hi = mid;
+        }
+        const crit = (lo + hi) / 2;
+        return h1Direction === 'greater' ? Math.abs(crit) : -Math.abs(crit);
+      }
       let crit = tcritMap[alpha][tails][dIdx];
       if (df > 30) {
         const normalCrit = tails === 2 ? (alpha === 0.05 ? 1.96 : alpha === 0.01 ? 2.58 : 1.645) : (alpha === 0.05 ? 1.645 : alpha === 0.01 ? 2.33 : 1.28);
@@ -108,15 +118,16 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
       }
       return h1Direction === 'greater' ? Math.abs(crit) : -Math.abs(crit);
     }
-    if (tails === 2) {
-      if (alpha === 0.05) return 1.96;
-      if (alpha === 0.01) return 2.58;
-      if (alpha === 0.10) return 1.645;
-    } else {
-      const crit = alpha === 0.05 ? 1.645 : alpha === 0.01 ? 2.33 : 1.28;
+    {
+      const target = tails === 2 ? 1 - alpha / 2 : 1 - alpha;
+      let lo = 0, hi = 10;
+      for (let i = 0; i < 60; i++) {
+        const mid = (lo + hi) / 2;
+        if (normalCDF(mid) < target) lo = mid; else hi = mid;
+      }
+      const crit = (lo + hi) / 2;
       return h1Direction === 'greater' ? Math.abs(crit) : -Math.abs(crit);
     }
-    return 1.96;
   };
 
   const criticalValue = getCriticalValue();
@@ -168,6 +179,15 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
         0.10: { 2: [1, 6.314, 2.920, 2.353, 2.132, 2.015, 1.943, 1.895, 1.860, 1.833, 1.812, 1.796, 1.782, 1.771, 1.761, 1.753, 1.746, 1.740, 1.734, 1.729, 1.725, 1.721, 1.717, 1.714, 1.711, 1.708, 1.706, 1.703, 1.701, 1.699, 1.697], 1: [1, 3.078, 1.886, 1.638, 1.533, 1.476, 1.440, 1.415, 1.397, 1.383, 1.372, 1.363, 1.356, 1.350, 1.345, 1.341, 1.337, 1.333, 1.330, 1.328, 1.325, 1.323, 1.321, 1.319, 1.318, 1.316, 1.315, 1.314, 1.313, 1.311, 1.310] }
       };
       const dIdx = Math.min(df, 30);
+      if (!tcritMap[alpha]) {
+        const target = currentCiTails === 2 ? 1 - alpha / 2 : 1 - alpha;
+        let lo = 0, hi = 20;
+        for (let i = 0; i < 60; i++) {
+          const mid = (lo + hi) / 2;
+          if (tCDF(mid, df) < target) lo = mid; else hi = mid;
+        }
+        return Math.abs((lo + hi) / 2);
+      }
       let crit = tcritMap[alpha][currentCiTails][dIdx];
       if (df > 30) {
         const normalCrit = currentCiTails === 2 ? (alpha === 0.05 ? 1.96 : alpha === 0.01 ? 2.58 : 1.645) : (alpha === 0.05 ? 1.645 : alpha === 0.01 ? 2.33 : 1.28);
@@ -176,11 +196,13 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
       }
       return Math.abs(crit);
     } else {
-      if (currentCiTails === 2) {
-        return alpha === 0.01 ? 2.576 : alpha === 0.05 ? 1.96 : 1.645;
-      } else {
-        return alpha === 0.01 ? 2.326 : alpha === 0.05 ? 1.645 : 1.282;
+      const target = currentCiTails === 2 ? 1 - alpha / 2 : 1 - alpha;
+      let lo = 0, hi = 10;
+      for (let i = 0; i < 60; i++) {
+        const mid = (lo + hi) / 2;
+        if (normalCDF(mid) < target) lo = mid; else hi = mid;
       }
+      return Math.abs((lo + hi) / 2);
     }
   };
 
@@ -674,7 +696,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
             <div className={`flex p-0.5 rounded-lg border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
               <button onClick={() => setVisualMode('p-value')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${visualMode === 'p-value' ? (darkMode ? 'bg-slate-800 text-indigo-400' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400 hover:text-slate-600'}`}>P-Value View</button>
-              {!showTutor && <button onClick={() => setVisualMode('power')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${visualMode === 'power' ? (darkMode ? 'bg-slate-800 text-indigo-400' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400 hover:text-slate-600'}`}>Errors/Power</button>}
+              {!showTutor && <button onClick={() => { setVisualMode('power'); setShowPopulation(true); }} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${visualMode === 'power' ? (darkMode ? 'bg-slate-800 text-indigo-400' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400 hover:text-slate-600'}`}>Errors/Power</button>}
             </div>
 
             <button onClick={() => setShowPopulation(!showPopulation)} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${showPopulation ? (darkMode ? 'bg-indigo-500 text-white shadow-lg' : 'bg-indigo-600 text-white shadow-lg') : (darkMode ? 'bg-slate-900 text-slate-500 hover:bg-slate-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>

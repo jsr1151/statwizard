@@ -245,6 +245,31 @@ const AncovaPage = ({
                 </div>
             </Card>
 
+            <Card darkMode={darkMode}>
+                <div className="space-y-4">
+                    <h4 className={`text-sm font-black uppercase tracking-widest flex items-center gap-2 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        <Sparkles size={14} /> What ANCOVA Is Doing
+                    </h4>
+                    <div className={`grid md:grid-cols-3 gap-4 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>1. The Problem</div>
+                            <p className="leading-relaxed">Groups often differ on a background variable (the <strong>covariate</strong>) before the treatment even begins. Raw group means then reflect both the treatment effect and these pre-existing differences.</p>
+                        </div>
+                        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>2. The Adjustment</div>
+                            <p className="leading-relaxed">ANCOVA fits a regression line with the same slope in every group, then slides each line to a common covariate value (the grand mean). The <strong>adjusted means</strong> at that value are what gets compared.</p>
+                        </div>
+                        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>3. Key Assumption</div>
+                            <p className="leading-relaxed">The covariate-outcome slope must be the <strong>same across all groups</strong> (parallel slopes). The TABLE tab tests this — a significant Group × Covariate interaction means the assumption is violated.</p>
+                        </div>
+                    </div>
+                    <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                        <strong>In the visualizer:</strong> Use the <strong>F-DIST</strong> tab to enter data and see the F-statistic. Switch to <strong>Explore</strong> mode to freely drag df₁, df₂, and F. The <strong>PLOT</strong> tab shows the covariate slider — drag it to see how adjusted means shift while raw means stay fixed. The <strong>EXPLORER</strong> tab shows pairwise comparisons at whatever covariate value you set.
+                    </p>
+                </div>
+            </Card>
+
             <AncovaVisual
                 darkMode={darkMode}
                 showValues={showValues}

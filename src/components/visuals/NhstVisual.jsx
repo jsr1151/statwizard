@@ -53,7 +53,7 @@ const PValueWidget = ({ darkMode }) => {
                     )}
 
                     {/* The Distribution Curve */}
-                    <path d={pathData.replace(/150 -/g, '140 -')} fill="none" stroke={darkMode ? "#475569" : "#94a3b8"} strokeWidth="2" />
+                    <path d={`M ${points[0][0]},${points[0][1] - 10} ` + points.slice(1).map(p => `L ${p[0]},${p[1] - 10}`).join(' ')} fill="none" stroke={darkMode ? "#475569" : "#94a3b8"} strokeWidth="2" />
 
                     {/* Observed Statistic Marker */}
                     <line
@@ -132,14 +132,17 @@ const CIWidget = ({ darkMode }) => {
             <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <span className="text-[9px] font-black uppercase text-slate-500">Estimate</span>
-                        <input type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
+                        <span className="text-[9px] font-black uppercase text-slate-500">Estimate: {estimate.toFixed(1)}</span>
+                        <input type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500" />
                     </div>
                     <div className="space-y-1">
-                        <span className="text-[9px] font-black uppercase text-slate-500">Interval Width</span>
-                        <input type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
+                        <span className="text-[9px] font-black uppercase text-slate-500">Half-Width: ±{range.toFixed(1)}</span>
+                        <input type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500" />
                     </div>
                 </div>
+                <p className={`text-[9px] font-medium leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <strong>Estimate</strong> moves the interval left/right. When the point estimate is far from 0 (the null), the interval is more likely to exclude the null and suggest a real effect. <strong>Half-Width</strong> controls precision — wider intervals (small N or high variance) are less informative and more likely to include the null.
+                </p>
                 <div className={`p-2 rounded-lg text-[9px] font-black text-center border uppercase transition-all ${includesNull ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
                     {includesNull ? 'Imply p > .05 (Two-sided)' : 'Imply p < .05 (Two-sided)'}
                 </div>
@@ -176,11 +179,11 @@ const PowerWidget = ({ darkMode }) => {
                     <line x1="0" y1="140" x2="300" y2="140" stroke={darkMode ? "#334155" : "#e2e8f0"} strokeWidth="1" />
 
                     {/* H0 Distribution */}
-                    <path d={pointsToPath(pointsH0).replace(/150 -/g, '140 -')} fill="none" stroke={darkMode ? "#334155" : "#cbd5e1"} strokeWidth="1" strokeDasharray="3,3" />
+                    <path d={`M ${pointsH0[0][0]},${pointsH0[0][1] - 10} ` + pointsH0.slice(1).map(p => `L ${p[0]},${p[1] - 10}`).join(' ')} fill="none" stroke={darkMode ? "#334155" : "#cbd5e1"} strokeWidth="1" strokeDasharray="3,3" />
                     <text x={meanH0} y="148" textAnchor="middle" className="text-[7px] font-bold fill-slate-400">NULL (H₀)</text>
 
                     {/* H1 Distribution */}
-                    <path d={pointsToPath(pointsH1).replace(/150 -/g, '140 -')} fill="none" stroke="#6366f1" strokeWidth="2" />
+                    <path d={`M ${pointsH1[0][0]},${pointsH1[0][1] - 10} ` + pointsH1.slice(1).map(p => `L ${p[0]},${p[1] - 10}`).join(' ')} fill="none" stroke="#6366f1" strokeWidth="2" />
                     <text x={meanH1} y="148" textAnchor="middle" className="text-[7px] font-bold fill-indigo-500">REAL EFFECT (H₁)</text>
 
                     {/* Cutoff / Alpha Line */}
@@ -294,6 +297,59 @@ const NhstVisual = ({ darkMode }) => {
                     ))}
                 </div>
             </div>
+
+            {/* Step Detail Panel */}
+            {activeStep !== null && (() => {
+                const stepDetails = [
+                    {
+                        heading: 'Step 1: State Your Hypotheses',
+                        color: 'indigo',
+                        body: 'Before collecting data, define exactly what you\'re testing. The Null Hypothesis (H₀) is the "no effect" claim — usually that a mean equals a target value, or that two groups are the same. The Alternative Hypothesis (H₁) is what you\'re trying to find evidence for. These must be mutually exclusive and set in advance.',
+                        tips: ['H₀: μ = 100 (the population mean is 100)', 'H₁: μ ≠ 100 (two-tailed) or μ > 100 (one-tailed)', 'Never change your hypothesis after seeing the data — that\'s p-hacking.']
+                    },
+                    {
+                        heading: 'Step 2: Choose the Right Test',
+                        color: 'emerald',
+                        body: 'The test statistic you compute depends on what you\'re measuring and what you know. Use a Z-test when you know the population standard deviation (σ). Use a t-test when you only have the sample standard deviation (s) — which is almost always. Use an F-test when comparing variances or testing multiple groups at once.',
+                        tips: ['Z-test: known σ, large N, proportions', 't-test: unknown σ, one or two sample means', 'F-test: comparing group means (ANOVA) or variances']
+                    },
+                    {
+                        heading: 'Step 3: Compute the Test Statistic',
+                        color: 'amber',
+                        body: 'The test statistic measures how far your sample result is from the null hypothesis value, scaled by the standard error. A larger statistic (farther from zero) means your data is more surprising under H₀.',
+                        tips: ['Z = (x̄ − μ₀) / (σ / √n)', 't = (x̄ − μ₀) / (s / √n)', 'Degrees of freedom (df) depend on sample size and the test used.']
+                    },
+                    {
+                        heading: 'Step 4: Find the P-Value',
+                        color: 'rose',
+                        body: 'The p-value is the probability of observing a result as extreme or more extreme than yours, assuming H₀ is true. It is NOT the probability that H₀ is true. A small p-value means your data is unlikely under the null — but it doesn\'t tell you the effect is large or meaningful.',
+                        tips: ['p < α → reject H₀ (result is "statistically significant")', 'p ≥ α → fail to reject H₀ (insufficient evidence)', 'Common α levels: 0.05, 0.01, 0.10']
+                    },
+                    {
+                        heading: 'Step 5: Report the Full Story',
+                        color: 'violet',
+                        body: 'A good statistical report doesn\'t just say "p < .05." It gives the test statistic, degrees of freedom, exact p-value, and an effect size. Effect size tells readers whether the finding is practically meaningful, not just statistically detectable.',
+                        tips: ['Report: t(df) = value, p = .XXX, d = .XX', 'Include confidence intervals for the estimate', 'Distinguish statistical significance from practical importance']
+                    }
+                ];
+                const detail = stepDetails[activeStep];
+                const colorMap = { indigo: 'indigo', emerald: 'emerald', amber: 'amber', rose: 'rose', violet: 'violet' };
+                const c = colorMap[detail.color];
+                return (
+                    <div className={`p-6 rounded-2xl border-2 animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? `bg-${c}-950/20 border-${c}-500/20` : `bg-${c}-50 border-${c}-100`}`}>
+                        <h4 className={`text-base font-black mb-3 ${darkMode ? `text-${c}-400` : `text-${c}-700`}`}>{detail.heading}</h4>
+                        <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{detail.body}</p>
+                        <ul className="space-y-2">
+                            {detail.tips.map((tip, i) => (
+                                <li key={i} className={`flex items-start gap-2 text-[11px] font-mono ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                    <span className={`mt-0.5 shrink-0 font-black ${darkMode ? `text-${c}-400` : `text-${c}-600`}`}>→</span>
+                                    {tip}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+            })()}
 
             {/* Main Exploration Section */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
