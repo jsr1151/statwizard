@@ -955,7 +955,7 @@ export default function App() {
                         )}
 
                         {appMode === 'wizard' && (
-                            <div className={`rounded-2xl shadow-xl border overflow-hidden transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 shadow-2xl shadow-black/50' : 'bg-white border-slate-200'} ${isHelp ? (darkMode ? 'border-amber-500/30 ring-4 ring-amber-500/10' : 'border-amber-200 shadow-amber-100 ring-4 ring-amber-50') : ''}`}>
+                            <div className={`rounded-2xl shadow-xl border ${isResult ? 'overflow-visible' : 'overflow-hidden'} transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 shadow-2xl shadow-black/50' : 'bg-white border-slate-200'} ${isHelp ? (darkMode ? 'border-amber-500/30 ring-4 ring-amber-500/10' : 'border-amber-200 shadow-amber-100 ring-4 ring-amber-50') : ''}`}>
                                 {!isResult && (
                                     <div className={`p-6 md:p-8 ${isHelp ? (darkMode ? 'bg-amber-950/20 text-slate-200' : 'bg-amber-50 text-slate-900') : (darkMode ? 'bg-slate-900' : 'bg-white')}`}>
                                         <div className="flex justify-between items-center mb-4">
