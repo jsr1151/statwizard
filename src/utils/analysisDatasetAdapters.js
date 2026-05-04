@@ -62,6 +62,64 @@ const buildSeedKey = (...parts) => parts.filter(Boolean).join('::');
 
 export const getDatasetColumnLevels = getUsableCategoryLevels;
 
+export const buildOneSampleTTestDatasetSetup = (dataset, {
+    outcomeColumnId,
+}) => {
+    const outcomeColumn = getDatasetColumn(dataset, outcomeColumnId);
+    const errors = [];
+
+    if (!dataset) {
+        errors.push('Choose a saved dataset to begin.');
+    }
+
+    if (!outcomeColumnId) {
+        errors.push('Sample variable must be numeric.');
+    }
+
+    if (outcomeColumn && outcomeColumn.summary?.detectedType !== 'numeric') {
+        errors.push('Sample variable must be numeric.');
+    }
+
+    if (errors.length) {
+        return buildValidationResponse(errors, {
+            usableRows: 0,
+            totalRows: dataset?.rowCount || dataset?.rows?.length || 0,
+            droppedRows: dataset?.rowCount || dataset?.rows?.length || 0,
+        });
+    }
+
+    const values = (dataset.rows || [])
+        .map((row) => parseNumericValue(row?.[outcomeColumnId]))
+        .filter((value) => value != null);
+
+    const usableRows = values.length;
+    const totalRows = dataset.rowCount || dataset.rows.length;
+
+    if (!usableRows) {
+        return buildValidationResponse(['No usable rows remain after excluding missing values.'], {
+            usableRows,
+            totalRows,
+            droppedRows: totalRows,
+        });
+    }
+
+    const summary = formatSummary(values);
+
+    return buildValidationResponse([], {
+        usableRows,
+        totalRows,
+        droppedRows: Math.max(0, totalRows - usableRows),
+        seed: {
+            key: buildSeedKey(dataset.id, outcomeColumnId, usableRows),
+            raw: values.join(', '),
+            xBar: Number(summary.mean),
+            sigma: Number(summary.sd),
+            n: values.length,
+            label: outcomeColumn?.label || 'Sample variable',
+        },
+    });
+};
+
 export const buildIndependentTTestDatasetSetup = (dataset, {
     outcomeColumnId,
     groupingColumnId,

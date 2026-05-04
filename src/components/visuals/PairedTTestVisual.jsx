@@ -119,7 +119,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
   return (
     <div className="w-full flex">
       <div className="flex-1 flex flex-col items-center">
-        <div className={`w-full h-72 relative flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100 shadow-inner'}`}>
+        <div className={`w-full h-72 sticky top-4 z-20 flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 shadow-inner' : 'bg-white rounded-t-lg border-slate-100 shadow-inner'}`}>
           <div className="absolute top-4 left-4 flex gap-2 z-10">
             {['sampling', 'difference', 'paired'].map(m => (
               <button key={m} onClick={() => setDisplayMode(m)} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${displayMode === m ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-white'}`}>{m}</button>

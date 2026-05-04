@@ -112,6 +112,13 @@ const ANALYSIS_OPTIONS = [
         buildDetail: ({ numericCount }) => `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
     },
     {
+        id: 'one_sample_t_test',
+        label: 'One-Sample t-Test',
+        summary: 'Load one numeric variable into the one-sample t-test calculator.',
+        isCompatible: ({ numericCount }) => numericCount >= 1,
+        buildDetail: ({ numericCount }) => `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
+    },
+    {
         id: 'independent_t_test',
         label: 'Independent Samples t-Test',
         summary: 'Load one numeric outcome plus one categorical grouping variable with exactly 2 levels.',

@@ -112,6 +112,19 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
         };
     }
 
+    if (analysisId === 'one_sample_t_test') {
+        const preferredOutcome = findPreferredOutcomeColumn(numericColumns);
+
+        if (!preferredOutcome) {
+            return null;
+        }
+
+        return {
+            datasetId: dataset.id,
+            outcome: preferredOutcome.id,
+        };
+    }
+
     if (analysisId === 'paired_t_test') {
         if (numericColumns.length < 2) {
             return null;

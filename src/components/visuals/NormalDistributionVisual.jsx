@@ -6,7 +6,7 @@ import useTutor from '../../hooks/useTutor';
 import TutorPanel from '../tutor/TutorPanel';
 import CalculationText from '../common/CalculationText';
 import TabButton from '../common/TabButton';
-const NormalDistributionVisual = ({ highlight = null, label = "Distribution", type = "z", darkMode, tutorLevel = 'tutor', showTutor: showTutorProp = true, onTutorUpdate, onStatsUpdate, powerViewConfig = null }) => {
+const NormalDistributionVisual = ({ highlight = null, label = "Distribution", type = "z", darkMode, tutorLevel = 'tutor', showTutor: showTutorProp = true, onTutorUpdate, onStatsUpdate, powerViewConfig = null, datasetSeed = null }) => {
   const showTutor = showTutorProp;
   const [val, setVal] = useState(0);
   const [alpha, setAlpha] = useState(powerViewConfig?.alpha ?? 0.05);
@@ -221,6 +221,22 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
     setCalcData(prev => ({ ...prev, n, xBar: parseFloat(mean.toFixed(precision)), sigma: parseFloat(sd.toFixed(3)) }));
   };
 
+  useEffect(() => {
+    if (!datasetSeed?.key || showTutor) {
+      return;
+    }
+
+    setCalcMode(true);
+    setDataInputMode('raw');
+    setRawData(datasetSeed.raw || '');
+    setCalcData((previous) => ({
+      ...previous,
+      xBar: Number.isFinite(datasetSeed.xBar) ? datasetSeed.xBar : previous.xBar,
+      sigma: Number.isFinite(datasetSeed.sigma) ? Math.max(0.001, datasetSeed.sigma) : previous.sigma,
+      n: Number.isFinite(datasetSeed.n) ? Math.max(1, datasetSeed.n) : previous.n,
+    }));
+  }, [datasetSeed?.key, showTutor]);
+
   const reportString = `One-sample ${type === 't' ? 't' : 'z'} test, ${type === 't' ? 't' : 'z'} = ${val.toFixed(precision)}, p = ${pTail < 0.001 ? '< .001' : pTail.toFixed(3)}, α = ${alpha}, ${isSignificant ? 'reject H₀' : 'fail to reject H₀'}. (x̄=${calcData.xBar}, μ₀=${calcData.mu}, n=${calcData.n}, ${type === 't' ? 's' : 'σ'}=${calcData.sigma})`;
 
   const stdDev = 35;
@@ -399,7 +415,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
   return (
     <div className="w-full flex">
       <div className={`flex-1 flex flex-col items-center transition-all duration-500`}>
-        <div className={`w-full ${isPowerCompactPreset ? 'h-80 rounded-2xl' : 'h-72'} relative flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? `bg-slate-950 border-slate-800 shadow-inner ${isPowerCompactPreset ? 'rounded-2xl' : ''}` : `bg-white border-slate-100 ${isPowerCompactPreset ? 'rounded-2xl' : 'rounded-t-lg'}`}`}>
+        <div className={`w-full ${isPowerCompactPreset ? 'h-80 rounded-2xl' : 'h-72'} sticky top-4 z-20 flex items-end justify-center select-none border overflow-hidden px-4 transition-colors ${darkMode ? `bg-slate-950 border-slate-800 shadow-inner ${isPowerCompactPreset ? 'rounded-2xl' : ''}` : `bg-white border-slate-100 ${isPowerCompactPreset ? 'rounded-2xl' : 'rounded-t-lg'}`}`}>
           <svg
             ref={svgRef}
             viewBox="-20 0 340 200"

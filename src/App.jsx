@@ -77,6 +77,7 @@ import SimpleLinearRegressionPage from './components/regression/SimpleLinearRegr
 import MultipleRegressionPage from './components/regression/MultipleRegressionPage';
 import AnalysisSectionTabs from './components/analysis/AnalysisSectionTabs';
 import AnalysisAssumptionsSection from './components/analysis/AnalysisAssumptionsSection.jsx';
+import OneSampleTTestPage from './components/analysis/OneSampleTTestPage.jsx';
 import IndependentTTestPage from './components/analysis/IndependentTTestPage.jsx';
 import PairedTTestPage from './components/analysis/PairedTTestPage.jsx';
 import OneWayAnovaPage from './components/analysis/OneWayAnovaPage.jsx';
@@ -250,6 +251,7 @@ export default function App() {
     const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
     const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
     const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
+    const isOneSampleTTestPage = currentStepId === 'res_onesample_ttest';
     const isIndependentTTestPage = currentStepId === 'res_indep_ttest';
     const isPairedTTestPage = currentStepId === 'res_paired_ttest';
     const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
@@ -932,6 +934,7 @@ export default function App() {
                                     const nextStepIdByAnalysisId = {
                                         pearson_correlation: 'correlation_result',
                                         multiple_regression: 'multiple_regression_result',
+                                        one_sample_t_test: 'res_onesample_ttest',
                                         independent_t_test: 'res_indep_ttest',
                                         paired_t_test: 'res_paired_ttest',
                                         one_way_anova: 'res_one_way_anova',
@@ -1075,6 +1078,30 @@ export default function App() {
                                                     initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
                                                     onOpenDataManager={() => setAppMode('data_manager')}
                                                 />
+                                            ) : isOneSampleTTestPage ? (
+                                                <div className="space-y-8">
+                                                    <OneSampleTTestPage
+                                                        section={activeResultSection}
+                                                        darkMode={darkMode}
+                                                        currentStats={currentStats}
+                                                        onStatsChange={setCurrentStats}
+                                                        assumptions={currentStep?.assumptions || []}
+                                                        testConfig={currentTestConfig}
+                                                        initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
+                                                        onOpenDataManager={() => setAppMode('data_manager')}
+                                                        onTutorUpdate={setActiveTutorScript}
+                                                    />
+
+                                                    {activeResultSection === 'lessons' && activeTutorScript && (
+                                                        <TutorPanel
+                                                            script={activeTutorScript}
+                                                            level="tutor"
+                                                            inline={true}
+                                                            darkMode={darkMode}
+                                                            onClose={() => setActiveTutorScript(null)}
+                                                        />
+                                                    )}
+                                                </div>
                                             ) : isIndependentTTestPage ? (
                                                 <div className="space-y-8">
                                                     <IndependentTTestPage
