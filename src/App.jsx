@@ -373,7 +373,7 @@ export default function App() {
         isSymbolKeyFirstOpen: symbolKeyOpen,
     }), [anovaIsFirstVisit, mathHistory, hoveredTerm, showEquationValues, symbolKeyOpen]);
 
-    const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext);
+    const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext, currentStepId);
     const factorialAnovaTutor = useFactorialAnovaTutor(currentStats, anovaTutorContext);
     const ancovaTutor = useAncovaTutor(currentStats, anovaTutorContext);
 
@@ -1208,7 +1208,7 @@ export default function App() {
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
                                                 {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && (
                                                     <div className="lg:col-span-4 flex flex-col gap-6">
-                                                        {displayFormulaId && displayFormulaId !== 'none' && (
+                                                        {displayFormulaId && displayFormulaId !== 'none' && activeResultSection !== 'lessons' && (
                                                             <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[250px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                                 <div className={`px-4 py-2 border-b flex justify-between items-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                                                     <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><Calculator className="w-4 h-4" /> The Equation</h3>
@@ -1267,7 +1267,7 @@ export default function App() {
                                                     </div>
                                                 )}
 
-                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst') ? 'lg:col-span-12' : 'lg:col-span-8'}>
+                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst' || activeResultSection === 'lessons') ? 'lg:col-span-12' : 'lg:col-span-8'}>
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
                                                         <div className={`flex-1 flex items-stretch justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ANOVA_TUTOR_SCRIPTS } from '../data/anovaTutorScripts';
 
-const useAnovaTutor = (stats, context) => {
+const useAnovaTutor = (stats, context, resetKey = null) => {
     const [activeTip, setActiveTip] = useState(null);
     const [dismissedIds, setDismissedIds] = useState(() => {
         const saved = localStorage.getItem('anova_tutor_dismissed');
@@ -42,6 +42,14 @@ const useAnovaTutor = (stats, context) => {
     useEffect(() => {
         localStorage.setItem('anova_tutor_dismissed', JSON.stringify(dismissedIds));
     }, [dismissedIds]);
+
+    // Reset history and active tip when navigating to a new page
+    useEffect(() => {
+        if (resetKey === null) return;
+        setHistory([]);
+        setActiveTip(null);
+        setSessionDismissedIds([]);
+    }, [resetKey]);
 
     // Idle Timer
     useEffect(() => {

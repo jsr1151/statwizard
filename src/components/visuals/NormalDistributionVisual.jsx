@@ -674,7 +674,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
 
             <div className={`flex p-0.5 rounded-lg border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
               <button onClick={() => setVisualMode('p-value')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${visualMode === 'p-value' ? (darkMode ? 'bg-slate-800 text-indigo-400' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400 hover:text-slate-600'}`}>P-Value View</button>
-              <button onClick={() => setVisualMode('power')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${visualMode === 'power' ? (darkMode ? 'bg-slate-800 text-indigo-400' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400 hover:text-slate-600'}`}>Errors/Power</button>
+              {!showTutor && <button onClick={() => setVisualMode('power')} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${visualMode === 'power' ? (darkMode ? 'bg-slate-800 text-indigo-400' : 'bg-white text-indigo-600 shadow-sm') : 'text-slate-400 hover:text-slate-600'}`}>Errors/Power</button>}
             </div>
 
             <button onClick={() => setShowPopulation(!showPopulation)} className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${showPopulation ? (darkMode ? 'bg-indigo-500 text-white shadow-lg' : 'bg-indigo-600 text-white shadow-lg') : (darkMode ? 'bg-slate-900 text-slate-500 hover:bg-slate-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')}`}>
@@ -904,7 +904,6 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
               {showTutor ? (
                 <div className="flex gap-1">
                   <button onClick={() => setCalcMode(false)} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${!calcMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Direct {type === 'z' ? 'Z' : 'T'}-Score</button>
-                  <button onClick={() => setCalcMode(true)} className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${calcMode ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Step-by-Step Calculator</button>
                 </div>
               ) : (
                 <span className="px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest bg-indigo-600 text-white shadow-lg">Observed Data Workflow</span>

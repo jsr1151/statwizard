@@ -924,32 +924,6 @@ const SimpleLinearRegressionPage = ({
                     </div>
                 </div>
 
-                {assumptions.length > 0 && (
-                    <Card darkMode={darkMode}>
-                        <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                                <CheckCircle size={20} />
-                            </div>
-                            <div>
-                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                    Guidance / Assumptions
-                                </div>
-                                <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                    What to check before trusting the line
-                                </h3>
-                                <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                    Treat these as practical checks, not a rigid pass/fail gate. The goal is to understand when one straight-line model is useful and when the plot or study design calls for more caution.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 space-y-3">
-                            {assumptions.map((assumption, index) => (
-                                <AssumptionItem key={`${assumption.label}-${index}`} assumption={assumption} darkMode={darkMode} />
-                            ))}
-                        </div>
-                    </Card>
-                )}
             </div>
         );
     }

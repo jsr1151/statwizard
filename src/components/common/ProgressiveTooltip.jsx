@@ -21,6 +21,7 @@ const ProgressiveTooltip = ({
     const triggerRef = useRef(null);
     const tooltipRef = useRef(null);
     const hoverTimeout = useRef(null);
+    const showTimeout = useRef(null);
 
     useEffect(() => {
         setIsMounted(true);
@@ -58,10 +59,14 @@ const ProgressiveTooltip = ({
 
     const handleMouseEnter = () => {
         if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-        setIsVisible(true);
+        if (showTimeout.current) clearTimeout(showTimeout.current);
+        showTimeout.current = setTimeout(() => {
+            setIsVisible(true);
+        }, 500);
     };
 
     const handleMouseLeave = () => {
+        if (showTimeout.current) clearTimeout(showTimeout.current);
         hoverTimeout.current = setTimeout(() => {
             setIsVisible(false);
         }, 100);

@@ -17,7 +17,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     { id: 2, label: 'Treatment A', color: '#ec4899', inputMode: 'raw', values: [8, 7, 9, 8, 7], summary: { mean: "7.8", sd: "0.8", n: "5" }, collapsed: false },
     { id: 3, label: 'Treatment B', color: '#10b981', inputMode: 'raw', values: [3, 4, 2, 3, 4], summary: { mean: "3.2", sd: "0.8", n: "5" }, collapsed: false }
   ]);
-  const [anovaMode, setAnovaMode] = useState('data'); // 'data' | 'calc'
+  const [anovaMode, setAnovaMode] = useState('calc'); // 'data' | 'calc'
   const [calcDf1, setCalcDf1] = useState(2);
   const [calcDf2, setCalcDf2] = useState(25);
   const [calcF, setCalcF] = useState(3.5);
