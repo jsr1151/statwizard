@@ -56,6 +56,8 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
         yMin: '',
         yMax: '',
     });
+    const [categoryPositions, setCategoryPositions] = useState({});
+    const [draggingGroupId, setDraggingGroupId] = useState(null);
 
     const summaries = useMemo(() => (
         groups
@@ -68,6 +70,8 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
     const margin = { top: 34, right: 38, bottom: 74, left: 68 };
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
+    const minCategoryX = margin.left + 34;
+    const maxCategoryX = margin.left + plotWidth - 34;
     const numericYMin = settings.yMin === '' ? null : Number(settings.yMin);
     const numericYMax = settings.yMax === '' ? null : Number(settings.yMax);
     const activeErrorType = settings.type === 'bar' || settings.type === 'line' ? settings.errorType : 'none';
@@ -90,8 +94,13 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
     const yMax = Number.isFinite(numericYMax) ? numericYMax : observedMax + observedSpan * 0.18;
     const yToPos = (value) => margin.top + plotHeight - ((value - yMin) / Math.max(1e-9, yMax - yMin)) * plotHeight;
     const xFor = (index) => {
+        const groupId = summaries[index]?.id;
+        const savedPosition = categoryPositions[groupId];
+        if (Number.isFinite(savedPosition)) {
+            return Math.max(minCategoryX, Math.min(maxCategoryX, savedPosition));
+        }
         if (summaries.length <= 1) return margin.left + plotWidth / 2;
-        return margin.left + (plotWidth * (index / (summaries.length - 1)));
+        return margin.left + (plotWidth * ((index + 1) / (summaries.length + 1)));
     };
     const tickValues = [0, 0.25, 0.5, 0.75, 1].map((ratio) => yMin + ((yMax - yMin) * ratio));
     const baselineY = yToPos(Math.max(0, yMin));
@@ -108,6 +117,21 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
                 <line x1={x - 9} y1={yToPos(group.mean + error)} x2={x + 9} y2={yToPos(group.mean + error)} stroke={darkMode ? '#e2e8f0' : '#0f172a'} strokeWidth="1.5" />
             </g>
         );
+    };
+
+    const pointerXToSvg = (event) => {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        const ratio = (event.clientX - bounds.left) / Math.max(1, bounds.width);
+        return ratio * width;
+    };
+
+    const updateDraggedCategory = (event) => {
+        if (draggingGroupId === null) return;
+        const nextX = Math.max(minCategoryX, Math.min(maxCategoryX, pointerXToSvg(event)));
+        setCategoryPositions((previous) => ({
+            ...previous,
+            [draggingGroupId]: nextX,
+        }));
     };
 
     return (
@@ -131,6 +155,12 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
                             {label}
                         </button>
                     ))}
+                    <button
+                        onClick={() => setCategoryPositions({})}
+                        className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${Object.keys(categoryPositions).length ? 'bg-amber-600 border-amber-500 text-white' : (darkMode ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
+                    >
+                        Reset positions
+                    </button>
                 </div>
             </div>
 
@@ -171,7 +201,13 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
             </div>
 
             <div className={`min-h-0 flex-1 rounded-xl border ${darkMode ? 'bg-slate-900/70 border-slate-800' : 'bg-white border-slate-200'}`}>
-                <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible font-sans">
+                <svg
+                    viewBox={`0 0 ${width} ${height}`}
+                    className="w-full h-full overflow-visible font-sans"
+                    onPointerMove={updateDraggedCategory}
+                    onPointerUp={() => setDraggingGroupId(null)}
+                    onPointerLeave={() => setDraggingGroupId(null)}
+                >
                     {settings.showGrid && tickValues.map((tick) => (
                         <line key={`grid-${tick}`} x1={margin.left} y1={yToPos(tick)} x2={margin.left + plotWidth} y2={yToPos(tick)} stroke={darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)'} />
                     ))}
@@ -204,7 +240,15 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
                         const barWidth = Math.max(28, Math.min(58, plotWidth / Math.max(1, summaries.length) * 0.52));
 
                         return (
-                            <g key={group.id}>
+                            <g
+                                key={group.id}
+                                className="cursor-ew-resize"
+                                onPointerDown={(event) => {
+                                    event.preventDefault();
+                                    event.currentTarget.setPointerCapture?.(event.pointerId);
+                                    setDraggingGroupId(group.id);
+                                }}
+                            >
                                 {settings.type === 'bar' && (
                                     <rect x={x - barWidth / 2} y={Math.min(yToPos(group.mean), baselineY)} width={barWidth} height={Math.abs(baselineY - yToPos(group.mean))} fill={group.color} opacity="0.72" stroke={darkMode ? '#e2e8f0' : '#0f172a'} />
                                 )}
