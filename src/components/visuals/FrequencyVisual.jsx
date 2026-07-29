@@ -214,7 +214,7 @@ const FrequencyVisual = ({ darkMode }) => {
               onClick={() => setMode('abs')}
               className={`flex-1 text-[10px] rounded transition-all ${mode === 'abs' ? (darkMode ? 'bg-indigo-600 shadow text-white font-bold' : 'bg-white shadow text-indigo-600 font-bold') : 'text-slate-500 hover:text-slate-300'}`}
             >
-              Absolute ($f$)
+              Absolute (<i>f</i>)
             </button>
             <button
               type="button"
@@ -230,7 +230,7 @@ const FrequencyVisual = ({ darkMode }) => {
               onClick={() => setMode('cum')}
               className={`flex-1 text-[10px] rounded transition-all ${mode === 'cum' ? (darkMode ? 'bg-indigo-600 shadow text-white font-bold' : 'bg-white shadow text-indigo-600 font-bold') : 'text-slate-500 hover:text-slate-300'}`}
             >
-              Cumulative ($cf$)
+              Cumulative (<i>cf</i>)
             </button>
           </div>
         </div>

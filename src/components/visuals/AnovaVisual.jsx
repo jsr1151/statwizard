@@ -273,7 +273,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       onMouseMove={() => tutor?.resetIdle?.()}
     >
       {/* Visualizer Frame */}
-      <div className={`w-full h-[600px] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
+      <div className={`w-full h-[clamp(380px,55vh,520px)] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
         <div className="absolute top-4 left-4 flex gap-2 z-40">
           {['fDist', 'means', 'plots', 'decomp', 'table'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Info, ChevronRight, ChevronDown } from 'lucide-react';
 
@@ -17,6 +17,13 @@ const ProgressiveTooltip = ({
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const [isMounted, setIsMounted] = useState(false);
     const [portalContainer, setPortalContainer] = useState(null);
+    const [tooltipsEnabled, setTooltipsEnabled] = useState(() => {
+        try {
+            return localStorage.getItem('statwizard_tooltips_enabled') !== 'false';
+        } catch {
+            return true;
+        }
+    });
 
     const triggerRef = useRef(null);
     const tooltipRef = useRef(null);
@@ -33,6 +40,15 @@ const ProgressiveTooltip = ({
             setIsMounted(false);
             setPortalContainer(null);
         };
+    }, []);
+
+    useEffect(() => {
+        const handlePreferenceChange = (event) => {
+            setTooltipsEnabled(event.detail !== false);
+            if (event.detail === false) setIsVisible(false);
+        };
+        window.addEventListener('statwizardTooltipsChanged', handlePreferenceChange);
+        return () => window.removeEventListener('statwizardTooltipsChanged', handlePreferenceChange);
     }, []);
 
     const updatePosition = () => {
@@ -58,6 +74,7 @@ const ProgressiveTooltip = ({
     }, [isVisible, isMounted]);
 
     const handleMouseEnter = () => {
+        if (!tooltipsEnabled) return;
         if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
         if (showTimeout.current) clearTimeout(showTimeout.current);
         showTimeout.current = setTimeout(() => {
@@ -132,6 +149,21 @@ const ProgressiveTooltip = ({
                                 )}
                             </div>
                         )}
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                try {
+                                    localStorage.setItem('statwizard_tooltips_enabled', 'false');
+                                } catch {
+                                    // Keep the session preference even when storage is unavailable.
+                                }
+                                window.dispatchEvent(new CustomEvent('statwizardTooltipsChanged', { detail: false }));
+                            }}
+                            className="mt-2 pt-2 border-t border-slate-700/50 text-left text-[9px] font-black uppercase tracking-wider text-slate-400 hover:text-indigo-400"
+                        >
+                            Do not show tips anymore
+                        </button>
                     </div>
 
                     <div className={`absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent ${darkMode ? 'border-t-slate-900' : 'border-t-white'
@@ -150,7 +182,7 @@ const ProgressiveTooltip = ({
             ref={triggerRef}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className={`${Wrapper === 'div' ? 'relative inline-block' : ''} tooltip-trigger cursor-help`}
+            className={`${Wrapper === 'div' ? 'relative inline-block' : ''} tooltip-trigger ${tooltipsEnabled ? 'cursor-help' : ''}`}
         >
             {children}
             {renderPortalContent()}

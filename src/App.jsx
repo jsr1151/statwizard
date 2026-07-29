@@ -95,6 +95,11 @@ const generateAIResponse = async (prompt) => {
 };
 
 const STRUCTURED_RESULT_STEP_IDS = new Set([
+    'res_central_tendency',
+    'res_variability',
+    'res_frequency',
+    'res_ztest',
+    'res_rm_anova',
     'correlation_result',
     'regression_result',
     'multiple_regression_result',
@@ -153,6 +158,13 @@ export default function App() {
     const [activeResultSection, setActiveResultSection] = useState('calculator');
     const [pendingPowerLaunch, setPendingPowerLaunch] = useState(null);
     const [showEquationPanel, setShowEquationPanel] = useState(true);
+    const [tooltipsEnabled, setTooltipsEnabled] = useState(() => {
+        try {
+            return localStorage.getItem('statwizard_tooltips_enabled') !== 'false';
+        } catch {
+            return true;
+        }
+    });
 
     // --- 3. STATE WITH INITIALIZERS / SIDE EFFECTS ---
     const [anovaIsFirstVisit, setAnovaIsFirstVisit] = useState(() => {
@@ -162,6 +174,12 @@ export default function App() {
             return true;
         }
     });
+
+    useEffect(() => {
+        const handleTooltipPreference = (event) => setTooltipsEnabled(event.detail !== false);
+        window.addEventListener('statwizardTooltipsChanged', handleTooltipPreference);
+        return () => window.removeEventListener('statwizardTooltipsChanged', handleTooltipPreference);
+    }, []);
 
     // --- 4. CUSTOM HOOKS ---
     const { updateAvailable, reload: reloadForUpdate, dismiss: dismissUpdate } = useAutoReload();
@@ -240,7 +258,17 @@ export default function App() {
     }, [appMode, currentStepId, history, answers]);
 
     const currentStep = STEPS[currentStepId];
-    const currentTestConfig = POWER_TEST_BY_STEP_ID[currentStepId] || null;
+    const currentTestConfig = useMemo(() => (
+        POWER_TEST_BY_STEP_ID[currentStepId]
+        || (currentStepId === 'res_factorial_anova' && POWER_TEST_BY_STEP_ID.res_one_way_anova
+            ? {
+                ...POWER_TEST_BY_STEP_ID.res_one_way_anova,
+                id: 'factorial_anova',
+                stepId: 'res_factorial_anova',
+                label: 'Factorial ANOVA',
+            }
+            : null)
+    ), [currentStepId]);
     const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
     const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
     const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
@@ -359,6 +387,18 @@ export default function App() {
     const activeMathTermKey = mathHistory.length > 0 ? mathHistory[mathHistory.length - 1] : null;
 
     const toggleDarkMode = () => setDarkMode(!darkMode);
+    const toggleTooltips = () => {
+        setTooltipsEnabled((previous) => {
+            const next = !previous;
+            try {
+                localStorage.setItem('statwizard_tooltips_enabled', String(next));
+            } catch {
+                // The preference still applies for this session when storage is unavailable.
+            }
+            window.dispatchEvent(new CustomEvent('statwizardTooltipsChanged', { detail: next }));
+            return next;
+        });
+    };
 
     const anovaTutorContext = useMemo(() => ({
         isFirstVisit: anovaIsFirstVisit,
@@ -883,7 +923,7 @@ export default function App() {
             <DatasetLibraryProvider>
                 <Suspense fallback={<RouteLoadingFallback darkMode={darkMode} />}>
                 <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-indigo-500/30 pb-20 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
-                <Header onBack={handleBack} onHome={handleRestart} canGoBack={appMode !== 'menu'} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
+                <Header onBack={handleBack} onHome={handleRestart} canGoBack={appMode !== 'menu'} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} tooltipsEnabled={tooltipsEnabled} onToggleTooltips={toggleTooltips} />
                 {appMode === 'wizard' && !isHelp && <div className="w-full bg-slate-200 h-1.5"><div className="bg-indigo-600 h-1.5 transition-all duration-700 ease-out" style={{ width: `${Math.min((history.length / 5) * 100, 100)}%` }} /></div>}
 
                 <main className="max-w-[1400px] mx-auto p-4 md:p-8">
@@ -1165,6 +1205,8 @@ export default function App() {
                                                     currentStats={currentStats}
                                                     onStatsChange={setCurrentStats}
                                                     assumptions={currentStep?.assumptions || []}
+                                                    testConfig={currentTestConfig}
+                                                    initialPowerMode={pendingPowerLaunch?.stepId === currentStepId ? pendingPowerLaunch?.mode : undefined}
                                                     onOpenDataManager={() => setAppMode('data_manager')}
                                                 />
                                             ) : isAncovaPage ? (
@@ -1227,9 +1269,9 @@ export default function App() {
                                             ) : (
                                             <>
                                             <div className="grid lg:grid-cols-12 gap-8 items-start">
-                                                {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && (
+                                                {currentStepId !== 'res_probability' && currentStepId !== 'res_nhst' && !isStructuredResultPage && (
                                                     <div className="lg:col-span-4 flex flex-col gap-6">
-                                                        {displayFormulaId && displayFormulaId !== 'none' && activeResultSection !== 'lessons' && (
+                                                        {displayFormulaId && displayFormulaId !== 'none' && activeResultSection !== 'lessons' && !isStructuredResultPage && (
                                                             <div className={`border-2 rounded-xl shadow-sm overflow-visible flex flex-col relative z-0 min-h-[250px] transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                                 <div className={`px-4 py-2 border-b flex justify-between items-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                                                     <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}><Calculator className="w-4 h-4" /> The Equation</h3>
@@ -1288,7 +1330,7 @@ export default function App() {
                                                     </div>
                                                 )}
 
-                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst' || activeResultSection === 'lessons') ? 'lg:col-span-12' : 'lg:col-span-8'}>
+                                                <div className={(currentStepId === 'res_probability' || currentStepId === 'res_nhst' || activeResultSection === 'lessons' || isStructuredResultPage) ? 'lg:col-span-12' : 'lg:col-span-8'}>
                                                     <div className={`border rounded-xl p-6 h-full flex flex-col min-h-[400px] transition-colors ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                                         <h4 className={`font-bold mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}><BarChart2 className="w-4 h-4 text-indigo-400" /> Visual Concept</h4>
                                                         <div className={`flex-1 flex items-stretch justify-center rounded-lg min-h-[250px] transition-colors ${displayVisualType === 'anova' || displayVisualType === 'factorial_anova' || displayVisualType === 'ancova' ? '' : (darkMode ? 'bg-slate-950/50 border border-dashed border-slate-800' : 'bg-slate-50/50 border border-dashed border-slate-200')}`}>
@@ -1487,9 +1529,9 @@ export default function App() {
                                     title: "F ≈ 1 Example",
                                     body: "If between-group variance is 20 and within-group variance is 20, F = 20/20 = 1.0. This happens when the treatment has no more effect than random chance.",
                                 },
-                                'show_df_explanation': {
-                                    title: "Understanding df_within",
-                                    body: "df_within = N - k. Every group uses up 1 'degree of freedom' to calculate its mean. If you have 30 people and 3 groups, you have 30 - 3 = 27 degrees of freedom left for noise.",
+                                'show_fcrit_explanation': {
+                                    title: "Understanding F critical",
+                                    body: "F critical is the cutoff set by alpha and the numerator and denominator degrees of freedom. An observed F beyond this cutoff falls in the rejection region; changing alpha or either degree of freedom changes the cutoff.",
                                 },
                                 'show_f_factors': {
                                     title: "What raises F?",

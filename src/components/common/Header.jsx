@@ -1,8 +1,8 @@
 import React from "react";
-import { ChevronLeft, Sparkles, Monitor } from "lucide-react";
+import { ChevronLeft, Sparkles, Monitor, Settings } from "lucide-react";
 import { PRODUCT } from "../../config/product";
 
-const Header = ({ onBack, onHome, canGoBack, darkMode, onToggleDarkMode }) => (
+const Header = ({ onBack, onHome, canGoBack, darkMode, onToggleDarkMode, tooltipsEnabled, onToggleTooltips }) => (
   <header
     className={`${darkMode ? "bg-slate-950" : "bg-slate-900"} text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-20 border-b ${darkMode ? "border-slate-800" : "border-slate-700/30"}`}
   >
@@ -37,6 +37,17 @@ const Header = ({ onBack, onHome, canGoBack, darkMode, onToggleDarkMode }) => (
     </div>
 
     <div className="flex items-center gap-2 md:gap-3">
+      <button
+        type="button"
+        onClick={onToggleTooltips}
+        aria-label={tooltipsEnabled ? "Disable explanatory tooltips" : "Enable explanatory tooltips"}
+        aria-pressed={tooltipsEnabled}
+        className={`flex items-center gap-2 p-2 sm:px-3 rounded-xl transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${darkMode ? "bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800" : "bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700"}`}
+        title={tooltipsEnabled ? "Settings: turn tips off" : "Settings: turn tips on"}
+      >
+        <Settings aria-hidden="true" className="w-4 h-4" />
+        <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider">Tips {tooltipsEnabled ? 'On' : 'Off'}</span>
+      </button>
       <button
         type="button"
         onClick={onToggleDarkMode}

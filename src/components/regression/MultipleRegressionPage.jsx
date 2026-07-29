@@ -2523,7 +2523,7 @@ const MultipleRegressionPage = ({
                 </div>
 
                 <div className="lg:col-span-4 space-y-6">
-                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28">
+                    <Card darkMode={darkMode} className="lg:sticky lg:top-24 xl:top-28 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
                         <div className="flex items-center gap-3 mb-4">
                             <SlidersHorizontal size={18} className={darkMode ? 'text-indigo-300' : 'text-indigo-700'} />
                             <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>

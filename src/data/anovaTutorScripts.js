@@ -123,7 +123,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
             return Math.abs(p - alpha) <= 0.01 || (Math.abs(fVal - fCrit) / fCrit <= 0.05);
         },
         buttons: [
-            { label: "What is F_crit?", action: "show_df_explanation" },
+            { label: "What is F critical?", action: "show_fcrit_explanation" },
             { label: "Got it", action: "dismiss_session" }
         ]
     },

@@ -7,6 +7,7 @@ import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
 import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
 import { buildFactorialAnovaDatasetSetup } from '../../utils/analysisDatasetAdapters.js';
 import { getDatasetColumn } from '../../utils/datasetImport.js';
+import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 
 const Card = ({ darkMode, children, className = '' }) => (
     <div className={`rounded-2xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} ${className}`}>
@@ -59,6 +60,8 @@ const FactorialAnovaPage = ({
     onStatsChange,
     assumptions = [],
     onOpenDataManager,
+    testConfig,
+    initialPowerMode,
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const {
@@ -225,6 +228,17 @@ const FactorialAnovaPage = ({
                 description="Review the assumptions before trusting the main effects and interaction. The calculator tab uses your saved dataset; this section explains what to check and what to do when those assumptions look weak."
                 assumptions={assumptions}
                 summaryItems={summaryItems}
+            />
+        );
+    }
+
+    if (section === 'power' && testConfig) {
+        return (
+            <PowerAnalysisTab
+                testConfig={testConfig}
+                currentStats={currentStats}
+                darkMode={darkMode}
+                initialMode={initialPowerMode}
             />
         );
     }
