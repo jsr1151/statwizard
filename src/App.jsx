@@ -258,17 +258,41 @@ export default function App() {
     }, [appMode, currentStepId, history, answers]);
 
     const currentStep = STEPS[currentStepId];
-    const currentTestConfig = useMemo(() => (
-        POWER_TEST_BY_STEP_ID[currentStepId]
-        || (currentStepId === 'res_factorial_anova' && POWER_TEST_BY_STEP_ID.res_one_way_anova
-            ? {
-                ...POWER_TEST_BY_STEP_ID.res_one_way_anova,
+    const currentTestConfig = useMemo(() => {
+        const registeredConfig = POWER_TEST_BY_STEP_ID[currentStepId];
+        if (registeredConfig) return registeredConfig;
+
+        const oneWayConfig = POWER_TEST_BY_STEP_ID.res_one_way_anova;
+        if (!oneWayConfig) return null;
+
+        if (currentStepId === 'res_factorial_anova') {
+            return {
+                ...oneWayConfig,
                 id: 'factorial_anova',
                 stepId: 'res_factorial_anova',
                 label: 'Factorial ANOVA',
-            }
-            : null)
-    ), [currentStepId]);
+                power: {
+                    ...oneWayConfig.power,
+                    assumptionNote: 'This planning view is a balanced omnibus approximation across the factorial cells. For effect-specific main-effect or interaction power, use dedicated factorial-design software with the intended numerator degrees of freedom.',
+                },
+            };
+        }
+
+        if (currentStepId === 'res_rm_anova') {
+            return {
+                ...oneWayConfig,
+                id: 'repeated_measures_anova',
+                stepId: 'res_rm_anova',
+                label: 'Repeated Measures ANOVA',
+                power: {
+                    ...oneWayConfig.power,
+                    assumptionNote: 'This initial planning view is a conservative balanced omnibus approximation. A full repeated-measures calculation also needs the correlation among repeated observations and a nonsphericity correction; confirm the final design in dedicated repeated-measures power software.',
+                },
+            };
+        }
+
+        return null;
+    }, [currentStepId]);
     const isPearsonCorrelationPage = currentStepId === 'correlation_result' && Boolean(currentTestConfig);
     const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
     const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
@@ -408,9 +432,9 @@ export default function App() {
         isSymbolKeyFirstOpen: symbolKeyOpen,
     }), [anovaIsFirstVisit, mathHistory, hoveredTerm, showEquationValues, symbolKeyOpen]);
 
-    const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext, currentStepId);
-    const factorialAnovaTutor = useFactorialAnovaTutor(currentStats, anovaTutorContext);
-    const ancovaTutor = useAncovaTutor(currentStats, anovaTutorContext);
+    const anovaTutor = useAnovaTutor(currentStats, anovaTutorContext, currentStepId, tooltipsEnabled);
+    const factorialAnovaTutor = useFactorialAnovaTutor(currentStats, anovaTutorContext, tooltipsEnabled);
+    const ancovaTutor = useAncovaTutor(currentStats, anovaTutorContext, tooltipsEnabled);
 
     const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStepId === 'res_ancova' || currentStep?.visualType === 'anova' || currentStep?.visualType === 'ancova';
     const isAnovaActive = isAnovaTrulyActive;
@@ -737,6 +761,30 @@ export default function App() {
                         {useSafeGenericEquationCard ? (
                             <div className="w-full animate-in fade-in zoom-in-95 duration-200">
                                 {renderSafeGenericEquationBody()}
+                                {safeRelevantSymbols.length > 0 && (
+                                    <div className={`mt-6 border-t pt-5 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                                        <div className={`mb-3 text-center text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                            Select a variable for its explanation
+                                        </div>
+                                        <div className="flex flex-wrap justify-center gap-2">
+                                            {safeRelevantSymbols.map((symbol) => (
+                                                <button
+                                                    key={symbol.key}
+                                                    type="button"
+                                                    onClick={() => pushMathTerm(symbol.key)}
+                                                    disabled={!MATH_TERMS[symbol.key]}
+                                                    className={`rounded-lg border px-3 py-2 text-sm transition-colors ${MATH_TERMS[symbol.key]
+                                                        ? (darkMode ? 'border-slate-700 bg-slate-900 text-indigo-300 hover:border-indigo-500' : 'border-slate-200 bg-white text-indigo-700 hover:border-indigo-500')
+                                                        : (darkMode ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-400')}`}
+                                                    title={symbol.desc}
+                                                >
+                                                    <span dangerouslySetInnerHTML={{ __html: symbol.sym }} />
+                                                    <span className="ml-2 text-xs opacity-70">{symbol.desc}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             renderInteractiveEquationWorkspace()

@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { TUTOR_SCRIPTS } from '../data/tutorScripts';
 
 const useTutor = (module, currentState) => {
+    const [tipsEnabled, setTipsEnabled] = useState(() => {
+        try {
+            return localStorage.getItem('statwizard_tooltips_enabled') !== 'false';
+        } catch {
+            return true;
+        }
+    });
     const lastStateRef = useRef(currentState);
     const [activeScript, setActiveScript] = useState(null);
     const [history, setHistory] = useState([]);
@@ -12,6 +19,22 @@ const useTutor = (module, currentState) => {
     }, [activeScript]);
 
     useEffect(() => {
+        const handlePreferenceChange = (event) => {
+            const enabled = event.detail !== false;
+            setTipsEnabled(enabled);
+            if (!enabled) setActiveScript(null);
+        };
+        window.addEventListener('statwizardTooltipsChanged', handlePreferenceChange);
+        return () => window.removeEventListener('statwizardTooltipsChanged', handlePreferenceChange);
+    }, []);
+
+    useEffect(() => {
+        if (!tipsEnabled) {
+            activeScriptRef.current = null;
+            setActiveScript(null);
+            lastStateRef.current = currentState;
+            return;
+        }
         const lastState = lastStateRef.current;
         const scripts = TUTOR_SCRIPTS[module] || [];
         const triggered = scripts
@@ -47,7 +70,7 @@ const useTutor = (module, currentState) => {
             }
         }
         lastStateRef.current = currentState;
-    }, [currentState, module]);
+    }, [currentState, module, tipsEnabled]);
 
     return { activeScript, history, setActiveScript };
 };

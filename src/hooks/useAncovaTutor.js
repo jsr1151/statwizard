@@ -6,6 +6,14 @@ const STORAGE_KEY = 'ancova_tutor_dismissed';
 const STORAGE_VERSION = 1;
 
 const useAncovaTutor = (results, context, isActive = true) => {
+    const [globalTipsEnabled, setGlobalTipsEnabled] = useState(() => {
+        try {
+            return localStorage.getItem('statwizard_tooltips_enabled') !== 'false';
+        } catch {
+            return true;
+        }
+    });
+    const effectiveActive = isActive && globalTipsEnabled;
     const [activeTip, setActiveTip] = useState(null);
     const [dismissedIds, setDismissedIds] = useState(() => readStoredJson({
         key: STORAGE_KEY,
@@ -30,7 +38,7 @@ const useAncovaTutor = (results, context, isActive = true) => {
     const hasInteractedRef = useRef(hasInteracted);
     const dismissedIdsRef = useRef(dismissedIds);
     const sessionDismissedIdsRef = useRef(sessionDismissedIds);
-    const isActiveRef = useRef(isActive);
+    const isActiveRef = useRef(effectiveActive);
 
     useEffect(() => { resultsRef.current = results; }, [results]);
     useEffect(() => { contextRef.current = context; }, [context]);
@@ -41,7 +49,13 @@ const useAncovaTutor = (results, context, isActive = true) => {
     useEffect(() => { hasInteractedRef.current = hasInteracted; }, [hasInteracted]);
     useEffect(() => { dismissedIdsRef.current = dismissedIds; }, [dismissedIds]);
     useEffect(() => { sessionDismissedIdsRef.current = sessionDismissedIds; }, [sessionDismissedIds]);
-    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
+    useEffect(() => { isActiveRef.current = effectiveActive; }, [effectiveActive]);
+
+    useEffect(() => {
+        const handlePreferenceChange = (event) => setGlobalTipsEnabled(event.detail !== false);
+        window.addEventListener('statwizardTooltipsChanged', handlePreferenceChange);
+        return () => window.removeEventListener('statwizardTooltipsChanged', handlePreferenceChange);
+    }, []);
 
     useEffect(() => {
         writeStoredJson({
@@ -52,7 +66,7 @@ const useAncovaTutor = (results, context, isActive = true) => {
     }, [dismissedIds]);
 
     useEffect(() => {
-        if (!isActive) {
+        if (!effectiveActive) {
             setIdleTime(0);
             setActiveTip(null);
             return undefined;
@@ -62,7 +76,7 @@ const useAncovaTutor = (results, context, isActive = true) => {
             setIdleTime(prev => prev + 1);
         }, 1000);
         return () => clearInterval(timerRef.current);
-    }, [isActive]);
+    }, [effectiveActive]);
 
     const resetIdle = useCallback(() => {
         setIdleTime(0);
@@ -129,11 +143,11 @@ const useAncovaTutor = (results, context, isActive = true) => {
 
     // Internal loop
     useEffect(() => {
-        if (!isActive) return undefined;
+        if (!effectiveActive) return undefined;
 
         const interval = setInterval(() => triggerEvent({}), 2000);
         return () => clearInterval(interval);
-    }, [isActive, triggerEvent]);
+    }, [effectiveActive, triggerEvent]);
 
     return {
         activeTip,

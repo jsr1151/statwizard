@@ -5,7 +5,7 @@ import { isStringArray, readStoredJson, writeStoredJson } from '../utils/storage
 const STORAGE_KEY = 'anova_tutor_dismissed';
 const STORAGE_VERSION = 1;
 
-const useAnovaTutor = (stats, context, resetKey = null) => {
+const useAnovaTutor = (stats, context, resetKey = null, isActive = true) => {
     const [activeTip, setActiveTip] = useState(null);
     const [dismissedIds, setDismissedIds] = useState(() => readStoredJson({
         key: STORAGE_KEY,
@@ -32,6 +32,7 @@ const useAnovaTutor = (stats, context, resetKey = null) => {
     const hasInteractedRef = useRef(hasInteracted);
     const dismissedIdsRef = useRef(dismissedIds);
     const sessionDismissedIdsRef = useRef(sessionDismissedIds);
+    const isActiveRef = useRef(isActive);
 
     // Update refs whenever values change
     useEffect(() => { statsRef.current = stats; }, [stats]);
@@ -43,6 +44,7 @@ const useAnovaTutor = (stats, context, resetKey = null) => {
     useEffect(() => { hasInteractedRef.current = hasInteracted; }, [hasInteracted]);
     useEffect(() => { dismissedIdsRef.current = dismissedIds; }, [dismissedIds]);
     useEffect(() => { sessionDismissedIdsRef.current = sessionDismissedIds; }, [sessionDismissedIds]);
+    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
 
     // Persistence
     useEffect(() => {
@@ -63,11 +65,16 @@ const useAnovaTutor = (stats, context, resetKey = null) => {
 
     // Idle Timer
     useEffect(() => {
+        if (!isActive) {
+            setActiveTip(null);
+            setIdleTime(0);
+            return undefined;
+        }
         timerRef.current = setInterval(() => {
             setIdleTime(prev => prev + 1);
         }, 1000);
         return () => clearInterval(timerRef.current);
-    }, []);
+    }, [isActive]);
 
     const resetIdle = useCallback(() => {
         setIdleTime(0);
@@ -93,6 +100,7 @@ const useAnovaTutor = (stats, context, resetKey = null) => {
     }, []);
 
     const triggerEvent = useCallback((eventData) => {
+        if (!isActiveRef.current) return;
         const isSignal = !!eventData?.signal;
 
         const combinedState = {

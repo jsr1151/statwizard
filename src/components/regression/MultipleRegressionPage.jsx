@@ -2694,6 +2694,8 @@ const MultipleRegressionPage = ({
                                         setLessonShowResiduals(event.target.checked);
                                         if (event.target.checked) {
                                             setLessonMainView('residual');
+                                        } else {
+                                            setLessonMainView('observed');
                                         }
                                     }}
                                 />
