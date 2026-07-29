@@ -102,6 +102,7 @@ const STRUCTURED_RESULT_STEP_IDS = new Set([
     'res_central_tendency',
     'res_variability',
     'res_frequency',
+    'res_probability',
     'res_ztest',
     'res_rm_anova',
     'correlation_result',
