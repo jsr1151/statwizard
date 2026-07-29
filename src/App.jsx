@@ -81,6 +81,7 @@ const PairedTTestPage = lazy(() => import('./components/analysis/PairedTTestPage
 const OneWayAnovaPage = lazy(() => import('./components/analysis/OneWayAnovaPage.jsx'));
 const FactorialAnovaPage = lazy(() => import('./components/analysis/FactorialAnovaPage.jsx'));
 const AncovaPage = lazy(() => import('./components/analysis/AncovaPage.jsx'));
+const CentralTendencyPage = lazy(() => import('./components/descriptive/CentralTendencyPage.jsx'));
 const AnovaTutorPanel = lazy(() => import('./components/tutor/AnovaTutorPanel'));
 const FactorialAnovaTutorPanel = lazy(() => import('./components/tutor/FactorialAnovaTutorPanel'));
 const AncovaTutorPanel = lazy(() => import('./components/tutor/AncovaTutorPanel'));
@@ -289,6 +290,7 @@ export default function App() {
     const isSimpleLinearRegressionPage = currentStepId === 'regression_result' && Boolean(currentTestConfig);
     const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
     const isOneSampleTTestPage = currentStepId === 'res_onesample_ttest';
+    const isCentralTendencyPage = currentStepId === 'res_central_tendency';
     const isIndependentTTestPage = currentStepId === 'res_indep_ttest';
     const isPairedTTestPage = currentStepId === 'res_paired_ttest';
     const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
@@ -301,6 +303,17 @@ export default function App() {
     const availableResultSections = useMemo(() => {
         if (!isStructuredResultPage) {
             return [];
+        }
+
+        if (isCentralTendencyPage) {
+            return [
+                { id: 'lessons', label: 'Learn', icon: BookOpen },
+                { id: 'calculator', label: 'Calculator', icon: Calculator },
+                { id: 'explorer', label: 'Explorer', icon: BarChart2 },
+                { id: 'choosing', label: 'Choose a Measure', icon: CheckCircle },
+                { id: 'equation', label: 'Equations', icon: Sigma },
+                { id: 'software', label: 'Software', icon: Terminal },
+            ];
         }
 
         const sections = [
@@ -325,7 +338,7 @@ export default function App() {
         }
 
         return sections;
-    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isStructuredResultPage]);
+    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isStructuredResultPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1106,7 +1119,12 @@ export default function App() {
                                                 />
                                             )}
 
-                                            {activeResultSection === 'equation' && displayFormulaId && displayFormulaId !== 'none' ? (
+                                            {isCentralTendencyPage ? (
+                                                <CentralTendencyPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                />
+                                            ) : activeResultSection === 'equation' && displayFormulaId && displayFormulaId !== 'none' ? (
                                                 <div className="space-y-8">
                                                     <div className={`rounded-xl border p-6 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                                         <div className="flex flex-wrap items-start justify-between gap-4">

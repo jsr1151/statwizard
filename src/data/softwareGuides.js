@@ -15,11 +15,11 @@ export const SOFTWARE_GUIDES = {
         google_sheets: "1. Min: =MIN(range)\n2. Max: =MAX(range)\n3. Q1: =QUARTILE(range, 1)\n4. Q3: =QUARTILE(range, 3)\n5. IQR: =Q3 - Q1"
     },
     central_tendency: {
-        spss: "Analyze > Descriptive Statistics > Frequencies.\nClick Statistics > Check Mean, Median, and Mode.",
-        jasp: "Descriptives > Descriptive Statistics.\nUnder 'Statistics', check 'Mean', 'Median', and 'Mode'.",
-        r: "mean(data$variable)\nmedian(data$variable)",
-        excel: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nMode: =MODE.SNGL(range)",
-        google_sheets: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nMode: =MODE(range)"
+        spss: "Analyze > Descriptive Statistics > Frequencies.\nMove the variable into Variable(s).\nChoose Statistics, then select Mean, Median, and Mode.\nReview missing-value counts before interpreting the output.",
+        jasp: "Descriptives > Descriptive Statistics.\nMove the variable into Variables.\nUnder Statistics, select Mean, Median, and Mode.\nCheck Valid and Missing so the denominator is clear.",
+        r: "# na.rm ignores missing values\nmean(data$variable, na.rm = TRUE)\nmedian(data$variable, na.rm = TRUE)\n\n# Statistical mode(s); base R mode() is not this measure\nx <- na.omit(data$variable)\ncounts <- table(x)\nas.numeric(names(counts)[counts == max(counts)])",
+        excel: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nOne mode: =MODE.SNGL(range)\nAll tied modes: =MODE.MULT(range)\n\nBlank cells are ignored; verify text and error cells before calculating.",
+        google_sheets: "Mean: =AVERAGE(range)\nMedian: =MEDIAN(range)\nOne mode: =MODE(range)\nAll tied modes: =MODE.MULT(range)\n\nBlank cells are ignored; verify text and error cells before calculating."
     },
     z_test: {
         spss: "Manual Calculation: z = (Mean - μ) / (σ / √n).",
