@@ -19,6 +19,14 @@ describe('central tendency utilities', () => {
         expect(calculateCentralTendency([1, 2, 3]).modes).toEqual([]);
     });
 
+    it('describes distribution shape from the same observations', () => {
+        const symmetric = calculateCentralTendency([-2, -1, 0, 1, 2]);
+        expect(symmetric.skewness).toBeCloseTo(0, 10);
+        expect(symmetric.excessKurtosis).toBeCloseTo(-1.3, 10);
+        expect(calculateCentralTendency([1, 1, 1]).skewness).toBeNull();
+        expect(calculateCentralTendency([1, 2, 3, 20]).skewness).toBeGreaterThan(1);
+    });
+
     it('calculates a weighted mean and rejects invalid weights', () => {
         expect(calculateWeightedMean([80, 90], [1, 3])).toBe(87.5);
         expect(calculateWeightedMean([80], [-1])).toBeNull();

@@ -28,6 +28,7 @@ export const calculateCentralTendency = (input = []) => {
     const sorted = [...values].sort((a, b) => a - b);
     const n = sorted.length;
     const sum = sorted.reduce((total, value) => total + value, 0);
+    const mean = sum / n;
     const middle = Math.floor(n / 2);
     const median = n % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
     const frequencies = new Map();
@@ -36,11 +37,16 @@ export const calculateCentralTendency = (input = []) => {
     const modes = highestFrequency > 1
         ? [...frequencies.entries()].filter(([, count]) => count === highestFrequency).map(([value]) => value)
         : [];
+    const moment2 = sorted.reduce((total, value) => total + (value - mean) ** 2, 0) / n;
+    const moment3 = sorted.reduce((total, value) => total + (value - mean) ** 3, 0) / n;
+    const moment4 = sorted.reduce((total, value) => total + (value - mean) ** 4, 0) / n;
+    const skewness = moment2 > 0 ? moment3 / moment2 ** 1.5 : null;
+    const excessKurtosis = moment2 > 0 ? moment4 / moment2 ** 2 - 3 : null;
 
     return {
         n,
         sum,
-        mean: sum / n,
+        mean,
         median,
         modes,
         modeFrequency: highestFrequency,
@@ -48,6 +54,8 @@ export const calculateCentralTendency = (input = []) => {
         sorted,
         min: sorted[0],
         max: sorted[n - 1],
+        skewness,
+        excessKurtosis,
         frequencies: [...frequencies.entries()].map(([value, count]) => ({ value, count })),
     };
 };

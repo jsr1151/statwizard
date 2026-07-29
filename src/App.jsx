@@ -310,7 +310,6 @@ export default function App() {
                 { id: 'lessons', label: 'Learn', icon: BookOpen },
                 { id: 'calculator', label: 'Calculator', icon: Calculator },
                 { id: 'explorer', label: 'Explorer', icon: BarChart2 },
-                { id: 'choosing', label: 'Choose a Measure', icon: CheckCircle },
                 { id: 'equation', label: 'Equations', icon: Sigma },
                 { id: 'software', label: 'Software', icon: Terminal },
             ];
