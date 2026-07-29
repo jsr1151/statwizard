@@ -119,14 +119,6 @@ const EFFECT_SIZE_SECTION_STEP_IDS = new Set([
     'res_ancova',
 ]);
 
-const SAFE_GENERIC_EQUATION_STEP_IDS = new Set([
-    'res_central_tendency',
-    'res_variability',
-    'res_frequency',
-    'res_ztest',
-    'res_rm_anova',
-]);
-
 // --- MAIN APP ---
 export default function App() {
     // --- 1. CORE REFS (Top priority to avoid TDZ/hoisting issues) ---
@@ -486,7 +478,9 @@ export default function App() {
     let relevantSymbols = SYMBOL_KEYS.sd;
     if (displayFormulaId && SYMBOL_KEYS[displayFormulaId]) relevantSymbols = SYMBOL_KEYS[displayFormulaId];
     const safeRelevantSymbols = Array.isArray(relevantSymbols) ? relevantSymbols : [];
-    const useSafeGenericEquationCard = SAFE_GENERIC_EQUATION_STEP_IDS.has(currentStepId);
+    // Equation tabs have enough horizontal space for the standard interactive
+    // formula workspace, including its inline term links and detail cards.
+    const useSafeGenericEquationCard = false;
 
     const renderSafeGenericEquationBody = () => {
         const labelClass = darkMode ? 'text-slate-500' : 'text-slate-500';
