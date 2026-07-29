@@ -16,6 +16,15 @@ const MODES = [
   { id: 'hilo', label: 'Hi-Lo Count' },
 ];
 
+const MODE_GUIDANCE = {
+  poker: { title: 'Poker hand odds', goal: 'See how often each five-card poker hand should occur.', action: 'Deal hands, then compare the observed results with the theoretical probabilities.' },
+  hunt: { title: 'Hunt and bet', goal: 'Connect the chance of drawing a target card with the value of a bet.', action: 'Choose a target and hand size, run hands, and open the math to compare probability with profit.' },
+  replace: { title: 'With or without replacement', goal: 'See how replacement changes the sample space and whether draws are independent.', action: 'Choose a hand size, toggle replacement, and compare the resulting probabilities.' },
+  conditional: { title: 'Deck tracker', goal: 'Watch conditional probabilities change as known cards leave the deck.', action: 'Reveal cards and observe how the remaining deck changes the chance of the next card.' },
+  outs: { title: 'Poker outs', goal: 'Translate cards that improve a hand into turn and river probabilities.', action: 'Choose a draw scenario and inspect the number of outs and chance of improving.' },
+  hilo: { title: 'Hi-Lo counting', goal: 'See how a running count summarizes the balance of high and low cards remaining.', action: 'Deal through the deck and watch the counts; they shift odds but never guarantee a card.' },
+};
+
 export default function ProbabilityCards({ darkMode }) {
   const [cardSubMode, setCardSubMode] = useState('poker');
   const [cardGame, setCardGame] = useState({
@@ -71,6 +80,12 @@ export default function ProbabilityCards({ darkMode }) {
             {label}
           </button>
         ))}
+      </div>
+
+      <div className={`max-w-3xl mx-auto -mt-3 p-4 rounded-2xl border ${darkMode ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
+        <h5 className="text-sm font-black text-indigo-400">{MODE_GUIDANCE[cardSubMode].title}</h5>
+        <p className={`mt-1 text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}><strong>What it demonstrates:</strong> {MODE_GUIDANCE[cardSubMode].goal}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500"><strong>Try this:</strong> {MODE_GUIDANCE[cardSubMode].action}</p>
       </div>
 
       {cardSubMode === 'poker' && <PokerOddsPanel cardGame={cardGame} darkMode={darkMode} setCardGame={setCardGame} />}

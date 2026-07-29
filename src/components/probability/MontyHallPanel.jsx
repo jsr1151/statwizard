@@ -85,7 +85,8 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
       </div>
 
       <div
-        className={`grid gap-2 justify-center max-h-[300px] overflow-y-auto pr-2 custom-scrollbar ${montyState.doorCount > 10 ? 'grid-cols-8' : montyState.doorCount > 5 ? 'grid-cols-5' : 'grid-cols-3'}`}
+        className="grid gap-2 w-full"
+        style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${montyState.doorCount > 30 ? 28 : 48}px, 1fr))` }}
       >
         {montyState.doors.map((d, i) => {
           const isRevealed = montyState.revealed.includes(i);
@@ -95,7 +96,7 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
             <div
               key={i}
               onClick={() => montyState.gameState === 'start' && handleMontyPick(i)}
-              className={`aspect-[2/3] w-full rounded-xl border-2 flex flex-col items-center justify-center text-lg cursor-pointer transition-all active:scale-95 ${isSelected ? 'border-indigo-500 bg-indigo-500/20 shadow-indigo-500/20 shadow-lg z-10' : isRevealed ? (isCar ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-800 bg-slate-800/10 opacity-40 shadow-none grayscale') : darkMode ? 'border-slate-700 bg-slate-900/40 hover:border-slate-500 shadow-md' : 'border-slate-200 bg-white hover:border-slate-400 shadow-sm'}`}
+              className={`min-h-12 py-2 w-full rounded-lg border-2 flex flex-col items-center justify-center text-sm cursor-pointer transition-all active:scale-95 ${isSelected ? 'border-indigo-500 bg-indigo-500/20 shadow-indigo-500/20 shadow-lg z-10' : isRevealed ? (isCar ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-800 bg-slate-800/10 opacity-40 shadow-none grayscale') : darkMode ? 'border-slate-700 bg-slate-900/40 hover:border-slate-500 shadow-md' : 'border-slate-200 bg-white hover:border-slate-400 shadow-sm'}`}
             >
               <span className="animate-in fade-in zoom-in-50">{isRevealed ? (isCar ? '🏎️' : '🐐') : '🚪'}</span>
               <span className="text-[7px] font-black text-slate-500 mt-1 uppercase">#{i + 1}</span>

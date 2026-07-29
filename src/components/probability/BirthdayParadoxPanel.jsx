@@ -1,100 +1,55 @@
+import { useEffect, useMemo, useState } from 'react';
+
+const probabilityOfMatch = (people) => {
+  let noMatch = 1;
+  for (let index = 0; index < people; index += 1) noMatch *= (365 - index) / 365;
+  return 1 - noMatch;
+};
+
+const createGroup = (size) => Array.from({ length: size }, () => Math.floor(Math.random() * 365));
+const formatDay = (day) => {
+  const date = new Date(Date.UTC(2024, 0, 1 + day));
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+};
+
 export default function BirthdayParadoxPanel({ birthdayPeople, birthdaySim, darkMode, setBirthdayPeople, setBirthdaySim }) {
-  return (
-    <div className="animate-in fade-in space-y-8">
-      <div className="relative w-64 h-64 mx-auto flex items-center justify-center bg-slate-900/40 rounded-full border border-white/5 overflow-hidden">
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          {/* Connection Lines */}
-          {Array.from({ length: Math.min(birthdayPeople, 40) }).map((_, i) => {
-            const angle1 = (i / Math.min(birthdayPeople, 40)) * 2 * Math.PI;
-            const r = 40;
-            const x1 = 50 + r * Math.cos(angle1);
-            const y1 = 50 + r * Math.sin(angle1);
-            return Array.from({ length: Math.min(birthdayPeople, 40) })
-              .slice(i + 1)
-              .map((_, j) => {
-                const k = i + 1 + j;
-                const angle2 = (k / Math.min(birthdayPeople, 40)) * 2 * Math.PI;
-                const x2 = 50 + r * Math.cos(angle2);
-                const y2 = 50 + r * Math.sin(angle2);
-                return <line key={`${i}-${k}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="0.1" className="text-indigo-500/20" />;
-              });
-          })}
-          {/* People Nodes */}
-          {Array.from({ length: Math.min(birthdayPeople, 40) }).map((_, i) => {
-            const angle = (i / Math.min(birthdayPeople, 40)) * 2 * Math.PI;
-            const r = 40;
-            return <circle key={i} cx={50 + r * Math.cos(angle)} cy={50 + r * Math.sin(angle)} r="1.5" className="fill-indigo-500" />;
-          })}
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" strokeWidth="4" />
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke={birthdayPeople >= 23 ? '#10b981' : '#4f46e5'}
-            strokeWidth="4"
-            strokeDasharray={`${(() => {
-              let p = 1;
-              for (let i = 0; i < birthdayPeople; i++) p *= (365 - i) / 365;
-              return (1 - p) * 282.7;
-            })()} 282.7`}
-            strokeLinecap="round"
-            className="transition-all duration-1000"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/20">
-          <span className="text-4xl font-black text-white">
-            {(() => {
-              let p = 1;
-              for (let i = 0; i < birthdayPeople; i++) p *= (365 - i) / 365;
-              return ((1 - p) * 100).toFixed(1);
-            })()}
-            %
-          </span>
-          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Match Potential</span>
-        </div>
+  const [group, setGroup] = useState(() => createGroup(birthdayPeople));
+  useEffect(() => { setGroup(createGroup(birthdayPeople)); }, [birthdayPeople]);
+  const counts = useMemo(() => group.reduce((map, day) => map.set(day, (map.get(day) || 0) + 1), new Map()), [group]);
+  const matchingDays = [...counts.entries()].filter(([, count]) => count > 1);
+  const theoretical = probabilityOfMatch(birthdayPeople);
+
+  const simulateGroups = () => {
+    let matches = 0;
+    for (let trial = 0; trial < 1000; trial += 1) {
+      const days = new Set();
+      let matched = false;
+      for (let person = 0; person < birthdayPeople; person += 1) {
+        const day = Math.floor(Math.random() * 365);
+        if (days.has(day)) { matched = true; break; }
+        days.add(day);
+      }
+      if (matched) matches += 1;
+    }
+    setBirthdaySim((previous) => ({ trials: previous.trials + 1000, matches: previous.matches + matches }));
+  };
+
+  return <div className="animate-in fade-in space-y-6">
+    <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+      <div className={`rounded-3xl border p-6 text-center ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <div className="text-5xl font-black text-indigo-400">{(theoretical * 100).toFixed(1)}%</div>
+        <p className="mt-2 text-sm text-slate-500">Theoretical chance that at least two people share a birthday</p>
+        <input aria-label="Group size" type="range" min="1" max="100" value={birthdayPeople} onChange={(event) => setBirthdayPeople(Number(event.target.value))} className="mt-6 w-full accent-indigo-500" />
+        <div className="mt-2 flex justify-between text-xs font-bold text-slate-500"><span>Group: {birthdayPeople}</span><span>23 people: 50.7%</span></div>
       </div>
-      <div className="space-y-4">
-        <input
-          type="range"
-          min="1"
-          max="100"
-          value={birthdayPeople}
-          onChange={(e) => setBirthdayPeople(parseInt(e.target.value))}
-          className="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
-        />
-        <div className="flex justify-between text-[10px] font-black text-slate-500">
-          <span>Group Size: {birthdayPeople}</span>
-          <span>Target: 23 (50%)</span>
+      <div className={`rounded-3xl border p-5 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+        <div className="flex flex-wrap justify-between gap-3"><div><h5 className="font-black">One simulated group</h5><p className="text-xs text-slate-500">Matching birthdays are highlighted with the same color.</p></div><button type="button" onClick={() => setGroup(createGroup(birthdayPeople))} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold">Generate another group</button></div>
+        <div className="relative mt-5 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+          {group.map((day, index) => { const matched = counts.get(day) > 1; return <div key={index} className={`rounded-lg border p-2 text-center ${matched ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : darkMode ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white border-slate-200 text-slate-500'}`}><div className="text-[9px] font-black">P{index + 1}</div><div className="text-[9px] mt-1">{formatDay(day)}</div></div>; })}
         </div>
-      </div>
-      <div className={`p-6 rounded-3xl ${darkMode ? 'bg-slate-950 border-slate-800 border' : 'bg-white border-slate-200 border'} text-center space-y-4`}>
-        <button
-          onClick={() => {
-            let matchCount = 0;
-            for (let t = 0; t < 1000; t++) {
-              const bdays = new Set();
-              let matched = false;
-              for (let i = 0; i < birthdayPeople; i++) {
-                const b = Math.floor(Math.random() * 365);
-                if (bdays.has(b)) {
-                  matched = true;
-                  break;
-                }
-                bdays.add(b);
-              }
-              if (matched) matchCount++;
-            }
-            setBirthdaySim((p) => ({ trials: p.trials + 1000, matches: p.matches + matchCount }));
-          }}
-          className="py-2 px-6 bg-slate-800 rounded-full text-[10px] font-black text-indigo-400 uppercase hover:bg-slate-700 transition-all"
-        >
-          Simulate 1,000 Groups
-        </button>
-        <div className="text-xs font-bold text-slate-400">
-          Empirical Rate: {birthdaySim.trials > 0 ? ((birthdaySim.matches / birthdaySim.trials) * 100).toFixed(2) : '0.00'}% ({birthdaySim.trials} trials)
-        </div>
+        <div className={`mt-4 rounded-xl p-3 text-sm ${matchingDays.length ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-500'}`}>{matchingDays.length ? matchingDays.map(([day, count]) => `${count} people share ${formatDay(day)}`).join(' · ') : 'No match in this group. Generate another group—many individual groups will have none even when the overall probability exceeds 50%.'}</div>
       </div>
     </div>
-  );
+    <div className={`rounded-3xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}><div className="flex flex-wrap items-center justify-between gap-4"><div><h5 className="font-black">Repeat the group experiment 1,000 times</h5><p className="mt-1 text-xs text-slate-500">This creates 1,000 independent groups of {birthdayPeople} people and counts how many groups contain at least one shared birthday. Repeating it makes the empirical rate approach the theoretical {(theoretical * 100).toFixed(1)}%.</p></div><button type="button" onClick={simulateGroups} className="px-5 py-3 rounded-xl bg-indigo-600 text-white text-xs font-black">Simulate 1,000 groups</button></div><div className="mt-4 text-sm font-bold">Empirical rate: {birthdaySim.trials ? `${(birthdaySim.matches / birthdaySim.trials * 100).toFixed(2)}%` : 'Run the experiment to begin'} <span className="text-slate-500">({birthdaySim.matches.toLocaleString()} matching groups out of {birthdaySim.trials.toLocaleString()})</span></div></div>
+  </div>;
 }

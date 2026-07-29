@@ -1,18 +1,22 @@
 import { useState } from 'react';
 
 const EVENTS = [
-  { label: 'Perfect NCAA Bracket', p: 1 / 9.2e18, color: 'text-red-600' },
-  { label: 'Winning Mega Millions', p: 1 / 302500000, color: 'text-red-500' },
-  { label: 'Winning a Royal Flush', p: 1 / 649740, color: 'text-orange-600' },
-  { label: 'Struck by Lightning (Yearly)', p: 0.000001, color: 'text-orange-500' },
-  { label: 'Drawing an Ace', p: 0.0769, color: 'text-amber-600' },
+  { label: 'One Specific 5-Card Hand', p: 1 / 2598960, color: 'text-red-500' },
+  { label: 'Royal Flush', p: 1 / 649740, color: 'text-orange-600' },
+  { label: 'Two People Share a Birthday', p: 1 / 365, color: 'text-orange-500' },
+  { label: 'Rolling Two Sixes', p: 1 / 36, color: 'text-amber-600' },
+  { label: 'Drawing an Ace', p: 1 / 13, color: 'text-amber-600' },
   { label: 'Rolling a 6 on a Die', p: 1 / 6, color: 'text-amber-500' },
-  { label: '4-Choice MC Guess', p: 0.25, color: 'text-amber-500' },
-  { label: 'Flipping Heads', p: 0.5, color: 'text-indigo-500' },
-  { label: 'Rain in Seattle (Avg Day)', p: 0.45, color: 'text-blue-500' },
-  { label: 'Passing a True/False Guess', p: 0.5, color: 'text-indigo-400' },
+  { label: 'Drawing a Face Card', p: 3 / 13, color: 'text-amber-500' },
+  { label: '4-Choice Guess', p: 1 / 4, color: 'text-amber-500' },
+  { label: 'Drawing a Heart', p: 1 / 4, color: 'text-blue-500' },
+  { label: 'Two Heads in Two Flips', p: 1 / 4, color: 'text-blue-500' },
+  { label: 'Flipping Heads', p: 1 / 2, color: 'text-indigo-500' },
+  { label: 'Drawing a Red Card', p: 1 / 2, color: 'text-indigo-400' },
+  { label: 'Rolling an Even Number', p: 1 / 2, color: 'text-indigo-400' },
+  { label: 'At Least One Head in Two Flips', p: 3 / 4, color: 'text-emerald-400' },
   { label: 'Rolling > 1 on a Die', p: 5 / 6, color: 'text-emerald-400' },
-  { label: 'Sun Setting Today', p: 0.99999, color: 'text-emerald-500' },
+  { label: 'Not Rolling a 6', p: 5 / 6, color: 'text-emerald-500' },
 ];
 
 export default function ProbabilityBasics({ darkMode }) {
