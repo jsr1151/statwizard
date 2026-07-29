@@ -53,6 +53,34 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
   );
   if (type === 'sd') return <div className="flex flex-col items-center"><div className={`text-xs font-bold mb-3 uppercase tracking-wider ${labelCol}`}>Sample Standard Deviation</div><div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span className="font-bold mr-3 italic">s</span><span className="mr-3">=</span><div className="flex items-center"><span className="text-4xl mr-1 font-light">√</span><div className={`flex flex-col items-center border-t pt-1 ${borderCol}`}><div className={`flex flex-col items-center border-b pb-1 mb-1 px-2 ${borderCol}`}><span>Σ({calc("x", undefined)} - {calc("x̄", getV('xBar'))})²</span></div><span>{calc("n", getV('n'))} - 1</span></div></div></div></div>;
   if (type === 'range') return <div className="flex flex-col items-center"><div className={`text-xs font-bold mb-3 uppercase tracking-wider ${labelCol}`}>Range & IQR Equations</div><div className={`flex flex-col gap-4 text-xl md:text-2xl font-serif ${textCol}`}><div>{calc("Range", undefined)} = Max - Min</div><div>{calc("IQR", undefined)} = {calc("Q3", undefined)} - {calc("Q1", undefined)}</div></div></div>;
+  if (type === 'variability') return (
+    <div className="flex flex-col gap-8 w-full">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className={`rounded-xl border p-5 flex flex-col items-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`text-xs font-bold mb-4 uppercase tracking-wider ${labelCol}`}>Sample Variance</div>
+          <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
+            <span>{calc("s2", getV('sampleVariance'))}</span><span className="mx-3">=</span>
+            <div className="flex flex-col items-center">
+              <span className={`border-b-2 px-2 pb-1 mb-1 ${borderCol}`}>Î£({calc("x", undefined)} âˆ’ {calc("xÌ„", getV('mean'))})Â²</span>
+              <span>{calc("n", getV('n'))} âˆ’ 1</span>
+            </div>
+          </div>
+        </div>
+        <div className={`rounded-xl border p-5 flex flex-col items-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+          <div className={`text-xs font-bold mb-4 uppercase tracking-wider ${labelCol}`}>Sample Standard Deviation</div>
+          <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
+            <span>{calc("s", getV('sampleSd'))}</span><span className="mx-3">=</span><span className="text-4xl mr-1">âˆš</span><span className={`border-t-2 px-2 pt-1 ${borderCol}`}>{calc("s2", getV('sampleVariance'))}</span>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Range</div><div className={`mt-4 text-xl font-serif ${textCol}`}>{calc("Range", getV('range'))} = {calc("Max", getV('max'))} âˆ’ {calc("Min", getV('min'))}</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Interquartile Range</div><div className={`mt-4 text-xl font-serif ${textCol}`}>{calc("IQR", getV('iqr'))} = {calc("Q3", getV('q3'))} âˆ’ {calc("Q1", getV('q1'))}</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Median Absolute Deviation</div><div className={`mt-4 text-lg font-serif ${textCol}`}>{calc("MAD", getV('mad'))} = median(|{calc("x", undefined)} âˆ’ {calc("Median", getV('median'))}|)</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Coefficient of Variation</div><div className={`mt-4 text-lg font-serif ${textCol}`}>{calc("CV", getV('coefficientOfVariation'))} = <span className="inline-flex flex-col align-middle mx-1"><span className={`border-b ${borderCol}`}>{calc("s", getV('sampleSd'))}</span><span>|{calc("xÌ„", getV('mean'))}|</span></span> Ã— 100%</div></div>
+      </div>
+    </div>
+  );
   if (type === 'percentage') return <div className="flex flex-col items-center"><div className={`text-xs font-bold mb-3 uppercase tracking-wider ${labelCol}`}>Relative Frequency Equation</div><div className={`flex flex-col gap-3 text-xl md:text-2xl font-serif ${textCol}`}><div className="flex items-center"><span className="mr-2 italic">rf</span><span>=</span><div className="flex flex-col items-center mx-1"><span className={`border-b-2 px-1 ${borderCol}`}>{calc("f", undefined)}</span><span>{calc("N", getV('n'))}</span></div></div></div></div>;
   if (type === 't_indep') {
     const isWelch = stats?.testType === 'welch';

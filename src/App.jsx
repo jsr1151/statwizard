@@ -485,6 +485,10 @@ export default function App() {
     let displayVisualType = currentStep?.visualType;
     let currentSoftware = currentStep?.software;
 
+    if (currentStepId === 'res_variability') {
+        displayFormulaId = 'variability';
+    }
+
     // --- SYMBOL KEY LOGIC ---
     let relevantSymbols = SYMBOL_KEYS.sd;
     if (displayFormulaId && SYMBOL_KEYS[displayFormulaId]) relevantSymbols = SYMBOL_KEYS[displayFormulaId];
@@ -1112,11 +1116,6 @@ export default function App() {
                                                     section={activeResultSection}
                                                     darkMode={darkMode}
                                                 />
-                                            ) : isVariabilityPage ? (
-                                                <VariabilityPage
-                                                    section={activeResultSection}
-                                                    darkMode={darkMode}
-                                                />
                                             ) : activeResultSection === 'equation' && displayFormulaId && displayFormulaId !== 'none' ? (
                                                 <div className="space-y-8">
                                                     <div className={`rounded-xl border p-6 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -1134,6 +1133,12 @@ export default function App() {
 
                                                     {renderEquationPanel()}
                                                 </div>
+                                            ) : isVariabilityPage ? (
+                                                <VariabilityPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    onStatsChange={setCurrentStats}
+                                                />
                                             ) : isPearsonCorrelationPage ? (
                                                 <PearsonCorrelationPage
                                                     section={activeResultSection}

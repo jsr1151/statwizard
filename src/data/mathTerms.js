@@ -27,6 +27,10 @@ export const MATH_TERMS = {
     "Q1": { title: "First Quartile", desc: "25th Percentile.", calc: "Median of lower half." },
     "Q3": { title: "Third Quartile", desc: "75th Percentile.", calc: "Median of upper half." },
     "Percentage": { title: "Percentage (%)", desc: "Part of whole.", calc: "({f} / {n}) * 100" },
+    "Max": { title: "Maximum", desc: "Largest observed value in the dataset.", calc: "Largest ordered observation." },
+    "Min": { title: "Minimum", desc: "Smallest observed value in the dataset.", calc: "Smallest ordered observation." },
+    "MAD": { title: "Median Absolute Deviation (MAD)", desc: "Robust typical distance from the sample median.", calc: "median(|{x} - {Median}|)" },
+    "CV": { title: "Coefficient of Variation (CV)", desc: "Standard deviation relative to the magnitude of the mean, expressed as a percentage.", calc: "({s} / |{xÌ„}|) Ã— 100%" },
     // 1-Group Focus
     "z": { title: "Z-Score", desc: "Standardized diff.", calc: "({x̄} - {μ}) / {SE}" },
     "mu": { title: "Population Mean (μ)", desc: "Known average.", calc: "Constant." },

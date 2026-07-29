@@ -1,4 +1,17 @@
 export const SYMBOL_KEYS = {
+    variability: [
+        { key: 's', sym: 's', desc: 'Sample standard deviation' },
+        { key: 's2', sym: 's<sup>2</sup>', desc: 'Sample variance' },
+        { key: 'x', sym: 'x', desc: 'Individual observation' },
+        { key: 'xÌ„', sym: 'xÌ„', desc: 'Sample mean' },
+        { key: 'n', sym: 'n', desc: 'Sample size' },
+        { key: 'Range', sym: 'Range', desc: 'Maximum minus minimum' },
+        { key: 'IQR', sym: 'IQR', desc: 'Interquartile range' },
+        { key: 'Q1', sym: 'Q<sub>1</sub>', desc: 'First quartile' },
+        { key: 'Q3', sym: 'Q<sub>3</sub>', desc: 'Third quartile' },
+        { key: 'MAD', sym: 'MAD', desc: 'Median absolute deviation' },
+        { key: 'CV', sym: 'CV', desc: 'Coefficient of variation' },
+    ],
     mean: [
         { key: 'x̄', sym: 'x̄', desc: 'Sample mean' },
         { key: 'Sigma', sym: '&Sigma;', desc: 'Summation' },
