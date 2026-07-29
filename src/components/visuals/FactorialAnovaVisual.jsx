@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Activity, LayoutGrid, PieChart, Plus, Sigma, X, GitCommit, Layers, Percent, Calculator } from 'lucide-react';
 import { fCDF, fPPF, calculateFactorialAnova, calculatePostHocFactorial } from '../../utils/mathHelpers';
 import FactorialAnovaTutorPanel from '../tutor/FactorialAnovaTutorPanel';
@@ -66,6 +66,8 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
         setOutcomeLabel(datasetSeed.outcomeLabel || 'Outcome Variable');
         setCellData(datasetSeed.cellData);
         setActiveTab('table');
+    // A new seed key is the explicit signal to replace user-edited calculator data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [datasetSeed?.key]);
 
     // --- CALCULATIONS ---
@@ -274,18 +276,19 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
     }, [activeTab, alpha, factors, allCellsEmpty, cellData, results, cellStats]);
 
     const tutor = useFactorialAnovaTutor(results, tutorContext);
+    const { triggerEvent: triggerTutorEvent } = tutor;
 
     // Tab Change Signal
     useEffect(() => {
-        tutor.triggerEvent({ signal: `change_tab_${activeTab}` });
-    }, [activeTab]);
+        triggerTutorEvent({ signal: `change_tab_${activeTab}` });
+    }, [activeTab, triggerTutorEvent]);
 
     // Alpha Change Signal
     useEffect(() => {
-        tutor.triggerEvent({ signal: 'change_alpha' });
-    }, [alpha]);
+        triggerTutorEvent({ signal: 'change_alpha' });
+    }, [alpha, triggerTutorEvent]);
 
-    const handleTutorAction = (action) => {
+    const handleTutorAction = useCallback((action) => {
         switch (action) {
             case 'open_themes':
                 // The dropdown is usually auto-open or can be focused
@@ -298,14 +301,14 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                 break;
             default: console.log("Factorial Tutor Action:", action);
         }
-    };
+    }, []);
 
     useEffect(() => {
         const handleAction = (e) => {
             if (e.detail) handleTutorAction(e.detail);
         };
         const handleSignal = (e) => {
-            if (e.detail) tutor.triggerEvent({ signal: e.detail });
+            if (e.detail) triggerTutorEvent({ signal: e.detail });
         };
         window.addEventListener('factorialAnovaTutorAction', handleAction);
         window.addEventListener('factorialAnovaTutorSignal', handleSignal);
@@ -313,7 +316,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
             window.removeEventListener('factorialAnovaTutorAction', handleAction);
             window.removeEventListener('factorialAnovaTutorSignal', handleSignal);
         };
-    }, [handleTutorAction, tutor]);
+    }, [handleTutorAction, triggerTutorEvent]);
 
     const handleLevelAdd = (factorId) => {
         addLevel(factorId);

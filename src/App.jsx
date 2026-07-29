@@ -1,7 +1,7 @@
 // StatWizard Alpha - Modular Architecture
 // App.jsx - Orchestration Layer
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import {
     ArrowRight,
     CheckCircle,
@@ -34,13 +34,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import Header from './components/common/Header';
 import TabButton from './components/common/TabButton';
 import CalculationText from './components/common/CalculationText';
-
-// --- Tutor ---
-import TutorPanel from './components/tutor/TutorPanel';
-
-// --- Formula ---
-import FormulaDisplay from './components/formula/FormulaDisplay';
-import AssumptionItem from './components/formula/AssumptionItem';
+import RouteLoadingFallback from './components/common/RouteLoadingFallback';
 
 // --- Hooks ---
 import useAutoReload from './hooks/useAutoReload';
@@ -48,48 +42,48 @@ import useAnovaTutor from './hooks/useAnovaTutor';
 import useFactorialAnovaTutor from './hooks/useFactorialAnovaTutor';
 import useAncovaTutor from './hooks/useAncovaTutor';
 
-// --- Visualizers ---
-import NormalDistributionVisual from './components/visuals/NormalDistributionVisual';
-import IndependentTTestVisual from './components/visuals/IndependentTTestVisual';
-import PairedTTestVisual from './components/visuals/PairedTTestVisual';
-import AnovaVisual from './components/visuals/AnovaVisual';
-import FactorialAnovaVisual from './components/visuals/FactorialAnovaVisual';
-import AncovaVisual from './components/visuals/AncovaVisual';
-import VariabilityVisual from './components/visuals/VariabilityVisual';
-import FrequencyVisual from './components/visuals/FrequencyVisual';
-import ShapeVisual from './components/visuals/ShapeVisual';
-import QuartileVisual from './components/visuals/QuartileVisual';
-import ProbabilityVisual from './components/visuals/ProbabilityVisual';
-import NhstVisual from './components/visuals/NhstVisual';
-
 // --- Navigation ---
 import MainMenu from './components/navigation/MainMenu';
-import ModulesView from './components/navigation/ModulesView';
-import SearchView from './components/navigation/SearchView';
-import LessonsView from './components/navigation/LessonsView';
-import DataManagerPage from './components/data/DataManagerPage';
 import UpdateToast from './components/common/UpdateToast';
-import PowerAnalysisHub from './components/power/PowerAnalysisHub';
-import PowerAnalysisTab from './components/power/PowerAnalysisTab';
-import EffectSizePanel from './components/power/EffectSizePanel';
-import PearsonCorrelationPage from './components/correlation/PearsonCorrelationPage';
-import SimpleLinearRegressionPage from './components/regression/SimpleLinearRegressionPage';
-import MultipleRegressionPage from './components/regression/MultipleRegressionPage';
-import AnalysisSectionTabs from './components/analysis/AnalysisSectionTabs';
-import AnalysisAssumptionsSection from './components/analysis/AnalysisAssumptionsSection.jsx';
-import OneSampleTTestPage from './components/analysis/OneSampleTTestPage.jsx';
-import IndependentTTestPage from './components/analysis/IndependentTTestPage.jsx';
-import PairedTTestPage from './components/analysis/PairedTTestPage.jsx';
-import OneWayAnovaPage from './components/analysis/OneWayAnovaPage.jsx';
-import FactorialAnovaPage from './components/analysis/FactorialAnovaPage.jsx';
-import AncovaPage from './components/analysis/AncovaPage.jsx';
-
-// --- Tutor Components ---
-import AnovaTutorPanel from './components/tutor/AnovaTutorPanel';
-import FactorialAnovaTutorPanel from './components/tutor/FactorialAnovaTutorPanel';
-import AncovaTutorPanel from './components/tutor/AncovaTutorPanel';
 import { POWER_TEST_BY_STEP_ID } from './power/testRegistry';
 import { DatasetLibraryProvider } from './hooks/useDatasetLibrary';
+
+const TutorPanel = lazy(() => import('./components/tutor/TutorPanel'));
+const FormulaDisplay = lazy(() => import('./components/formula/FormulaDisplay'));
+const AssumptionItem = lazy(() => import('./components/formula/AssumptionItem'));
+const NormalDistributionVisual = lazy(() => import('./components/visuals/NormalDistributionVisual'));
+const IndependentTTestVisual = lazy(() => import('./components/visuals/IndependentTTestVisual'));
+const PairedTTestVisual = lazy(() => import('./components/visuals/PairedTTestVisual'));
+const AnovaVisual = lazy(() => import('./components/visuals/AnovaVisual'));
+const FactorialAnovaVisual = lazy(() => import('./components/visuals/FactorialAnovaVisual'));
+const AncovaVisual = lazy(() => import('./components/visuals/AncovaVisual'));
+const VariabilityVisual = lazy(() => import('./components/visuals/VariabilityVisual'));
+const FrequencyVisual = lazy(() => import('./components/visuals/FrequencyVisual'));
+const ShapeVisual = lazy(() => import('./components/visuals/ShapeVisual'));
+const QuartileVisual = lazy(() => import('./components/visuals/QuartileVisual'));
+const ProbabilityVisual = lazy(() => import('./components/visuals/ProbabilityVisual'));
+const NhstVisual = lazy(() => import('./components/visuals/NhstVisual'));
+const ModulesView = lazy(() => import('./components/navigation/ModulesView'));
+const SearchView = lazy(() => import('./components/navigation/SearchView'));
+const LessonsView = lazy(() => import('./components/navigation/LessonsView'));
+const DataManagerPage = lazy(() => import('./components/data/DataManagerPage'));
+const PowerAnalysisHub = lazy(() => import('./components/power/PowerAnalysisHub'));
+const PowerAnalysisTab = lazy(() => import('./components/power/PowerAnalysisTab'));
+const EffectSizePanel = lazy(() => import('./components/power/EffectSizePanel'));
+const PearsonCorrelationPage = lazy(() => import('./components/correlation/PearsonCorrelationPage'));
+const SimpleLinearRegressionPage = lazy(() => import('./components/regression/SimpleLinearRegressionPage'));
+const MultipleRegressionPage = lazy(() => import('./components/regression/MultipleRegressionPage'));
+const AnalysisSectionTabs = lazy(() => import('./components/analysis/AnalysisSectionTabs'));
+const AnalysisAssumptionsSection = lazy(() => import('./components/analysis/AnalysisAssumptionsSection.jsx'));
+const OneSampleTTestPage = lazy(() => import('./components/analysis/OneSampleTTestPage.jsx'));
+const IndependentTTestPage = lazy(() => import('./components/analysis/IndependentTTestPage.jsx'));
+const PairedTTestPage = lazy(() => import('./components/analysis/PairedTTestPage.jsx'));
+const OneWayAnovaPage = lazy(() => import('./components/analysis/OneWayAnovaPage.jsx'));
+const FactorialAnovaPage = lazy(() => import('./components/analysis/FactorialAnovaPage.jsx'));
+const AncovaPage = lazy(() => import('./components/analysis/AncovaPage.jsx'));
+const AnovaTutorPanel = lazy(() => import('./components/tutor/AnovaTutorPanel'));
+const FactorialAnovaTutorPanel = lazy(() => import('./components/tutor/FactorialAnovaTutorPanel'));
+const AncovaTutorPanel = lazy(() => import('./components/tutor/AncovaTutorPanel'));
 
 // --- STUB: generateAIResponse ---
 const generateAIResponse = async (prompt) => {
@@ -170,7 +164,7 @@ export default function App() {
     });
 
     // --- 4. CUSTOM HOOKS ---
-    const { updateAvailable, countdown } = useAutoReload();
+    const { updateAvailable, reload: reloadForUpdate, dismiss: dismissUpdate } = useAutoReload();
 
     // --- BROWSER HISTORY SYNC ---
     useEffect(() => {
@@ -887,6 +881,7 @@ export default function App() {
     return (
         <ErrorBoundary>
             <DatasetLibraryProvider>
+                <Suspense fallback={<RouteLoadingFallback darkMode={darkMode} />}>
                 <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-indigo-500/30 pb-20 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
                 <Header onBack={handleBack} onHome={handleRestart} canGoBack={appMode !== 'menu'} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
                 {appMode === 'wizard' && !isHelp && <div className="w-full bg-slate-200 h-1.5"><div className="bg-indigo-600 h-1.5 transition-all duration-700 ease-out" style={{ width: `${Math.min((history.length / 5) * 100, 100)}%` }} /></div>}
@@ -1605,8 +1600,9 @@ export default function App() {
                     </div>
                 )}
 
-                {updateAvailable && <UpdateToast countdown={countdown} />}
+                {updateAvailable && <UpdateToast onReload={reloadForUpdate} onDismiss={dismissUpdate} />}
                 </div>
+                </Suspense>
             </DatasetLibraryProvider>
         </ErrorBoundary>
     );

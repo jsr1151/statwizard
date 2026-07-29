@@ -235,6 +235,8 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
       sigma: Number.isFinite(datasetSeed.sigma) ? Math.max(0.001, datasetSeed.sigma) : previous.sigma,
       n: Number.isFinite(datasetSeed.n) ? Math.max(1, datasetSeed.n) : previous.n,
     }));
+  // A new seed key is the explicit signal to replace user-edited calculator data.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetSeed?.key, showTutor]);
 
   const reportString = `One-sample ${type === 't' ? 't' : 'z'} test, ${type === 't' ? 't' : 'z'} = ${val.toFixed(precision)}, p = ${pTail < 0.001 ? '< .001' : pTail.toFixed(3)}, α = ${alpha}, ${isSignificant ? 'reject H₀' : 'fail to reject H₀'}. (x̄=${calcData.xBar}, μ₀=${calcData.mu}, n=${calcData.n}, ${type === 't' ? 's' : 'σ'}=${calcData.sigma})`;

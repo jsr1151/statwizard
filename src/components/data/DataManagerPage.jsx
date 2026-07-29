@@ -174,14 +174,25 @@ const formatTimestamp = (value) => {
     });
 };
 
-const sanitizeFileName = (value = 'dataset') =>
-    String(value)
+const INVALID_FILENAME_CHARACTERS = new Set('<>:"/\\|?*');
+
+const sanitizeFileName = (value = 'dataset') => {
+    const sanitized = String(value)
         .trim()
-        .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
-        .replace(/\s+/g, '_')
-    || 'dataset';
+        .split('')
+        .map((character) => (
+            character.charCodeAt(0) <= 31 || INVALID_FILENAME_CHARACTERS.has(character)
+                ? '_'
+                : character
+        ))
+        .join('')
+        .replace(/\s+/g, '_');
+
+    return sanitized || 'dataset';
+};
 
 const UNDO_HISTORY_LIMIT = 30;
+const SHOW_LEGACY_DERIVED_VARIABLES = false;
 
 const normalizeSearch = (value) => String(value ?? '').trim().toLowerCase();
 
@@ -586,6 +597,8 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
+    // The handler closes over the same undo stack that deliberately controls listener refreshes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [busy, undoStack]);
 
     const resetTransformDrafts = () => {
@@ -1955,7 +1968,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                                 formatDatasetValue={formatDatasetValue}
                             />
 
-                            {false && (
+                            {SHOW_LEGACY_DERIVED_VARIABLES && (
                                 <>
                             <Card darkMode={darkMode}>
                                 <div className="flex items-center gap-3 mb-4">

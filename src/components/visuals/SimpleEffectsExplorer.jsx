@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { ChevronRight, ArrowRight, Calculator, Info, GitCompare, HelpCircle } from 'lucide-react';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
-import { calculate95CI, fCDF, adjustPValues } from '../../utils/mathHelpers';
+import { calculate95CI, fCDF, adjustPValues, getTCrit } from '../../utils/mathHelpers';
 
 const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode }) => {
     const [sliceFactor, setSliceFactor] = useState('A'); // Factor to "hold constant"
@@ -14,14 +14,13 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
     const isInteractionSignificant = results?.effects?.AxB?.p < 0.05;
 
     // Perform a quick simple effects calculation for the selected slice
-    const calculateSimpleEffect = (levelId) => {
+    const calculateSimpleEffect = useCallback((levelId) => {
         if (!levelId) return null;
 
         // Get all cells where constant factor = levelId
         const levels = targetFactor.levels;
         const means = [];
         const ns = [];
-        const sss = [];
 
         levels.forEach(l => {
             const key = sliceFactor === 'A' ? `${levelId}_${l.id}` : `${l.id}_${levelId}`;
@@ -29,7 +28,6 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
             if (stats && stats.n > 0) {
                 means.push(stats.mean);
                 ns.push(stats.n);
-                sss.push(stats.ss);
             }
         });
 
@@ -66,7 +64,7 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
         // For simplicity, we show the range/diff of the first two levels or max/min if more than 2
         const meanDiff = Math.abs(cellInfo[0].mean - cellInfo[1].mean);
         const se = Math.sqrt(msError * (1 / cellInfo[0].n + 1 / cellInfo[1].n));
-        const margin = 1.96 * se; // Approx 95% CI
+        const margin = getTCrit(0.05, dfError) * se;
 
         return {
             ss: ssBetween,
@@ -79,12 +77,12 @@ const SimpleEffectsExplorer = ({ factorA, factorB, cellStats, results, darkMode 
             cellInfo,
             label: constantFactor.levels.find(l => l.id === levelId)?.label
         };
-    };
+    }, [targetFactor, constantFactor, sliceFactor, cellStats, results]);
 
     // Calculate simple effects for ALL levels to allow for proper p-value adjustment
     const allSimpleEffects = useMemo(() => {
         return constantFactor.levels.map(l => calculateSimpleEffect(l.id));
-    }, [constantFactor.levels, sliceFactor, cellStats, results]);
+    }, [constantFactor.levels, calculateSimpleEffect]);
 
     const adjustedPValues = useMemo(() => {
         const pVals = allSimpleEffects.filter(e => e !== null).map(e => e.p);

@@ -311,7 +311,7 @@ const SimpleLinearRegressionPage = ({
     const [calculatorSelectedPointId, setCalculatorSelectedPointId] = useState(null);
 
     const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
-    const numericColumns = parsedTable.numericColumns || [];
+    const numericColumns = useMemo(() => parsedTable.numericColumns || [], [parsedTable]);
 
     useEffect(() => {
         if (!numericColumns.length) {

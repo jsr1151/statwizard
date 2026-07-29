@@ -61,10 +61,13 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
       name: datasetSeed.group2?.label || previous.name,
       raw: datasetSeed.group2?.raw || previous.raw,
     }));
+  // A new seed key is the explicit signal to replace user-edited calculator data.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetSeed?.key]);
 
   const stats = useMemo(() => {
-    let n1 = 0, n2 = 0, dBar = 0, sd = 0, r = 0, n = 0;
+    let n1, n2, n;
+    let dBar = 0, sd = 0, r = 0;
     let mean1 = summaryData.mean1, mean2 = summaryData.mean2;
     let sd1 = summaryData.sd1, sd2 = summaryData.sd2;
     let diffs = [];

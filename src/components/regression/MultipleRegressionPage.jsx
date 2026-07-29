@@ -938,7 +938,7 @@ const MultipleRegressionPage = ({
     const [calculatorPredictionInputs, setCalculatorPredictionInputs] = useState({});
 
     const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
-    const numericColumns = parsedTable.numericColumns || [];
+    const numericColumns = useMemo(() => parsedTable.numericColumns || [], [parsedTable]);
     const savedDataset = useMemo(
         () => datasets.find((dataset) => dataset.id === selectedDatasetId) || null,
         [datasets, selectedDatasetId]

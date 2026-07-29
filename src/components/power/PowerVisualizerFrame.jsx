@@ -43,7 +43,7 @@ const PowerVisualizerFrame = ({ result, testConfig, darkMode }) => {
 
     useEffect(() => {
         setCurveType(defaultCurveType);
-    }, [testConfig?.id, result?.mode]);
+    }, [defaultCurveType, testConfig?.id]);
 
     const viewDescription = activeView === 'distribution'
         ? 'Planning view only: null vs alternative distributions, critical cutoff, and the alpha, beta, and power regions.'

@@ -98,6 +98,8 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
         setAncovaMode('data');
         setManualF(null);
         setActiveTab('PLOT');
+    // A new seed key is the explicit signal to replace user-edited calculator data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [datasetSeed?.key]);
 
     useEffect(() => {

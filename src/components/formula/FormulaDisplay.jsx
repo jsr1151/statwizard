@@ -587,6 +587,7 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
     const effectItem = effects[effectKey] || {};
     const errorItem = effects.Error || {};
     const totalItem = effects.Total || {};
+    const partitionsTotal = getV('ssType') === 'I' || Boolean(getV('isBalanced'));
 
     // Determine which effect to show based on expandedEffect
     let effectTerm = 'MS_AxB';
@@ -708,23 +709,39 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <div
             className={`p-5 rounded-2xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-zinc-50 border-slate-100'} flex flex-col items-center gap-2 min-w-0 overflow-visible transition-all hover:border-indigo-500/50 cursor-link`}
           >
-            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center px-4`}>The SS Total identity for Factorial ANOVA</div>
+            <div className={`text-[9px] font-black uppercase tracking-widest ${labelCol} text-center px-4`}>
+              {partitionsTotal ? 'The SS Total identity for Factorial ANOVA' : 'Type III sums of squares'}
+            </div>
             <div className={`text-[11px] ${labelCol} text-center leading-tight mb-1 px-4`}>
-              Total variability is partitioned into main effects, the interaction, and error.
+              {partitionsTotal
+                ? 'Total variability is partitioned into main effects, the interaction, and error.'
+                : 'In an unbalanced Type III model, each effect is tested in the full model; effect sums of squares are not additive parts of SS total.'}
             </div>
 
             <div className={`flex flex-col items-center gap-2 w-full mt-2 overflow-visible`}>
               <div className="eq-wrap overflow-x-auto w-full pb-2 scrollbar-thin scrollbar-thumb-slate-700 no-scrollbar">
                 <div className={`eq-text font-serif ${textCol} flex items-center justify-center min-w-max whitespace-nowrap mx-auto px-6`}>
-                  <span>{calc("SS_total", totalItem.ss)}</span>
-                  <span className="mx-2 opacity-50">=</span>
-                  <span>{calc("SS_A", effects.A?.ss)}</span>
-                  <span className="mx-2 opacity-30">+</span>
-                  <span>{calc("SS_B", effects.B?.ss)}</span>
-                  <span className="mx-2 opacity-30">+</span>
-                  <span>{calc("SS_AxB", effects.AxB?.ss)}</span>
-                  <span className="mx-2 opacity-30">+</span>
-                  <span>{calc("SS_error", errorItem.ss)}</span>
+                  {partitionsTotal ? (
+                    <>
+                      <span>{calc("SS_total", totalItem.ss)}</span>
+                      <span className="mx-2 opacity-50">=</span>
+                      <span>{calc("SS_A", effects.A?.ss)}</span>
+                      <span className="mx-2 opacity-30">+</span>
+                      <span>{calc("SS_B", effects.B?.ss)}</span>
+                      <span className="mx-2 opacity-30">+</span>
+                      <span>{calc("SS_AxB", effects.AxB?.ss)}</span>
+                      <span className="mx-2 opacity-30">+</span>
+                      <span>{calc("SS_error", errorItem.ss)}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{calc("SS_A", effects.A?.ss)}</span>
+                      <span className="mx-2 opacity-30">;</span>
+                      <span>{calc("SS_B", effects.B?.ss)}</span>
+                      <span className="mx-2 opacity-30">;</span>
+                      <span>{calc("SS_AxB", effects.AxB?.ss)}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

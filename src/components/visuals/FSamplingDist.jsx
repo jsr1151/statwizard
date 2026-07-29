@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AlertCircle, Sparkles, Calculator, MousePointer2, Info, ArrowDown, MousePointerClick, Maximize2, Minimize2, RefreshCw, Play, ChevronsRight, ChevronUp, ChevronDown, Activity, Lightbulb, BrainCircuit, BarChart2, Sigma, BookOpen, Plus, X, Trash2, Edit2, TrendingUp, Grid, FileText, PieChart } from 'lucide-react';
 import ProgressiveTooltip from '../common/ProgressiveTooltip';
 import { getGaussianPoints, getTPoints, normalCDF, tCDF, erf, getTCrit, getFDensity, fCDF, fPPF, getFCrit, getFPoints, calculateAnova, calculatePostHoc, lnGamma, beta } from '../../utils/mathHelpers';
@@ -21,14 +21,14 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
   const plotWidth = width - paddingX * 2;
   const baselineY = height - paddingY;
 
-  const fToX = (f) => {
+  const fToX = useCallback((f) => {
     const safeF = (typeof f === 'number' && !isNaN(f)) ? f : 0;
     return (safeF / currentMaxX) * plotWidth + paddingX;
-  };
-  const xToF = (x) => {
+  }, [currentMaxX, paddingX, plotWidth]);
+  const xToF = useCallback((x) => {
     const safeX = (typeof x === 'number' && !isNaN(x)) ? x : paddingX;
     return Math.max(0, ((safeX - paddingX) / plotWidth) * currentMaxX);
-  };
+  }, [currentMaxX, paddingX, plotWidth]);
 
   const handleDrag = (e) => {
     if (mode === 'data') return;
@@ -55,7 +55,7 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
       pts.push([fToX(f), baselineY - (dens * distScale)]);
     }
     return pts;
-  }, [df1, df2, currentMaxX, plotWidth, distScale]);
+  }, [baselineY, currentMaxX, df1, df2, distScale, fToX]);
 
   const path = pointsToLine(points);
 
@@ -69,7 +69,7 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
     pPts.forEach(p => { d += `L ${p[0]},${p[1]} `; });
     d += `L ${fToX(currentMaxX)},${baselineY} Z`;
     return d;
-  }, [points, safeFCrit, currentMaxX, fToX, distScale, df1, df2]);
+  }, [baselineY, points, safeFCrit, currentMaxX, fToX, xToF, distScale, df1, df2]);
 
   const pValuePath = useMemo(() => {
     if (safeFVal >= currentMaxX) return "";
@@ -81,7 +81,7 @@ const FSamplingDist = ({ mode = 'data', fCrit = 4.0, fVal = 0, setFVal, darkMode
     pPts.forEach(p => { d += `L ${p[0]},${p[1]} `; });
     d += `L ${fToX(currentMaxX)},${baselineY} Z`;
     return d;
-  }, [points, safeFVal, currentMaxX, fToX, distScale, df1, df2]);
+  }, [baselineY, points, safeFVal, currentMaxX, fToX, xToF, distScale, df1, df2]);
 
   return (
     <div className="w-full h-full flex flex-col items-center animate-in fade-in duration-700 overflow-visible">

@@ -15,7 +15,10 @@ const VariabilityVisual = ({ darkMode }) => {
   const stdDev = 15 * spread;
   const heightScale = 140;
 
-  const points = useMemo(() => getGaussianPoints(mean, stdDev, heightScale), [spread]);
+  const points = useMemo(
+    () => getGaussianPoints(mean, stdDev, heightScale),
+    [mean, stdDev, heightScale]
+  );
   const curvePath = pointsToPath(points);
 
   const toggleRule = (rule) => {

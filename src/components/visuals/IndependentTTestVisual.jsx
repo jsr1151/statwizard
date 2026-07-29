@@ -67,6 +67,8 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
       n: Number.isFinite(datasetSeed.group2?.n) ? datasetSeed.group2.n : previous.n,
       raw: datasetSeed.group2?.raw || previous.raw,
     }));
+  // A new seed key is the explicit signal to replace user-edited calculator data.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetSeed?.key]);
 
   // --- Calculations ---

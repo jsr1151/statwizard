@@ -1,12 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { FACTORIAL_ANOVA_TUTOR_SCRIPTS } from '../data/factorialAnovaTutorScripts';
+import { isStringArray, readStoredJson, writeStoredJson } from '../utils/storage.js';
 
-const useFactorialAnovaTutor = (results, context) => {
+const STORAGE_KEY = 'factorial_anova_tutor_dismissed';
+const STORAGE_VERSION = 1;
+
+const useFactorialAnovaTutor = (results, context, isActive = true) => {
     const [activeTip, setActiveTip] = useState(null);
-    const [dismissedIds, setDismissedIds] = useState(() => {
-        const saved = localStorage.getItem('factorial_anova_tutor_dismissed');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [dismissedIds, setDismissedIds] = useState(() => readStoredJson({
+        key: STORAGE_KEY,
+        fallback: [],
+        validate: isStringArray,
+        version: STORAGE_VERSION,
+    }));
     const [sessionDismissedIds, setSessionDismissedIds] = useState([]);
     const [lastTipTime, setLastTipTime] = useState(0);
     const [idleTime, setIdleTime] = useState(0);
@@ -24,6 +30,7 @@ const useFactorialAnovaTutor = (results, context) => {
     const hasInteractedRef = useRef(hasInteracted);
     const dismissedIdsRef = useRef(dismissedIds);
     const sessionDismissedIdsRef = useRef(sessionDismissedIds);
+    const isActiveRef = useRef(isActive);
 
     useEffect(() => { resultsRef.current = results; }, [results]);
     useEffect(() => { contextRef.current = context; }, [context]);
@@ -34,17 +41,28 @@ const useFactorialAnovaTutor = (results, context) => {
     useEffect(() => { hasInteractedRef.current = hasInteracted; }, [hasInteracted]);
     useEffect(() => { dismissedIdsRef.current = dismissedIds; }, [dismissedIds]);
     useEffect(() => { sessionDismissedIdsRef.current = sessionDismissedIds; }, [sessionDismissedIds]);
+    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
 
     useEffect(() => {
-        localStorage.setItem('factorial_anova_tutor_dismissed', JSON.stringify(dismissedIds));
+        writeStoredJson({
+            key: STORAGE_KEY,
+            value: dismissedIds,
+            version: STORAGE_VERSION,
+        });
     }, [dismissedIds]);
 
     useEffect(() => {
+        if (!isActive) {
+            setIdleTime(0);
+            setActiveTip(null);
+            return undefined;
+        }
+
         timerRef.current = setInterval(() => {
             setIdleTime(prev => prev + 1);
         }, 1000);
         return () => clearInterval(timerRef.current);
-    }, []);
+    }, [isActive]);
 
     const resetIdle = useCallback(() => {
         setIdleTime(0);
@@ -70,9 +88,12 @@ const useFactorialAnovaTutor = (results, context) => {
     }, []);
 
     const triggerEvent = useCallback((eventData) => {
+        if (!isActiveRef.current) return;
+
         const isSignal = !!eventData?.signal;
         const state = {
             results: resultsRef.current,
+            ...resultsRef.current?.tutorContext,
             ...contextRef.current,
             ...eventData,
             idleTime: idleTimeRef.current,
@@ -109,9 +130,11 @@ const useFactorialAnovaTutor = (results, context) => {
 
     // Internal loop
     useEffect(() => {
+        if (!isActive) return undefined;
+
         const interval = setInterval(() => triggerEvent({}), 2000);
         return () => clearInterval(interval);
-    }, [triggerEvent]);
+    }, [isActive, triggerEvent]);
 
     return {
         activeTip,

@@ -149,7 +149,7 @@ const PearsonCorrelationPage = ({
         noise: lessonNoise,
         includeOutlier: lessonOutlierOn,
     }), [lessonBaseDataset, lessonSampleSize, lessonNoise, lessonOutlierOn]);
-    const lessonPairs = lessonDataset.pairs || [];
+    const lessonPairs = useMemo(() => lessonDataset.pairs || [], [lessonDataset]);
 
     const lessonStats = useMemo(() => calculatePearsonCorrelationStats({
         xValues: lessonPairs.map((pair) => pair.x),
@@ -224,7 +224,7 @@ const PearsonCorrelationPage = ({
     const [calculatorShowBand, setCalculatorShowBand] = useState(false);
 
     const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
-    const numericColumns = parsedTable.numericColumns || [];
+    const numericColumns = useMemo(() => parsedTable.numericColumns || [], [parsedTable]);
     const savedDataset = useMemo(
         () => datasets.find((dataset) => dataset.id === selectedDatasetId) || null,
         [datasets, selectedDatasetId]

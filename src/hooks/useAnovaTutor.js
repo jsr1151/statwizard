@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ANOVA_TUTOR_SCRIPTS } from '../data/anovaTutorScripts';
+import { isStringArray, readStoredJson, writeStoredJson } from '../utils/storage.js';
+
+const STORAGE_KEY = 'anova_tutor_dismissed';
+const STORAGE_VERSION = 1;
 
 const useAnovaTutor = (stats, context, resetKey = null) => {
     const [activeTip, setActiveTip] = useState(null);
-    const [dismissedIds, setDismissedIds] = useState(() => {
-        const saved = localStorage.getItem('anova_tutor_dismissed');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [dismissedIds, setDismissedIds] = useState(() => readStoredJson({
+        key: STORAGE_KEY,
+        fallback: [],
+        validate: isStringArray,
+        version: STORAGE_VERSION,
+    }));
     const [sessionDismissedIds, setSessionDismissedIds] = useState([]);
     const [lastTipTime, setLastTipTime] = useState(0);
     const [idleTime, setIdleTime] = useState(0);
@@ -40,7 +46,11 @@ const useAnovaTutor = (stats, context, resetKey = null) => {
 
     // Persistence
     useEffect(() => {
-        localStorage.setItem('anova_tutor_dismissed', JSON.stringify(dismissedIds));
+        writeStoredJson({
+            key: STORAGE_KEY,
+            value: dismissedIds,
+            version: STORAGE_VERSION,
+        });
     }, [dismissedIds]);
 
     // Reset history and active tip when navigating to a new page

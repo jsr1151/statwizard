@@ -3,7 +3,7 @@ import { MATH_TERMS } from '../../data/mathTerms';
 
 const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
     const safeTerm = typeof term === 'string' ? term : '';
-    const actualTerm = safeTerm.replace(/[\{\}]/g, '');
+    const actualTerm = safeTerm.replace(/[{}]/g, '');
     const isCalculable = MATH_TERMS[actualTerm];
 
     // Standardize terms for display with proper subscripts
@@ -70,23 +70,38 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
             .replace(/delta/g, "Δ");
     };
 
-    const cleanTerm = getCleanTerm(safeTerm.replace(/[\{\}]/g, ''));
+    const cleanTerm = getCleanTerm(safeTerm.replace(/[{}]/g, ''));
     const isNumber = typeof value === 'number';
     const valDisplay = isNumber ? value.toFixed(2) : value;
     const displayValue = (showValue && value !== undefined) ? valDisplay : cleanTerm;
 
     const tooltip = isCalculable ? `${MATH_TERMS[actualTerm].desc}${showValue && value !== undefined ? ` (Value: ${valDisplay})` : ''}` : '';
 
+    const handleActivate = (event) => {
+        event.stopPropagation();
+        if (isCalculable) onInfo?.(actualTerm);
+    };
+
+    const sharedProps = {
+        onMouseEnter: () => onHover?.(actualTerm),
+        onMouseLeave: () => onHover?.(null),
+        title: tooltip,
+        className: `inline-block px-1 mx-0.5 rounded transition-all sym-link ${isCalculable
+            ? (darkMode ? 'cursor-pointer hover:bg-indigo-500/20 text-indigo-400 font-bold' : 'cursor-pointer hover:bg-indigo-100 text-indigo-900 font-bold')
+            : (darkMode ? (showValue ? 'text-indigo-400 font-bold' : 'text-slate-400 font-serif') : (showValue ? 'text-indigo-600 font-bold' : 'text-slate-800 font-serif'))}`,
+        dangerouslySetInnerHTML: { __html: displayValue },
+    };
+
+    if (!isCalculable) return <span {...sharedProps} />;
+
     return (
-        <span
-            onClick={(e) => { e.stopPropagation(); if (isCalculable && typeof onInfo === 'function') onInfo(actualTerm); }}
-            onMouseEnter={() => onHover && onHover(actualTerm)}
-            onMouseLeave={() => onHover && onHover(null)}
-            title={tooltip}
-            className={`inline-block px-1 mx-0.5 rounded transition-all sym-link ${isCalculable
-                ? (darkMode ? 'cursor-pointer hover:bg-indigo-500/20 text-indigo-400 font-bold' : 'cursor-pointer hover:bg-indigo-100 text-indigo-900 font-bold')
-                : (darkMode ? (showValue ? 'text-indigo-400 font-bold' : 'text-slate-400 font-serif') : (showValue ? 'text-indigo-600 font-bold' : 'text-slate-800 font-serif'))}`}
-            dangerouslySetInnerHTML={{ __html: displayValue }}
+        <button
+            {...sharedProps}
+            type="button"
+            onClick={handleActivate}
+            onFocus={() => onHover?.(actualTerm)}
+            onBlur={() => onHover?.(null)}
+            aria-label={`${actualTerm}: ${tooltip}`}
         />
     );
 };
