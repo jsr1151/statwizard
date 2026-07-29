@@ -98,6 +98,16 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
       </div>
     </div>
   );
+  if (type === 'probability_rules') return (
+    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 w-full">
+      <div className={`rounded-xl border p-6 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Equally Likely Outcomes</div><div className={`mt-5 flex justify-center items-center text-xl font-serif ${textCol}`}><span>{calc("P_A", undefined)}</span><span className="mx-3">=</span><span className="inline-flex flex-col"><span className={`border-b-2 px-2 ${borderCol}`}>favorable outcomes</span><span>total outcomes</span></span></div></div>
+      <div className={`rounded-xl border p-6 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Complement</div><div className={`mt-5 text-xl font-serif ${textCol}`}>{calc("P_not_A", undefined)} = 1 &minus; {calc("P_A", undefined)}</div></div>
+      <div className={`rounded-xl border p-6 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>General Addition Rule</div><div className={`mt-5 text-lg font-serif ${textCol}`}>{calc("P_union", undefined)} = {calc("P_A", undefined)} + P(B) &minus; {calc("P_intersection", undefined)}</div></div>
+      <div className={`rounded-xl border p-6 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>General Multiplication Rule</div><div className={`mt-5 text-lg font-serif ${textCol}`}>{calc("P_intersection", undefined)} = {calc("P_given", undefined)} &times; P(B)</div></div>
+      <div className={`rounded-xl border p-6 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Conditional Probability</div><div className={`mt-5 flex justify-center items-center text-lg font-serif ${textCol}`}><span>{calc("P_given", undefined)}</span><span className="mx-3">=</span><span className="inline-flex flex-col"><span className={`border-b-2 px-2 ${borderCol}`}>{calc("P_intersection", undefined)}</span><span>P(B)</span></span></div></div>
+      <div className={`rounded-xl border p-6 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider text-center ${labelCol}`}>Special Cases</div><div className={`mt-4 space-y-2 text-sm ${textCol}`}><p><strong>Independent:</strong> {calc("P_intersection", undefined)} = {calc("P_A", undefined)} &times; P(B)</p><p><strong>Mutually exclusive:</strong> {calc("P_intersection", undefined)} = 0</p></div></div>
+    </div>
+  );
   if (type === 't_indep') {
     const isWelch = stats?.testType === 'welch';
     return (

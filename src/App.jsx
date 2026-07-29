@@ -84,6 +84,7 @@ const AncovaPage = lazy(() => import('./components/analysis/AncovaPage.jsx'));
 const CentralTendencyPage = lazy(() => import('./components/descriptive/CentralTendencyPage.jsx'));
 const VariabilityPage = lazy(() => import('./components/descriptive/VariabilityPage.jsx'));
 const FrequencyPage = lazy(() => import('./components/descriptive/FrequencyPage.jsx'));
+const ProbabilityPage = lazy(() => import('./components/probability/ProbabilityPage.jsx'));
 const AnovaTutorPanel = lazy(() => import('./components/tutor/AnovaTutorPanel'));
 const FactorialAnovaTutorPanel = lazy(() => import('./components/tutor/FactorialAnovaTutorPanel'));
 const AncovaTutorPanel = lazy(() => import('./components/tutor/AncovaTutorPanel'));
@@ -136,7 +137,6 @@ export default function App() {
     const [currentStepId, setCurrentStepId] = useState('start');
     const [report, setReport] = useState("");
     const [activeTab, setActiveTab] = useState('spss');
-    const [probabilityTab, setProbabilityTab] = useState('basics');
     const [mathHistory, setMathHistory] = useState([]);
     const [aiLoading, setAiLoading] = useState(false);
     const [aiExplanation, setAiExplanation] = useState(null);
@@ -294,6 +294,7 @@ export default function App() {
     const isCentralTendencyPage = currentStepId === 'res_central_tendency';
     const isVariabilityPage = currentStepId === 'res_variability';
     const isFrequencyPage = currentStepId === 'res_frequency';
+    const isProbabilityPage = currentStepId === 'res_probability';
     const isIndependentTTestPage = currentStepId === 'res_indep_ttest';
     const isPairedTTestPage = currentStepId === 'res_paired_ttest';
     const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
@@ -338,6 +339,16 @@ export default function App() {
             ];
         }
 
+        if (isProbabilityPage) {
+            return [
+                { id: 'lessons', label: 'Learn', icon: BookOpen },
+                { id: 'calculator', label: 'Calculator', icon: Calculator },
+                { id: 'simulations', label: 'Simulations', icon: BarChart2 },
+                { id: 'demos', label: 'Demos', icon: Sparkles },
+                { id: 'equation', label: 'Equations', icon: Sigma },
+            ];
+        }
+
         const sections = [
             { id: 'lessons', label: 'Tutor / Lessons', icon: BookOpen },
             { id: 'calculator', label: 'Test Calculator', icon: Calculator },
@@ -360,13 +371,12 @@ export default function App() {
         }
 
         return sections;
-    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isFrequencyPage, isStructuredResultPage, isVariabilityPage]);
+    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isFrequencyPage, isProbabilityPage, isStructuredResultPage, isVariabilityPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setMathHistory([]);
         setActiveTab('spss');
-        setProbabilityTab('basics');
         setSymbolKeyOpen(false);
         setShowEquationPanel(true);
         setActiveTutorScript(null);
@@ -502,6 +512,9 @@ export default function App() {
     }
     if (currentStepId === 'res_frequency') {
         displayFormulaId = 'frequency';
+    }
+    if (currentStepId === 'res_probability') {
+        displayFormulaId = 'probability_rules';
     }
 
     // --- SYMBOL KEY LOGIC ---
@@ -896,7 +909,7 @@ export default function App() {
             return (
                 <ErrorBoundary>
                     <ProbabilityVisual
-                        mode={probabilityTab}
+                        mode="basics"
                         darkMode={darkMode}
                         onTutorUpdate={teachingMode ? setActiveTutorScript : undefined}
                         onStatsUpdate={setCurrentStats}
@@ -1099,24 +1112,6 @@ export default function App() {
                                             <p className={`text-lg max-w-3xl mx-auto leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-300'}`}>{currentStep?.content}</p>
                                         </div>
                                         <div className={`p-6 md:p-8 space-y-12 transition-colors ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                                            {currentStepId === 'res_probability' && (
-                                                <div className="flex justify-center border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar pb-1">
-                                                    {[
-                                                        { id: 'basics', label: 'Basics' },
-                                                        { id: 'properties', label: 'Properties' },
-                                                        { id: 'simulation', label: 'Coin Simulation' },
-                                                        { id: 'dice', label: 'Dice Roll' },
-                                                        { id: 'spinner', label: 'Spinner' },
-                                                        { id: 'paradoxes', label: 'Paradoxes' },
-                                                        { id: 'cards', label: 'Cards' }
-                                                    ].map((tab) => (
-                                                        <button key={tab.id} onClick={() => setProbabilityTab(tab.id)} className={`whitespace-nowrap px-6 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors ${probabilityTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                                                            {tab.label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-
                                             {availableResultSections.length > 0 && (
                                                 <AnalysisSectionTabs
                                                     darkMode={darkMode}
@@ -1159,6 +1154,11 @@ export default function App() {
                                                     section={activeResultSection}
                                                     darkMode={darkMode}
                                                     onStatsChange={setCurrentStats}
+                                                />
+                                            ) : isProbabilityPage ? (
+                                                <ProbabilityPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
                                                 />
                                             ) : isPearsonCorrelationPage ? (
                                                 <PearsonCorrelationPage

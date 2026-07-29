@@ -1,5 +1,10 @@
 // --- EXPANDED MATH TERMS ---
 export const MATH_TERMS = {
+    "P_A": { title: "Probability of A", desc: "The probability that event A occurs.", calc: "A value from 0 to 1." },
+    "P_not_A": { title: "Complement of A", desc: "The probability that event A does not occur.", calc: "1 - {P_A}" },
+    "P_union": { title: "Union (A or B)", desc: "The probability that A, B, or both occur.", calc: "{P_A} + P(B) - {P_intersection}" },
+    "P_intersection": { title: "Intersection (A and B)", desc: "The probability that A and B both occur.", calc: "{P_given} P(B)" },
+    "P_given": { title: "Conditional Probability", desc: "The probability of A after learning that B occurred.", calc: "{P_intersection} / P(B)" },
     // Frequency Terms
     "f": { title: "Absolute Frequency", desc: "The raw count of how many times a value appears.", calc: "Count(x)" },
     "rf": { title: "Relative Frequency", desc: "The proportion of the total.", calc: "f / N" },

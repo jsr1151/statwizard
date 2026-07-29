@@ -8,7 +8,7 @@ import SpinnerSimulation from '../probability/SpinnerSimulation';
 
 export default function ProbabilityVisual({ mode = 'basics', darkMode }) {
     return (
-        <div className="w-full max-w-2xl mx-auto space-y-6 p-4">
+        <div className="w-full max-w-6xl mx-auto space-y-6 p-4">
             <div hidden={mode !== 'basics'}><ProbabilityBasics darkMode={darkMode} /></div>
             <div hidden={mode !== 'properties'}><ProbabilityProperties darkMode={darkMode} /></div>
             <div hidden={mode !== 'simulation'}><CoinSimulation darkMode={darkMode} /></div>

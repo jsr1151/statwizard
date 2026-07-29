@@ -57,6 +57,7 @@ describe("FormulaDisplay", () => {
       "range",
       "variability",
       "frequency",
+      "probability_rules",
       "percentage",
       "z_test",
       "correlation",

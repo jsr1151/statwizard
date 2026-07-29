@@ -1,4 +1,11 @@
 export const SYMBOL_KEYS = {
+    probability_rules: [
+        { key: 'P_A', sym: 'P(A)', desc: 'Probability of event A' },
+        { key: 'P_not_A', sym: 'P(A<sup>c</sup>)', desc: 'Probability of the complement of A' },
+        { key: 'P_union', sym: 'P(A &cup; B)', desc: 'Probability that A or B occurs' },
+        { key: 'P_intersection', sym: 'P(A &cap; B)', desc: 'Probability that A and B occur' },
+        { key: 'P_given', sym: 'P(A | B)', desc: 'Conditional probability of A given B' },
+    ],
     frequency: [
         { key: 'f', sym: 'f', desc: 'Absolute frequency (count)' },
         { key: 'rf', sym: 'rf', desc: 'Relative frequency (proportion)' },

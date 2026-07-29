@@ -11,6 +11,11 @@ const MathTerm = ({ term, onInfo, onHover, darkMode, value, showValue }) => {
         let clean = t.replace(/_\{(.*?)\}/g, "<sub>$1</sub>");
 
         return clean
+            .replace(/P_not_A/g, "P(A<sup>c</sup>)")
+            .replace(/P_union/g, "P(A &cup; B)")
+            .replace(/P_intersection/g, "P(A &cap; B)")
+            .replace(/P_given/g, "P(A | B)")
+            .replace(/P_A/g, "P(A)")
             .replace(/SE_delta/g, "SE<sub>Δ</sub>")
             .replace(/SE_paired/g, "SE<sub>d̄</sub>")
             .replace(/x̄_grand/g, "x̄<sub>grand</sub>")
