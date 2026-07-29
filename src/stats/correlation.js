@@ -743,11 +743,24 @@ export const pairNumericColumns = (xValues = [], yValues = []) => {
     const pairCount = Math.min(xValues.length, yValues.length);
     const pairs = [];
 
-    for (let index = 0; index < pairCount; index += 1) {
-        const x = Number(xValues[index]);
-        const y = Number(yValues[index]);
+    const parseFiniteNumericValue = (value) => {
+        if (typeof value === 'number') {
+            return Number.isFinite(value) ? value : null;
+        }
 
-        if (Number.isFinite(x) && Number.isFinite(y)) {
+        if (typeof value !== 'string' || !value.trim()) {
+            return null;
+        }
+
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : null;
+    };
+
+    for (let index = 0; index < pairCount; index += 1) {
+        const x = parseFiniteNumericValue(xValues[index]);
+        const y = parseFiniteNumericValue(yValues[index]);
+
+        if (x !== null && y !== null) {
             pairs.push({
                 id: index,
                 index,

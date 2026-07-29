@@ -12,6 +12,7 @@ const FactorialDatasetEditor = ({
     addLevel,
     removeLevel,
     updateLevelLabel,
+    onClearAll,
     darkMode
 }) => {
     return (
@@ -133,7 +134,8 @@ const FactorialDatasetEditor = ({
                 </div>
 
                 <button
-                    onClick={() => window.dispatchEvent(new CustomEvent('factorialAnovaTutorSignal', { detail: 'clear_all_attempt' }))}
+                    type="button"
+                    onClick={onClearAll}
                     className="text-[10px] font-black uppercase text-slate-500 hover:text-rose-500 transition-colors"
                 >
                     <Trash2 size={12} className="inline mr-1" /> Clear All
@@ -231,7 +233,7 @@ const FactorialDatasetEditor = ({
                                                 ) : (
                                                     <textarea
                                                         placeholder="Scores..."
-                                                        value={cell.values?.join(', ')}
+                                                        value={cell.rawText ?? cell.values?.join(', ')}
                                                         onChange={e => parseCellRaw(key, e.target.value)}
                                                         className={`w-full h-20 p-2 rounded-xl text-[10px] font-mono border border-slate-800 transition-all outline-none resize-none bg-slate-950 text-indigo-400 focus:border-indigo-500 custom-scrollbar`}
                                                     />

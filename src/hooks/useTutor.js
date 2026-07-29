@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TUTOR_SCRIPTS } from '../data/tutorScripts';
 
 const useTutor = (module, currentState) => {
-    const [lastState, setLastState] = useState(currentState);
+    const lastStateRef = useRef(currentState);
     const [activeScript, setActiveScript] = useState(null);
     const [history, setHistory] = useState([]);
+    const activeScriptRef = useRef(activeScript);
 
     useEffect(() => {
+        activeScriptRef.current = activeScript;
+    }, [activeScript]);
+
+    useEffect(() => {
+        const lastState = lastStateRef.current;
         const scripts = TUTOR_SCRIPTS[module] || [];
         const triggered = scripts
             .filter(s => s.condition(lastState, currentState))
@@ -17,23 +23,30 @@ const useTutor = (module, currentState) => {
             if (typeof resolved.content === 'function') {
                 resolved.content = resolved.content(lastState, currentState);
             }
-            setActiveScript(resolved);
-            if (resolved.id !== activeScript?.id) {
-                setHistory(prev => [resolved, ...prev].slice(0, 5));
+            if (resolved.id !== activeScriptRef.current?.id) {
+                setHistory(historyItems => [resolved, ...historyItems].slice(0, 5));
             }
-        } else if (activeScript) {
-            const base = scripts.find(s => s.id === activeScript.id);
-            if (base && typeof base.content === 'function') {
-                const newContent = base.content(lastState, currentState);
-                if (JSON.stringify(newContent) !== JSON.stringify(activeScript.content)) {
-                    setActiveScript({
-                        ...base,
-                        content: newContent
-                    });
+
+            activeScriptRef.current = resolved;
+            setActiveScript(resolved);
+        } else {
+            const previous = activeScriptRef.current;
+
+            if (previous) {
+                const base = scripts.find(s => s.id === previous.id);
+
+                if (base && typeof base.content === 'function') {
+                    const newContent = base.content(lastState, currentState);
+
+                    if (JSON.stringify(newContent) !== JSON.stringify(previous.content)) {
+                        const updated = { ...base, content: newContent };
+                        activeScriptRef.current = updated;
+                        setActiveScript(updated);
+                    }
                 }
             }
         }
-        setLastState(currentState);
+        lastStateRef.current = currentState;
     }, [currentState, module]);
 
     return { activeScript, history, setActiveScript };

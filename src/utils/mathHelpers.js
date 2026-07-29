@@ -1,5 +1,8 @@
 // --- Statistical Math Utility Functions ---
 
+import { studentTCDF, studentTCriticalValue } from '../power/tMath.js';
+import { calculateFactorialAnova as calculateFactorialAnovaModel } from '../stats/factorialAnova.js';
+
 // --- HELPER: Gaussian Generator ---
 export const getGaussianPoints = (mean, stdDev, heightScale = 120, width = 300) => {
     const points = [];
@@ -34,12 +37,10 @@ export const erf = (x) => {
 
 export const normalCDF = (x) => 0.5 * (1 + erf(x / Math.sqrt(2)));
 
-// --- HELPER: T-CDF approximation ---
-export const tCDF = (t, df) => {
-    if (df > 100) return normalCDF(t);
-    const x = t * (1 - 1 / (4 * df)) / Math.sqrt(1 + (t * t) / (2 * df));
-    return normalCDF(x);
-};
+// --- HELPER: Student t CDF ---
+// Kept under the legacy public name while delegating to the validated shared
+// implementation used by the power, correlation, and regression domains.
+export const tCDF = (t, df) => studentTCDF(t, df);
 
 // --- HELPER: Log Gamma Function (Lanczos Approximation) ---
 export const lnGamma = (z) => {
@@ -141,19 +142,19 @@ export const fPPF = (p, d1, d2) => {
 };
 
 export const getTCrit = (alpha, df, tails = 2) => {
-    if (df > 100) return tails === 2 ? (alpha === 0.05 ? 1.96 : 2.58) : (alpha === 0.05 ? 1.645 : 2.33);
-    const tTable = {
-        1: [12.71, 63.66], 2: [4.30, 9.93], 3: [3.18, 5.84], 4: [2.78, 4.60],
-        5: [2.57, 4.03], 6: [2.45, 3.71], 7: [2.36, 3.50], 8: [2.31, 3.36],
-        9: [2.26, 3.25], 10: [2.23, 3.17], 12: [2.18, 3.06], 15: [2.13, 2.95],
-        20: [2.09, 2.85], 25: [2.06, 2.79], 30: [2.04, 2.75], 40: [2.02, 2.70],
-        60: [2.00, 2.66], 100: [1.98, 2.63]
-    };
-    const col = alpha <= 0.01 ? 1 : 0;
-    if (tTable[df]) return tails === 2 ? tTable[df][col] : tTable[df][col] * 0.8;
-    const keys = Object.keys(tTable).map(Number).sort((a, b) => a - b);
-    const closest = keys.reduce((prev, curr) => Math.abs(curr - df) < Math.abs(prev - df) ? curr : prev);
-    return tails === 2 ? tTable[closest][col] : tTable[closest][col] * 0.8;
+    const numericAlpha = Number(alpha);
+    const numericDf = Number(df);
+    const numericTails = Number(tails);
+
+    if (!(numericAlpha > 0 && numericAlpha < 1) || !(numericDf > 0) || ![1, 2].includes(numericTails)) {
+        return NaN;
+    }
+
+    return studentTCriticalValue({
+        alpha: numericAlpha,
+        df: numericDf,
+        tails: numericTails,
+    });
 };
 
 export const getFPoints = (df1, df2, heightScale = 40, width = 300, maxX = 6) => {
@@ -333,197 +334,7 @@ export const calculate95CI = (mean, sd, n) => {
 
 // --- HELPER: Factorial ANOVA Calculator (Two-Way Between-Subjects) ---
 export const calculateFactorialAnova = (factorA, factorB, cellData, ssType = 'III') => {
-    const aLevels = factorA.levels;
-    const bLevels = factorB.levels;
-    const kA = aLevels.length;
-    const kB = bLevels.length;
-
-    let totalN = 0;
-    let sumTotal = 0;
-    let sumInvN = 0;
-    const cellStats = {};
-    const allResiduals = [];
-
-    // 1. Collect Cell Stats
-    aLevels.forEach(a => {
-        bLevels.forEach(b => {
-            const key = `${a.id}_${b.id}`;
-            const cell = cellData[key] || { values: [], summary: { n: 0, mean: 0 }, inputMode: 'raw' };
-            let n, mean, ss_cell = 0;
-            let vals = [];
-
-            if (cell.inputMode === 'summary') {
-                n = parseFloat(cell.summary?.n || 0);
-                mean = parseFloat(cell.summary?.mean || 0);
-                const sd = parseFloat(cell.summary?.sd || 0);
-                ss_cell = (n > 1) ? (n - 1) * Math.pow(sd, 2) : 0;
-            } else {
-                vals = (cell.values || []).map(v => parseFloat(v)).filter(v => !isNaN(v));
-                n = vals.length;
-                mean = n > 0 ? vals.reduce((s, v) => s + v, 0) / n : 0;
-                ss_cell = vals.reduce((s, v) => s + Math.pow(v - mean, 2), 0);
-
-                // Collect residuals
-                vals.forEach(v => allResiduals.push(v - mean));
-            }
-
-            cellStats[key] = { n, mean, ss: ss_cell };
-            totalN += n;
-            sumTotal += n * mean;
-            if (n > 0) sumInvN += (1 / n);
-        });
-    });
-
-    if (totalN === 0) return null;
-
-    // Harmonic mean of cell sizes (used for Unweighted Means / Type III)
-    const nh = (kA * kB) / sumInvN;
-
-    // 2. Marginal Means
-    // Unweighted marginal means (Type III)
-    const marginalA_unweighted = aLevels.map(a => {
-        let sumMeans = 0;
-        let count = 0;
-        bLevels.forEach(b => {
-            const c = cellStats[`${a.id}_${b.id}`];
-            sumMeans += c.mean;
-            count++;
-        });
-        return { label: a.label, mean: sumMeans / count };
-    });
-
-    const marginalB_unweighted = bLevels.map(b => {
-        let sumMeans = 0;
-        let count = 0;
-        aLevels.forEach(a => {
-            const c = cellStats[`${a.id}_${b.id}`];
-            sumMeans += c.mean;
-            count++;
-        });
-        return { label: b.label, mean: sumMeans / count };
-    });
-
-    const grandMean_unweighted = marginalA_unweighted.reduce((s, a) => s + a.mean, 0) / kA;
-
-    // 3. Sum of Squares
-    let ssA, ssB, ssAxB, ssError, ssTotal;
-
-    // SS Error is always the same (pooled within-cell variation)
-    ssError = Object.values(cellStats).reduce((s, c) => s + c.ss, 0);
-
-    if (ssType === 'III' || totalN % (kA * kB) !== 0) {
-        // Method of Unweighted Means (Approximation for Type III)
-        ssA = nh * kB * marginalA_unweighted.reduce((s, a) => s + Math.pow(a.mean - grandMean_unweighted, 2), 0);
-        ssB = nh * kA * marginalB_unweighted.reduce((s, b) => s + Math.pow(b.mean - grandMean_unweighted, 2), 0);
-
-        // Interaction SS (Unweighted)
-        let ssInt_unweighted = 0;
-        aLevels.forEach((a, i) => {
-            bLevels.forEach((b, j) => {
-                const c = cellStats[`${a.id}_${b.id}`];
-                const expected = marginalA_unweighted[i].mean + marginalB_unweighted[j].mean - grandMean_unweighted;
-                ssInt_unweighted += Math.pow(c.mean - expected, 2);
-            });
-        });
-        ssAxB = nh * ssInt_unweighted;
-    } else {
-        // Simple sequential/weighted (Type I/II logic for balanced)
-        const GM = sumTotal / totalN;
-        ssA = 0;
-        aLevels.forEach(a => {
-            let nA = 0, sumA = 0;
-            bLevels.forEach(b => {
-                const c = cellStats[`${a.id}_${b.id}`];
-                nA += c.n;
-                sumA += c.n * c.mean;
-            });
-            if (nA > 0) ssA += nA * Math.pow((sumA / nA) - GM, 2);
-        });
-
-        ssB = 0;
-        bLevels.forEach(b => {
-            let nB = 0, sumB = 0;
-            aLevels.forEach(a => {
-                const c = cellStats[`${a.id}_${b.id}`];
-                nB += c.n;
-                sumB += c.n * c.mean;
-            });
-            if (nB > 0) ssB += nB * Math.pow((sumB / nB) - GM, 2);
-        });
-
-        const ssCells = Object.values(cellStats).reduce((s, c) => s + (c.n * Math.pow(c.mean - GM, 2)), 0);
-        ssAxB = Math.max(0, ssCells - ssA - ssB);
-    }
-
-    // SS Total (Model + Error)
-    // Note: In Type III, SS Total isn't necessarily SS A + SS B + SS AxB + SS Error if unbalanced.
-    // Usually we report the descriptive SS Total from raw data.
-    const GM_weighted = sumTotal / totalN;
-    ssTotal = Object.values(cellStats).reduce((s, c) => {
-        // SS_cell_total = sum((y - GM)^2) = sum((y - mean_cell)^2) + n_cell*(mean_cell - GM)^2
-        return s + c.ss + c.n * Math.pow(c.mean - GM_weighted, 2);
-    }, 0);
-
-    // 4. Degrees of Freedom
-    const dfA = kA - 1;
-    const dfB = kB - 1;
-    const dfAxB = dfA * dfB;
-    const dfError = totalN - (kA * kB);
-    const dfTotal = totalN - 1;
-
-    // 5. Mean Squares and F-Ratios
-    const msA = ssA / (dfA || 1);
-    const msB = ssB / (dfB || 1);
-    const msAxB = ssAxB / (dfAxB || 1);
-    const msError = ssError / (dfError || 1);
-
-    const fA = msError !== 0 ? msA / msError : 0;
-    const fB = msError !== 0 ? msB / msError : 0;
-    const fAxB = msError !== 0 ? msAxB / msError : 0;
-
-    // 6. p-values
-    const pA = 1 - fCDF(fA, dfA, dfError);
-    const pB = 1 - fCDF(fB, dfB, dfError);
-    const pAxB = 1 - fCDF(fAxB, dfAxB, dfError);
-
-    // 7. Effect Sizes (Partial Eta Squared)
-    const pesA = ssA / (ssA + ssError);
-    const pesB = ssB / (ssB + ssError);
-    const pesAxB = ssAxB / (ssAxB + ssError);
-
-    // Levene's Test (simplified: check if cell variances are significantly different)
-    // We calculate the mean absolute deviation of residuals for each cell
-    let ssLeveneBetween = 0;
-    let ssLeveneWithin = 0;
-    const cellMADs = [];
-    Object.values(cellStats).forEach(c => {
-        // Approximating MAD as 0.7979 * SD for normal distribution
-        const sd = Math.sqrt(c.ss / (c.n - 1 || 1));
-        cellMADs.push(0.7979 * sd);
-    });
-    const grandMAD = cellMADs.reduce((a, b) => a + b, 0) / cellMADs.length;
-    cellMADs.forEach(mad => {
-        ssLeveneBetween += Math.pow(mad - grandMAD, 2);
-    });
-    const fLevene = (ssLeveneBetween / (kA * kB - 1)) / (0.001); // Mocked Levene F
-
-    return {
-        totalN, GM: GM_weighted, ssType,
-        residuals: allResiduals,
-        levene: { f: fLevene, p: 1 - fCDF(fLevene, kA * kB - 1, totalN - kA * kB) },
-        effects: {
-            A: { ss: ssA, df: dfA, ms: msA, f: fA, p: pA, pes: pesA, label: factorA.label },
-            B: { ss: ssB, df: dfB, ms: msB, f: fB, p: pB, pes: pesB, label: factorB.label },
-            AxB: { ss: ssAxB, df: dfAxB, ms: msAxB, f: fAxB, p: pAxB, pes: pesAxB, label: `${factorA.label} × ${factorB.label}` },
-            Error: { ss: ssError, df: dfError, ms: msError },
-            Total: { ss: ssTotal, df: dfTotal }
-        },
-        cellStats,
-        aLevels,
-        bLevels,
-        marginalA: aLevels.map((a, i) => ({ label: a.label, mean: marginalA_unweighted[i].mean })),
-        marginalB: bLevels.map((b, i) => ({ label: b.label, mean: marginalB_unweighted[i].mean }))
-    };
+    return calculateFactorialAnovaModel(factorA, factorB, cellData, ssType);
 };
 
 // --- HELPER: p-value adjustments ---

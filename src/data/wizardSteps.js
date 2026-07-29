@@ -249,7 +249,7 @@ export const STEPS = {
                 label: "Homogeneity of Variance",
                 whatItMeans: "The amount of 'spread' or variability should be roughly equal in both groups.",
                 howToTest: [
-                    { name: "Levene's Test", desc: "Look for p > .05 in your software output. This confirms equal variances." }
+                    { name: "Levene's Test", desc: "A p-value above alpha means the test did not detect unequal variances; it does not prove the variances are equal." }
                 ],
                 ifItFails: "Standard t-tests are sensitive to unequal variances. Most software provides 'Welch's t-test' (Equal Variances Not Assumed). Use that row instead.",
                 nonParametric: "Welch's T-Test (Non-pooled)"
@@ -360,7 +360,7 @@ export const STEPS = {
                 label: "Homogeneity of Variance",
                 whatItMeans: "The within-group spread (variance) should be similar across all groups.",
                 howToTest: [
-                    { name: "Levene's Test", desc: "Look for p > .05 to confirm groups have similar variance." }
+                    { name: "Levene's Test", desc: "A p-value above alpha means the test did not detect unequal variances; also inspect group spreads and sample sizes." }
                 ],
                 ifItFails: "If violated, standard ANOVA is unreliable. Use Welch's ANOVA or variance-stabilizing transforms.",
                 nonParametric: "Welch’s ANOVA"

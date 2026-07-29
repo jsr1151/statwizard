@@ -51,7 +51,14 @@ const getBalancedGroupPreview = (sampleSize, groupCount) => {
     };
 };
 
-const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, onResultChange }) => {
+const PowerAnalysisPanel = ({
+    testConfig,
+    currentStats,
+    darkMode,
+    initialMode,
+    onResultChange,
+    onModeChange,
+}) => {
     const powerConfig = testConfig?.power;
     const availableModes = useMemo(() => {
         if (!powerConfig) {
@@ -73,7 +80,10 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
         setInputs(powerConfig?.buildInitialInputs?.(currentStats, nextMode) || {});
     }, [testConfig?.id, powerConfig, currentStats, initialMode, availableModes]);
 
-    const schema = powerConfig?.inputSchema?.[mode] || [];
+    const schema = useMemo(
+        () => powerConfig?.inputSchema?.[mode] || [],
+        [powerConfig, mode]
+    );
     const visibleFieldIds = useMemo(
         () => new Set(
             schema
@@ -124,6 +134,7 @@ const PowerAnalysisPanel = ({ testConfig, currentStats, darkMode, initialMode, o
                         onClick={() => {
                             setMode(modeId);
                             setInputs(powerConfig?.buildInitialInputs?.(currentStats, modeId) || {});
+                            onModeChange?.(modeId);
                         }}
                         className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${mode === modeId ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900 hover:bg-white')}`}
                     >

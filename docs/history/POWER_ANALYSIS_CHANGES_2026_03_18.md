@@ -1,5 +1,7 @@
 # Power Analysis Changes - 2026-03-18
 
+> **Historical record:** This document captures the initial power-analysis implementation slice. It is retained for design context, not current setup instructions.
+
 This document records exactly what was added in the first power-analysis implementation slice for StatWizard.
 
 ## Goal of This Slice

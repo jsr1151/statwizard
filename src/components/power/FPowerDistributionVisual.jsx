@@ -76,7 +76,7 @@ const PlotLabel = ({ x, y, fill, stroke, children }) => (
 );
 
 const FPowerDistributionVisual = ({ config, darkMode }) => {
-    const powerMeta = config?.powerMeta || {};
+    const powerMeta = useMemo(() => config?.powerMeta || {}, [config?.powerMeta]);
     const [showAlternative, setShowAlternative] = useState(true);
     const [showLabels, setShowLabels] = useState(true);
     const groupCount = Math.max(2, Math.round(Number(powerMeta?.groupCount) || 2));

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Activity, LayoutGrid, PieChart, Plus, Sigma, X } from 'lucide-react';
 import { fCDF, fPPF, calculateAnova, calculatePostHoc } from '../../utils/mathHelpers';
 import AnovaDatasetEditor from './AnovaDatasetEditor';
@@ -129,6 +129,68 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
   }, [showPostHoc]);
 
   // --- Navigation & Action Handlers ---
+  const addGroup = useCallback(() => {
+    const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+
+    setGroups((previousGroups) => {
+      if (previousGroups.length >= colors.length) return previousGroups;
+
+      const newId = previousGroups.length > 0
+        ? Math.max(...previousGroups.map(group => group.id)) + 1
+        : 1;
+      const newGroup = {
+        id: newId,
+        label: `Group ${labels[previousGroups.length]}`,
+        color: colors[previousGroups.length],
+        inputMode: previousGroups[0]?.inputMode || 'raw',
+        values: [5, 6, 7],
+        summary: { mean: "6.0", sd: "1.0", n: "3" },
+        collapsed: false
+      };
+
+      return [...previousGroups, newGroup];
+    });
+    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'add_group' } }));
+  }, []);
+
+  const handleTutorAction = useCallback((action) => {
+    switch (action) {
+      case 'toggle_show_values':
+        setLocalShowValues(previous => !previous);
+        break;
+      case 'add_group':
+        addGroup();
+        break;
+      case 'highlight_ssb':
+        onTutorUpdate?.({
+          id: 'highlight_ssb',
+          body: "Focusing on between-group distances.",
+          content: {
+            now: "Highlighting SS_between",
+            whatChanged: "The distances from each group mean to the grand mean are emphasized.",
+            tryNext: "Try moving a group mean to see the distances grow."
+          }
+        });
+        break;
+      case 'highlight_f_drivers':
+        setHighlightTarget('f_ratio');
+        onTutorUpdate?.({
+          id: 'highlight_f_drivers',
+          body: "Highlighting the F-ratio and its components.",
+          content: {
+            now: "Showing F-ratio drivers",
+            whatChanged: "The F-ratio box is highlighted above.",
+            tryNext: "Adjust the data to see how the ratio responds."
+          }
+        });
+        setTimeout(() => setHighlightTarget(null), 3000);
+        break;
+      default:
+        break;
+    }
+  }, [addGroup, onTutorUpdate]);
+
   useEffect(() => {
     const handleAction = (e) => {
       const detail = e.detail;
@@ -141,62 +203,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
     };
     window.addEventListener('anovaTutorAction', handleAction);
     return () => window.removeEventListener('anovaTutorAction', handleAction);
-  }, [groups, localShowValues]);
-
-  const handleTutorAction = (action) => {
-    switch (action) {
-      case 'toggle_show_values':
-        setLocalShowValues(!localShowValues);
-        break;
-      case 'add_group':
-        addGroup();
-        break;
-      case 'highlight_ssb':
-        onTutorUpdate({
-          id: 'highlight_ssb',
-          body: "Focusing on between-group distances.",
-          content: {
-            now: "Highlighting SS_between",
-            whatChanged: "The distances from each group mean to the grand mean are emphasized.",
-            tryNext: "Try moving a group mean to see the distances grow."
-          }
-        });
-        break;
-      case 'highlight_f_drivers':
-        setHighlightTarget('f_ratio');
-        onTutorUpdate({
-          id: 'highlight_f_drivers',
-          body: "Highlighting the F-ratio and its components.",
-          content: {
-            now: "Showing F-ratio drivers",
-            whatChanged: "The F-ratio box is highlighted above.",
-            tryNext: "Adjust the data to see how the ratio responds."
-          }
-        });
-        setTimeout(() => setHighlightTarget(null), 3000);
-        break;
-      default: console.log("Tutor Action:", action);
-    }
-  };
-
-  const addGroup = () => {
-    const newId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 1;
-    const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
-    const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
-    if (groups.length >= colors.length) return;
-
-    const newGroup = {
-      id: newId,
-      label: `Group ${labels[groups.length]}`,
-      color: colors[groups.length],
-      inputMode: groups[0]?.inputMode || 'raw',
-      values: [5, 6, 7],
-      summary: { mean: "6.0", sd: "1.0", n: "3" },
-      collapsed: false
-    };
-    setGroups([...groups, newGroup]);
-    window.dispatchEvent(new CustomEvent('anovaTutorAction', { detail: { signal: 'add_group' } }));
-  };
+  }, [handleTutorAction]);
 
   const removeGroup = (id) => {
     if (groups.length <= 2) return;

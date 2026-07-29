@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PowerAnalysisPanel from './PowerAnalysisPanel';
 import PowerVisualizerFrame from './PowerVisualizerFrame';
 
-const PowerAnalysisTab = ({ testConfig, currentStats, darkMode, initialMode }) => {
+const PowerAnalysisTab = ({ testConfig, currentStats, darkMode, initialMode, onModeChange }) => {
     const [result, setResult] = useState(null);
 
     return (
@@ -14,6 +14,7 @@ const PowerAnalysisTab = ({ testConfig, currentStats, darkMode, initialMode }) =
                     darkMode={darkMode}
                     initialMode={initialMode}
                     onResultChange={setResult}
+                    onModeChange={onModeChange}
                 />
             </div>
             <div className="lg:col-span-8">

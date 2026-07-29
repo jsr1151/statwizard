@@ -19,7 +19,8 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
   const [ciType, setCiType] = useState('two-sided');
 
   const stats = useMemo(() => {
-    let n1 = 0, n2 = 0, dBar = 0, sd = 0, r = 0, n = 0;
+    let n1, n2, n;
+    let dBar = 0, sd = 0, r = 0;
     let diffs = [];
     let raw1 = [], raw2 = [];
 
@@ -59,7 +60,8 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
     const tCrit = df > 0 ? getTCrit(alpha, df, tails) : 2.0;
 
     let ciLower, ciUpper;
-    const ciBound = 1.96 * se; // Simplified for visual
+    const ciCritical = df > 0 ? getTCrit(alpha, df, ciType === 'two-sided' ? 2 : 1) : 0;
+    const ciBound = ciCritical * se;
     ciLower = ciType === 'two-sided' ? dBar - ciBound : (h1Direction === 'greater' ? dBar - ciBound : -Infinity);
     ciUpper = ciType === 'two-sided' ? dBar + ciBound : (h1Direction === 'greater' ? Infinity : dBar + ciBound);
 
@@ -76,6 +78,16 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
 
   const tutor = useTutor('t_test_paired', stats);
   useEffect(() => { if (onTutorUpdate && tutor.activeScript) onTutorUpdate(tutor.activeScript); }, [tutor.activeScript, onTutorUpdate]);
+
+  const confidencePercent = Math.round((1 - alpha) * 100);
+  const confidenceReport = !showCI
+    ? ''
+    : ciType === 'two-sided'
+      ? `, ${confidencePercent}% CI [${stats.ciLower.toFixed(2)}, ${stats.ciUpper.toFixed(2)}]`
+      : h1Direction === 'greater'
+        ? `, ${confidencePercent}% lower confidence bound > ${stats.ciLower.toFixed(2)}`
+        : `, ${confidencePercent}% upper confidence bound < ${stats.ciUpper.toFixed(2)}`;
+  const reportLine = `Paired samples t-test, t(${stats.df.toFixed(0)}) = ${stats.t.toFixed(2)}, p = ${stats.p < 0.001 ? '< .001' : stats.p.toFixed(3).replace(/^0/, '')}, d_z = ${stats.dz.toFixed(2)}${confidenceReport}.`;
 
   const handleSwap = () => {
     if (inputMode === 'raw') {
@@ -331,7 +343,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               </span>
             </div>
             <div className={`p-4 rounded-xl border flex flex-col items-center justify-center relative overflow-hidden transition-colors ${showCI ? (darkMode ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-indigo-50 border-indigo-100') : (darkMode ? 'bg-slate-950 border-slate-800 opacity-50' : 'bg-white opacity-50')}`}>
-              <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">{(1 - alpha) * 100}% Confidence Interval</span>
+              <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">{confidencePercent}% Confidence Interval</span>
               {showCI ? (
                 <div className="text-sm font-black font-mono tracking-tighter text-indigo-600">
                   {ciType === 'two-sided' ? `[${stats.ciLower.toFixed(2)}, ${stats.ciUpper.toFixed(2)}]` : (h1Direction === 'greater' ? `> ${stats.ciLower.toFixed(2)}` : `< ${stats.ciUpper.toFixed(2)}`)}
@@ -343,12 +355,11 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
           <div className={`rounded-xl border p-3 flex flex-col md:flex-row justify-between items-center gap-4 group transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
             <div className={`text-[10px] font-mono break-all leading-relaxed max-w-[85%] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
               <span className="text-indigo-500 font-bold tracking-widest mr-2 uppercase text-[7px]">Report Line</span>
-              Paired samples t-test, t({stats.df.toFixed(0)}) = {stats.t.toFixed(2)}, p = {stats.p < 0.001 ? '< .001' : stats.p.toFixed(3).replace(/^0/, '')}, d_z = {stats.dz.toFixed(2)}{showCI ? `, 95% CI [${stats.ciLower.toFixed(2)}, ${stats.ciUpper.toFixed(2)}]` : ''}.
+              {reportLine}
             </div>
             <button
               onClick={() => {
-                const line = `Paired samples t-test, t(${stats.df.toFixed(0)}) = ${stats.t.toFixed(2)}, p = ${stats.p < 0.001 ? '< .001' : stats.p.toFixed(3).replace(/^0/, '')}, dz = ${stats.dz.toFixed(2)}${showCI ? `, 95% CI [${stats.ciLower.toFixed(2)}, ${stats.ciUpper.toFixed(2)}]` : ''}.`;
-                navigator.clipboard.writeText(line);
+                navigator.clipboard.writeText(reportLine);
                 const btn = document.activeElement;
                 if (btn) { btn.innerText = "COPIED!"; setTimeout(() => btn.innerText = "COPY APA", 2000); }
               }}

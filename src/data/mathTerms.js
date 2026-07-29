@@ -4,7 +4,7 @@ export const MATH_TERMS = {
     "f": { title: "Absolute Frequency", desc: "The raw count of how many times a value appears.", calc: "Count(x)" },
     "rf": { title: "Relative Frequency", desc: "The proportion of the total.", calc: "f / N" },
     "cf": { title: "Cumulative Frequency", desc: "The running total of frequencies up to the current value.", calc: "Sum of f from start to current." },
-    "N": { title: "Total Observations", desc: "Sum of all frequencies.", calc: "Σf" },
+    "N": { title: "Total Sample Size", desc: "Total number of observations across frequencies or groups.", calc: "Σf or Σnⱼ" },
 
     // Descriptive
     "x̄": { title: "Arithmetic Mean", desc: "The average value.", calc: "Σx / {n}" },
@@ -58,7 +58,6 @@ export const MATH_TERMS = {
     "df_error": { title: "Degrees of Freedom (Error)", desc: "Values free to vary after accounting for group means. (Requires all cells populated for standard factorial model).", calc: "N - k" },
     "eta2": { title: "Eta-Squared (η²)", desc: "Eta squared. Proportion of total variability explained by group differences: SS_between / SS_total.", calc: "{SS_between} / {SS_total}" },
     "k": { title: "Number of Groups", desc: "Number of groups (how many means you are comparing).", calc: "Count of categories." },
-    "N": { title: "Total Sample Size", desc: "Total sample size across all groups.", calc: "Σnⱼ" },
     "nj": { title: "Group Sample Size", desc: "Sample size in group j.", calc: "Count in group j." },
     "i": { title: "Observation Index", desc: "Observation index within a group (person/row number).", calc: "Row index." },
     "j": { title: "Group Index", desc: "Group index (which group).", calc: "Column/Group ID." },
