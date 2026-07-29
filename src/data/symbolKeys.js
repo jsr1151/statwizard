@@ -1,4 +1,11 @@
 export const SYMBOL_KEYS = {
+    frequency: [
+        { key: 'f', sym: 'f', desc: 'Absolute frequency (count)' },
+        { key: 'rf', sym: 'rf', desc: 'Relative frequency (proportion)' },
+        { key: 'cf', sym: 'cf', desc: 'Cumulative frequency' },
+        { key: 'N', sym: 'N', desc: 'Total valid observations' },
+        { key: 'Percentage', sym: '%', desc: 'Relative frequency expressed per 100' },
+    ],
     variability: [
         { key: 's', sym: 's', desc: 'Sample standard deviation' },
         { key: 's2', sym: 's<sup>2</sup>', desc: 'Sample variance' },

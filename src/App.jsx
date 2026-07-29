@@ -83,6 +83,7 @@ const FactorialAnovaPage = lazy(() => import('./components/analysis/FactorialAno
 const AncovaPage = lazy(() => import('./components/analysis/AncovaPage.jsx'));
 const CentralTendencyPage = lazy(() => import('./components/descriptive/CentralTendencyPage.jsx'));
 const VariabilityPage = lazy(() => import('./components/descriptive/VariabilityPage.jsx'));
+const FrequencyPage = lazy(() => import('./components/descriptive/FrequencyPage.jsx'));
 const AnovaTutorPanel = lazy(() => import('./components/tutor/AnovaTutorPanel'));
 const FactorialAnovaTutorPanel = lazy(() => import('./components/tutor/FactorialAnovaTutorPanel'));
 const AncovaTutorPanel = lazy(() => import('./components/tutor/AncovaTutorPanel'));
@@ -292,6 +293,7 @@ export default function App() {
     const isOneSampleTTestPage = currentStepId === 'res_onesample_ttest';
     const isCentralTendencyPage = currentStepId === 'res_central_tendency';
     const isVariabilityPage = currentStepId === 'res_variability';
+    const isFrequencyPage = currentStepId === 'res_frequency';
     const isIndependentTTestPage = currentStepId === 'res_indep_ttest';
     const isPairedTTestPage = currentStepId === 'res_paired_ttest';
     const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
@@ -326,6 +328,16 @@ export default function App() {
             ];
         }
 
+        if (isFrequencyPage) {
+            return [
+                { id: 'lessons', label: 'Learn', icon: BookOpen },
+                { id: 'calculator', label: 'Calculator', icon: Calculator },
+                { id: 'explorer', label: 'Explorer', icon: BarChart2 },
+                { id: 'equation', label: 'Equations', icon: Sigma },
+                { id: 'software', label: 'Software', icon: Terminal },
+            ];
+        }
+
         const sections = [
             { id: 'lessons', label: 'Tutor / Lessons', icon: BookOpen },
             { id: 'calculator', label: 'Test Calculator', icon: Calculator },
@@ -348,7 +360,7 @@ export default function App() {
         }
 
         return sections;
-    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isStructuredResultPage, isVariabilityPage]);
+    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isFrequencyPage, isStructuredResultPage, isVariabilityPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -487,6 +499,9 @@ export default function App() {
 
     if (currentStepId === 'res_variability') {
         displayFormulaId = 'variability';
+    }
+    if (currentStepId === 'res_frequency') {
+        displayFormulaId = 'frequency';
     }
 
     // --- SYMBOL KEY LOGIC ---
@@ -1135,6 +1150,12 @@ export default function App() {
                                                 </div>
                                             ) : isVariabilityPage ? (
                                                 <VariabilityPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                    onStatsChange={setCurrentStats}
+                                                />
+                                            ) : isFrequencyPage ? (
+                                                <FrequencyPage
                                                     section={activeResultSection}
                                                     darkMode={darkMode}
                                                     onStatsChange={setCurrentStats}

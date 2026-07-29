@@ -56,6 +56,7 @@ describe("FormulaDisplay", () => {
       "sd",
       "range",
       "variability",
+      "frequency",
       "percentage",
       "z_test",
       "correlation",

@@ -92,11 +92,11 @@ export const SOFTWARE_GUIDES = {
         google_sheets: "Use =LINEST(y_range, x_ranges, TRUE, TRUE) with multiple predictor columns. Arrange the predictor columns side-by-side before fitting the model."
     },
     frequency: {
-        spss: "Analyze > Descriptive Statistics > Frequencies.\nMove variable(s) to the right box.",
-        jasp: "Descriptives > Descriptive Statistics.\nCheck 'Frequency tables'.",
-        r: "table(data$variable)",
-        excel: "1. Insert > PivotTable.\n2. Drag variable to Rows AND Values.",
-        google_sheets: "1. Insert > PivotTable.\n2. Drag variable to Rows AND Values."
+        spss: "Analyze > Descriptive Statistics > Frequencies.\nMove the variable into Variable(s).\nKeep Display frequency tables selected.\nChoose Charts for a bar chart or histogram and review Valid, Missing, Frequency, Percent, Valid Percent, and Cumulative Percent.",
+        jasp: "Descriptives > Descriptive Statistics.\nMove the variable into Variables.\nSelect Frequency tables.\nUse Bar plots for categorical/discrete data and Distribution plots for continuous data.",
+        r: "x <- na.omit(data$variable)\nf <- table(x)\nrf <- prop.table(f)\npct <- 100 * rf\ncf <- cumsum(f)\ndata.frame(frequency = f, relative = rf, percent = pct, cumulative = cf)",
+        excel: "Insert > PivotTable.\nDrag the variable to Rows and Values (Count).\nAdd the Values field again, then use Show Values As > % of Grand Total.\nFor cumulative frequency, add another copy and use Show Values As > Running Total In.",
+        google_sheets: "Insert > Pivot table.\nAdd the variable under Rows and Values; summarize Values by COUNTA.\nFor a formula table, use =QUERY(range, \"select Col1,count(Col1) where Col1 is not null group by Col1 label count(Col1) 'Frequency'\",0)."
     },
     shape: {
         spss: "Analyze > Descriptive Statistics > Frequencies.\nStatistics > Check Skewness and Kurtosis.",

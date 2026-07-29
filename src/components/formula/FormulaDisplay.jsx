@@ -82,6 +82,22 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
     </div>
   );
   if (type === 'percentage') return <div className="flex flex-col items-center"><div className={`text-xs font-bold mb-3 uppercase tracking-wider ${labelCol}`}>Relative Frequency Equation</div><div className={`flex flex-col gap-3 text-xl md:text-2xl font-serif ${textCol}`}><div className="flex items-center"><span className="mr-2 italic">rf</span><span>=</span><div className="flex flex-col items-center mx-1"><span className={`border-b-2 px-1 ${borderCol}`}>{calc("f", undefined)}</span><span>{calc("N", getV('n'))}</span></div></div></div></div>;
+  if (type === 'frequency') return (
+    <div className="grid gap-6 md:grid-cols-3 w-full">
+      <div className={`rounded-xl border p-6 flex flex-col items-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+        <div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Relative Frequency</div>
+        <div className={`mt-5 flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span>{calc("rf", undefined)}</span><span className="mx-3">=</span><span className="inline-flex flex-col items-center"><span className={`border-b-2 px-3 ${borderCol}`}>{calc("f", undefined)}</span><span>{calc("N", getV('n'))}</span></span></div>
+      </div>
+      <div className={`rounded-xl border p-6 flex flex-col items-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+        <div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Percentage</div>
+        <div className={`mt-5 flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span>{calc("Percentage", undefined)}</span><span className="mx-3">=</span><span>{calc("rf", undefined)} &times; 100%</span></div>
+      </div>
+      <div className={`rounded-xl border p-6 flex flex-col items-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+        <div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Cumulative Frequency</div>
+        <div className={`mt-5 flex items-center text-xl md:text-2xl font-serif ${textCol}`}><span>{calc("cf", undefined)}</span><span className="mx-3">=</span><span>&Sigma; {calc("f", undefined)} through the current ordered value</span></div>
+      </div>
+    </div>
+  );
   if (type === 't_indep') {
     const isWelch = stats?.testType === 'welch';
     return (
