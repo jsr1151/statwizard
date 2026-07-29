@@ -1,5 +1,12 @@
 // --- SOFTWARE GUIDES LOOKUP ---
 export const SOFTWARE_GUIDES = {
+    variability: {
+        spss: "Analyze > Descriptive Statistics > Frequencies.\nMove the variable into Variable(s).\nChoose Statistics, then select Standard deviation, Variance, Range, Quartiles, and the percentiles you need.\nReview valid and missing counts before interpreting results.",
+        jasp: "Descriptives > Descriptive Statistics.\nMove the variable into Variables.\nUnder Statistics, select Std. deviation, Variance, Range, Quartiles, and IQR.\nUnder Plots, select Boxplots and Distribution plots.",
+        r: "x <- na.omit(data$variable)\nsd(x)\nvar(x)\ndiff(range(x))\nquantile(x, c(.25, .5, .75), type = 7)\nIQR(x, type = 7)\nmad(x, constant = 1)  # unscaled MAD used on this page",
+        excel: "Sample SD: =STDEV.S(range)\nSample variance: =VAR.S(range)\nRange: =MAX(range)-MIN(range)\nQ1: =QUARTILE.INC(range,1)\nQ3: =QUARTILE.INC(range,3)\nIQR: =QUARTILE.INC(range,3)-QUARTILE.INC(range,1)\n\nUse STDEV.P and VAR.P only when the values are the full population.",
+        google_sheets: "Sample SD: =STDEV(range)\nSample variance: =VAR(range)\nRange: =MAX(range)-MIN(range)\nQ1: =QUARTILE(range,1)\nQ3: =QUARTILE(range,3)\nIQR: =QUARTILE(range,3)-QUARTILE(range,1)\n\nUse STDEVP and VARP only when the values are the full population."
+    },
     sd: {
         spss: "Analyze > Descriptive Statistics > Descriptives.\nMove variables to 'Variable(s)'.\nClick Options > Check 'Std. deviation' and 'Variance'.",
         jasp: "Descriptives > Descriptive Statistics.\nMove variables to 'Variables' box.\nUnder 'Statistics', check 'Std. deviation' and 'Variance'.",

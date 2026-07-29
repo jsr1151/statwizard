@@ -82,6 +82,7 @@ const OneWayAnovaPage = lazy(() => import('./components/analysis/OneWayAnovaPage
 const FactorialAnovaPage = lazy(() => import('./components/analysis/FactorialAnovaPage.jsx'));
 const AncovaPage = lazy(() => import('./components/analysis/AncovaPage.jsx'));
 const CentralTendencyPage = lazy(() => import('./components/descriptive/CentralTendencyPage.jsx'));
+const VariabilityPage = lazy(() => import('./components/descriptive/VariabilityPage.jsx'));
 const AnovaTutorPanel = lazy(() => import('./components/tutor/AnovaTutorPanel'));
 const FactorialAnovaTutorPanel = lazy(() => import('./components/tutor/FactorialAnovaTutorPanel'));
 const AncovaTutorPanel = lazy(() => import('./components/tutor/AncovaTutorPanel'));
@@ -134,7 +135,6 @@ export default function App() {
     const [currentStepId, setCurrentStepId] = useState('start');
     const [report, setReport] = useState("");
     const [activeTab, setActiveTab] = useState('spss');
-    const [variabilityTab, setVariabilityTab] = useState('sd');
     const [probabilityTab, setProbabilityTab] = useState('basics');
     const [mathHistory, setMathHistory] = useState([]);
     const [aiLoading, setAiLoading] = useState(false);
@@ -291,6 +291,7 @@ export default function App() {
     const isMultipleRegressionPage = currentStepId === 'multiple_regression_result' && Boolean(currentTestConfig);
     const isOneSampleTTestPage = currentStepId === 'res_onesample_ttest';
     const isCentralTendencyPage = currentStepId === 'res_central_tendency';
+    const isVariabilityPage = currentStepId === 'res_variability';
     const isIndependentTTestPage = currentStepId === 'res_indep_ttest';
     const isPairedTTestPage = currentStepId === 'res_paired_ttest';
     const isOneWayAnovaPage = currentStepId === 'res_one_way_anova';
@@ -306,6 +307,16 @@ export default function App() {
         }
 
         if (isCentralTendencyPage) {
+            return [
+                { id: 'lessons', label: 'Learn', icon: BookOpen },
+                { id: 'calculator', label: 'Calculator', icon: Calculator },
+                { id: 'explorer', label: 'Explorer', icon: BarChart2 },
+                { id: 'equation', label: 'Equations', icon: Sigma },
+                { id: 'software', label: 'Software', icon: Terminal },
+            ];
+        }
+
+        if (isVariabilityPage) {
             return [
                 { id: 'lessons', label: 'Learn', icon: BookOpen },
                 { id: 'calculator', label: 'Calculator', icon: Calculator },
@@ -337,13 +348,12 @@ export default function App() {
         }
 
         return sections;
-    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isStructuredResultPage]);
+    }, [currentStep?.assumptions, currentStep?.formulaId, currentStepId, currentTestConfig, isCentralTendencyPage, isStructuredResultPage, isVariabilityPage]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setMathHistory([]);
         setActiveTab('spss');
-        setVariabilityTab('sd');
         setProbabilityTab('basics');
         setSymbolKeyOpen(false);
         setShowEquationPanel(true);
@@ -474,17 +484,6 @@ export default function App() {
     let displayFormulaId = currentStep?.formulaId;
     let displayVisualType = currentStep?.visualType;
     let currentSoftware = currentStep?.software;
-
-    if (currentStepId === 'res_variability') {
-        if (variabilityTab === 'range') {
-            displayFormulaId = 'range';
-            displayVisualType = 'quartile';
-        } else if (variabilityTab === 'shape') {
-            displayFormulaId = 'none';
-            displayVisualType = 'skew';
-        }
-        currentSoftware = SOFTWARE_GUIDES[variabilityTab];
-    }
 
     // --- SYMBOL KEY LOGIC ---
     let relevantSymbols = SYMBOL_KEYS.sd;
@@ -1081,16 +1080,6 @@ export default function App() {
                                             <p className={`text-lg max-w-3xl mx-auto leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-300'}`}>{currentStep?.content}</p>
                                         </div>
                                         <div className={`p-6 md:p-8 space-y-12 transition-colors ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                                            {currentStepId === 'res_variability' && (
-                                                <div className="flex justify-center border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar pb-1">
-                                                    {['sd', 'range', 'shape'].map((tab) => (
-                                                        <button key={tab} onClick={() => setVariabilityTab(tab)} className={`whitespace-nowrap px-6 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors ${variabilityTab === tab ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                                                            {tab === 'sd' ? 'Standard Deviation' : tab === 'range' ? 'Position & Percentiles' : 'Distribution Shape'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-
                                             {currentStepId === 'res_probability' && (
                                                 <div className="flex justify-center border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar pb-1">
                                                     {[
@@ -1120,6 +1109,11 @@ export default function App() {
 
                                             {isCentralTendencyPage ? (
                                                 <CentralTendencyPage
+                                                    section={activeResultSection}
+                                                    darkMode={darkMode}
+                                                />
+                                            ) : isVariabilityPage ? (
+                                                <VariabilityPage
                                                     section={activeResultSection}
                                                     darkMode={darkMode}
                                                 />
