@@ -55,6 +55,7 @@ describe("FormulaDisplay", () => {
       "mean",
       "sd",
       "range",
+      "variability",
       "percentage",
       "z_test",
       "correlation",
@@ -80,6 +81,29 @@ describe("FormulaDisplay", () => {
           : baseStats;
       expect(renderFormula(type, stats)).not.toContain("Formula not rendered");
     });
+  });
+
+  it("renders variability notation without encoding artifacts", () => {
+    const markup = renderFormula("variability", {
+      ...baseStats,
+      mean: 10,
+      sampleVariance: 4,
+      sampleSd: 2,
+      range: 8,
+      min: 6,
+      max: 14,
+      q1: 8,
+      q3: 12,
+      iqr: 4,
+      median: 10,
+      mad: 2,
+      coefficientOfVariation: 20,
+    });
+
+    expect(markup).toContain("Σ");
+    expect(markup).toContain("√");
+    expect(markup).toContain("−");
+    expect(markup).not.toMatch(/â|Ã|Î/);
   });
 
   it("labels pooled and Welch independent-test standard errors", () => {

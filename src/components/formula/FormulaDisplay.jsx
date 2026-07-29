@@ -61,23 +61,23 @@ const FormulaDisplay = ({ type, onInfo, onHover, darkMode, showValues, stats }) 
           <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
             <span>{calc("s2", getV('sampleVariance'))}</span><span className="mx-3">=</span>
             <div className="flex flex-col items-center">
-              <span className={`border-b-2 px-2 pb-1 mb-1 ${borderCol}`}>Î£({calc("x", undefined)} âˆ’ {calc("xÌ„", getV('mean'))})Â²</span>
-              <span>{calc("n", getV('n'))} âˆ’ 1</span>
+              <span className={`border-b-2 px-2 pb-1 mb-1 ${borderCol}`}>&Sigma;({calc("x", undefined)} &minus; {calc("xBar", getV('mean'))})<sup>2</sup></span>
+              <span>{calc("n", getV('n'))} &minus; 1</span>
             </div>
           </div>
         </div>
         <div className={`rounded-xl border p-5 flex flex-col items-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
           <div className={`text-xs font-bold mb-4 uppercase tracking-wider ${labelCol}`}>Sample Standard Deviation</div>
           <div className={`flex items-center text-xl md:text-2xl font-serif ${textCol}`}>
-            <span>{calc("s", getV('sampleSd'))}</span><span className="mx-3">=</span><span className="text-4xl mr-1">âˆš</span><span className={`border-t-2 px-2 pt-1 ${borderCol}`}>{calc("s2", getV('sampleVariance'))}</span>
+            <span>{calc("s", getV('sampleSd'))}</span><span className="mx-3">=</span><span className="text-4xl mr-1">&radic;</span><span className={`border-t-2 px-2 pt-1 ${borderCol}`}>{calc("s2", getV('sampleVariance'))}</span>
           </div>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Range</div><div className={`mt-4 text-xl font-serif ${textCol}`}>{calc("Range", getV('range'))} = {calc("Max", getV('max'))} âˆ’ {calc("Min", getV('min'))}</div></div>
-        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Interquartile Range</div><div className={`mt-4 text-xl font-serif ${textCol}`}>{calc("IQR", getV('iqr'))} = {calc("Q3", getV('q3'))} âˆ’ {calc("Q1", getV('q1'))}</div></div>
-        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Median Absolute Deviation</div><div className={`mt-4 text-lg font-serif ${textCol}`}>{calc("MAD", getV('mad'))} = median(|{calc("x", undefined)} âˆ’ {calc("Median", getV('median'))}|)</div></div>
-        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Coefficient of Variation</div><div className={`mt-4 text-lg font-serif ${textCol}`}>{calc("CV", getV('coefficientOfVariation'))} = <span className="inline-flex flex-col align-middle mx-1"><span className={`border-b ${borderCol}`}>{calc("s", getV('sampleSd'))}</span><span>|{calc("xÌ„", getV('mean'))}|</span></span> Ã— 100%</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Range</div><div className={`mt-4 text-xl font-serif ${textCol}`}>{calc("Range", getV('range'))} = {calc("Max", getV('max'))} &minus; {calc("Min", getV('min'))}</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Interquartile Range</div><div className={`mt-4 text-xl font-serif ${textCol}`}>{calc("IQR", getV('iqr'))} = {calc("Q3", getV('q3'))} &minus; {calc("Q1", getV('q1'))}</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Median Absolute Deviation</div><div className={`mt-4 text-lg font-serif ${textCol}`}>{calc("MAD", getV('mad'))} = median(|{calc("x", undefined)} &minus; {calc("Median", getV('median'))}|)</div></div>
+        <div className={`rounded-xl border p-5 text-center ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}><div className={`text-xs font-bold uppercase tracking-wider ${labelCol}`}>Coefficient of Variation</div><div className={`mt-4 text-lg font-serif ${textCol}`}>{calc("CV", getV('coefficientOfVariation'))} = <span className="inline-flex flex-col align-middle mx-1"><span className={`border-b ${borderCol}`}>{calc("s", getV('sampleSd'))}</span><span>|{calc("xBar", getV('mean'))}|</span></span> &times; 100%</div></div>
       </div>
     </div>
   );

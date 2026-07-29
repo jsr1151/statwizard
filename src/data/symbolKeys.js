@@ -3,7 +3,7 @@ export const SYMBOL_KEYS = {
         { key: 's', sym: 's', desc: 'Sample standard deviation' },
         { key: 's2', sym: 's<sup>2</sup>', desc: 'Sample variance' },
         { key: 'x', sym: 'x', desc: 'Individual observation' },
-        { key: 'xÌ„', sym: 'xÌ„', desc: 'Sample mean' },
+        { key: 'xBar', sym: 'x&#772;', desc: 'Sample mean' },
         { key: 'n', sym: 'n', desc: 'Sample size' },
         { key: 'Range', sym: 'Range', desc: 'Maximum minus minimum' },
         { key: 'IQR', sym: 'IQR', desc: 'Interquartile range' },
