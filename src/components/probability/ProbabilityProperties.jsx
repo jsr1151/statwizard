@@ -10,13 +10,13 @@ export default function ProbabilityProperties({ darkMode }) {
     <div className="animate-in fade-in duration-500 space-y-8">
       <div className="flex gap-2 mb-6">
         <button
-          onClick={() => setPropertyView('rules')}
+          aria-pressed={propertyView === 'rules'} onClick={() => setPropertyView('rules')}
           className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${propertyView === 'rules' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : darkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'}`}
         >
           Basic Rules
         </button>
         <button
-          onClick={() => setPropertyView('mutual')}
+          aria-pressed={propertyView === 'mutual'} onClick={() => setPropertyView('mutual')}
           className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${propertyView === 'mutual' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : darkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'}`}
         >
           Mutual Exclusivity
@@ -29,7 +29,7 @@ export default function ProbabilityProperties({ darkMode }) {
           <div className={`p-6 rounded-3xl border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
             <div className="flex justify-between items-start mb-4">
               <h6 className="text-xs font-black uppercase tracking-widest text-emerald-400">Addition Rule (OR)</h6>
-              <button onClick={() => setShowGeneralOr(!showGeneralOr)} className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase transition-colors">
+              <button aria-expanded={showGeneralOr} onClick={() => setShowGeneralOr(!showGeneralOr)} className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase transition-colors">
                 {showGeneralOr ? 'Hide General' : 'Show General'}
               </button>
             </div>
@@ -74,7 +74,7 @@ export default function ProbabilityProperties({ darkMode }) {
           <div className={`p-6 rounded-3xl border transition-all ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
             <div className="flex justify-between items-start mb-4">
               <h6 className="text-xs font-black uppercase tracking-widest text-amber-400">Multiplication Rule (AND)</h6>
-              <button onClick={() => setShowGeneralAnd(!showGeneralAnd)} className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase transition-colors">
+              <button aria-expanded={showGeneralAnd} onClick={() => setShowGeneralAnd(!showGeneralAnd)} className="text-[10px] font-bold text-slate-500 hover:text-indigo-400 uppercase transition-colors">
                 {showGeneralAnd ? 'Hide General' : 'Show General'}
               </button>
             </div>
@@ -113,27 +113,27 @@ export default function ProbabilityProperties({ darkMode }) {
             <h6 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-6">Complement Rule: P(A) + P(Not A) = 1</h6>
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <input
+                <input aria-label="Event probability"
                   type="range"
                   min="0"
                   max="1"
                   step="0.01"
-                  value={complementP || 0.7}
+                  value={complementP}
                   onChange={(e) => setComplementP(parseFloat(e.target.value))}
                   className="flex-1 accent-indigo-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
                 />
-                <div className="text-[10px] font-black text-indigo-400 w-12 text-right">{((complementP || 0.7) * 100).toFixed(0)}%</div>
+                <div className="text-[10px] font-black text-indigo-400 w-12 text-right">{((complementP) * 100).toFixed(0)}%</div>
               </div>
               <div className="flex h-12 rounded-2xl overflow-hidden border border-white/5 shadow-inner bg-slate-800/50">
                 <div
                   className="bg-indigo-600 flex items-center justify-center text-[10px] font-black text-white transition-all duration-300"
-                  style={{ width: `${(complementP || 0.7) * 100}%` }}
+                  style={{ width: `${(complementP) * 100}%` }}
                 >
                   P(EVENT)
                 </div>
                 <div
                   className="bg-slate-600 flex items-center justify-center text-[10px] font-black text-slate-300 transition-all duration-300"
-                  style={{ width: `${(1 - (complementP || 0.7)) * 100}%` }}
+                  style={{ width: `${(1 - (complementP)) * 100}%` }}
                 >
                   NOT EVENT
                 </div>

@@ -14,7 +14,7 @@ export default function DiceCltPanel({ cltHistory, darkMode, diceCountVal, runCL
         <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
           <span>Sample Size (k dice): {diceCountVal}</span>
         </div>
-        <input
+        <input aria-label="Dice per sample"
           type="range"
           min="1"
           max="15"

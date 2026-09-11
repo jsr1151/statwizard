@@ -12,6 +12,7 @@ export default function DiceSinglePanel({ darkMode, diceHistory, diceResult, dic
           {[4, 6, 8, 12, 20].map((n) => (
             <button
               key={n}
+              aria-pressed={diceType === n}
               onClick={() => setDiceType(n)}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${diceType === n ? 'bg-indigo-600 text-white' : darkMode ? 'bg-slate-800 text-slate-400' : 'bg-white border text-slate-500'}`}
             >

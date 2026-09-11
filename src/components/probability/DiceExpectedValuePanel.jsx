@@ -11,7 +11,7 @@ export default function DiceExpectedValuePanel({ darkMode, diceEvHistory, diceEv
           <div key={face} className={`p-3 rounded-2xl border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100 shadow-sm'} space-y-2`}>
             <div className="flex justify-between items-center">
               <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-[10px] font-black text-white">{face}</div>
-              <input
+              <input aria-label={`Payout for face ${face}`}
                 type="number"
                 value={diceEvPayouts[face]}
                 onChange={(e) => setDiceEvPayouts((p) => ({ ...p, [face]: parseFloat(e.target.value) || 0 }))}

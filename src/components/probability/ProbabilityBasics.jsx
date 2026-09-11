@@ -79,6 +79,7 @@ export default function ProbabilityBasics({ darkMode }) {
         {BASICS_EVENTS.map((ev) => (
           <button
             key={ev.label}
+            aria-pressed={basicsEvent?.label === ev.label}
             onClick={() => setBasicsEvent(ev)}
             className={`p-3 rounded-xl border text-left transition-all duration-300 ${basicsEvent?.label === ev.label ? 'border-indigo-500 bg-indigo-500/10' : darkMode ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-100 hover:shadow-lg'}`}
           >

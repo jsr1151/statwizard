@@ -79,7 +79,7 @@ export default function SimpsonsParadoxPanel({ darkMode, setSimpsonCounts, setSi
                 <span className="text-emerald-500">Easy ({tr.easy})</span>
                 <span className="text-rose-500">Hard ({tr.hard})</span>
               </div>
-              <input
+              <input aria-label={`${tr.label} hard cases`}
                 type="range"
                 min="10"
                 max="1000"

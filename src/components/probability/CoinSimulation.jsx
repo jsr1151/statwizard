@@ -59,6 +59,7 @@ export default function CoinSimulation({ darkMode }) {
           <button
             key={id}
             type="button"
+            aria-pressed={coinSubMode === id}
             onClick={() => setCoinSubMode(id)}
             className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${coinSubMode === id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 hover:text-white'}`}
           >

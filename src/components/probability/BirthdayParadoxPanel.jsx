@@ -8,7 +8,7 @@ const probabilityOfMatch = (people) => {
 
 const createGroup = (size) => Array.from({ length: size }, () => Math.floor(Math.random() * 365));
 const formatDay = (day) => {
-  const date = new Date(Date.UTC(2024, 0, 1 + day));
+  const date = new Date(Date.UTC(2023, 0, 1 + day));
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 };
 
@@ -44,12 +44,12 @@ export default function BirthdayParadoxPanel({ birthdayPeople, birthdaySim, dark
       </div>
       <div className={`rounded-3xl border p-5 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex flex-wrap justify-between gap-3"><div><h5 className="font-black">One simulated group</h5><p className="text-xs text-slate-500">Matching birthdays are highlighted with the same color.</p></div><button type="button" onClick={() => setGroup(createGroup(birthdayPeople))} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold">Generate another group</button></div>
-        <div className="relative mt-5 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+        <div className="relative mt-5 grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 xl:grid-cols-10 gap-2">
           {group.map((day, index) => { const matched = counts.get(day) > 1; return <div key={index} className={`rounded-lg border p-2 text-center ${matched ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : darkMode ? 'bg-slate-900 border-slate-800 text-slate-500' : 'bg-white border-slate-200 text-slate-500'}`}><div className="text-[9px] font-black">P{index + 1}</div><div className="text-[9px] mt-1">{formatDay(day)}</div></div>; })}
         </div>
         <div className={`mt-4 rounded-xl p-3 text-sm ${matchingDays.length ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-500'}`}>{matchingDays.length ? matchingDays.map(([day, count]) => `${count} people share ${formatDay(day)}`).join(' · ') : 'No match in this group. Generate another group—many individual groups will have none even when the overall probability exceeds 50%.'}</div>
       </div>
     </div>
-    <div className={`rounded-3xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}><div className="flex flex-wrap items-center justify-between gap-4"><div><h5 className="font-black">Repeat the group experiment 1,000 times</h5><p className="mt-1 text-xs text-slate-500">This creates 1,000 independent groups of {birthdayPeople} people and counts how many groups contain at least one shared birthday. Repeating it makes the empirical rate approach the theoretical {(theoretical * 100).toFixed(1)}%.</p></div><button type="button" onClick={simulateGroups} className="px-5 py-3 rounded-xl bg-indigo-600 text-white text-xs font-black">Simulate 1,000 groups</button></div><div className="mt-4 text-sm font-bold">Empirical rate: {birthdaySim.trials ? `${(birthdaySim.matches / birthdaySim.trials * 100).toFixed(2)}%` : 'Run the experiment to begin'} <span className="text-slate-500">({birthdaySim.matches.toLocaleString()} matching groups out of {birthdaySim.trials.toLocaleString()})</span></div></div>
+    <div className={`rounded-3xl border p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}><div className="flex flex-wrap items-center justify-between gap-4"><div><h5 className="font-black">Repeat the group experiment 1,000 times</h5><p className="mt-1 text-xs text-slate-500">This creates 1,000 independent groups of {birthdayPeople} people and counts how many groups contain at least one shared birthday. Repeating it makes the empirical rate approach the theoretical {(theoretical * 100).toFixed(1)}%.</p></div><button type="button" onClick={simulateGroups} className="px-5 py-3 rounded-xl bg-indigo-600 text-white text-xs font-black">Simulate 1,000 groups</button></div><div role="status" className="mt-4 text-sm font-bold">Empirical rate: {birthdaySim.trials ? `${(birthdaySim.matches / birthdaySim.trials * 100).toFixed(2)}%` : 'Run the experiment to begin'} <span className="text-slate-500">({birthdaySim.matches.toLocaleString()} matching groups out of {birthdaySim.trials.toLocaleString()})</span></div></div>
   </div>;
 }

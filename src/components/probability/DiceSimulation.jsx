@@ -68,6 +68,7 @@ export default function DiceSimulation({ darkMode }) {
           <button
             key={id}
             type="button"
+            aria-pressed={diceSubMode === id}
             onClick={() => setDiceSubMode(id)}
             className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${diceSubMode === id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
           >

@@ -17,7 +17,7 @@ export default function DiceSumPanel({ darkMode, diceCountVal, diceSumHistory, g
             Range: {diceCountVal} - {6 * diceCountVal}
           </span>
         </div>
-        <input
+        <input aria-label="Number of dice"
           type="range"
           min="2"
           max="10"

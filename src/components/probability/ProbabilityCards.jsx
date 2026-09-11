@@ -74,6 +74,7 @@ export default function ProbabilityCards({ darkMode }) {
           <button
             key={id}
             type="button"
+            aria-pressed={cardSubMode === id}
             onClick={() => setCardSubMode(id)}
             className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${cardSubMode === id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
           >

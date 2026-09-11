@@ -17,7 +17,7 @@ export default function CardReplacementPanel({ darkMode, replaceHandSize, replac
         <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
           <span className="text-[9px] font-black text-slate-500 uppercase block mb-2">Draw Count (k)</span>
           <div className="text-2xl font-black text-white">{replaceHandSize}</div>
-          <input
+          <input aria-label="Draw count"
             type="range"
             min="2"
             max="8"

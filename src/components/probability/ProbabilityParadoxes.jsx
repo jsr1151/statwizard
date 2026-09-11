@@ -18,7 +18,7 @@ const createMontyDoors = (doorCount) => {
 
 export default function ProbabilityParadoxes({ darkMode }) {
   const [paradoxType, setParadoxType] = useState('monty');
-  const [montyState, setMontyState] = useState({
+  const [montyState, setMontyState] = useState(() => ({
     doors: createMontyDoors(3),
     selected: null,
     revealed: [],
@@ -26,11 +26,12 @@ export default function ProbabilityParadoxes({ darkMode }) {
     win: false,
     doorCount: 3,
     history: { stayWins: 0, switchWins: 0, stayTotal: 0, switchTotal: 0 },
-  });
+  }));
   const [doorInput, setDoorInput] = useState('3');
   const [birthdayPeople, setBirthdayPeople] = useState(23);
   const [birthdaySim, setBirthdaySim] = useState({ trials: 0, matches: 0 });
   const [gamblerStreak, setGamblerStreak] = useState([]);
+  const [gamblerStats, setGamblerStats] = useState({ correct: 0, total: 0 });
   const [simpsonRates, setSimpsonRates] = useState({
     aEasy: 0.9,
     aHard: 0.3,
@@ -44,7 +45,9 @@ export default function ProbabilityParadoxes({ darkMode }) {
     bHard: 100,
   });
 
-  const resetMonty = (doorCount = 3) => {
+  const resetMonty = (requestedCount = 3) => {
+    const doorCount = Math.max(3, Math.min(100, Math.trunc(Number(requestedCount)) || 3));
+    setDoorInput(String(doorCount));
     setMontyState((previous) => ({
       ...previous,
       doors: createMontyDoors(doorCount),
@@ -53,6 +56,7 @@ export default function ProbabilityParadoxes({ darkMode }) {
       gameState: 'start',
       win: false,
       doorCount,
+      history: doorCount === previous.doorCount ? previous.history : { stayWins: 0, switchWins: 0, stayTotal: 0, switchTotal: 0 },
     }));
   };
 
@@ -102,6 +106,7 @@ export default function ProbabilityParadoxes({ darkMode }) {
           <button
             key={id}
             type="button"
+            aria-pressed={paradoxType === id}
             onClick={() => setParadoxType(id)}
             className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${paradoxType === id ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'}`}
           >
@@ -123,9 +128,9 @@ export default function ProbabilityParadoxes({ darkMode }) {
         />
       )}
       {paradoxType === 'birthday' && (
-        <BirthdayParadoxPanel birthdayPeople={birthdayPeople} birthdaySim={birthdaySim} darkMode={darkMode} setBirthdayPeople={setBirthdayPeople} setBirthdaySim={setBirthdaySim} />
+        <BirthdayParadoxPanel birthdayPeople={birthdayPeople} birthdaySim={birthdaySim} darkMode={darkMode} setBirthdayPeople={(people) => { setBirthdayPeople(people); setBirthdaySim({ trials: 0, matches: 0 }); }} setBirthdaySim={setBirthdaySim} />
       )}
-      {paradoxType === 'gambler' && <GamblersFallacyPanel darkMode={darkMode} gamblerStreak={gamblerStreak} setGamblerStreak={setGamblerStreak} />}
+      {paradoxType === 'gambler' && <GamblersFallacyPanel stats={gamblerStats} setStats={setGamblerStats} darkMode={darkMode} gamblerStreak={gamblerStreak} setGamblerStreak={setGamblerStreak} />}
       {paradoxType === 'simpson' && (
         <SimpsonsParadoxPanel darkMode={darkMode} setSimpsonCounts={setSimpsonCounts} setSimpsonRates={setSimpsonRates} simpsonCounts={simpsonCounts} simpsonRates={simpsonRates} />
       )}

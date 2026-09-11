@@ -33,6 +33,7 @@ export default function SpinnerSimulation({ darkMode }) {
         ].map((t) => (
           <button
             key={t.id}
+            type="button" aria-pressed={spinnerSubMode === t.id}
             onClick={() => setSpinnerSubMode(t.id)}
             className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${spinnerSubMode === t.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
           >
@@ -124,7 +125,7 @@ export default function SpinnerSimulation({ darkMode }) {
                   <div className="flex items-center gap-3">
                     <div className="w-4 h-4 rounded-full shadow-inner" style={{ backgroundColor: seg.color }} />
                     <input
-                      type="text"
+                      aria-label={`Segment ${i + 1} label`} type="text"
                       value={seg.label}
                       onChange={(e) => {
                         const next = [...spinnerSegments];
@@ -135,6 +136,7 @@ export default function SpinnerSimulation({ darkMode }) {
                       placeholder="LABEL"
                     />
                     <button
+                      aria-label={`Remove segment ${i + 1}`} disabled={spinnerSegments.length <= 2}
                       onClick={() => {
                         if (spinnerSegments.length <= 2) return;
                         setSpinnerSegments(spinnerSegments.filter((_, idx) => idx !== i));
@@ -149,7 +151,7 @@ export default function SpinnerSimulation({ darkMode }) {
                       <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest pl-1">Weight</span>
                       <div className="flex items-center gap-2 bg-slate-800/50 rounded-xl px-3 py-2 border border-white/5">
                         <input
-                          type="number"
+                          aria-label={`Segment ${i + 1} weight`} type="number"
                           step="0.1"
                           value={seg.weight}
                           onChange={(e) => {
@@ -165,7 +167,7 @@ export default function SpinnerSimulation({ darkMode }) {
                       <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest pl-1">Points (EV)</span>
                       <div className="flex items-center gap-2 bg-slate-800/50 rounded-xl px-3 py-2 border border-white/5">
                         <input
-                          type="number"
+                          aria-label={`Segment ${i + 1} points`} type="number"
                           value={seg.points}
                           onChange={(e) => {
                             const next = [...spinnerSegments];

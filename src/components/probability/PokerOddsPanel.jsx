@@ -34,6 +34,7 @@ export default function PokerOddsPanel({ cardGame, darkMode, setCardGame }) {
       </div>
 
       <div className="text-center space-y-4">
+        <p role="status" className="text-xs text-slate-500">Hands recorded: {cardGame.history.length}</p>
         <div className="flex gap-4">
           <button
             onClick={() => {

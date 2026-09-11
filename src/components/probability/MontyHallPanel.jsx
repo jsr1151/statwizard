@@ -7,6 +7,7 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
           <span className="text-[10px] font-black text-slate-500 uppercase">Number of Doors (3 - 100)</span>
           <div className="flex gap-2 items-center">
             <input
+              aria-label="Number of doors"
               type="number"
               min="3"
               max="100"
@@ -15,7 +16,7 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
               className="w-20 bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm font-black text-white text-center outline-none focus:border-indigo-500 transition-all"
             />
             <button
-              onClick={() => resetMonty(parseInt(doorInput) || 3)}
+              onClick={() => resetMonty(doorInput)}
               className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase rounded-xl transition-all shadow-lg"
             >
               Set & Reset
@@ -25,12 +26,12 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
       </div>
 
       <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'} space-y-4`}>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-black text-xs">?</div>
             <h6 className="text-[11px] font-black uppercase tracking-widest text-slate-400">The Paradox Explained</h6>
           </div>
-          <div className="flex gap-4 text-[10px] font-black">
+          <div className="flex flex-wrap gap-4 text-[10px] font-black">
             <div className="text-slate-500">
               P(Stay Win): <span className="text-white">{((1 / montyState.doorCount) * 100).toFixed(1)}%</span>
             </div>
@@ -47,7 +48,7 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className={`p-4 rounded-3xl border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50'}`}>
           <div className="text-[8px] font-black text-slate-500 uppercase mb-2">Simulated Stats</div>
           <div className="flex justify-between text-xs font-bold items-center">
@@ -55,7 +56,7 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
             <div className="h-10 w-px bg-slate-800/10 mx-2" />
             <span className="text-emerald-400">Switch: {((montyState.history.switchWins / Math.max(1, montyState.history.switchTotal)) * 100).toFixed(1)}%</span>
           </div>
-          <div className="mt-2 text-[8px] text-slate-600 uppercase font-bold">Games: {montyState.history.stayTotal + montyState.history.switchTotal}</div>
+          <div role="status" className="mt-2 text-[8px] text-slate-600 uppercase font-bold">Games: {montyState.history.stayTotal + montyState.history.switchTotal}</div>
         </div>
         <button
           onClick={() => {
@@ -110,6 +111,7 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
 
       {montyState.gameState === 'result' && (
         <div
+          role="status"
           className={`p-6 rounded-3xl text-center animate-in zoom-in-95 shadow-2xl ${montyState.win ? 'bg-emerald-600/20 border-2 border-emerald-500/40' : 'bg-rose-600/20 border-2 border-rose-500/40'}`}
         >
           <div className="text-3xl mb-2">{montyState.win ? '🎉' : '🐐'}</div>

@@ -33,6 +33,7 @@ export default function CardHuntPanel({
         ].map((t) => (
           <button
             key={t.id}
+            aria-pressed={huntTarget === t.id}
             onClick={() => setHuntTarget(t.id)}
             className={`p-4 rounded-2xl border-2 transition-all block ${huntTarget === t.id ? 'border-indigo-500 bg-indigo-500/10' : darkMode ? 'border-slate-800 bg-slate-900/50 text-slate-500' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
           >
@@ -46,12 +47,12 @@ export default function CardHuntPanel({
       <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'} space-y-6`}>
         <div className="flex justify-between items-center bg-slate-800/50 p-3 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2">
-            <div
+            <button type="button" role="switch" aria-checked={huntWithReplacement} aria-label="With replacement"
               className={`w-8 h-4 rounded-full p-0.5 cursor-pointer transition-all ${huntWithReplacement ? 'bg-indigo-600' : 'bg-slate-700'}`}
               onClick={() => setHuntWithReplacement(!huntWithReplacement)}
             >
-              <div className={`w-3 h-3 bg-white rounded-full transition-all ${huntWithReplacement ? 'translate-x-4' : 'translate-x-0'}`} />
-            </div>
+              <span className={`block w-3 h-3 bg-white rounded-full transition-all ${huntWithReplacement ? 'translate-x-4' : 'translate-x-0'}`} />
+            </button>
             <span className="text-[10px] font-black text-slate-300 uppercase">With Replacement</span>
           </div>
           <span className="text-[10px] font-black text-indigo-400 uppercase">{huntWithReplacement ? 'Binomial' : 'Hypergeometric'}</span>
@@ -60,7 +61,7 @@ export default function CardHuntPanel({
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-black text-slate-500 uppercase">Hand Size: {huntHandSize}</span>
-            <input
+            <input aria-label="Hand size"
               type="range"
               min="1"
               max="15"
@@ -76,7 +77,7 @@ export default function CardHuntPanel({
               <span className="text-[9px] font-black text-slate-500 uppercase">Payout ($)</span>
               <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-4 py-3 border border-white/5">
                 <span className="text-indigo-400 font-black">$</span>
-                <input
+                <input aria-label="Payout ($)"
                   type="number"
                   step="0.5"
                   value={cardBetConfig.payout}
@@ -89,7 +90,7 @@ export default function CardHuntPanel({
               <span className="text-[9px] font-black text-slate-500 uppercase">Bet Cost ($)</span>
               <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-4 py-3 border border-white/5">
                 <span className="text-rose-400 font-black">$</span>
-                <input
+                <input aria-label="Bet cost ($)"
                   type="number"
                   step="0.5"
                   value={cardBetConfig.bet}

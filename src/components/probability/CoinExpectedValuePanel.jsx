@@ -10,7 +10,7 @@ export default function CoinExpectedValuePanel({ binomP, darkMode, evHistory, ev
         <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'} space-y-4`}>
           <div className="flex justify-between items-center">
             <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-[10px] font-black text-white">H</div>
-            <input
+            <input aria-label="Heads payout"
               type="number"
               value={evPayoutH}
               onChange={(e) => setEvPayoutH(parseFloat(e.target.value) || 0)}
@@ -25,7 +25,7 @@ export default function CoinExpectedValuePanel({ binomP, darkMode, evHistory, ev
         <div className={`p-6 rounded-3xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'} space-y-4`}>
           <div className="flex justify-between items-center">
             <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-[10px] font-black text-white">T</div>
-            <input
+            <input aria-label="Tails payout"
               type="number"
               value={evPayoutT}
               onChange={(e) => setEvPayoutT(parseFloat(e.target.value) || 0)}

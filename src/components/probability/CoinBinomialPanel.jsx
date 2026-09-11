@@ -19,7 +19,7 @@ export default function CoinBinomialPanel({ binomHistory, binomN, binomP, darkMo
             <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
               <span>n (Flips): {binomN}</span>
             </div>
-            <input
+            <input aria-label="Number of flips per trial"
               type="range"
               min="1"
               max="20"
@@ -36,7 +36,7 @@ export default function CoinBinomialPanel({ binomHistory, binomN, binomP, darkMo
             <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
               <span>p (Bias): {(binomP * 100).toFixed(0)}%</span>
             </div>
-            <input
+            <input aria-label="Probability of heads"
               type="range"
               min="0"
               max="1"
