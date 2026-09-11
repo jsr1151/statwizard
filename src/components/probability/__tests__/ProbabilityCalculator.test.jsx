@@ -2,9 +2,17 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import ProbabilityPage from '../ProbabilityPage';
-import { field, input, render } from './testUtils';
+import { field, input, render, rerender } from './testUtils';
 
 describe('probability calculator interactions', () => {
+  it('preserves calculator entries while visiting another section', async () => {
+    const view = await render(<ProbabilityPage section="calculator" darkMode={false} />);
+    await input(field(view, 'Favorable'), 3);
+    await rerender(view, <ProbabilityPage section="foundations" darkMode={false} />);
+    await rerender(view, <ProbabilityPage section="calculator" darkMode={false} />);
+    expect(field(view, 'Favorable').value).toBe('3');
+    expect(view.textContent).toContain('50.00%');
+  });
   it('renders valid defaults and recalculates edited probabilities', async () => {
     const view = await render(<ProbabilityPage section="calculator" darkMode={false} />);
     expect(view.textContent).toContain('16.67%');

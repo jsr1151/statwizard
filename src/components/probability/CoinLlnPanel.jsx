@@ -98,6 +98,8 @@ export default function CoinLlnPanel({ coinFlipState, coinStats, darkMode, flipB
       </div>
 
       <button
+        disabled={coinFlipState.flipping}
+        aria-label={coinFlipState.flipping ? 'Coin is flipping' : 'Single flip'}
         onClick={() => {
           if (coinFlipState.flipping) return;
           const isHeads = Math.random() > 0.5;

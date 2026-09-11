@@ -50,29 +50,27 @@ export default function ProbabilityBasics({ darkMode }) {
               }}
             >
               <div className="w-2 h-10 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20 shadow-lg shadow-indigo-500/40" />
-              <div
-                className={`mt-2 whitespace-nowrap text-[10px] font-black uppercase tracking-tighter ${basicsEvent.color} bg-slate-900/80 px-2 py-0.5 rounded-full backdrop-blur-sm border border-white/10`}
-              >
-                {basicsEvent.label} ({(basicsEvent.p * 100).toFixed(basicsEvent.p < 0.0001 ? 8 : 2)}%)
-              </div>
             </div>
           )}
 
           {/* Axiom Callouts */}
-          <div className="absolute -top-10 left-0 text-[9px] font-black text-slate-500 bg-slate-800/20 px-2 py-1 rounded-lg border border-white/5 backdrop-blur-sm group cursor-help">
-            P(∅) = 0
-            <div className="absolute hidden group-hover:block -top-8 left-0 bg-slate-800 text-white p-2 rounded shadow-xl whitespace-nowrap z-30">
+          <details className="absolute -top-10 left-0 text-[9px] font-black text-slate-500 bg-slate-800/20 px-2 py-1 rounded-lg border border-white/5 backdrop-blur-sm">
+            <summary className="cursor-pointer">P(∅) = 0</summary>
+            <div className="absolute top-full left-0 w-40 bg-slate-800 text-white p-2 rounded shadow-xl z-30">
               Impossible events have probability zero.
             </div>
-          </div>
-          <div className="absolute -top-10 right-0 text-[9px] font-black text-slate-500 bg-slate-800/20 px-2 py-1 rounded-lg border border-white/5 backdrop-blur-sm group cursor-help">
-            P(Ω) = 1
-            <div className="absolute hidden group-hover:block -top-8 right-0 bg-slate-800 text-white p-2 rounded shadow-xl whitespace-nowrap z-30">
+          </details>
+          <details className="absolute -top-10 right-0 text-[9px] font-black text-slate-500 bg-slate-800/20 px-2 py-1 rounded-lg border border-white/5 backdrop-blur-sm">
+            <summary className="cursor-pointer">P(Ω) = 1</summary>
+            <div className="absolute top-full right-0 w-40 bg-slate-800 text-white p-2 rounded shadow-xl z-30">
               The set of all possible outcomes equals certainty.
             </div>
-          </div>
+          </details>
           <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[8px] font-black text-slate-600 tracking-widest uppercase">0 ≤ P(A) ≤ 1</div>
         </div>
+        <p role="status" className={`mt-10 text-sm font-bold ${basicsEvent?.color || 'text-slate-500'}`}>
+          {basicsEvent ? `${basicsEvent.label} (${(basicsEvent.p * 100).toFixed(basicsEvent.p < 0.0001 ? 8 : 2)}%)` : 'Select an event to place it on the probability scale.'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">

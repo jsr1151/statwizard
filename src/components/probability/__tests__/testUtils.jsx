@@ -14,6 +14,11 @@ export async function render(element) {
   return container;
 }
 
+export async function rerender(container, element) {
+  const { root } = roots.find(entry => entry.container === container);
+  await act(async () => root.render(element));
+}
+
 export function button(container, name) {
   const found = [...container.querySelectorAll('button')].find(node => node.textContent.trim() === name);
   expect(found, `Button: ${name}`).toBeTruthy();

@@ -27,7 +27,7 @@ export default function PokerOddsPanel({ cardGame, darkMode, setCardGame }) {
                 <div className={`text-2xl ${['♥', '♦'].includes(card.suit) ? 'text-rose-500' : darkMode ? 'text-slate-300' : 'text-slate-900'}`}>{card.suit}</div>
               </>
             ) : (
-              <div className="text-xl text-slate-800">?</div>
+              <div className="text-xl text-slate-500">?</div>
             )}
           </div>
         ))}
@@ -143,7 +143,7 @@ export default function PokerOddsPanel({ cardGame, darkMode, setCardGame }) {
               const sessionProb = cardGame.history.length > 0 ? sessionCount / cardGame.history.length : 0;
               return (
                 <div key={h.name} className="flex items-center gap-3">
-                  <div className="w-24 text-[9px] font-black text-slate-400 uppercase truncate">{h.name}</div>
+                  <div className="w-24 shrink-0 text-[9px] font-black text-slate-400 uppercase">{h.name}</div>
                   <div className="flex-1 h-3 bg-slate-800/50 rounded-full overflow-hidden relative">
                     <div className="absolute inset-0 bg-indigo-500/20" style={{ width: `${h.t * 100}%` }} />
                     <div className="absolute inset-0 bg-emerald-500 transition-all duration-700" style={{ width: `${sessionProb * 100}%` }} />

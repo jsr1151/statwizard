@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { combinations } from '../../stats/probability';
 import CoinBinomialPanel from './CoinBinomialPanel';
 import CoinExpectedValuePanel from './CoinExpectedValuePanel';
@@ -20,6 +20,13 @@ export default function CoinSimulation({ darkMode }) {
   const [evPayoutH, setEvPayoutH] = useState(1);
   const [evPayoutT, setEvPayoutT] = useState(-1);
   const [evHistory, setEvHistory] = useState([]);
+
+  useEffect(() => {
+    if (!coinFlipState.flipping) return;
+    // Finish even if the animated panel is hidden before transitionend fires.
+    const timer = setTimeout(() => setCoinFlipState(previous => ({ ...previous, flipping: false })), 1000);
+    return () => clearTimeout(timer);
+  }, [coinFlipState.flipping]);
 
   const flipBatch = (count) => {
     let heads = 0;

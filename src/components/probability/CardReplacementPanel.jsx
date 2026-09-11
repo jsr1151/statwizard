@@ -8,7 +8,7 @@ export default function CardReplacementPanel({ darkMode, replaceHandSize, replac
         <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">The "Misconception Killer": Independence vs Dependence</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
           <span className="text-[9px] font-black text-slate-500 uppercase block mb-2">Success Rate (P)</span>
           <div className="text-2xl font-black text-indigo-400">25%</div>
@@ -29,7 +29,7 @@ export default function CardReplacementPanel({ darkMode, replaceHandSize, replac
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} space-y-4 relative overflow-hidden`}>
           <div className="absolute top-0 right-0 p-2 bg-indigo-600/10 text-indigo-400 text-[8px] font-black uppercase tracking-widest rounded-bl-xl">Independent</div>
           <h6 className="text-[10px] font-black text-white uppercase tracking-widest">With Replacement</h6>

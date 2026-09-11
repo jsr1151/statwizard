@@ -10,16 +10,22 @@ const INITIAL_SEGMENTS = [
 
 export default function SpinnerSimulation({ darkMode }) {
   const [spinnerAngle, setSpinnerAngle] = useState(0);
-  const [spinnerSegments, setSpinnerSegments] = useState(INITIAL_SEGMENTS);
+  const [spinnerSegments, setSpinnerSegments] = useState(() => INITIAL_SEGMENTS.map(segment => ({ ...segment })));
   const [spinnerEVHistory, setSpinnerEVHistory] = useState([]);
+  const [lastSpin, setLastSpin] = useState(null);
   const [spinnerSubMode, setSpinnerSubMode] = useState('spin');
 
-  const totalWeight = spinnerSegments.reduce((sum, segment) => sum + (segment.weight || 1), 0);
+  const resetHistory = () => {
+    setSpinnerEVHistory([]);
+    setLastSpin(null);
+  };
+
+  const totalWeight = spinnerSegments.reduce((sum, segment) => sum + segment.weight, 0);
   let currentWeight = 0;
   const segmentsWithAngles = spinnerSegments.map((segment) => {
-    const start = (currentWeight / totalWeight) * 360;
-    const size = ((segment.weight || 1) / totalWeight) * 360;
-    currentWeight += segment.weight || 1;
+    const start = (currentWeight / (totalWeight || 1)) * 360;
+    const size = (segment.weight / (totalWeight || 1)) * 360;
+    currentWeight += segment.weight;
     return { ...segment, start, size };
   });
 
@@ -75,6 +81,7 @@ export default function SpinnerSimulation({ darkMode }) {
         {spinnerSubMode === 'spin' && (
           <div className="w-full max-w-sm space-y-6">
             <button
+              disabled={totalWeight === 0}
               onClick={() => {
                 const newAngle = spinnerAngle + Math.floor(Math.random() * 360) + 1440;
                 setSpinnerAngle(newAngle);
@@ -82,18 +89,23 @@ export default function SpinnerSimulation({ darkMode }) {
                 const finalRotation = newAngle % 360;
                 const winAngle = (360 - finalRotation) % 360;
                 const winner = segmentsWithAngles.find((s) => winAngle >= s.start && winAngle < s.start + s.size);
-                if (winner) setSpinnerEVHistory((prev) => [...prev, winner.points || 0]);
+                if (winner) {
+                  setSpinnerEVHistory((prev) => [...prev, winner.points || 0]);
+                  setLastSpin(winner);
+                }
               }}
               className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
             >
               SPIN THE WHEEL
             </button>
+            {totalWeight === 0 && <p role="status" className="text-sm text-slate-500">Set at least one positive segment weight to spin.</p>}
+            <p role="status" className="text-sm font-bold text-slate-500">{lastSpin ? `Last spin: ${lastSpin.label} (${lastSpin.points} points)` : 'Spin to record a result.'}</p>
             <div className="grid grid-cols-2 gap-4">
               {spinnerSegments.slice(0, 4).map((s, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
                   <span className="text-[10px] font-bold text-slate-500">
-                    {((s.weight / totalWeight) * 100).toFixed(1)}% {s.label}
+                    {((s.weight / (totalWeight || 1)) * 100).toFixed(1)}% {s.label}
                   </span>
                 </div>
               ))}
@@ -106,10 +118,12 @@ export default function SpinnerSimulation({ darkMode }) {
             <div className="flex justify-between items-center mb-4">
               <h6 className="text-[10px] font-black uppercase text-slate-500">Edit Segment Weights</h6>
               <button
+                disabled={spinnerSegments.length >= 12}
                 onClick={() => {
                   if (spinnerSegments.length >= 12) return;
                   const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#84cc16'];
                   setSpinnerSegments([...spinnerSegments, { label: 'NEW', color: colors[spinnerSegments.length % colors.length], weight: 1, points: 0 }]);
+                  resetHistory();
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white text-[10px] font-black transition-all"
               >
@@ -128,9 +142,8 @@ export default function SpinnerSimulation({ darkMode }) {
                       aria-label={`Segment ${i + 1} label`} type="text"
                       value={seg.label}
                       onChange={(e) => {
-                        const next = [...spinnerSegments];
-                        next[i].label = e.target.value.toUpperCase().slice(0, 12);
-                        setSpinnerSegments(next);
+                        const label = e.target.value.toUpperCase().slice(0, 12);
+                        setSpinnerSegments(previous => previous.map((segment, index) => index === i ? { ...segment, label } : segment));
                       }}
                       className="flex-1 bg-transparent text-xs font-black outline-none border-b-2 border-transparent focus:border-indigo-500 transition-all uppercase"
                       placeholder="LABEL"
@@ -140,6 +153,7 @@ export default function SpinnerSimulation({ darkMode }) {
                       onClick={() => {
                         if (spinnerSegments.length <= 2) return;
                         setSpinnerSegments(spinnerSegments.filter((_, idx) => idx !== i));
+                        resetHistory();
                       }}
                       className="text-rose-500/40 hover:text-rose-500 transition-colors"
                     >
@@ -155,9 +169,10 @@ export default function SpinnerSimulation({ darkMode }) {
                           step="0.1"
                           value={seg.weight}
                           onChange={(e) => {
-                            const next = [...spinnerSegments];
-                            next[i].weight = Math.max(0, parseFloat(e.target.value) || 0);
-                            setSpinnerSegments(next);
+                            const value = Number(e.target.value);
+                            const weight = Number.isFinite(value) ? Math.max(0, value) : 0;
+                            setSpinnerSegments(previous => previous.map((segment, index) => index === i ? { ...segment, weight } : segment));
+                            resetHistory();
                           }}
                           className="w-full bg-transparent text-sm font-black text-white outline-none"
                         />
@@ -170,9 +185,10 @@ export default function SpinnerSimulation({ darkMode }) {
                           aria-label={`Segment ${i + 1} points`} type="number"
                           value={seg.points}
                           onChange={(e) => {
-                            const next = [...spinnerSegments];
-                            next[i].points = parseFloat(e.target.value) || 0;
-                            setSpinnerSegments(next);
+                            const value = Number(e.target.value);
+                            const points = Number.isFinite(value) ? value : 0;
+                            setSpinnerSegments(previous => previous.map((segment, index) => index === i ? { ...segment, points } : segment));
+                            resetHistory();
                           }}
                           className="w-full bg-transparent text-sm font-black text-white outline-none"
                         />
@@ -189,7 +205,7 @@ export default function SpinnerSimulation({ darkMode }) {
           <div className="w-full max-w-sm space-y-6">
             <div className={`p-6 rounded-3xl bg-indigo-600/10 border border-indigo-500/20 text-center shadow-inner`}>
               <div className="text-[10px] font-black uppercase text-slate-500 mb-1">Theoretical EV (Points)</div>
-              <div className="text-4xl font-black text-white">{spinnerSegments.reduce((sum, s) => sum + s.points * (s.weight / totalWeight), 0).toFixed(2)}</div>
+              <div role="status" className="text-4xl font-black text-white">{totalWeight === 0 ? 'Set a positive weight' : spinnerSegments.reduce((sum, s) => sum + s.points * (s.weight / (totalWeight || 1)), 0).toFixed(2)}</div>
               <div className="mt-2 text-[9px] font-bold text-indigo-400 uppercase tracking-widest opacity-80">Σ (P_i × V_i)</div>
             </div>
 
@@ -202,7 +218,7 @@ export default function SpinnerSimulation({ darkMode }) {
                 <div className="text-[8px] text-slate-600 font-bold uppercase mt-1">{spinnerEVHistory.length} Spins</div>
               </div>
               <button
-                onClick={() => setSpinnerEVHistory([])}
+                onClick={resetHistory}
                 className="p-4 rounded-2xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 transition-all flex flex-col items-center justify-center"
               >
                 <span className="text-[8px] font-black text-rose-400 uppercase">Clear History</span>
@@ -214,12 +230,12 @@ export default function SpinnerSimulation({ darkMode }) {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <div className="text-[8px] font-black text-slate-500 uppercase">P(A)</div>
-                  <div className="text-sm font-black text-white">{((spinnerSegments[0].weight / totalWeight) * 100).toFixed(1)}%</div>
+                  <div className="text-sm font-black text-white">{totalWeight === 0 ? '—' : `${((spinnerSegments[0].weight / totalWeight) * 100).toFixed(1)}%`}</div>
                   <div className="text-[7px] text-slate-600 uppercase font-black">Occurrence</div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-[8px] font-black text-slate-500 uppercase">P(Aᶜ)</div>
-                  <div className="text-sm font-black text-indigo-400">{((1 - spinnerSegments[0].weight / totalWeight) * 100).toFixed(1)}%</div>
+                  <div className="text-sm font-black text-indigo-400">{totalWeight === 0 ? '—' : `${((1 - spinnerSegments[0].weight / totalWeight) * 100).toFixed(1)}%`}</div>
                   <div className="text-[7px] text-slate-600 uppercase font-black">Complement</div>
                 </div>
               </div>

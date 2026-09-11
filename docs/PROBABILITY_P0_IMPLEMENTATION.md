@@ -2,6 +2,9 @@
 
 September 11, 2026
 
+Continuation: see `PROBABILITY_HARDENING.md` for the completed P1 coverage,
+P2 review, and fixes to the follow-up findings below.
+
 Scope: the opening implementation slice in `NEXT_AGENT_HANDOFF.md` (both P0
 defects, focused regressions, and full validation). P1 and the complete P2
 review remain follow-up work.

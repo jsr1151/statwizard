@@ -134,7 +134,7 @@ export default function SimpsonsParadoxPanel({ darkMode, setSimpsonCounts, setSi
                     <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aggregate Success Rate</h6>
                     <p className="text-[9px] text-slate-500 italic mt-1">Weighted average of group rates.</p>
                   </div>
-                  {isReversed && <div className="px-3 py-1 rounded-full bg-rose-500 text-white text-[8px] font-black uppercase animate-bounce">Paradox Active</div>}
+                  {isReversed && <div className="px-3 py-1 rounded-full bg-rose-600 text-white text-[8px] font-black uppercase">Paradox Active</div>}
                 </div>
                 <div className="space-y-6">
                   <div className="space-y-2">

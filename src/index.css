@@ -65,6 +65,58 @@ body {
     line-height: 1.5;
 }
 
+/* Probability panels share a readable palette, including inset dark controls. */
+.probability-workspace {
+    --probability-text: var(--color-slate-900);
+    --probability-muted: var(--color-slate-600);
+    --probability-indigo: var(--color-indigo-700);
+    --probability-emerald: var(--color-emerald-800);
+    --probability-amber: var(--color-amber-800);
+    --probability-rose: var(--color-rose-700);
+    --probability-focus: var(--color-indigo-700);
+    color: var(--probability-text);
+}
+
+.probability-workspace[data-theme="dark"],
+.probability-workspace :is(.bg-slate-600, .bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-slate-950) {
+    color: var(--probability-text);
+    --probability-text: var(--color-slate-50);
+    --probability-muted: var(--color-slate-300);
+    --probability-indigo: var(--color-indigo-300);
+    --probability-emerald: var(--color-emerald-300);
+    --probability-amber: var(--color-amber-300);
+    --probability-rose: var(--color-rose-300);
+    --probability-focus: var(--color-indigo-300);
+}
+
+.probability-workspace :is(.bg-indigo-600, .bg-indigo-700, .bg-emerald-600, .bg-rose-600) {
+    color: var(--probability-text);
+    --probability-text: white;
+    --probability-muted: white;
+    --probability-focus: var(--color-indigo-300);
+}
+
+.probability-workspace[data-theme="light"] :is(
+    .bg-slate-800\/10, .bg-slate-800\/20, .bg-slate-800\/50,
+    .bg-slate-900\/20, .bg-slate-900\/40, .bg-slate-900\/50, .bg-slate-900\/80,
+    .bg-slate-950\/40, .bg-slate-950\/50
+) {
+    background-color: var(--color-slate-100);
+}
+
+.probability-workspace :is(.text-white, .text-slate-300) { color: var(--probability-text); }
+.probability-workspace :is(.text-slate-400, .text-slate-500, .text-slate-600) { color: var(--probability-muted); }
+.probability-workspace :is(.text-indigo-400, .text-indigo-500, .text-blue-500) { color: var(--probability-indigo); }
+.probability-workspace :is(.text-emerald-400, .text-emerald-500) { color: var(--probability-emerald); }
+.probability-workspace :is(.text-amber-400, .text-amber-500, .text-amber-600, .text-orange-500, .text-orange-600) { color: var(--probability-amber); }
+.probability-workspace :is(.text-rose-400, .text-rose-500, .text-red-500) { color: var(--probability-rose); }
+.probability-workspace span.opacity-40 { opacity: 1; }
+
+.probability-workspace :is(button, input, select, summary):focus-visible {
+    outline: 2px solid var(--probability-focus);
+    outline-offset: 3px;
+}
+
 svg text {
     paint-order: stroke;
     text-rendering: geometricPrecision;

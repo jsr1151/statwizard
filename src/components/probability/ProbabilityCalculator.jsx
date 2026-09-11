@@ -1,13 +1,12 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo } from 'react';
 import { Calculator } from 'lucide-react';
 import { binomialProbability, combinations, diceSumDistribution } from '../../stats/probability';
 
 const numberFromInput = (value) => value.trim() === '' ? Number.NaN : Number(value);
 const validCount = (value) => Number.isSafeInteger(value) && value >= 0;
 
-export default function ProbabilityCalculator({ darkMode }) {
+export default function ProbabilityCalculator({ darkMode, values, setValues }) {
   const id = useId();
-  const [values, setValues] = useState({ favorable: '1', total: '6', n: '10', k: '5', p: '0.5', dice: '2' });
   const { favorable, total, n, k, p, dice } = Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, numberFromInput(value)]),
   );
@@ -33,7 +32,7 @@ export default function ProbabilityCalculator({ darkMode }) {
     onChange: (event) => setValues(previous => ({ ...previous, [key]: event.target.value })),
   });
 
-  return <div className="space-y-6">
+  return <div className="probability-workspace space-y-6" data-theme={darkMode ? 'dark' : 'light'}>
     <section className={cardClass}>
       <div className="flex gap-4">
         <div className="p-3 h-fit rounded-xl bg-indigo-500/10 text-indigo-400"><Calculator /></div>
