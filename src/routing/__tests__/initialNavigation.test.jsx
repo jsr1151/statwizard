@@ -52,3 +52,18 @@ it('replaces stale module state with the requested home page', async () => {
     expect(window.history.length).toBe(length);
     expect(container.querySelector('.probability-workspace')).toBeNull();
 });
+
+it('switches probability sections and returns home through the header', async () => {
+    await mountAt('#/wizard/res_probability');
+    await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(container.querySelector('.probability-workspace')).not.toBeNull();
+    }, { timeout: 5000 });
+    const button = (label) => [...container.querySelectorAll('button')].find(node => node.textContent.trim() === label);
+    await act(async () => button('Demos').click());
+    expect(container.textContent).toContain('Monty');
+    await act(async () => button('Calculator').click());
+    expect(container.textContent).toContain('Exact binomial probability');
+    await act(async () => container.querySelector('[aria-label="Return to StatWizard home"]').click());
+    expect(container.textContent).toContain('Stat Modules');
+});
