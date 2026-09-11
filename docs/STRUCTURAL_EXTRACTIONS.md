@@ -22,7 +22,7 @@ edits. Its views now live in these existing section files:
 
 | Component | Lines | Responsibility |
 | --- | ---: | --- |
-| `RegressionCalculatorSection.jsx` | 354 | Data entry, fitted model, prediction, coefficient and residual views |
+| `RegressionCalculatorSection.jsx` | 353 | Data entry, fitted model, prediction, coefficient and residual views |
 | `RegressionLessonSection.jsx` | 248 | Presets, plot controls, prediction and residual spotlights |
 | `RegressionEffectSizeSection.jsx` | 151 | Fit/slope explanations and effect-size controls |
 | `RegressionPowerSection.jsx` | 34 | Shared power-planning surface |
