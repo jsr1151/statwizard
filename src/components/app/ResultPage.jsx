@@ -1,4 +1,5 @@
-import { lazy } from "react";
+import { lazy, useMemo } from "react";
+import { PowerNavigationContext } from '../../routing/powerNavigationContext.js';
 import { CheckCircle, Calculator, Terminal, MousePointer2, Info, BarChart2, Grid } from "lucide-react";
 import TabButton from "../../components/common/TabButton";
 import EquationWorkspace from "./EquationWorkspace.jsx";
@@ -33,10 +34,15 @@ export default function ResultPage({
         isOneWayAnovaPage, anovaTutor, showEquationValues, isFactorialAnovaPage, isAncovaPage,
         showStructuredCalculator, displayVisualType, visualizerProps, isStructuredResultPage, setShowEquationValues,
         setSymbolKeyOpen, symbolKeyOpen, safeRelevantSymbols, hoveredTerm, equationWorkspaceProps,
-        activeTab, setActiveTab, currentSoftware,
+        activeTab, setActiveTab, currentSoftware, selectPowerMode,
 }) {
+    const powerNavigation = useMemo(() => activeResultSection === 'power' ? {
+        stepId: currentStepId,
+        mode: pendingPowerLaunch?.mode,
+        onModeChange: selectPowerMode,
+    } : null, [activeResultSection, currentStepId, pendingPowerLaunch?.mode, selectPowerMode]);
     return (
-<>
+<PowerNavigationContext.Provider value={powerNavigation}>
             <div className={`p-8 md:p-10 text-center transition-colors ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-900 text-white'}`}>
                 <h2 className="text-3xl md:text-4xl font-extrabold mb-4">{currentStep?.title}</h2>
                 <p className={`text-lg max-w-3xl mx-auto leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-300'}`}>{currentStep?.content}</p>
@@ -386,6 +392,6 @@ export default function ResultPage({
                 </>
                 )}
             </div>
-        </>
+        </PowerNavigationContext.Provider>
     );
 }

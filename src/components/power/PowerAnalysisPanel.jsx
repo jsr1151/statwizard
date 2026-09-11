@@ -131,6 +131,8 @@ const PowerAnalysisPanel = ({
                 {availableModes.map((modeId) => (
                     <button
                         key={modeId}
+                        type="button"
+                        aria-pressed={mode === modeId}
                         onClick={() => {
                             setMode(modeId);
                             setInputs(powerConfig?.buildInitialInputs?.(currentStats, modeId) || {});

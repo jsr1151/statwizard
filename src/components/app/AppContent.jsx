@@ -10,8 +10,8 @@ const DataManagerPage = lazy(() => import('../../components/data/DataManagerPage
 const PowerAnalysisHub = lazy(() => import('../../components/power/PowerAnalysisHub'));
 
 export default function AppContent({
-        appMode, darkMode, setAppMode, setCurrentStepId, searchQuery,
-        setSearchQuery, handleOpenPowerCalculator, setActiveResultSection, isResult, isHelp,
+        appMode, darkMode, setAppMode, openStep, searchQuery,
+        setSearchQuery, handleOpenPowerCalculator, isResult, isHelp,
         currentStepId, currentStep, handleOptionClick, resultProps, history,
 }) {
     return (
@@ -37,9 +37,9 @@ export default function AppContent({
 
             {appMode === 'menu' && <MainMenu onSelect={setAppMode} darkMode={darkMode} />}
 
-            {appMode === 'modules' && <ModulesView onSelect={(id) => { setCurrentStepId(id); setAppMode('wizard'); }} darkMode={darkMode} />}
+            {appMode === 'modules' && <ModulesView onSelect={openStep} darkMode={darkMode} />}
 
-            {appMode === 'search' && <SearchView searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSelect={(id) => { setCurrentStepId(id); setAppMode('wizard'); }} darkMode={darkMode} />}
+            {appMode === 'search' && <SearchView searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSelect={openStep} darkMode={darkMode} />}
 
             {appMode === 'power' && (
                 <PowerAnalysisHub
@@ -70,9 +70,7 @@ export default function AppContent({
                             return;
                         }
 
-                        setCurrentStepId(nextStepId);
-                        setAppMode('wizard');
-                        setActiveResultSection('calculator');
+                        openStep(nextStepId, { section: 'calculator' });
                     }}
                 />
             )}

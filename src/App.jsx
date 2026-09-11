@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect, useMemo, useRef } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { SYMBOL_KEYS } from "./data/symbolKeys";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import Header from "./components/common/Header";
@@ -12,6 +12,7 @@ import { DatasetLibraryProvider } from "./hooks/useDatasetLibrary";
 import AppContent from "./components/app/AppContent.jsx";
 import AppOverlays from "./components/app/AppOverlays.jsx";
 
+import useAppNavigation from './routing/useAppNavigation.js';
 import { getResultPage } from './routing/resultPageConfig.js';
 
 // --- STUB: generateAIResponse ---
@@ -25,16 +26,12 @@ const generateAIResponse = async (prompt) => {
 
 // --- MAIN APP ---
 export default function App() {
-    // --- 1. CORE REFS (Top priority to avoid TDZ/hoisting issues) ---
-    const isPopStateRef = useRef(false);
-    const isFirstMountRef = useRef(true);
-
-    // --- 2. STANDARD STATE ---
-    const [appMode, setAppMode] = useState('menu');
+    const {
+        appMode, currentStepId, history, answers, resultSection, powerMode,
+        restoreCount, openPage: setAppMode, openStep,
+        selectSection, selectPowerMode, chooseOption: handleOptionClick, restart,
+    } = useAppNavigation();
     const [searchQuery, setSearchQuery] = useState('');
-    const [history, setHistory] = useState(['start']);
-    const [answers, setAnswers] = useState({});
-    const [currentStepId, setCurrentStepId] = useState('start');
     const [report, setReport] = useState("");
     const [activeTab, setActiveTab] = useState('spss');
     const [mathHistory, setMathHistory] = useState([]);
@@ -49,8 +46,6 @@ export default function App() {
     const [hoveredTerm, setHoveredTerm] = useState(null);
     const [activeExplanation, setActiveExplanation] = useState(null);
     const [showHistory, setShowHistory] = useState(false);
-    const [activeResultSection, setActiveResultSection] = useState('calculator');
-    const [pendingPowerLaunch, setPendingPowerLaunch] = useState(null);
     const [showEquationPanel, setShowEquationPanel] = useState(true);
     const [tooltipsEnabled, setTooltipsEnabled] = useState(() => {
         try {
@@ -78,81 +73,37 @@ export default function App() {
     // --- 4. CUSTOM HOOKS ---
     const { updateAvailable, reload: reloadForUpdate, dismiss: dismissUpdate } = useAutoReload();
 
-    // --- BROWSER HISTORY SYNC ---
     useEffect(() => {
-        const handleNavigation = (event) => {
-            if (event.state) {
-                isPopStateRef.current = true;
-                const { appMode, currentStepId, history, answers } = event.state;
-
-                // Batch updates
-                setAppMode(appMode);
-                setCurrentStepId(currentStepId);
-                setHistory(history);
-                setAnswers(answers);
-
-                // Clear ephemeral UI state
-                setMathHistory([]);
-                setAiExplanation(null);
-                setAiModalOpen(false);
-            } else if (window.location.hash === '' || window.location.hash === '#/') {
-                isPopStateRef.current = true;
-                setAppMode('menu');
-                setCurrentStepId('start');
-                setHistory(['start']);
-                setAnswers({});
-            }
-        };
-
-        window.addEventListener('popstate', handleNavigation);
-
-        // Push initial state if missing
-        if (!window.history.state) {
-            window.history.replaceState({
-                appMode: 'menu',
-                currentStepId: 'start',
-                history: ['start'],
-                answers: {}
-            }, '', '#/');
-        } else {
-            // If we reloaded and have state, sync it
-            handleNavigation({ state: window.history.state });
-        }
-
-        return () => window.removeEventListener('popstate', handleNavigation);
-    }, []);
-
-    // Sync app state TO browser history
-    useEffect(() => {
-        // Skip on first mount (handled by replaceState in the other effect)
-        if (isFirstMountRef.current) {
-            isFirstMountRef.current = false;
-            return;
-        }
-
-        // If this state change was caused by a popstate event, don't push it back!
-        if (isPopStateRef.current) {
-            isPopStateRef.current = false;
-            return;
-        }
-
-        const statePayload = { appMode, currentStepId, history, answers };
-        const newHash = `#/${appMode}${appMode === 'wizard' && currentStepId !== 'start' ? `/${currentStepId}` : ''}`;
-
-        // Log for debugging if the user says it "still doesn't work"
-        // console.log("Pushing History State:", newHash, statePayload);
-
-        // Only PUSH if the identifying URL characteristics (hash) changed
-        // Use REPLACE for internal state changes that shouldn't clog the back stack
-        if (window.location.hash !== newHash) {
-            window.history.pushState(statePayload, '', newHash);
-        } else {
-            window.history.replaceState(statePayload, '', newHash);
-        }
-    }, [appMode, currentStepId, history, answers]);
+        setMathHistory([]);
+        setAiExplanation(null);
+        setAiModalOpen(false);
+        setActiveTutorScript(null);
+    }, [restoreCount]);
 
     const resultPage = useMemo(() => getResultPage(currentStepId), [currentStepId]);
-    const { currentStep, currentTestConfig, isPearsonCorrelationPage, isSimpleLinearRegressionPage, isMultipleRegressionPage, isOneSampleTTestPage, isCentralTendencyPage, isVariabilityPage, isFrequencyPage, isProbabilityPage, isIndependentTTestPage, isPairedTTestPage, isOneWayAnovaPage, isFactorialAnovaPage, isAncovaPage, isResult, isHelp, isStructuredResultPage, availableResultSections } = resultPage;
+    const {
+        currentStep,
+        currentTestConfig,
+        isPearsonCorrelationPage,
+        isSimpleLinearRegressionPage,
+        isMultipleRegressionPage,
+        isOneSampleTTestPage,
+        isCentralTendencyPage,
+        isVariabilityPage,
+        isFrequencyPage,
+        isProbabilityPage,
+        isIndependentTTestPage,
+        isPairedTTestPage,
+        isOneWayAnovaPage,
+        isFactorialAnovaPage,
+        isAncovaPage,
+        isResult,
+        isHelp,
+        isStructuredResultPage,
+        availableResultSections,
+    } = resultPage;
+    const activeResultSection = resultSection || (isStructuredResultPage ? 'lessons' : 'calculator');
+    const pendingPowerLaunch = activeResultSection === 'power' ? { stepId: currentStepId, mode: powerMode } : null;
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -163,28 +114,6 @@ export default function App() {
         setActiveTutorScript(null);
     }, [currentStepId]);
 
-    useEffect(() => {
-        if (pendingPowerLaunch?.stepId === currentStepId && currentTestConfig) {
-            setActiveResultSection('power');
-            return;
-        }
-
-        setActiveResultSection(isStructuredResultPage ? 'lessons' : 'calculator');
-    }, [currentStepId, pendingPowerLaunch, currentTestConfig, isStructuredResultPage]);
-
-    useEffect(() => {
-        if (appMode !== 'wizard') {
-            setPendingPowerLaunch(null);
-        }
-    }, [appMode]);
-
-    const handleOptionClick = (option) => {
-        const nextStepId = option.next;
-        setAnswers({ ...answers, [currentStepId]: option.label });
-        setHistory([...history, nextStepId]);
-        setCurrentStepId(nextStepId);
-    };
-
     const handleBack = () => {
         // Just call browser back - if we have history within the app, it will pop.
         // If we don't (e.g. at Menu), it will go to last site.
@@ -192,22 +121,14 @@ export default function App() {
     };
 
     const handleRestart = () => {
-        setAppMode('menu');
-        setHistory(['start']);
-        setAnswers({});
-        setCurrentStepId('start');
+        restart();
         setReport("");
         setAiExplanation(null);
         setMathHistory([]);
-        setActiveResultSection('calculator');
-        setPendingPowerLaunch(null);
     };
 
     const handleOpenPowerCalculator = (testConfig, mode) => {
-        setPendingPowerLaunch({ stepId: testConfig.stepId, mode });
-        setCurrentStepId(testConfig.stepId);
-        setAppMode('wizard');
-        setActiveResultSection('power');
+        openStep(testConfig.stepId, { section: 'power', mode });
         setActiveTutorScript(null);
         setMathHistory([]);
     };
@@ -308,11 +229,7 @@ export default function App() {
 
     const showStructuredCalculator = Boolean(currentTestConfig) && activeResultSection === 'calculator';
     const handleResultSectionChange = (nextSection) => {
-        setActiveResultSection(nextSection);
-
-        if (nextSection !== 'power') {
-            setPendingPowerLaunch(null);
-        }
+        selectSection(nextSection);
 
         if (nextSection !== 'lessons') {
             setActiveTutorScript(null);
@@ -333,6 +250,7 @@ export default function App() {
         setCurrentStats, anovaTutor, factorialAnovaTutor, ancovaTutor, displayFormulaId,
     };
     const resultProps = {
+        selectPowerMode,
         darkMode, currentStep, availableResultSections, activeResultSection, handleResultSectionChange,
         isCentralTendencyPage, displayFormulaId, equationProps, isVariabilityPage, setCurrentStats,
         isFrequencyPage, isProbabilityPage, isPearsonCorrelationPage, currentStats, currentTestConfig,
@@ -345,8 +263,8 @@ export default function App() {
     };
     const contentProps = {
         history,
-        appMode, darkMode, setAppMode, setCurrentStepId, searchQuery,
-        setSearchQuery, handleOpenPowerCalculator, setActiveResultSection, isResult, isHelp,
+        appMode, darkMode, setAppMode, openStep, searchQuery,
+        setSearchQuery, handleOpenPowerCalculator, isResult, isHelp,
         currentStepId, currentStep, handleOptionClick, resultProps,
     };
     const overlayProps = {

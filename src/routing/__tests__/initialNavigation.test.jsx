@@ -62,8 +62,72 @@ it('switches probability sections and returns home through the header', async ()
     const button = (label) => [...container.querySelectorAll('button')].find(node => node.textContent.trim() === label);
     await act(async () => button('Demos').click());
     expect(container.textContent).toContain('Monty');
+    expect(window.location.hash).toBe('#/wizard/res_probability/demos');
+    expect(button('Demos').getAttribute('aria-pressed')).toBe('true');
     await act(async () => button('Calculator').click());
     expect(container.textContent).toContain('Exact binomial probability');
     await act(async () => container.querySelector('[aria-label="Return to StatWizard home"]').click());
     expect(container.textContent).toContain('Stat Modules');
+});
+
+const waitForView = async (assertion) => vi.waitFor(async () => {
+    await act(async () => { await vi.dynamicImportSettled(); });
+    assertion();
+}, { timeout: 5000 });
+const clickLabel = async (label) => act(async () => {
+    [...container.querySelectorAll('button')].find(node => node.textContent.trim() === label).click();
+});
+
+it('restores sections with browser Back and Forward without extra history entries', async () => {
+    const length = await mountAt('#/wizard/res_probability/demos');
+    await waitForView(() => expect(container.textContent).toContain('Monty'));
+    await clickLabel('Calculator');
+    expect(window.history.length).toBe(length + 1);
+    await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 20)); });
+    await waitForView(() => expect(container.textContent).toContain('Monty'));
+    expect(window.location.hash).toBe('#/wizard/res_probability/demos');
+    await act(async () => { window.history.forward(); await new Promise(resolve => setTimeout(resolve, 20)); });
+    await waitForView(() => expect(container.textContent).toContain('Exact binomial probability'));
+    expect(window.location.hash).toBe('#/wizard/res_probability/calculator');
+    expect(window.history.length).toBe(length + 1);
+});
+
+it('handles state-free hash navigation and malformed history after mounting', async () => {
+    await mountAt('#/menu');
+    await act(async () => {
+        window.location.hash = '#/wizard/res_probability/simulations';
+        await new Promise(resolve => setTimeout(resolve, 20));
+    });
+    await waitForView(() => expect(container.querySelector('.probability-workspace')).not.toBeNull());
+    expect(window.history.state.resultSection).toBe('simulations');
+    await act(async () => {
+        window.history.replaceState({ appMode: 'wizard', history: null }, '', '#/wizard/toString');
+        window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+    });
+    await waitForView(() => expect(container.textContent).toContain('Stat Modules'));
+    expect(window.location.hash).toBe('#/menu');
+});
+
+it('opens a power-mode deep link and reflects mode changes in the URL', async () => {
+    await mountAt('#/wizard/correlation_result/power/sensitivity');
+    await waitForView(() => expect(container.textContent).toContain('Pearson correlation power planning'));
+    await clickLabel('A Priori');
+    expect(window.location.hash).toBe('#/wizard/correlation_result/power/a_priori');
+    await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 20)); });
+    await waitForView(() => expect(window.location.hash).toBe('#/wizard/correlation_result/power/sensitivity'));
+    const selected = [...container.querySelectorAll('button')].find(node => node.textContent.trim() === 'Sensitivity');
+    expect(selected.getAttribute('aria-pressed')).toBe('true');
+});
+
+it('retains wizard answers when moving through questions and browser history', async () => {
+    await mountAt('#/wizard');
+    await waitForView(() => expect(container.textContent).toContain('Question 1'));
+    const option = [...container.querySelectorAll('main button')].find(node => node.querySelector('.lucide-arrow-right'));
+    expect(option).toBeDefined();
+    await act(async () => option.click());
+    expect(window.history.state.history).toHaveLength(2);
+    expect(window.history.state.answers.start).toBeTruthy();
+    await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 20)); });
+    await waitForView(() => expect(container.textContent).toContain('Question 1'));
+    expect(window.history.state.answers).toEqual({});
 });

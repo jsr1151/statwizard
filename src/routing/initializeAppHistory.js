@@ -1,5 +1,6 @@
 import { STEPS } from '../data/wizardSteps.js';
 import { parseAppRoute } from './appRoutes.js';
+import { getResultPage, getTestConfig } from './resultPageConfig.js';
 
 const isValidStep = (stepId) => typeof stepId === 'string' && Object.hasOwn(STEPS, stepId);
 const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -16,16 +17,16 @@ const canRestoreState = (state, route) => (
     && isRecord(state.answers)
 );
 
-// App restores history.state on mount. Seed it from the address before React
-// mounts so fresh deep links follow the same path as a browser reload.
-export const initializeAppHistory = (browserWindow = window) => {
-    const route = parseAppRoute(browserWindow.location.hash, {
+export const resolveAppHistory = (hash, storedState) => {
+    const route = parseAppRoute(hash, {
         isValidStep,
-        // The current shell only serializes pages and wizard steps. Section
-        // routing needs its own shell integration before these URLs can open.
-        isValidResultSection: () => false,
+        isValidResultSection: (stepId, section) => getResultPage(stepId)
+            .availableResultSections.some(item => item.id === section),
+        isValidPowerMode: (stepId, mode) => {
+            const config = getTestConfig(stepId)?.power;
+            return (config?.implementedPowerModes || []).includes(mode);
+        },
     });
-    const storedState = browserWindow.history.state;
     const state = canRestoreState(storedState, route) ? {
         appMode: storedState.appMode,
         currentStepId: storedState.currentStepId,
@@ -38,7 +39,16 @@ export const initializeAppHistory = (browserWindow = window) => {
         answers: {},
     };
 
+    // The address is authoritative for the visible section, including when
+    // returning to an older entry that only stored page/step information.
+    if (route.resultSection) state.resultSection = route.resultSection;
+    if (route.powerMode) state.powerMode = route.powerMode;
+
     // Match the shell's home spelling to avoid adding a history entry on mount.
-    const hash = route.appMode === 'menu' ? '#/menu' : route.canonicalHash;
+    return { state, hash: route.appMode === 'menu' ? '#/menu' : route.canonicalHash };
+};
+
+export const initializeAppHistory = (browserWindow = window) => {
+    const { state, hash } = resolveAppHistory(browserWindow.location.hash, browserWindow.history.state);
     browserWindow.history.replaceState(state, '', hash);
 };

@@ -15,6 +15,7 @@ const AnalysisSectionTabs = ({
                 <button
                     key={section.id}
                     type="button"
+                    aria-pressed={isActive}
                     onClick={() => onChange?.(section.id)}
                     className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg min-h-[3.25rem] text-sm font-black uppercase tracking-[0.18em] leading-tight text-center transition-all ${isActive
                         ? 'bg-indigo-600 text-white shadow-lg'

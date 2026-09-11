@@ -101,10 +101,12 @@ valid saved history retains wizard progress on reload; stale or malformed state
 is rebuilt from the URL. Invalid routes fall back to Home. Startup replaces
 the current history entry and uses the shell's `#/menu` spelling for Home.
 
-The follow-up leaves `App.jsx` unchanged. It covers initial page/module loads;
-result-section/power-mode suffixes and state-free hash changes after mounting
-still require separate shell integration. Repository-wide component
-decomposition and bundle work from the handoff also remain deferred.
+This first follow-up left `App.jsx` unchanged and covered initial page/module
+loads. The subsequent [navigation integration](NAVIGATION_IMPLEMENTATION.md)
+now also supports result sections, power-mode suffixes, and state-free hash
+changes after mounting. It extracted the application views and navigation
+hook; decomposition of the remaining large feature pages and bundle work
+remain deferred.
 
 Validation after this follow-up: 28 test files / 238 tests passed, including
 real-app StrictMode startup regressions and route/state validation. Lint,

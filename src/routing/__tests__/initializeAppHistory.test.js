@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { initializeAppHistory } from '../initializeAppHistory.js';
+import { STEPS } from '../../data/wizardSteps.js';
+import { getResultPage } from '../resultPageConfig.js';
 
 const savedState = {
     appMode: 'wizard',
@@ -20,6 +22,17 @@ const initialize = (hash, state = null) => {
 };
 
 describe('initial application history', () => {
+    it('accepts every section exposed by the application and rejects sections on wizard questions', () => {
+        for (const stepId of Object.keys(STEPS)) {
+            for (const { id } of getResultPage(stepId).availableResultSections) {
+                expect(initialize(`#/wizard/${stepId}/${id}`)).toMatchObject({
+                    appMode: 'wizard', currentStepId: stepId, resultSection: id,
+                });
+            }
+        }
+        expect(initialize('#/wizard/start/calculator').appMode).toBe('menu');
+        expect(initialize('#/wizard/correlation_result/power/unsupported').appMode).toBe('menu');
+    });
     it('opens a pasted probability module URL without existing history state', () => {
         expect(initialize('#/wizard/res_probability')).toEqual({
             appMode: 'wizard', currentStepId: 'res_probability',
@@ -40,11 +53,29 @@ describe('initial application history', () => {
 
     it.each(['', '#', '#/', '#/menu', '#/unknown', '#/wizard/missing',
         '#/wizard/toString', '#/wizard/__proto__', '#/%E0%A4%A',
-        '#/wizard/res_probability/calculator'])('uses Home for empty or unsupported route %j', (hash) => {
+        '#/wizard/res_probability/power'])('uses Home for empty or unsupported route %j', (hash) => {
         expect(initialize(hash)).toEqual({
             appMode: 'menu', currentStepId: 'start', history: ['start'], answers: {},
         });
         expect(window.location.hash).toBe('#/menu');
+    });
+
+    it.each(['lessons', 'calculator', 'simulations', 'demos', 'equation'])('restores the probability %s section', (section) => {
+        expect(initialize(`#/wizard/res_probability/${section}`)).toMatchObject({
+            appMode: 'wizard', currentStepId: 'res_probability', resultSection: section,
+        });
+    });
+
+    it.each(['a_priori', 'post_hoc', 'sensitivity'])('restores the %s power mode', (powerMode) => {
+        expect(initialize(`#/wizard/correlation_result/power/${powerMode}`)).toMatchObject({
+            appMode: 'wizard', currentStepId: 'correlation_result', resultSection: 'power', powerMode,
+        });
+    });
+
+    it('uses the section in the URL instead of stored section state', () => {
+        expect(initialize('#/wizard/res_probability/demos', {
+            ...savedState, resultSection: 'calculator', powerMode: 'sensitivity',
+        })).toEqual({ ...savedState, resultSection: 'demos' });
     });
 
     it('preserves wizard progress on reload and repeated initialization', () => {
