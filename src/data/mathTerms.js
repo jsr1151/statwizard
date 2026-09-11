@@ -36,7 +36,7 @@ export const MATH_TERMS = {
     "Max": { title: "Maximum", desc: "Largest observed value in the dataset.", calc: "Largest ordered observation." },
     "Min": { title: "Minimum", desc: "Smallest observed value in the dataset.", calc: "Smallest ordered observation." },
     "MAD": { title: "Median Absolute Deviation (MAD)", desc: "Robust typical distance from the sample median.", calc: "median(|{x} - {Median}|)" },
-    "CV": { title: "Coefficient of Variation (CV)", desc: "Standard deviation relative to the magnitude of the mean, expressed as a percentage.", calc: "({s} / |{xÌ„}|) Ã— 100%" },
+    "CV": { title: "Coefficient of Variation (CV)", desc: "Standard deviation relative to the magnitude of the mean, expressed as a percentage.", calc: "({s} / |{x̄}|) × 100%" },
     // 1-Group Focus
     "z": { title: "Z-Score", desc: "Standardized diff.", calc: "({x̄} - {μ}) / {SE}" },
     "mu": { title: "Population Mean (μ)", desc: "Known average.", calc: "Constant." },
