@@ -93,14 +93,17 @@ export default function MontyHallPanel({ darkMode, doorInput, handleMontyFinal, 
           const isSelected = montyState.selected === i;
           const isCar = d === 'car';
           return (
-            <div
+            <button
               key={i}
-              onClick={() => montyState.gameState === 'start' && handleMontyPick(i)}
-              className={`min-h-12 py-2 w-full rounded-lg border-2 flex flex-col items-center justify-center text-sm cursor-pointer transition-all active:scale-95 ${isSelected ? 'border-indigo-500 bg-indigo-500/20 shadow-indigo-500/20 shadow-lg z-10' : isRevealed ? (isCar ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-800 bg-slate-800/10 opacity-40 shadow-none grayscale') : darkMode ? 'border-slate-700 bg-slate-900/40 hover:border-slate-500 shadow-md' : 'border-slate-200 bg-white hover:border-slate-400 shadow-sm'}`}
+              type="button"
+              disabled={montyState.gameState !== 'start'}
+              aria-label={`Door ${i + 1}, ${isRevealed ? (isCar ? 'car' : 'goat') : 'closed'}${isSelected ? ', selected' : ''}`}
+              onClick={() => handleMontyPick(i)}
+              className={`min-h-12 py-2 w-full rounded-lg border-2 flex flex-col items-center justify-center text-sm cursor-pointer disabled:cursor-default transition-all enabled:active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 ${darkMode ? 'focus-visible:outline-indigo-300' : 'focus-visible:outline-indigo-700'} ${isSelected ? 'border-indigo-500 bg-indigo-500/20 shadow-indigo-500/20 shadow-lg z-10' : isRevealed ? (isCar ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-800 bg-slate-800/10 opacity-40 shadow-none grayscale') : darkMode ? 'border-slate-700 bg-slate-900/40 hover:border-slate-500 shadow-md' : 'border-slate-200 bg-white hover:border-slate-400 shadow-sm'}`}
             >
               <span className="animate-in fade-in zoom-in-50">{isRevealed ? (isCar ? '🏎️' : '🐐') : '🚪'}</span>
               <span className="text-[7px] font-black text-slate-500 mt-1 uppercase">#{i + 1}</span>
-            </div>
+            </button>
           );
         })}
       </div>
