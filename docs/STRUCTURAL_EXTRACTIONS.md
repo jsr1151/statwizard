@@ -22,7 +22,7 @@ edits. Its views now live in these existing section files:
 
 | Component | Lines | Responsibility |
 | --- | ---: | --- |
-| `RegressionCalculatorSection.jsx` | 348 | Data entry, fitted model, prediction, coefficient and residual views |
+| `RegressionCalculatorSection.jsx` | 354 | Data entry, fitted model, prediction, coefficient and residual views |
 | `RegressionLessonSection.jsx` | 248 | Presets, plot controls, prediction and residual spotlights |
 | `RegressionEffectSizeSection.jsx` | 151 | Fit/slope explanations and effect-size controls |
 | `RegressionPowerSection.jsx` | 34 | Shared power-planning surface |
@@ -51,11 +51,25 @@ effects, handlers, and all four extracted section render trees match the
 original implementation, ignoring formatting. Browser captures must let the
 shared power chart finish updating before comparing its displayed results.
 
+## Completed: regression calculator mobile layout
+
+The calculator's implicit mobile grid column inherited the coefficient
+table's minimum width, expanding a 375 px viewport to a 646 px page. Explicit
+single-column tracks and shrinkable grid items now keep the cards within the
+viewport. Long variable names wrap, and the fitted-model summary stacks on
+narrow screens. The coefficient table scrolls inside its card, with a named,
+keyboard-focusable region and visible focus styling.
+
+The follow-up passed 62 Edge checks across 375, 414, 768, 1024, and 1440 px in
+both themes. Sample data, confidence/prediction bands, extrapolation, long
+variable names, invalid data, empty data, and recovery had no page overflow
+or clipped controls. Tab and Arrow Right reached and scrolled the coefficient
+table without scrolling the page horizontally. Screenshots were inspected;
+no console warnings or errors occurred. All 260 tests, lint, build,
+documentation checks, and 30 power fixtures passed again.
+
 ## Follow-ups
 
-- The Simple Linear Regression calculator already overflows horizontally at
-  375 px in both themes. The baseline browser capture recorded this before
-  extraction. Address it in a separate layout fix.
 - Pearson Correlation, Data Manager, and Multiple Regression still exceed
   the 500-line component limit. Extract each separately with regression
   coverage; do not replace the current live views with older simplified ones.

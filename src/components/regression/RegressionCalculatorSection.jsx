@@ -19,7 +19,7 @@ export default function RegressionCalculatorSection({
     calculatorPredictionX, setCalculatorPredictionX, calculatorSelectedPair,
 }) {
     return (
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <Card darkMode={darkMode}>
                 <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
@@ -36,8 +36,8 @@ export default function RegressionCalculatorSection({
                 </div>
             </Card>
 
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-                <div className="lg:col-span-4 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="min-w-0 lg:col-span-4 space-y-6">
                     <Card darkMode={darkMode}>
                         <div className="flex items-center gap-3 mb-4">
                             <Database size={18} className={darkMode ? 'text-indigo-300' : 'text-indigo-700'} />
@@ -76,7 +76,7 @@ export default function RegressionCalculatorSection({
                             </div>
                         )}
 
-                        <div className="mt-6 grid gap-4">
+                        <div className="mt-6 grid grid-cols-1 gap-4">
                             <label className="block">
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predictor X</span>
                                 <select value={selectedX} onChange={(event) => setSelectedX(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
@@ -140,7 +140,7 @@ export default function RegressionCalculatorSection({
                     </Card>
                 </div>
 
-                <div className="lg:col-span-8 space-y-6">
+                <div className="min-w-0 lg:col-span-8 space-y-6">
                     <Card darkMode={darkMode}>
                         <RegressionScatterplot
                             pairs={calculatorStats?.pairs || []}
@@ -167,7 +167,7 @@ export default function RegressionCalculatorSection({
                         </div>
                     ) : (
                         <>
-                            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                 <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(calculatorStats.slope, 3)} tone="primary" detail={buildSlopeInterpretation({ slope: calculatorStats.slope, predictorLabel: selectedX || 'X', outcomeLabel: selectedY || 'Y' })} />
                                 <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(calculatorStats.intercept, 3)} detail={`Predicted ${selectedY || 'Y'} when ${selectedX || 'X'} = 0.`} />
                                 <MetricTile darkMode={darkMode} label="R²" value={formatStat(calculatorStats.rSquared, 3)} detail={`${formatStat(calculatorStats.rSquared * 100, 1)}% variance explained`} />
@@ -177,8 +177,8 @@ export default function RegressionCalculatorSection({
                             </div>
 
                             <Card darkMode={darkMode}>
-                                <div className="grid lg:grid-cols-12 gap-6 items-start">
-                                    <div className="lg:col-span-5 space-y-3">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                    <div className="min-w-0 lg:col-span-5 space-y-3">
                                         <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                             Prediction
                                         </div>
@@ -207,8 +207,8 @@ export default function RegressionCalculatorSection({
                                         </p>
                                     </div>
 
-                                    <div className="lg:col-span-7">
-                                        <div className="grid sm:grid-cols-3 gap-3">
+                                    <div className="min-w-0 lg:col-span-7">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
                                                 <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {selectedY || 'Y'}</div>
                                                 <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorPrediction?.fitted, 3)}</p>
@@ -241,8 +241,8 @@ export default function RegressionCalculatorSection({
                             </Card>
 
                             <Card darkMode={darkMode}>
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
                                         <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Fitted Model</div>
                                         <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{buildEquationText({ stats: calculatorStats, xLabel: selectedX || 'X', yLabel: selectedY || 'Y' })}</h3>
                                         <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -263,7 +263,12 @@ export default function RegressionCalculatorSection({
                                     </h3>
                                 </div>
 
-                                <div className="overflow-x-auto">
+                                <div
+                                    className="overflow-x-auto rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                    role="region"
+                                    aria-label="Regression coefficient table"
+                                    tabIndex={0}
+                                >
                                     <table className="w-full min-w-[560px] text-sm">
                                         <thead>
                                             <tr className={darkMode ? 'text-slate-500' : 'text-slate-500'}>
@@ -292,8 +297,8 @@ export default function RegressionCalculatorSection({
                             </Card>
 
                             <Card darkMode={darkMode}>
-                                <div className="grid lg:grid-cols-12 gap-6 items-start">
-                                    <div className="lg:col-span-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                    <div className="min-w-0 lg:col-span-4">
                                         <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                             <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-amber-300' : 'text-amber-700'}`}>Selected Case</div>
                                             <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
@@ -328,7 +333,7 @@ export default function RegressionCalculatorSection({
                                         </div>
                                     </div>
 
-                                    <div className="lg:col-span-8">
+                                    <div className="min-w-0 lg:col-span-8">
                                         <RegressionResidualPlot
                                             stats={calculatorStats}
                                             darkMode={darkMode}
