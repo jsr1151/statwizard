@@ -1,4 +1,4 @@
-const STATIC_MODES = new Set(['modules', 'search', 'power', 'lessons']);
+const STATIC_MODES = new Set(['modules', 'search', 'power', 'lessons', 'data_manager']);
 const RESULT_SECTIONS = new Set(['lessons', 'calculator', 'effect_size', 'power']);
 
 const homeRoute = (valid = true) => ({

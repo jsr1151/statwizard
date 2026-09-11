@@ -21,7 +21,7 @@ describe('application hash routes', () => {
         });
     });
 
-    it.each(['modules', 'search', 'power', 'lessons'])('round-trips the %s page', (appMode) => {
+    it.each(['modules', 'search', 'power', 'lessons', 'data_manager'])('round-trips the %s page', (appMode) => {
         const hash = serializeAppRoute({ appMode });
 
         expect(parseAppRoute(hash, routeOptions)).toMatchObject({

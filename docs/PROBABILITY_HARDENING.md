@@ -90,10 +90,26 @@ and `.vite/probability-journeys*` paths. Browser profiles are isolated under
 ignored `node_modules/.cache`. These are local review artifacts, not production
 dependencies.
 
-## Separate follow-up
+## Startup navigation follow-up (completed)
 
-A direct initial `#/wizard/res_probability` URL returned to the home screen in
-the browser review. Normal Stat Modules navigation works. This appears to be
-an existing application-shell routing issue; it is outside probability-panel
-hardening and no changes were made to `App.jsx` or the router. The repository-wide
-component decomposition and bundle work from the handoff also remain deferred.
+The browser review found that a fresh `#/wizard/res_probability` URL returned
+to Home: the shell initialized empty browser history without reading the URL.
+`src/routing/initializeAppHistory.js` now seeds the existing history contract
+from the address before React mounts. This also supports direct wizard-step
+links and the Modules, Search, Power, Lessons, and Data Manager pages. Matching,
+valid saved history retains wizard progress on reload; stale or malformed state
+is rebuilt from the URL. Invalid routes fall back to Home. Startup replaces
+the current history entry and uses the shell's `#/menu` spelling for Home.
+
+The follow-up leaves `App.jsx` unchanged. It covers initial page/module loads;
+result-section/power-mode suffixes and state-free hash changes after mounting
+still require separate shell integration. Repository-wide component
+decomposition and bundle work from the handoff also remain deferred.
+
+Validation after this follow-up: 28 test files / 238 tests passed, including
+real-app StrictMode startup regressions and route/state validation. Lint,
+production build, documentation checks, and all 30 power fixtures passed.
+A separate Edge review passed 12 checks covering direct pages, invalid URLs,
+probability reload with saved answers, and browser Back/Forward after using
+the actual Home and Stat Modules buttons. No console warnings or errors were
+reported. Its local harness and results are ignored artifacts under `.vite`.
