@@ -1,48 +1,151 @@
-import React, { useEffect, useState } from 'react';
-import { Info, Sigma, TrendingUp } from 'lucide-react';
-import { buildSlopeInterpretation, rSquaredToFSquared } from '../../stats/regression';
-import { formatStatistic } from '../../utils/statFormatters';
-import AnalysisCard from '../analysis/AnalysisCard';
-import AnalysisMetricTile from '../analysis/AnalysisMetricTile';
+import { Calculator, Info, Sigma, Target, TrendingUp } from "lucide-react";
+import { buildSlopeInterpretation, rSquaredToFSquared } from "../../stats/regression.js";
+import Card from '../analysis/AnalysisCard.jsx';
+import MetricTile from '../analysis/AnalysisMetricTile.jsx';
+import { formatStatistic as formatStat } from '../../utils/statFormatters.js';
 
-const RegressionEffectSizeSection = ({ currentStats, darkMode }) => {
-    const [rSquared, setRSquared] = useState(0.25);
-    const [slope, setSlope] = useState(0.8);
-    const [unitChange, setUnitChange] = useState(1);
-
-    useEffect(() => {
-        if (Number.isFinite(currentStats?.rSquared)) setRSquared(currentStats.rSquared);
-        if (Number.isFinite(currentStats?.slope)) setSlope(currentStats.slope);
-    }, [currentStats?.rSquared, currentStats?.slope]);
-
-    const fSquared = rSquaredToFSquared(rSquared);
-    const signedR = (slope >= 0 ? 1 : -1) * Math.sqrt(Math.max(0, rSquared));
-    const predictedChange = slope * unitChange;
-
+export default function RegressionEffectSizeSection({
+    effectSourceStats, darkMode, effectRSquared, setEffectRSquared,
+    effectSlope, setEffectSlope, effectUnitChange, setEffectUnitChange,
+    effectPredictedChange, effectFSquared,
+}) {
     return (
         <div className="space-y-8">
-            {currentStats?.ok && <AnalysisCard darkMode={darkMode}><div className="flex items-start justify-between gap-4"><div><div className="text-[10px] font-black uppercase tracking-widest mb-2 text-indigo-500">Current Calculator Snapshot</div><h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>R² = {formatStatistic(currentStats.rSquared)}</h3><p className="mt-2 text-sm text-slate-500">Slope {formatStatistic(currentStats.slope)}; adjusted R² {formatStatistic(currentStats.adjustedRSquared)}.</p></div><span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">f² = {formatStatistic(rSquaredToFSquared(currentStats.rSquared))}</span></div></AnalysisCard>}
+            {effectSourceStats?.ok && (
+                <Card darkMode={darkMode}>
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                Current Calculator Snapshot
+                            </div>
+                            <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                R² = {formatStat(effectSourceStats.rSquared, 3)}
+                            </h3>
+                            <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                The active calculator line has slope {formatStat(effectSourceStats.slope, 3)} and adjusted R² = {formatStat(effectSourceStats.adjustedRSquared, 3)}.
+                            </p>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${darkMode ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'}`}>
+                            f² = {formatStat(rSquaredToFSquared(effectSourceStats.rSquared), 3)}
+                        </div>
+                    </div>
+                </Card>
+            )}
+
             <div className="grid lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-5">
-                    <AnalysisCard darkMode={darkMode} className="h-full">
-                        <div className="flex items-center gap-3 mb-4"><div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400"><Sigma size={18} /></div><div><div className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Effect Size</div><h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Fit and slope are different ideas</h3></div></div>
-                        <p className="text-sm text-slate-500">R² summarizes fit, while the slope describes the predicted change in Y per unit of X. Power translates R² into Cohen’s f².</p>
-                        <div className="mt-6 grid gap-4">
-                            <label><span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Variance Explained (R²)</span><input type="number" min={0} max={0.999} step={0.01} value={rSquared} onChange={(event) => { const value = Number(event.target.value); if (Number.isFinite(value)) setRSquared(Math.max(0, Math.min(0.999, value))); }} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-900'}`} /></label>
-                            <label><span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Slope (b)</span><input type="number" step={0.01} value={slope} onChange={(event) => { const value = Number(event.target.value); if (Number.isFinite(value)) setSlope(value); }} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-900'}`} /></label>
-                            <label><span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Change in X</span><input type="number" step={0.1} value={unitChange} onChange={(event) => { const value = Number(event.target.value); if (Number.isFinite(value)) setUnitChange(value); }} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-900'}`} /></label>
+                    <Card darkMode={darkMode} className="h-full">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
+                                <Sigma size={18} />
+                            </div>
+                            <div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                    Effect Size
+                                </div>
+                                <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    Fit and slope are different ideas
+                                </h3>
+                            </div>
                         </div>
-                    </AnalysisCard>
+
+                        <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            In simple regression, R² is the clearest fit summary for many users. The slope tells you how predicted Y changes with X. The Power Analysis tab translates that fit into Cohen's f² = R² / (1 - R²).
+                        </p>
+
+                        <div className="mt-6 grid gap-4">
+                            <label className="block">
+                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                    Variance Explained (R²)
+                                </span>
+                                <input type="number" min={0} max={0.999} step={0.01} value={Number.isFinite(effectRSquared) ? effectRSquared : ''} onChange={(event) => {
+                                    const numeric = Number(event.target.value);
+                                    if (Number.isFinite(numeric)) {
+                                        setEffectRSquared(Math.max(0, Math.min(0.999, numeric)));
+                                    }
+                                }} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`} />
+                            </label>
+
+                            <label className="block">
+                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                    Slope (b)
+                                </span>
+                                <input type="number" step={0.01} value={Number.isFinite(effectSlope) ? effectSlope : ''} onChange={(event) => {
+                                    const numeric = Number(event.target.value);
+                                    if (Number.isFinite(numeric)) {
+                                        setEffectSlope(numeric);
+                                    }
+                                }} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`} />
+                            </label>
+
+                            <label className="block">
+                                <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                                    Change in X
+                                </span>
+                                <input type="number" step={0.1} value={Number.isFinite(effectUnitChange) ? effectUnitChange : ''} onChange={(event) => {
+                                    const numeric = Number(event.target.value);
+                                    if (Number.isFinite(numeric)) {
+                                        setEffectUnitChange(numeric);
+                                    }
+                                }} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`} />
+                            </label>
+                        </div>
+                    </Card>
                 </div>
+
                 <div className="lg:col-span-7 space-y-6">
-                    <div className="grid md:grid-cols-3 gap-4"><AnalysisMetricTile darkMode={darkMode} label="R²" value={formatStatistic(rSquared)} tone="primary" detail={`${formatStatistic(rSquared * 100, 1)}% variance explained.`} /><AnalysisMetricTile darkMode={darkMode} label="Equivalent r" value={formatStatistic(signedR)} detail="In simple regression, r follows the slope’s sign." /><AnalysisMetricTile darkMode={darkMode} label="Predicted Change" value={formatStatistic(predictedChange)} detail={buildSlopeInterpretation({ slope, units: unitChange })} /></div>
-                    <AnalysisCard darkMode={darkMode}><div className="flex items-center gap-3 mb-3"><TrendingUp size={18} className="text-emerald-500" /><h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>What R² means</h3></div><p className="text-sm text-slate-500">R² is the proportion of variability in Y accounted for by the fitted line; it does not describe slope size by itself.</p></AnalysisCard>
-                    <AnalysisCard darkMode={darkMode}><div className="flex items-center gap-3 mb-3"><Info size={18} className="text-amber-500" /><h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Why slope and fit can disagree</h3></div><p className="text-sm text-slate-500">Measurement scale and residual noise can produce a noticeable slope with weak fit, or a small slope with tight fit.</p></AnalysisCard>
-                    <AnalysisCard darkMode={darkMode}><div className="text-[10px] font-black uppercase tracking-widest mb-2 text-indigo-500">Power Connection</div><p className="text-sm text-slate-500">At the current R², Cohen’s f² = {formatStatistic(fSquared)}.</p></AnalysisCard>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <MetricTile darkMode={darkMode} label="R²" value={formatStat(effectRSquared, 3)} tone="primary" detail={`${formatStat(effectRSquared * 100, 1)}% of the outcome variance is explained by the line.`} />
+                        <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(effectSlope, 3)} detail={buildSlopeInterpretation({ slope: effectSlope, units: 1 })} />
+                        <MetricTile darkMode={darkMode} label="Predicted Change" value={formatStat(effectPredictedChange, 3)} detail={buildSlopeInterpretation({ slope: effectSlope, units: effectUnitChange })} />
+                    </div>
+
+                    <Card darkMode={darkMode}>
+                        <div className="flex items-center gap-3 mb-3">
+                            <TrendingUp size={18} className={darkMode ? 'text-emerald-300' : 'text-emerald-700'} />
+                            <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                What R² means
+                            </h3>
+                        </div>
+                        <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            R² tells you how much of the variability in Y is accounted for by the fitted straight line. It describes fit, not the size of the slope by itself.
+                        </p>
+                    </Card>
+
+                    <Card darkMode={darkMode}>
+                        <div className="flex items-center gap-3 mb-3">
+                            <Info size={18} className={darkMode ? 'text-amber-300' : 'text-amber-700'} />
+                            <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                Why slope and fit can disagree
+                            </h3>
+                        </div>
+                        <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            You can have a noticeable slope with a noisy cloud and a modest R², or a tight line with a small slope if the X scale is small. Significance, slope size, and fit are related but not interchangeable.
+                        </p>
+                    </Card>
+
+                    <Card darkMode={darkMode}>
+                        <div className="flex items-center gap-3 mb-3">
+                            <Target size={18} className={darkMode ? 'text-sky-300' : 'text-sky-700'} />
+                            <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                Slopes depend on units
+                            </h3>
+                        </div>
+                        <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            The slope is a rate of change, so rescaling X changes the slope value and its interpretation. The overall fit stays the same because the line still explains the same share of outcome variance.
+                        </p>
+                    </Card>
+
+                    <Card darkMode={darkMode}>
+                        <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                            Power Connection
+                        </div>
+                        <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            The power tab uses Cohen's f² for this first regression slice. At the current R², f² = {formatStat(effectFSquared, 3)}.
+                        </p>
+                    </Card>
                 </div>
             </div>
         </div>
     );
-};
-
-export default RegressionEffectSizeSection;
+}

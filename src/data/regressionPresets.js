@@ -1,10 +1,10 @@
 export const REGRESSION_TUTOR_PRESETS = [
-    ['positive_low_noise', 'Positive / Low Noise', 'A positive slope with tight scatter around the line.'],
-    ['positive_high_noise', 'Positive / High Noise', 'The slope stays positive while noise weakens the fit.'],
-    ['negative_low_noise', 'Negative / Low Noise', 'A clear downward line with little residual spread.'],
-    ['negative_high_noise', 'Negative / High Noise', 'The slope stays negative while predictions get noisier.'],
-    ['near_flat', 'Near-Flat Slope', 'A small slope is not the same as a strong predictive model.'],
-    ['nonlinear', 'Nonlinear', 'A curved pattern can make one straight line misleading.'],
+    ['positive_low_noise', 'Steep Upward / Tight Fit', 'A clear positive slope with small residuals, so the fitted line predicts well.'],
+    ['positive_high_noise', 'Steep Upward / Noisy Fit', 'The slope stays positive, but larger residuals make the predictions less precise.'],
+    ['negative_low_noise', 'Downward Slope / Tight Fit', 'A clear negative slope with little residual spread around the fitted line.'],
+    ['negative_high_noise', 'Downward Slope / Noisy Fit', 'The slope stays negative, but the line leaves larger prediction errors behind.'],
+    ['near_flat', 'Shallow Slope / Tight Fit', 'A shallow slope can still fit tightly, which helps separate rate of change from model fit.'],
+    ['nonlinear', 'Curved Pattern / Bad Linear Fit', 'A curved pattern can make a straight-line model predict badly even when it still returns a slope.'],
 ];
 
 export const REGRESSION_SAMPLE_DATASET = `Study Hours,Practice Problems,Exam Score,Stress Level

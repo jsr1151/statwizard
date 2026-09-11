@@ -43,9 +43,10 @@ equation interactions, and tutor overlays.
   their surrounding route while preserving their standalone callback API.
 
 The former 1,731-line `App.jsx` is now below the 500-line limit. This is the
-first independent structural slice from the handoff. Multiple Regression,
-Data Manager, Pearson Correlation, and Simple Linear Regression still need
-their own behavior-preserving extractions. Bundle optimization remains
+first independent structural slice from the handoff. Simple Linear Regression
+has since been extracted; see [structural progress](STRUCTURAL_EXTRACTIONS.md).
+Multiple Regression, Data Manager, and Pearson Correlation still need their
+own behavior-preserving extractions. Bundle optimization remains
 separate: the current build is about 313 kB for the main chunk and 492 kB for
 SheetJS, before gzip.
 
