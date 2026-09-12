@@ -21,7 +21,7 @@ export default function MultipleRegressionCalculatorSection({
     calculatorPredictionInputs, setCalculatorPredictionInputs, calculatorSelectedPair, calculatorGuidance,
 }) {
     return (
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <Card darkMode={darkMode}>
                 <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
@@ -41,8 +41,8 @@ export default function MultipleRegressionCalculatorSection({
                 </div>
             </Card>
 
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-                <div className="lg:col-span-4 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="min-w-0 lg:col-span-4 space-y-6">
                     <MultipleRegressionDataSourceCard {...{
                         darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
                         setTableText, tableText, selectedOutcome, setSelectedOutcome,
@@ -52,10 +52,10 @@ export default function MultipleRegressionCalculatorSection({
                     }} />
                 </div>
 
-                <div className="lg:col-span-8 space-y-6">
+                <div className="min-w-0 lg:col-span-8 space-y-6">
                     {(activeCompleteCaseSummary.total > 0 && (activeCompleteCaseSummary.usable > 0 || activeCompleteCaseSummary.dropped > 0)) && (
                         <Card darkMode={darkMode}>
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div>
                                     <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                         Complete-case summary
@@ -99,7 +99,7 @@ export default function MultipleRegressionCalculatorSection({
                         </Card>
                     ) : (
                         <>
-                            <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                                 <MetricTile darkMode={darkMode} label="R^2" value={formatStat(calculatorStats.rSquared, 3)} detail={`${formatStat(calculatorStats.rSquared * 100, 1)}% variance explained`} tone="primary" />
                                 <MetricTile darkMode={darkMode} label="Adjusted R^2" value={formatStat(calculatorStats.adjustedRSquared, 3)} detail="Complexity-adjusted model fit" />
                                 <MetricTile darkMode={darkMode} label="RMSE" value={formatStat(calculatorStats.rmse, 3)} detail="Typical prediction error size" />
@@ -108,7 +108,7 @@ export default function MultipleRegressionCalculatorSection({
                             </div>
 
                             <Card darkMode={darkMode}>
-                                <div className="flex items-start justify-between gap-4">
+                                <div className="flex flex-wrap items-start justify-between gap-4">
                                     <div>
                                         <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                             Fitted Model
@@ -126,7 +126,7 @@ export default function MultipleRegressionCalculatorSection({
                                 </div>
                             </Card>
 
-                            <div className="grid gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 <Card darkMode={darkMode}>
                                     <ObservedFittedPlot
                                         stats={calculatorStats}
@@ -158,7 +158,7 @@ export default function MultipleRegressionCalculatorSection({
                                 darkMode, confidenceLevel, calculatorStats,
                             }} />
 
-                            <div className="grid xl:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                                 <Card darkMode={darkMode}>
                                     <div className="flex items-center gap-3 mb-4">
                                         <Info size={18} className={darkMode ? 'text-sky-300' : 'text-sky-700'} />

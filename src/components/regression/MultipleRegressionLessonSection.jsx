@@ -31,7 +31,7 @@ export default function MultipleRegressionLessonSection({
     setLessonFloatVisualMinimized, lessonFloatVisualMinimized,
 }) {
     return (
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <Card darkMode={darkMode}>
                 <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
@@ -49,8 +49,8 @@ export default function MultipleRegressionLessonSection({
                 </div>
             </Card>
 
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-                <div className="lg:col-span-8 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="min-w-0 lg:col-span-8 space-y-6">
                     <div ref={lessonMainVisualRef}>
                         <MultipleRegressionTeachingView {...{
                             darkMode, lessonMainViews, lessonMainView, setLessonMainView,
@@ -74,7 +74,7 @@ export default function MultipleRegressionLessonSection({
 
                     {lessonStats?.ok && (
                         <Card darkMode={darkMode}>
-                            <div className="flex items-start justify-between gap-4 mb-5">
+                            <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
                                 <div>
                                     <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                         Model summary
@@ -91,7 +91,7 @@ export default function MultipleRegressionLessonSection({
                                 </div>
                             </div>
 
-                            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                 <MetricTile
                                     darkMode={darkMode}
                                     label={<TooltipLabel darkMode={darkMode} label="Intercept" tooltipKey="intercept" />}
@@ -163,7 +163,7 @@ export default function MultipleRegressionLessonSection({
                     )}
                 </div>
 
-                <div className="lg:col-span-4 space-y-6">
+                <div className="min-w-0 lg:col-span-4 space-y-6">
                     <MultipleRegressionTutorControls {...{
                         darkMode, setLessonContextId, lessonContextId, applyScenario,
                         lessonScenario, lessonBeta1, setLessonBeta1, lessonBeta2,
@@ -200,7 +200,7 @@ export default function MultipleRegressionLessonSection({
                             </div>
                             <button
                                 onClick={() => setLessonFloatVisualMinimized((previous) => !previous)}
-                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'}`}
+                                className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'}`}
                             >
                                 {lessonFloatVisualMinimized ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                 {lessonFloatVisualMinimized ? 'Show' : 'Minimize'}

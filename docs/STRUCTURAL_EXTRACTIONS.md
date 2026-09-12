@@ -272,17 +272,42 @@ passed 36 cases: six sections at 375, 768, and 1440 px in both themes.
 Visible text, control values, plotted points, and overflow match the fixed
 baseline, with no console errors or React warnings. The comparison waits
 for calculator prediction inputs to initialize before taking snapshots.
-The existing overflow is unchanged and remains listed below.
+The extraction preserved the existing overflow; the layout follow-up below
+resolves it.
 
 The production build reports approximately 135.2 kB for the Multiple
 Regression feature chunk (31.8 kB gzip), compared with 123.3 kB (27.7 kB
 gzip) before extraction. Bundle optimization remains a separate task.
 
+## Completed: Multiple Regression responsive layout
+
+At 375 px, the calculator expanded to 846 px and the lesson to 966 px.
+Their implicit grid columns inherited the coefficient tables' minimum
+widths. Explicit single-column tracks and shrinkable grid items now keep
+both sections within the viewport. Long variable names can wrap, summary
+badges flow onto another line when needed, and diagnostic status badges sit
+below their explanations. The floating graph dock keeps its Minimize
+button on one line.
+
+Both coefficient tables now have named, keyboard-focusable scroll regions
+with visible focus outlines. The tables retain their column widths and
+scroll internally without moving the page sideways.
+
+Browser review passed 170 layout cases at 375, 414, 768, 1024, and 1440 px
+in both themes, covering calculator setup/recovery, lesson visualizations,
+context/outlier changes, expanded diagnostics, and the floating dock.
+Ten additional cases verified fitted models with long variable names.
+Four keyboard checks verified Tab access, Arrow Right scrolling, and
+visible focus for both tables in both themes. Two checks at 375 x 667 px
+verified that the dock stays inside the viewport with a long plot title.
+Screenshots were inspected; no console errors or React warnings occurred.
+
+All 33 test files / 300 tests pass, together with lint, production build,
+documentation checks, and all 30 power fixtures. All touched components
+remain below 500 lines.
+
 ## Follow-ups
 
-- Multiple Regression's lesson and calculator already overflowed at 375
-  and 768 px in both themes before extraction. Address their layout in a
-  separate follow-up; this slice preserves their existing styles.
 - Bundle optimization remains separate. This build reports approximately
   313 kB for the main chunk, 492 kB for SheetJS, and 55 kB for the Simple Linear
   Regression feature chunk before gzip. The extracted Pearson feature chunk

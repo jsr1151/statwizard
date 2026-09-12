@@ -18,7 +18,7 @@ export default function MultipleRegressionLessonCoefficients({
                 </h3>
             </div>
 
-            <div className="overflow-x-auto">
+            <div role="region" aria-label="Lesson coefficient table" tabIndex={0} className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
                 <table className="w-full min-w-[880px] text-sm">
                     <thead>
                         <tr className={darkMode ? 'text-slate-500' : 'text-slate-500'}>

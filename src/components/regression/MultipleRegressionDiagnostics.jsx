@@ -27,7 +27,7 @@ export default function MultipleRegressionDiagnostics({
                     return (
                         <details key={item.id} className={`rounded-2xl border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                             <summary className="cursor-pointer list-none px-5 py-4">
-                                <div className="flex items-center justify-between gap-4">
+                                <div className="flex flex-col items-start gap-4">
                                     <div>
                                         <div className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.label}</div>
                                         <div className={`mt-1 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>{item.what}</div>

@@ -59,7 +59,7 @@ export default function MultipleRegressionTeachingView({
         </div>
 
         <div className={`lg:hidden rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                         Prediction controls
@@ -73,7 +73,7 @@ export default function MultipleRegressionTeachingView({
                 </div>
             </div>
 
-            <div className="mt-4 grid gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-3">
                 {lessonStats?.predictorSummaries?.map((summary) => (
                     <label key={`quick-${summary.label}`} className="block">
                         <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
@@ -101,7 +101,7 @@ export default function MultipleRegressionTeachingView({
                 ))}
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                 <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
                     <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
                         Predicted {lessonContext.outcomeLabel}
