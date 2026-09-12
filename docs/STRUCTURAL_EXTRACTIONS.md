@@ -108,11 +108,61 @@ the original implementation, ignoring formatting.
 Repository validation: 30 test files / 269 tests passed, along with lint,
 production build, documentation checks, and all 30 power fixtures.
 
+## Completed: Data Manager page
+
+`DataManagerPage.jsx` decreased from 2,484 to 239 lines. The page now composes
+the library, workspace, import controls, preview, transformation workbench,
+and analysis launcher. Editing state remains mounted at page scope through
+three hooks:
+
+| Hook | Lines | Responsibility |
+| --- | ---: | --- |
+| `useDataManagerEditor.js` | 498 | Editor/draft state, derived previews, metadata edits, and undo |
+| `useDataManagerFiles.js` | 366 | Import, save, duplicate, delete, export, and analysis launch |
+| `useDataManagerTransforms.js` | 448 | Derived variables, reverse coding, recoding, centering, and reshaping |
+
+The extracted views are `DataManagerHeader`, `DatasetLibraryCard`,
+`DatasetWorkspaceSummary`, `DatasetImportControls`, `DatasetPreviewCard`,
+and `DatasetAnalysisLauncher`. Their sizes range from 49 to 116 lines.
+Dataset status pills and summary fields also have separate components, and
+the page reuses the shared analysis card. The existing disabled legacy
+transform controls remain disabled in `DatasetLegacyTransforms.jsx`
+(434 lines). Pure helpers and options live in
+`src/utils/dataManagerHelpers.js` and `src/data/dataManagerOptions.js`.
+
+Nine component tests passed before and after extraction. They cover invalid
+imports and recovery, CSV header selection, real Excel sheet switching,
+save/clear/reopen/rename, duplication and deletion cancellation, derived
+variables, centering and reverse coding, button and keyboard undo, save
+failure recovery, and saving dirty data before an analysis launch with its
+variable roles. Tests use the real dataset library provider and mock storage
+at its persistence boundary.
+
+All 24 browser comparisons matched for displayed content, control values,
+and overflow status: empty, imported, centered, and analysis-launcher states
+at 375, 768, and 1440 px in both themes. No console errors or React warnings
+occurred. Mobile and desktop screenshots were inspected. A source-tree
+comparison confirmed that every original page statement moved exactly once
+and that all state, effects, handlers, helpers, constants, and extracted
+render trees match the original implementation, ignoring formatting.
+
+The baseline already overflowed horizontally at 375 px after import, in
+the centered state, and with the launcher open, in both themes. The same six
+cases overflow after extraction. Address this in a separate layout change.
+
+Repository validation: 31 test files / 278 tests passed, along with lint,
+production build, documentation checks, and all 30 power fixtures. The Data
+Manager feature chunk grew from approximately 82.5 to 89.7 kB before gzip
+(17.5 to 19.0 kB gzip); bundle optimization remains a separate follow-up.
+
 ## Follow-ups
 
-- Data Manager and Multiple Regression still exceed
-  the 500-line component limit. Extract each separately with regression
-  coverage; do not replace the current live views with older simplified ones.
+- Multiple Regression still exceeds the 500-line component limit. Data
+  Manager's existing `DataTransformWorkbench.jsx` is also 1,018 lines and
+  remains a separate extraction. Add coverage for its remaining transform
+  modes and grouped/reshape workflows before moving them.
+- Fix Data Manager's existing mobile overflow, including imported data,
+  transformation states, and its analysis launcher.
 - Bundle optimization remains separate. This build reports approximately
   313 kB for the main chunk, 492 kB for SheetJS, and 55 kB for the Simple Linear
   Regression feature chunk before gzip. The extracted Pearson feature chunk
