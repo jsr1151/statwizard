@@ -1,0 +1,97 @@
+{
+  "checks": [
+    {
+      "label": "restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/scope",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/blank-null",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/out-of-range-null",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/cleared-variable",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "paired rows and exclusion details restored",
+    "table, roles, hypothesis, confidence, null value and plot settings recover together",
+    "blank and out-of-range null values block test output",
+    "cleared variables stay empty",
+    "invalid and empty table restored",
+    "uploaded table and source recovered",
+    "fresh Data Manager launch overrides old inference settings",
+    "saved role and inference recovery",
+    "removal cancel, confirm and keyboard activation",
+    "failed save retains previous draft"
+  ]
+}

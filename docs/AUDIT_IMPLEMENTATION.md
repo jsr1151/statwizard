@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: Pearson correlation draft recovery
+
+Pearson now restores its table/source, X/Y choices for each source, hypothesis direction, confidence level, null population correlation, and plot display settings. Fresh Data Manager launches take priority over older drafts. Cleared or unavailable variables remain unselected. Blank and out-of-range null values stay editable and block test output rather than being converted to zero or clamped. Shared inference controls expose selected states and validation to assistive technology.
+
+Validation: 571 tests in 51 files, lint, production build, documentation, power fixtures, and bundle checks passed. All 16 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](PEARSON_DRAFT_VALIDATION.md). T-test/ANOVA draft recovery remains open.
+
 ## September 12: multiple regression draft recovery
 
 Multiple regression now recovers its table/source, outcome and predictor choices, confidence level, and prediction inputs. Pasted data and each saved dataset have separate variable choices and prediction profiles, with stable column IDs preserving saved prediction inputs through renames. Cleared or unavailable predictors no longer cause automatic reselection or a silently reduced model. Prediction inputs retain out-of-range values and blank fields instead of being clamped or treated as zero.
@@ -96,7 +102,7 @@ Automated accessibility snapshots do not establish complete accessibility confor
 
 ## Remaining work, in recommended order
 
-1. **Finish analysis workflow coverage.** Extend draft recovery from descriptive inputs and simple/multiple regression to correlation and t-test/ANOVA data, variable mappings, and settings. Add consistent reporting actions and review manual-input exclusions inside the older calculators. Complete an end-to-end keyboard and screen-reader review of nested plots and editors. Descriptive saved-data launches and multi-column file selection remain potential extensions beyond the now-labeled single-variable inputs.
+1. **Finish analysis workflow coverage.** Extend draft recovery from descriptive inputs, Pearson correlation, and simple/multiple regression to t-test/ANOVA data, variable mappings, and settings. Add consistent reporting actions and review manual-input exclusions inside the older calculators. Complete an end-to-end keyboard and screen-reader review of nested plots and editors. Descriptive saved-data launches and multi-column file selection remain potential extensions beyond the now-labeled single-variable inputs.
 2. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators. Repeated-measures power, mixed/factorial repeated designs, post-hoc comparisons, and additional confidence intervals need separate validation.
 3. **Improve reproducibility and recovery.** Add analysis/report export with inputs, exclusions, assumptions, and results; consider durable draft recovery and clearer backup/restore controls. Review power interpretation and advanced model limitations as part of this work.
 4. **Expand learning beyond the introductory path.** Add further worked examples and practice for comparing groups, association, and model assumptions. Review existing module explanations for consistency, and consider progress export and broader screen-reader testing.

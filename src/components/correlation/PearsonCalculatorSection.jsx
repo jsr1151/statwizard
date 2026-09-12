@@ -1,4 +1,6 @@
 import { useRef } from 'react';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
+import PearsonInferenceFields from './PearsonInferenceFields.jsx';
 import AnalysisRowSummary from '../analysis/AnalysisRowSummary.jsx';
 import { AlertTriangle, Calculator, CheckCircle, SlidersHorizontal } from "lucide-react";
 import PearsonScatterplot from "./PearsonScatterplot";
@@ -11,13 +13,13 @@ import { formatPValue } from '../../utils/statFormatters.js';
 import PearsonDataSourceCard from './PearsonDataSourceCard.jsx';
 
 export default function PearsonCalculatorSection({
-    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
+    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary, draft, setupError,
 
     tails, direction, darkMode, setCalculatorInputMode,
     calculatorInputMode, onUpload, setTableText, tableText,
     selectedDatasetId, setSelectedDatasetId, datasets, savedDataset,
     savedNumericColumns, savedRoleSelection, setSavedRoleSelection, activeCompleteCaseSummary,
-    setTails, setDirection, confidenceLevel, setConfidenceLevel,
+    setHypothesis, confidenceLevel, setConfidenceLevel,
     rho0, setRho0, setCalculatorShowLine, calculatorShowLine,
     setCalculatorShowBand, calculatorShowBand, parsedTable, numericColumns,
     selectedX, setSelectedX, selectedY, setSelectedY,
@@ -26,10 +28,9 @@ export default function PearsonCalculatorSection({
 }) {
     const resultsRef = useRef(null);
     const onGoResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
-    const setupState = tails === 2 ? 'two_tailed' : (direction === 'less' ? 'negative' : 'positive');
 
     return (
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <Card darkMode={darkMode}>
                 <div className="flex items-start gap-4">
                     <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
@@ -47,7 +48,8 @@ export default function PearsonCalculatorSection({
             </Card>
 
             <div className="grid lg:grid-cols-12 gap-8 items-start">
-                <div className="lg:col-span-4 space-y-6">
+                <div className="min-w-0 lg:col-span-4 space-y-6">
+                    <CalculatorDraftNotice {...{ draft, darkMode }} scope="Recovery includes the entered or uploaded table, data source, variable choices for each source, hypothesis direction, confidence level, null population correlation, and line and band display settings." />
                     <PearsonDataSourceCard {...{
                         tableSource, loadExample, uploadError, uploadPending, onGoResults, hasResults: !!calculatorStats?.ok, onOpenDataManager,
                         darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
@@ -114,7 +116,7 @@ export default function PearsonCalculatorSection({
                                     <div className={`rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                         <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Complete cases</div>
                                         <p className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                            {activeCompleteCaseSummary.usable} of {activeCompleteCaseSummary.total} rows are usable after dropping incomplete X or Y values.
+                                            {activeCompleteCaseSummary ? `${activeCompleteCaseSummary.usable} of ${activeCompleteCaseSummary.total} rows are usable after dropping incomplete X or Y values.` : 'Choose two different numeric variables to review complete rows.'}
                                         </p>
                                     </div>
 
@@ -122,76 +124,7 @@ export default function PearsonCalculatorSection({
                                         Data preparation lives in Data Manager. This calculator focuses on mapping variables and running the existing Pearson engine.
                                     </p>
 
-                                    <div>
-                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Hypothesis Direction</span>
-                                        <div className={`mt-2 rounded-xl border p-1 flex gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                            {[
-                                                ['two_tailed', 'Two-tailed'],
-                                                ['positive', 'Positive'],
-                                                ['negative', 'Negative'],
-                                            ].map(([id, label]) => {
-                                                const isActive = setupState === id;
-                                                return (
-                                                    <button
-                                                        key={id}
-                                                        onClick={() => {
-                                                            if (id === 'two_tailed') {
-                                                                setTails(2);
-                                                            } else {
-                                                                setTails(1);
-                                                                setDirection(id === 'negative' ? 'less' : 'greater');
-                                                            }
-                                                        }}
-                                                        className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900 hover:bg-white')}`}
-                                                    >
-                                                        {label}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    <label className="block">
-                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Confidence Level</span>
-                                        <select value={confidenceLevel} onChange={(event) => setConfidenceLevel(Number(event.target.value))} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
-                                            <option value={0.9}>90%</option>
-                                            <option value={0.95}>95%</option>
-                                            <option value={0.99}>99%</option>
-                                        </select>
-                                    </label>
-
-                                    <label className="block">
-                                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Null Population Correlation (rho0)</span>
-                                        <input
-                                            type="number"
-                                            min={-0.95}
-                                            max={0.95}
-                                            step={0.01}
-                                            value={rho0}
-                                            onChange={(event) => {
-                                                const numeric = Number(event.target.value);
-                                                if (Number.isFinite(numeric)) {
-                                                    setRho0(Math.max(-0.95, Math.min(0.95, numeric)));
-                                                }
-                                            }}
-                                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                                        />
-                                        <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                            Usually 0. This is the population correlation value the hypothesis test is evaluated against.
-                                        </p>
-                                    </label>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button onClick={() => setCalculatorShowLine((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${calculatorShowLine ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{calculatorShowLine ? 'Hide Line' : 'Show Line'}</button>
-                                        <button onClick={() => setCalculatorShowBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${calculatorShowBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{calculatorShowBand ? 'Hide Band' : 'Show Band'}</button>
-                                    </div>
-
-                                    <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                        <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Notation</div>
-                                        <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                            This calculator reports the observed sample correlation as r. Population language uses rho, and rho0 names the null population correlation being tested.
-                                        </p>
-                                    </div>
+                                    <PearsonInferenceFields {...{ darkMode, tails, direction, setHypothesis, confidenceLevel, setConfidenceLevel, rho0, setRho0, calculatorShowLine, setCalculatorShowLine, calculatorShowBand, setCalculatorShowBand }} />
                                 </div>
                             )
                         ) : !parsedTable.ok ? (
@@ -206,14 +139,16 @@ export default function PearsonCalculatorSection({
                             <div className="space-y-4">
                                 <label className="block">
                                     <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>X Variable</span>
-                                    <select value={selectedX} onChange={(event) => setSelectedX(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                    <select aria-label="X Variable" value={selectedX} onChange={(event) => setSelectedX(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                        <option value="">Choose numeric variable</option>
                                         {numericColumns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
                                     </select>
                                 </label>
 
                                 <label className="block">
                                     <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Y Variable</span>
-                                    <select value={selectedY} onChange={(event) => setSelectedY(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                    <select aria-label="Y Variable" value={selectedY} onChange={(event) => setSelectedY(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                        <option value="">Choose numeric variable</option>
                                         {numericColumns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
                                     </select>
                                 </label>
@@ -221,80 +156,11 @@ export default function PearsonCalculatorSection({
                                 <div className={`rounded-xl border px-4 py-3 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                                     <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Complete cases</div>
                                     <p className={`mt-2 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                        {activeCompleteCaseSummary.usable} of {activeCompleteCaseSummary.total} rows are usable after dropping incomplete X or Y values.
+                                        {activeCompleteCaseSummary ? `${activeCompleteCaseSummary.usable} of ${activeCompleteCaseSummary.total} rows are usable after dropping incomplete X or Y values.` : 'Choose two different numeric variables to review complete rows.'}
                                     </p>
                                 </div>
 
-                                <div>
-                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Hypothesis Direction</span>
-                                    <div className={`mt-2 rounded-xl border p-1 flex gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                        {[
-                                            ['two_tailed', 'Two-tailed'],
-                                            ['positive', 'Positive'],
-                                            ['negative', 'Negative'],
-                                        ].map(([id, label]) => {
-                                            const isActive = setupState === id;
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    onClick={() => {
-                                                        if (id === 'two_tailed') {
-                                                            setTails(2);
-                                                        } else {
-                                                            setTails(1);
-                                                            setDirection(id === 'negative' ? 'less' : 'greater');
-                                                        }
-                                                    }}
-                                                    className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-indigo-600 text-white shadow-lg' : (darkMode ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-900' : 'text-slate-500 hover:text-slate-900 hover:bg-white')}`}
-                                                >
-                                                    {label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <label className="block">
-                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Confidence Level</span>
-                                    <select value={confidenceLevel} onChange={(event) => setConfidenceLevel(Number(event.target.value))} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
-                                        <option value={0.9}>90%</option>
-                                        <option value={0.95}>95%</option>
-                                        <option value={0.99}>99%</option>
-                                    </select>
-                                </label>
-
-                                <label className="block">
-                                    <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Null Population Correlation (rho0)</span>
-                                    <input
-                                        type="number"
-                                        min={-0.95}
-                                        max={0.95}
-                                        step={0.01}
-                                        value={rho0}
-                                        onChange={(event) => {
-                                            const numeric = Number(event.target.value);
-                                            if (Number.isFinite(numeric)) {
-                                                setRho0(Math.max(-0.95, Math.min(0.95, numeric)));
-                                            }
-                                        }}
-                                        className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                                    />
-                                    <p className={`mt-2 text-xs leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                        Usually 0. This is the population correlation value the hypothesis test is evaluated against.
-                                    </p>
-                                </label>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => setCalculatorShowLine((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${calculatorShowLine ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{calculatorShowLine ? 'Hide Line' : 'Show Line'}</button>
-                                    <button onClick={() => setCalculatorShowBand((value) => !value)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${calculatorShowBand ? 'bg-indigo-600 text-white border-indigo-500' : (darkMode ? 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900')}`}>{calculatorShowBand ? 'Hide Band' : 'Show Band'}</button>
-                                </div>
-
-                                <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Notation</div>
-                                    <p className={`mt-2 text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                        This calculator reports the observed sample correlation as r. Population language uses rho, and rho0 names the null population correlation being tested.
-                                    </p>
-                                </div>
+                                <PearsonInferenceFields {...{ darkMode, tails, direction, setHypothesis, confidenceLevel, setConfidenceLevel, rho0, setRho0, calculatorShowLine, setCalculatorShowLine, calculatorShowBand, setCalculatorShowBand }} />
                             </div>
                         )}
                     </Card>
@@ -343,7 +209,7 @@ export default function PearsonCalculatorSection({
 
                     {!calculatorStats?.ok ? (
                         <div className={`rounded-2xl border p-5 ${darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
-                            {calculatorStats?.errors?.join(' ') || 'Choose two different numeric columns to compute Pearson correlation.'}
+                            {setupError || calculatorStats?.errors?.join(' ') || 'Choose two different numeric columns to compute Pearson correlation.'}
                         </div>
                     ) : (
                         <>
