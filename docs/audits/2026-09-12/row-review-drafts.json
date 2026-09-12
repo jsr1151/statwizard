@@ -1,0 +1,225 @@
+{
+  "checks": [
+    {
+      "label": "res_central_tendency/restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/write-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/write-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/write-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Independent Samples t-Test/row-review/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Independent Samples t-Test/row-review/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Independent Samples t-Test/row-review/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Independent Samples t-Test/row-review/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Paired Samples t-Test/row-review/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Paired Samples t-Test/row-review/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Paired Samples t-Test/row-review/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Paired Samples t-Test/row-review/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Way ANOVA/row-review/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Way ANOVA/row-review/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Way ANOVA/row-review/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Way ANOVA/row-review/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "ANCOVA/row-review/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "ANCOVA/row-review/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "ANCOVA/row-review/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "ANCOVA/row-review/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Sample t-Test/row-review/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Sample t-Test/row-review/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Sample t-Test/row-review/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Sample t-Test/row-review/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Factorial ANOVA/row-review/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Factorial ANOVA/row-review/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Factorial ANOVA/row-review/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Factorial ANOVA/row-review/375/false",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "three independent descriptive drafts",
+    "exact input and source recovery after reload",
+    "cancel and confirm removal",
+    "removal keeps current values but reloads example",
+    "failed writes preserve previous draft and current edits",
+    "six Data Manager launches with missing and nonnumeric outcomes",
+    "saved row numbers and exclusion reasons",
+    "cleared roles hide review and calculator"
+  ]
+}

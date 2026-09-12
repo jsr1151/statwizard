@@ -2,6 +2,8 @@
 
 Implemented September 12, 2026, following the [site audit](SITE_AUDIT_2026-09-11.md).
 
+Subsequent update: [browser-local input recovery](ROW_REVIEW_DRAFT_VALIDATION.md) now covers these three descriptive calculators. The scope below records the earlier source/copy workflow release.
+
 ## Changes
 
 Central tendency, variability, and frequency calculators and explorers identify the active example or entered values. A results summary reports included and excluded nonempty entries. Numeric calculators disclose excluded non-numeric/nonfinite entries, including when no usable values remain, with the first 100 displayed. A Go to results button focuses the result section. Loading the default example is named explicitly, and input/source state survives switching between calculator and explorer.

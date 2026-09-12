@@ -132,7 +132,7 @@ const DataPlot = ({ stats, darkMode }) => {
 };
 
 export default function CentralTendencyPage({ section, darkMode, onStatsChange }) {
-    const { input, setInput, source, loadExample } = useDescriptiveInput(EXAMPLES, 'symmetric');
+    const { input, setInput, source, loadExample, draft } = useDescriptiveInput(EXAMPLES, 'symmetric', 'central-tendency');
     const resultsRef = useRef(null);
     const goToResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
     const [precision, setPrecision] = useState(2);
@@ -152,7 +152,7 @@ export default function CentralTendencyPage({ section, darkMode, onStatsChange }
                     <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400">{section === 'calculator' ? <Calculator size={21} /> : <BarChart3 size={21} />}</div>
                     <div><h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{section === 'calculator' ? 'Central tendency calculator' : 'Distribution explorer'}</h3><p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Enter numbers separated by commas, spaces, semicolons, or new lines. Results update immediately.</p></div>
                 </div>
-                <DescriptiveInputNotice source={source} darkMode={darkMode} categorical={false} hasResults={!!stats} onGoResults={goToResults} /><label htmlFor="central-values" className="block mt-6 mb-2 text-sm font-bold">Observed values</label>
+                <DescriptiveInputNotice draft={draft} source={source} darkMode={darkMode} categorical={false} hasResults={!!stats} onGoResults={goToResults} /><label htmlFor="central-values" className="block mt-6 mb-2 text-sm font-bold">Observed values</label>
                 <textarea id="central-values" value={input} onChange={(event) => setInput(event.target.value)} rows={4} className={`w-full rounded-xl border p-4 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 ${darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300'}`} />
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                     {Object.entries(EXAMPLES).map(([id, values]) => <button key={id} type="button" onClick={() => loadExample(id)} className={`px-3 py-2 rounded-lg text-xs font-bold capitalize ${darkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-100 hover:bg-slate-200'}`}>{id}</button>)}

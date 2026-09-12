@@ -60,6 +60,7 @@ it.each(pages)('%s starts with clearly identified examples and hides saved-data 
 
 it.each(pages)('%s launches saved data without rendering example results and removes results after invalid mapping', async (analysisId, Page) => {
     const dataset = study();
+    dataset.rows.push({}); dataset.rowCount += 1;
     const selection = inferAnalysisLaunchSelection(dataset, analysisId);
     expect(selection).not.toBeNull();
     sessionStorage.setItem(ANALYSIS_LAUNCH_SESSION_KEY, JSON.stringify({ ...selection, analysisId }));
@@ -69,6 +70,9 @@ it.each(pages)('%s launches saved data without rendering example results and rem
     expect(calculator()).not.toBeNull();
     expect(state.renders.length).toBeGreaterThan(0); expect(state.renders.every(Boolean)).toBe(true);
     expect(container.textContent).toContain('Selected dataset: Study');
+    expect(container.querySelector('[aria-label="Saved data row review"]').textContent).toContain('8 of 9 rows have all required values; 1 excluded.');
+    expect(container.querySelector('[aria-label="Saved data row review"]').textContent).toContain('Data row 9:');
+    expect(container.querySelector('[aria-label="Saved data row review"]').textContent).toContain('Missing value');
     expect(sessionStorage.getItem(ANALYSIS_LAUNCH_SESSION_KEY)).toBeNull();
     const role = container.querySelector('select[aria-label]');
     await act(async () => {
@@ -76,6 +80,7 @@ it.each(pages)('%s launches saved data without rendering example results and rem
         role.dispatchEvent(new Event('change', { bubbles: true }));
     });
     expect(calculator()).toBeNull(); expect(props.onStatsChange).toHaveBeenLastCalledWith(null);
+    expect(container.querySelector('[aria-label="Saved data row review"]')).toBeNull();
 });
 
 it('does not substitute another saved dataset when a launch target is missing', async () => {

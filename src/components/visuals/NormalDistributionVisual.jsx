@@ -1049,7 +1049,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                         <span className="text-xs font-black text-white">{val}</span>
                       </div>
                     </div>
-                    <div className={`text-[10px] font-black px-3 py-1 rounded-lg ${isSignificant ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'}`}>
+                    <div className={`text-[10px] font-black px-3 py-1 rounded-lg ${isSignificant ? 'bg-red-700 text-white shadow-lg shadow-red-500/20' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'}`}>
                       {isSignificant ? "REJECT H₀" : "FAIL TO REJECT"}
                     </div>
                     <div className="absolute -right-2 -bottom-2 opacity-5">

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import AnalysisExclusionReview from './AnalysisExclusionReview.jsx';
 
 export default function AnalysisCalculatorWorkspace({
     darkMode, dataSource, onSourceChange, dataset, datasetSetup,
@@ -32,6 +33,7 @@ export default function AnalysisCalculatorWorkspace({
                 {ready && <button type="button" className={`${button} mt-3`} onClick={() => { calculator.current?.focus(); calculator.current?.scrollIntoView?.({ block: 'start' }); }}>Go to calculator</button>}
             </section>
             {dataSource === 'saved' && savedWorkspace}
+            {dataSource === 'saved' && <AnalysisExclusionReview review={datasetSetup.rowReview} ready={datasetSetup.ok} darkMode={darkMode} />}
             {ready ? (
                 <section key={`${dataSource}:${dataSource === 'saved' ? dataset?.id : ''}`} ref={calculator} tabIndex={-1} aria-label="Active calculator" className="min-w-0 scroll-mt-24">
                     {children}

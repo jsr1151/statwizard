@@ -1,3 +1,4 @@
+import { withDatasetRowReview } from './datasetRowReview.js';
 import {
     getDatasetColumn,
     isMissingValue,
@@ -62,7 +63,7 @@ const buildSeedKey = (...parts) => parts.filter(Boolean).join('::');
 
 export const getDatasetColumnLevels = getUsableCategoryLevels;
 
-export const buildOneSampleTTestDatasetSetup = (dataset, {
+const buildOneSampleTTestSetup = (dataset, {
     outcomeColumnId,
 }) => {
     const outcomeColumn = getDatasetColumn(dataset, outcomeColumnId);
@@ -120,7 +121,7 @@ export const buildOneSampleTTestDatasetSetup = (dataset, {
     });
 };
 
-export const buildIndependentTTestDatasetSetup = (dataset, {
+const buildIndependentTTestSetup = (dataset, {
     outcomeColumnId,
     groupingColumnId,
 }) => {
@@ -218,7 +219,7 @@ export const buildIndependentTTestDatasetSetup = (dataset, {
     });
 };
 
-export const buildPairedTTestDatasetSetup = (dataset, {
+const buildPairedTTestSetup = (dataset, {
     firstColumnId,
     secondColumnId,
 }) => {
@@ -296,7 +297,7 @@ export const buildPairedTTestDatasetSetup = (dataset, {
     });
 };
 
-export const buildOneWayAnovaDatasetSetup = (dataset, {
+const buildOneWayAnovaSetup = (dataset, {
     outcomeColumnId,
     groupingColumnId,
 }) => {
@@ -390,7 +391,7 @@ export const buildOneWayAnovaDatasetSetup = (dataset, {
     });
 };
 
-export const buildAncovaDatasetSetup = (dataset, {
+const buildAncovaSetup = (dataset, {
     outcomeColumnId,
     groupingColumnId,
     covariateColumnId,
@@ -514,7 +515,7 @@ export const buildAncovaDatasetSetup = (dataset, {
     });
 };
 
-export const buildFactorialAnovaDatasetSetup = (dataset, {
+const buildFactorialAnovaSetup = (dataset, {
     outcomeColumnId,
     factorAColumnId,
     factorBColumnId,
@@ -647,3 +648,34 @@ export const buildFactorialAnovaDatasetSetup = (dataset, {
         },
     });
 };
+
+export const buildOneSampleTTestDatasetSetup = withDatasetRowReview(buildOneSampleTTestSetup, selection => [
+    { id: selection.outcomeColumnId, type: 'numeric' },
+]);
+
+export const buildIndependentTTestDatasetSetup = withDatasetRowReview(buildIndependentTTestSetup, selection => [
+    { id: selection.outcomeColumnId, type: 'numeric' },
+    { id: selection.groupingColumnId, type: 'categorical' },
+]);
+
+export const buildPairedTTestDatasetSetup = withDatasetRowReview(buildPairedTTestSetup, selection => [
+    { id: selection.firstColumnId, type: 'numeric' },
+    { id: selection.secondColumnId, type: 'numeric' },
+]);
+
+export const buildOneWayAnovaDatasetSetup = withDatasetRowReview(buildOneWayAnovaSetup, selection => [
+    { id: selection.outcomeColumnId, type: 'numeric' },
+    { id: selection.groupingColumnId, type: 'categorical' },
+]);
+
+export const buildAncovaDatasetSetup = withDatasetRowReview(buildAncovaSetup, selection => [
+    { id: selection.outcomeColumnId, type: 'numeric' },
+    { id: selection.groupingColumnId, type: 'categorical' },
+    { id: selection.covariateColumnId, type: 'numeric' },
+]);
+
+export const buildFactorialAnovaDatasetSetup = withDatasetRowReview(buildFactorialAnovaSetup, selection => [
+    { id: selection.outcomeColumnId, type: 'numeric' },
+    { id: selection.factorAColumnId, type: 'categorical' },
+    { id: selection.factorBColumnId, type: 'categorical' },
+]);

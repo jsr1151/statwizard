@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: saved-row review and descriptive input recovery
+
+All six older t-test/ANOVA saved-data wrappers now show row numbers and variable-specific exclusion reasons. Counts distinguish incomplete rows from invalid model setups, retain complete-row totals for blocked designs, and reject stale variable mappings. Central tendency, variability, and frequency now recover exact input drafts after reload, with separate local storage, confirmation before removal, and visible failure handling. This saves input text and its source label; broader calculator settings and drafts remain open.
+
+Validation: 519 tests in 48 files, lint, production build, documentation, power fixtures, and bundle checks passed. All 42 final browser accessibility/overflow checks were clean, with no application errors. See [scope and validation](ROW_REVIEW_DRAFT_VALIDATION.md).
+
 ## September 12: descriptive inputs and saved simple regression
 
 Central tendency, variability, and frequency now identify their example/entered source and report included/excluded entry counts. Numeric exclusions remain visible when all entries are invalid. Results have a focus shortcut, and existing copy actions include source, inputs, counts, and results with a selectable fallback when clipboard access fails. Simple regression now launches saved data from Data Manager, preserves row pairs and readable variable labels, and respects missing datasets and cleared roles. Loading example data explicitly restores its variable choices.
@@ -78,7 +84,7 @@ Automated accessibility snapshots do not establish complete accessibility confor
 
 ## Remaining work, in recommended order
 
-1. **Finish analysis workflow coverage.** Extend row-level exclusion details to the older t-test/ANOVA wrappers, add durable calculator drafts and consistent reporting actions, and complete an end-to-end keyboard and screen-reader review of nested plots and editors. Descriptive saved-data launches and multi-column file selection remain potential extensions beyond the now-labeled single-variable inputs.
+1. **Finish analysis workflow coverage.** Extend draft recovery beyond descriptive input text to regression and t-test/ANOVA data, variable mappings, and settings. Add consistent reporting actions and review manual-input exclusions inside the older calculators. Complete an end-to-end keyboard and screen-reader review of nested plots and editors. Descriptive saved-data launches and multi-column file selection remain potential extensions beyond the now-labeled single-variable inputs.
 2. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators. Repeated-measures power, mixed/factorial repeated designs, post-hoc comparisons, and additional confidence intervals need separate validation.
 3. **Improve reproducibility and recovery.** Add analysis/report export with inputs, exclusions, assumptions, and results; consider durable draft recovery and clearer backup/restore controls. Review power interpretation and advanced model limitations as part of this work.
 4. **Expand learning beyond the introductory path.** Add further worked examples and practice for comparing groups, association, and model assumptions. Review existing module explanations for consistency, and consider progress export and broader screen-reader testing.

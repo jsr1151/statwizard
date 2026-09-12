@@ -730,7 +730,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                 })()}
 
                                 <div className={`mt-4 p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-slate-900/20 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                    <div className="flex justify-between items-center opacity-60">
+                                    <div className="flex justify-between items-center">
                                         <ProgressiveTooltip term="Residual" title="Error Variance" desc="The 'noise' or unexplained variability (unexplained by the experimental factors)." pedagogy="This variability is used as the denominator (MS error) for all F-tests in this ANOVA." darkMode={darkMode}>
                                             <span className="text-[10px] font-black uppercase text-slate-500 cursor-help">Error (Residual)</span>
                                         </ProgressiveTooltip>
