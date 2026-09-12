@@ -220,7 +220,7 @@ export const writeAnalysisLaunchPayload = (payload) => {
     storage.setItem(ANALYSIS_LAUNCH_SESSION_KEY, JSON.stringify(payload));
 };
 
-export const consumeAnalysisLaunchPayload = (expectedAnalysisId = null) => {
+export const readAnalysisLaunchPayload = (expectedAnalysisId = null) => {
     const storage = safeSessionStorage();
 
     if (!storage) {
@@ -240,9 +240,17 @@ export const consumeAnalysisLaunchPayload = (expectedAnalysisId = null) => {
             return null;
         }
 
-        storage.removeItem(ANALYSIS_LAUNCH_SESSION_KEY);
         return parsed;
     } catch (error) {
         return null;
     }
+};
+
+export const consumeAnalysisLaunchPayload = (expectedAnalysisId = null) => {
+    const payload = readAnalysisLaunchPayload(expectedAnalysisId);
+    if (payload) {
+        try { safeSessionStorage()?.removeItem(ANALYSIS_LAUNCH_SESSION_KEY); }
+        catch { /* Reading still works when removal is unavailable. */ }
+    }
+    return payload;
 };

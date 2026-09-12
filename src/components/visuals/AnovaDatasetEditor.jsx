@@ -20,7 +20,7 @@ const AnovaDatasetEditor = ({
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]" style={{ backgroundColor: g.color }} />
-                                <input
+                                <input aria-label={"Group name: " + g.label}
                                     value={g.label}
                                     onChange={e => updateGroup(g.id, 'label', e.target.value)}
                                     className={`text-[12px] font-black uppercase tracking-widest bg-transparent border-none focus:outline-none w-32 ${darkMode ? 'text-white' : 'text-slate-800'}`}

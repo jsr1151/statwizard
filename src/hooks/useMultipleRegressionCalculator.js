@@ -3,7 +3,7 @@ import { buildMultipleRegressionGuidance, calculateMultipleRegressionPrediction,
 import { parseDelimitedTable } from '../utils/delimitedTable.js';
 import { buildNumericAnalysisColumn, countCompleteRows } from '../utils/datasetImport.js';
 import { useDatasetLibraryContext } from '../hooks/useDatasetLibrary.js';
-import { ACTIVE_DATASET_SESSION_KEY, consumeAnalysisLaunchPayload } from '../utils/analysisLaunch.js';
+import { ACTIVE_DATASET_SESSION_KEY, readAnalysisLaunchPayload, consumeAnalysisLaunchPayload } from '../utils/analysisLaunch.js';
 import { SAMPLE_DATASET } from '../data/multipleRegressionLesson.js';
 import { countNumericCompleteCasesFromColumns, buildPredictionInputsFromStats, findDefaultPointId } from '../utils/multipleRegressionLesson.js';
 
@@ -12,17 +12,18 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
 
     const [tableText, setTableText] = useState(SAMPLE_DATASET);
 
-    const [calculatorInputMode, setCalculatorInputMode] = useState('paste');
-
-    const [selectedDatasetId, setSelectedDatasetId] = useState('');
-
-    const [launchPayload] = useState(() => consumeAnalysisLaunchPayload('multiple_regression'));
+    const [launchPayload] = useState(() => readAnalysisLaunchPayload('multiple_regression'));
+    const [calculatorInputMode, setCalculatorInputMode] = useState(launchPayload?.datasetId ? 'saved' : 'paste');
+    const [selectedDatasetId, setSelectedDatasetId] = useState(launchPayload?.datasetId || '');
+    useEffect(() => {
+        if (launchPayload) consumeAnalysisLaunchPayload('multiple_regression');
+    }, [launchPayload]);
 
     const [launchPayloadApplied, setLaunchPayloadApplied] = useState(false);
 
     const [savedRoleSelection, setSavedRoleSelection] = useState({
-        outcome: '',
-        predictors: [],
+        outcome: launchPayload?.outcome || '',
+        predictors: launchPayload?.predictors || [],
     });
 
     const [selectedOutcome, setSelectedOutcome] = useState('');

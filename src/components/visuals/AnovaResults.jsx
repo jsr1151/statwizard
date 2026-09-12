@@ -32,8 +32,8 @@ const AnovaResults = ({
                         className={`text-[16px] font-black uppercase tracking-[0.2em] flex flex-wrap items-center justify-center md:justify-start gap-3 ${renderModel.F > renderModel.Fcrit ? 'text-emerald-400' : 'text-slate-500'}`}
                     >
                         {renderModel.F > renderModel.Fcrit ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
-                        <span>p {renderModel.p < 0.001 ? '< .001' : (renderModel.p < 0.05 ? '< .05' : '> .05')}</span>
-                        <span className="opacity-50 tracking-widest">{renderModel.p < 0.05 ? '(Significant)' : '(Non-Sig)'}</span>
+                        <span>p {renderModel.p < 0.001 ? '< .001' : `= ${renderModel.p.toFixed(3)}`}</span>
+                        <span className="tracking-widest">{renderModel.F > renderModel.Fcrit ? '(Significant)' : '(Non-Sig)'}</span>
                     </div>
                     {anovaMode === 'calc' && <p className="text-[10px] font-black text-amber-500/60 uppercase tracking-widest mt-4">Exploring hypothetical inputs</p>}
                 </div>
@@ -181,10 +181,10 @@ const AnovaResults = ({
                         </div>
                     </div>
                 ) : (
-                    <div className={`p-10 rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center text-center opacity-40 ${darkMode ? 'bg-slate-900/10 border-slate-800 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
+                    <div className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center ${darkMode ? 'bg-slate-900/10 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
                         <Sparkles size={32} className="mb-4 opacity-20" />
                         <p className="text-xs font-black uppercase tracking-widest">Post-hoc Analysis is disabled in Explore Mode.</p>
-                        <p className="text-[9px] mt-2 opacity-60">Pairwise comparisons require observed dataset statistics.</p>
+                        <p className="text-sm mt-2">Pairwise comparisons require observed dataset statistics.</p>
                     </div>
                 )
             }

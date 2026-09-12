@@ -1,6 +1,7 @@
 import { CheckCircle, Sparkles, Calculator, Sigma, Terminal, BarChart2, BookOpen } from "lucide-react";
 import { STEPS } from "../data/wizardSteps";
 import { POWER_TEST_BY_STEP_ID } from "../power/testRegistry";
+import { METHOD_AVAILABILITY } from '../data/methodAvailability.js';
 
 const STRUCTURED_RESULT_STEP_IDS = new Set([
     'res_central_tendency',
@@ -29,6 +30,7 @@ const EFFECT_SIZE_SECTION_STEP_IDS = new Set([
 ]);
 
 export const getTestConfig = (currentStepId) => {
+        if (currentStepId === 'res_rm_anova') return null;
         const registeredConfig = POWER_TEST_BY_STEP_ID[currentStepId];
         if (registeredConfig) return registeredConfig;
 
@@ -44,19 +46,6 @@ export const getTestConfig = (currentStepId) => {
                 power: {
                     ...oneWayConfig.power,
                     assumptionNote: 'This planning view is a balanced omnibus approximation across the factorial cells. For effect-specific main-effect or interaction power, use dedicated factorial-design software with the intended numerator degrees of freedom.',
-                },
-            };
-        }
-
-        if (currentStepId === 'res_rm_anova') {
-            return {
-                ...oneWayConfig,
-                id: 'repeated_measures_anova',
-                stepId: 'res_rm_anova',
-                label: 'Repeated Measures ANOVA',
-                power: {
-                    ...oneWayConfig.power,
-                    assumptionNote: 'This initial planning view is a conservative balanced omnibus approximation. A full repeated-measures calculation also needs the correlation among repeated observations and a nonsphericity correction; confirm the final design in dedicated repeated-measures power software.',
                 },
             };
         }
@@ -82,9 +71,22 @@ export const getResultPage = (currentStepId) => {
     const isAncovaPage = currentStepId === 'res_ancova';
     const isResult = currentStep?.type === 'result';
     const isHelp = currentStep?.type === 'help';
-    const isStructuredResultPage = isResult && (STRUCTURED_RESULT_STEP_IDS.has(currentStepId) || Boolean(currentTestConfig));
+    const isStructuredResultPage = isResult && (STRUCTURED_RESULT_STEP_IDS.has(currentStepId) || Boolean(currentTestConfig) || Boolean(METHOD_AVAILABILITY[currentStepId]));
 
     const availableResultSections = (() => {
+        if (METHOD_AVAILABILITY[currentStepId]) {
+            if (currentStepId === 'res_unsupported_design') return [];
+            return [
+                { id: 'lessons', label: 'Method guide', icon: BookOpen },
+                { id: 'calculator', label: 'Calculator availability', icon: Calculator },
+                { id: 'assumptions', label: 'Assumptions', icon: CheckCircle },
+                { id: 'software', label: 'Software', icon: Terminal },
+                ...(currentStepId === 'res_rm_anova' ? [
+                    { id: 'equation', label: 'Model scope', icon: Sigma },
+                    { id: 'power', label: 'Power availability', icon: BarChart2 },
+                ] : []),
+            ];
+        }
         if (!isStructuredResultPage) {
             return [];
         }

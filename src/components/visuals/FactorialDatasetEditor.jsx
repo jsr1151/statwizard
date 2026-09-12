@@ -39,7 +39,7 @@ const FactorialDatasetEditor = ({
                     <div className="flex flex-wrap gap-2">
                         {factorA.levels.map(level => (
                             <div key={level.id} className="flex items-center gap-2 bg-slate-800/20 p-2 rounded-xl border border-slate-700/50">
-                                <input
+                                <input aria-label={"Factor level name: " + level.label}
                                     value={level.label}
                                     onChange={(e) => updateLevelLabel('A', level.id, e.target.value)}
                                     className="bg-transparent border-none outline-none text-[11px] font-bold w-20 text-slate-300"
@@ -72,7 +72,7 @@ const FactorialDatasetEditor = ({
                     <div className="flex flex-wrap gap-2">
                         {factorB.levels.map(level => (
                             <div key={level.id} className="flex items-center gap-2 bg-slate-800/20 p-2 rounded-xl border border-slate-700/50">
-                                <input
+                                <input aria-label={"Factor level name: " + level.label}
                                     value={level.label}
                                     onChange={(e) => updateLevelLabel('B', level.id, e.target.value)}
                                     className="bg-transparent border-none outline-none text-[11px] font-bold w-20 text-slate-300"
@@ -218,7 +218,7 @@ const FactorialDatasetEditor = ({
                                                                 >
                                                                     <label className="text-[7px] font-black uppercase text-slate-500 cursor-help">{field}</label>
                                                                 </ProgressiveTooltip>
-                                                                <input
+                                                                <input aria-label={"Cell " + key + " " + field}
                                                                     type="text"
                                                                     value={cell.summary?.[field] || ""}
                                                                     onChange={e => {
@@ -234,7 +234,7 @@ const FactorialDatasetEditor = ({
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <textarea
+                                                    <textarea aria-label={"Cell " + key + " raw scores"}
                                                         placeholder="Scores..."
                                                         value={cell.values?.join(', ')}
                                                         onChange={e => parseCellRaw(key, e.target.value)}

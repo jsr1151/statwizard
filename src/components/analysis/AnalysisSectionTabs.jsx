@@ -6,7 +6,13 @@ const AnalysisSectionTabs = ({
     activeSection,
     onChange,
 }) => (
-    <div className={`rounded-xl border p-2 flex flex-wrap gap-2 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+    <nav aria-label="Analysis sections" className={`min-w-0 rounded-xl border p-2 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+        <label className={`block text-sm font-bold sm:hidden ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Section
+            <select value={activeSection} onChange={event => onChange?.(event.target.value)} className={`mt-2 w-full rounded-lg border p-3 ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}>
+                {sections.map(section => <option key={section.id} value={section.id}>{section.label}</option>)}
+            </select>
+        </label>
+        <div className="hidden flex-wrap gap-2 sm:flex">
         {sections.map((section) => {
             const Icon = section.icon;
             const isActive = activeSection === section.id;
@@ -27,7 +33,8 @@ const AnalysisSectionTabs = ({
                 </button>
             );
         })}
-    </div>
+        </div>
+    </nav>
 );
 
 export default AnalysisSectionTabs;

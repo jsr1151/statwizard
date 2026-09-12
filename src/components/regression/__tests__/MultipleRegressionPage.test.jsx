@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import MultipleRegressionPage from '../MultipleRegressionPage.jsx';
@@ -18,7 +18,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root;
 let container;
 let props;
-const render = () => root.render(<DatasetLibraryProvider><MultipleRegressionPage {...props} /></DatasetLibraryProvider>);
+const render = () => root.render(<StrictMode><DatasetLibraryProvider><MultipleRegressionPage {...props} /></DatasetLibraryProvider></StrictMode>);
 const mount = async (section = 'calculator') => {
     props = { section, darkMode: true, onStatsChange: vi.fn(), testConfig: POWER_TEST_BY_STEP_ID.multiple_regression_result };
     container = document.createElement('main');
@@ -140,6 +140,7 @@ it('applies saved dataset launch roles and keeps complete cases after navigation
     await mount();
     expect(container.querySelector('textarea')).toBeNull();
     expect(stats()).toMatchObject({ ok: true, n: 8, predictorCount: 2 });
+    expect(props.onStatsChange.mock.calls.some(([value]) => value?.ok && value.n === 15)).toBe(false);
     expect(stats().intercept).toBeCloseTo(10);
     await rerender({ section: 'lessons' });
     await rerender({ section: 'calculator' });

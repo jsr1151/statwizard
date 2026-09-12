@@ -50,9 +50,8 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
         <p
           className={`text-lg ${darkMode ? "text-slate-500" : "text-slate-600"}`}
         >
-          Use the shared registry to choose a test family, pick the statistical
-          test, and launch the same power-analysis surface that lives inside
-          each test page.
+          Choose a test, then calculate the sample size you need, estimate power,
+          or find the smallest effect your study could detect.
         </p>
       </div>
 
@@ -129,9 +128,8 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
           <div
             className={`mt-4 text-sm ${darkMode ? "text-slate-500" : "text-slate-600"}`}
           >
-            Live tests stay fully selectable. Planned tests remain visible here
-            so the hub reflects the shared architecture that future solver
-            slices will plug into.
+            Choose a test that matches your outcome and study design.
+            Review its assumptions before planning your sample.
           </div>
         </div>
 
@@ -175,7 +173,7 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
           <div
             className={`text-xs font-black uppercase tracking-widest mb-2 ${darkMode ? "text-indigo-400" : "text-indigo-600"}`}
           >
-            Launch Shared Calculator
+            Open Power Calculator
           </div>
           <div
             className={`text-xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
@@ -185,8 +183,7 @@ const PowerAnalysisHub = ({ darkMode, onOpenCalculator }) => {
           <p
             className={`mt-2 ${darkMode ? "text-slate-500" : "text-slate-600"}`}
           >
-            This opens the same page-level power section used inside the test
-            itself, instead of a duplicated standalone calculator.
+            Enter your effect size and study settings to plan this analysis.
           </p>
         </div>
 

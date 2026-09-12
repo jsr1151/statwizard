@@ -1,4 +1,4 @@
-import React, { createContext, startTransition, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, startTransition, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { duplicateDatasetRecord } from '../utils/datasetImport.js';
 import { loadStoredDatasets, persistDatasetRecord, removeDatasetRecord } from '../utils/datasetStore.js';
 
@@ -12,6 +12,16 @@ const upsertDataset = (datasets, nextDataset) => {
 };
 
 export const DatasetLibraryProvider = ({ children }) => {
+    const workspaceDraft = useRef({});
+    useEffect(() => {
+        const protectDraft = (event) => {
+            if (!workspaceDraft.current.isDirty) return;
+            event.preventDefault();
+            event.returnValue = '';
+        };
+        window.addEventListener('beforeunload', protectDraft);
+        return () => window.removeEventListener('beforeunload', protectDraft);
+    }, []);
     const [datasets, setDatasets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -49,6 +59,7 @@ export const DatasetLibraryProvider = ({ children }) => {
     }, []);
 
     const value = useMemo(() => ({
+        workspaceDraft,
         datasets,
         isLoading,
         error,

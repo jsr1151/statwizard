@@ -23,7 +23,7 @@ const AncovaDatasetEditor = ({
                             {covariateName}
                         </div>
                     ) : (
-                        <input
+                        <input aria-label="Covariate name"
                             value={covariateName}
                             onChange={(e) => setCovariateName(e.target.value)}
                             placeholder="e.g. Baseline Stress"
@@ -66,7 +66,7 @@ const AncovaDatasetEditor = ({
                                 <div className="flex flex-col gap-1 w-full">
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] flex-shrink-0" style={{ backgroundColor: g.color }} />
-                                        <input
+                                        <input aria-label={"Group name: " + g.label}
                                             value={g.label}
                                             onChange={e => updateGroup(g.id, 'label', e.target.value)}
                                             className={`text-[12px] font-black uppercase tracking-widest bg-transparent border-none focus:outline-none w-32 ${darkMode ? 'text-white' : 'text-slate-800'}`}
@@ -93,13 +93,14 @@ const AncovaDatasetEditor = ({
                                 </div>
                                 <div className="flex items-center gap-1 ml-2">
                                     <button
+                                        aria-label={`${g.collapsed ? 'Expand' : 'Collapse'} ${g.label}`}
                                         onClick={() => updateGroup(g.id, 'collapsed', !g.collapsed)}
                                         className="text-slate-500 hover:text-indigo-500 transition-colors bg-slate-800/10 p-1.5 rounded-lg"
                                     >
                                         {g.collapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
                                     </button>
                                     {groups.length > 2 && (
-                                        <button onClick={() => removeGroup(g.id)} className="text-slate-500 hover:text-rose-500 transition-colors bg-slate-800/10 p-1.5 rounded-lg">
+                                        <button aria-label={`Remove ${g.label}`} onClick={() => removeGroup(g.id)} className="text-slate-500 hover:text-rose-500 transition-colors bg-slate-800/10 p-1.5 rounded-lg">
                                             <Trash2 size={12} />
                                         </button>
                                     )}
@@ -111,7 +112,7 @@ const AncovaDatasetEditor = ({
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="flex flex-col gap-1">
                                             <label className={`text-[9px] font-extrabold uppercase text-emerald-400 pl-1`}>X ({covariateName})</label>
-                                            <textarea
+                                            <textarea aria-label={g.label + " covariate values"}
                                                 placeholder="10\n12\n14..."
                                                 value={g.xRaw}
                                                 onChange={e => parseRaw(g.id, 'x', e.target.value)}
@@ -120,7 +121,7 @@ const AncovaDatasetEditor = ({
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <label className={`text-[9px] font-extrabold uppercase text-indigo-400 pl-1`}>Y (Outcome)</label>
-                                            <textarea
+                                            <textarea aria-label={g.label + " outcome values"}
                                                 placeholder="100\n110\n95..."
                                                 value={g.yRaw}
                                                 onChange={e => parseRaw(g.id, 'y', e.target.value)}

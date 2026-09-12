@@ -518,7 +518,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                   </button>
                 </div>
 
-                <input
+                <input aria-label="Comparison degrees of freedom"
                   type="range"
                   min="1"
                   max="120"
@@ -586,7 +586,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <span className="text-[7px] font-bold text-indigo-400 uppercase">Group 1</span>
-                        <select
+                        <select aria-label="Group 1 plot pattern"
                           value={plotSettings.g1Pattern}
                           onChange={e => setPlotSettings({ ...plotSettings, g1Pattern: e.target.value })}
                           className={`w-full p-1.5 rounded text-[8px] font-black uppercase border transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
@@ -596,7 +596,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                       </div>
                       <div className="space-y-2">
                         <span className="text-[7px] font-bold text-emerald-400 uppercase">Group 2</span>
-                        <select
+                        <select aria-label="Group 2 plot pattern"
                           value={plotSettings.g2Pattern}
                           onChange={e => setPlotSettings({ ...plotSettings, g2Pattern: e.target.value })}
                           className={`w-full p-1.5 rounded text-[8px] font-black uppercase border transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200'}`}
@@ -687,19 +687,19 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                 <div className="grid grid-cols-3 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">{"Mean (x̄₁)"}</label>
-                    <input type="number" step="0.1" value={group1.xBar} onChange={e => setGroup1({ ...group1, xBar: parseFloat(e.target.value) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Group 1 mean" type="number" step="0.1" value={group1.xBar} onChange={e => setGroup1({ ...group1, xBar: parseFloat(e.target.value) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">SD ($s_1$)</label>
-                    <input type="number" step="0.1" min="0.1" value={group1.s} onChange={e => setGroup1({ ...group1, s: Math.max(0.1, parseFloat(e.target.value)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Group 1 standard deviation" type="number" step="0.1" min="0.1" value={group1.s} onChange={e => setGroup1({ ...group1, s: Math.max(0.1, parseFloat(e.target.value)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Size ($n_1$)</label>
-                    <input type="number" step="1" min="1" value={group1.n} onChange={e => setGroup1({ ...group1, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Group 1 sample size" type="number" step="1" min="1" value={group1.n} onChange={e => setGroup1({ ...group1, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                 </div>
               ) : (
-                <textarea placeholder="Paste values separated by comma or space..." value={group1.raw} onChange={e => parseRaw(e.target.value, setGroup1)} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
+                <textarea aria-label="Group 1 raw values" placeholder="Paste values separated by comma or space..." value={group1.raw} onChange={e => parseRaw(e.target.value, setGroup1)} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
               )}
             </div>
 
@@ -712,19 +712,19 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                 <div className="grid grid-cols-3 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">{"Mean (x̄₂)"}</label>
-                    <input type="number" step="0.1" value={group2.xBar} onChange={e => setGroup2({ ...group2, xBar: parseFloat(e.target.value) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Group 2 mean" type="number" step="0.1" value={group2.xBar} onChange={e => setGroup2({ ...group2, xBar: parseFloat(e.target.value) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">SD ($s_2$)</label>
-                    <input type="number" step="0.1" min="0.1" value={group2.s} onChange={e => setGroup2({ ...group2, s: Math.max(0.1, parseFloat(e.target.value)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Group 2 standard deviation" type="number" step="0.1" min="0.1" value={group2.s} onChange={e => setGroup2({ ...group2, s: Math.max(0.1, parseFloat(e.target.value)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Size ($n_2$)</label>
-                    <input type="number" step="1" min="1" value={group2.n} onChange={e => setGroup2({ ...group2, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Group 2 sample size" type="number" step="1" min="1" value={group2.n} onChange={e => setGroup2({ ...group2, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                 </div>
               ) : (
-                <textarea placeholder="Paste values separated by comma or space..." value={group2.raw} onChange={e => parseRaw(e.target.value, setGroup2)} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
+                <textarea aria-label="Group 2 raw values" placeholder="Paste values separated by comma or space..." value={group2.raw} onChange={e => parseRaw(e.target.value, setGroup2)} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
               )}
             </div>
           </div>
@@ -733,7 +733,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Significance Level (α)</span>
-              <select value={alpha} onChange={e => setAlpha(parseFloat(e.target.value))} className={`p-2 rounded text-xs font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+              <select aria-label="Significance level" value={alpha} onChange={e => setAlpha(parseFloat(e.target.value))} className={`p-2 rounded text-xs font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                 <option value={0.01}>0.01 (Conservative)</option>
                 <option value={0.05}>0.05 (Standard)</option>
                 <option value={0.10}>0.10 (Exploratory)</option>
@@ -761,7 +761,7 @@ const IndependentTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onS
                 <div className={`flex-1 py-2 px-3 text-[10px] font-black rounded border uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                   {ciType === 'two-sided' ? 'Two-Sided CI' : 'One-Sided Bound'}
                 </div>
-                <select value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
+                <select aria-label="Confidence interval type" value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
                   <option value="two-sided">Two-Sided</option>
                   <option value="one-sided">One-Sided</option>
                 </select>

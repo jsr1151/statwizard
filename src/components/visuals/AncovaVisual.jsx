@@ -865,7 +865,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                         )}
                                     </div>
                                     <div className="flex gap-4">
-                                        <div className="flex bg-slate-800/50 p-1.5 rounded-xl border border-slate-700">
+                                        <div className="flex bg-slate-800 p-1.5 rounded-xl border border-slate-700">
                                             {[0.1, 0.05, 0.01].map(a => (
                                                 <button key={a} onClick={() => setAlpha(a)} className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${alpha === a ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500'}`}>{a}</button>
                                             ))}
@@ -880,7 +880,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                             { label: 'df2', val: calcDf2, min: 1, max: 250, setter: setCalcDf2 },
                                             { label: 'F', val: calcF, min: 0, max: 25, step: 0.1, setter: setCalcF }
                                         ].map(s => (
-                                            <div key={s.label} className="p-5 bg-slate-900/40 rounded-2xl border border-slate-800">
+                                            <div key={s.label} className="p-5 bg-slate-900 rounded-2xl border border-slate-800">
                                                 <div className="flex justify-between text-[9px] font-black text-slate-500 uppercase mb-2">
                                                     <span>{s.label}</span>
                                                     <span className="text-indigo-400">{s.val}</span>

@@ -66,9 +66,9 @@ export const SOFTWARE_GUIDES = {
     rm_anova: {
         spss: "Analyze > General Linear Model > Repeated Measures.",
         jasp: "ANOVA > Repeated Measures ANOVA.",
-        r: "aov(y ~ time + Error(sub/time))",
-        excel: "Path A (Toolpak): Data Analysis > ANOVA: Two-Factor Without Replication.\nPath B (Manual): Calculate 'Difference' columns (T1-T2, T1-T3) and use =T.TEST or manual ANOVA on residuals using =DEVSQ().",
-        google_sheets: "Path A (Add-on): Use 'Analysis ToolPak' > ANOVA: Two-Factor Without Replication.\nPath B (Manual): Use =DEVSQ() on the differences between timepoints."
+        r: "# Balanced, complete repeated observations in long format\n# One row per participant and condition; y is numeric.\ndf$sub <- factor(df$sub)\ndf$time <- factor(df$time)\nmodel <- aov(y ~ time + Error(sub/time), data = df)\nsummary(model)\n# This output is uncorrected: assess sphericity separately.\n# Use dedicated repeated-measures software for corrections\n# or a suitable mixed model for incomplete/unbalanced data.",
+        excel: "This guide does not provide a validated repeated-measures spreadsheet procedure. Use dedicated statistical software with participant matching and appropriate sphericity corrections. Separate paired t-tests do not replace the omnibus repeated-measures test.",
+        google_sheets: "Use dedicated statistical software for repeated-measures ANOVA. Ranking, difference columns, or a sequence of t-tests is not a replacement for the repeated-measures model."
     },
     correlation: {
         spss: "Analyze > Correlate > Bivariate.",
@@ -105,12 +105,19 @@ export const SOFTWARE_GUIDES = {
         excel: "Skewness: =SKEW(range)\nKurtosis: =KURT(range)",
         google_sheets: "Skewness: =SKEW(range)\nKurtosis: =KURT(range)"
     },
-    non_parametric: {
-        spss: "Analyze > Nonparametric Tests > Legacy Dialogs.",
-        jasp: "T-Tests > Check 'Mann-Whitney' or 'Wilcoxon'.",
-        r: "wilcox.test(y1, y2)",
-        excel: "1. Use =RANK(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns.",
-        google_sheets: "1. Use =RANK(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns."
+    mann_whitney: {
+        spss: "Choose the Mann–Whitney test for two independent samples. Assign the numeric/ordinal outcome and the two-level grouping variable; inspect ties and the reported inference method.",
+        jasp: "Choose the Mann–Whitney option for independent samples. Supply the outcome and grouping variable.",
+        r: "# Two independent numeric samples\nx <- y1[is.finite(y1)]\ny <- y2[is.finite(y2)]\nwilcox.test(x, y, paired = FALSE, alternative = 'two.sided')\n# Review warnings and whether exact or approximate inference was used.",
+        excel: "No validated spreadsheet procedure is provided here. Use statistical software that implements Mann–Whitney with tie handling. An ordinary T.TEST on ranks is not a substitute.",
+        google_sheets: "No validated spreadsheet procedure is provided here. Use statistical software that implements Mann–Whitney with tie handling. An ordinary T.TEST on ranks is not a substitute."
+    },
+    wilcoxon_signed_rank: {
+        spss: "Choose the Wilcoxon signed-rank test for two related samples. Assign the two matched measurements and inspect excluded pairs, zero differences, and ties.",
+        jasp: "Choose the Wilcoxon signed-rank option for paired samples. Place the matched measurements together as a pair.",
+        r: "# y1 and y2 must be matched, equally long numeric vectors\nstopifnot(length(y1) == length(y2))\nkeep <- is.finite(y1) & is.finite(y2)\nwilcox.test(y1[keep], y2[keep], paired = TRUE, alternative = 'two.sided')\n# Review warnings, ties, zero differences, and the inference method.",
+        excel: "No validated signed-rank spreadsheet procedure is provided here. Use statistical software for paired differences, zero/tie handling, and the signed-rank reference distribution. Do not run an ordinary T.TEST on ranks.",
+        google_sheets: "No validated signed-rank spreadsheet procedure is provided here. Use statistical software for paired differences, zero/tie handling, and the signed-rank reference distribution. Do not run an ordinary T.TEST on ranks."
     },
     factorial_anova: {
         spss: "Analyze > General Linear Model > Univariate.\nFixed Factor(s): Move both factors here.\nDependent Variable: Move outcome variable here.\nPlots: Factor A (Horizontal Axis), Factor B (Separate Lines) > Add.",

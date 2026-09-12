@@ -4,6 +4,7 @@ import { stripExtension } from '../utils/dataManagerHelpers.js';
 import { sanitizeFileName } from '../utils/dataManagerHelpers.js';
 
 export default function useDataManagerFiles({
+    requestReplacement,
     setProblem, clearUndoHistory, setEditorDataset, setIsDirty,
     setFeedback, setBusy, setImportSession, resetTransformDrafts,
     editorDataset, saveDataset, setNotice, duplicateDataset,
@@ -47,6 +48,8 @@ export default function useDataManagerFiles({
         if (!file) {
             return;
         }
+
+        if (!await requestReplacement('Importing another file')) return;
 
         setBusy(true);
         setFeedback({ nextNotice: '', nextProblem: '' });
@@ -191,7 +194,8 @@ export default function useDataManagerFiles({
         }
     };
 
-    const handleOpenSavedDataset = (dataset) => {
+    const handleOpenSavedDataset = async (dataset) => {
+        if (!await requestReplacement('Opening a saved dataset')) return;
         clearUndoHistory();
         setEditorDataset(hydrateStoredDataset(dataset));
         setImportSession(null);
@@ -231,6 +235,7 @@ export default function useDataManagerFiles({
     };
 
     const handleDuplicateDataset = async (dataset) => {
+        if (!await requestReplacement('Opening a duplicate dataset')) return;
         setBusy(true);
         setFeedback({ nextNotice: '', nextProblem: '' });
 

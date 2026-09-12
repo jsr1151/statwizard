@@ -1,12 +1,14 @@
 import { FileUp } from 'lucide-react';
+import { useRef } from 'react';
 import { buildDefaultDerivedDraft } from '../../utils/dataManagerHelpers.js';
 import Card from '../analysis/AnalysisCard.jsx';
 
 export default function DataManagerHeader({
     darkMode, handleFileImport, setEditorDataset, setImportSession,
     clearUndoHistory, setDerivedDraft, setIsDirty, setFeedback,
-    infoTone, busy, infoMessage,
+    infoTone, busy, infoMessage, requestReplacement,
 }) {
+    const fileInput = useRef(null);
     return (
         <Card darkMode={darkMode}>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -23,20 +25,26 @@ export default function DataManagerHeader({
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <label className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
-                        <FileUp size={16} />
+                    <button type="button" disabled={busy} onClick={() => fileInput.current?.click()} className={`relative inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold focus-visible:ring-2 focus-visible:ring-indigo-500 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
+                        <FileUp aria-hidden="true" size={16} />
                         Import Data File
+                    </button>
                         <input
+                            ref={fileInput}
+                            tabIndex={-1}
+                            aria-label="Import data file"
                             type="file"
                             accept=".csv,.tsv,.txt,.xlsx,.sav"
-                            className="hidden"
+                            className="sr-only"
+                            disabled={busy}
                             onChange={handleFileImport}
                         />
-                    </label>
 
                     <button
                         type="button"
-                        onClick={() => {
+                        disabled={busy}
+                        onClick={async () => {
+                            if (!await requestReplacement('Starting a new workspace')) return;
                             setEditorDataset(null);
                             setImportSession(null);
                             clearUndoHistory();
@@ -62,6 +70,7 @@ export default function DataManagerHeader({
             }`}>
                 {busy ? 'Working on your dataset...' : infoMessage}
             </div>
+            <p className={`mt-3 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Your workspace stays open when you visit other modules. Save before refreshing or closing this tab. Saved datasets stay on this browser and device; export a copy for backup.</p>
         </Card>
     );
 }

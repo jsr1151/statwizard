@@ -15,6 +15,8 @@ import DatasetLegacyTransforms from './DatasetLegacyTransforms.jsx';
 import useDataManagerEditor from '../../hooks/useDataManagerEditor.js';
 import useDataManagerFiles from '../../hooks/useDataManagerFiles.js';
 import useDataManagerTransforms from '../../hooks/useDataManagerTransforms.js';
+import useWorkspaceReplacement from '../../hooks/useWorkspaceReplacement.js';
+import UnsavedWorkspaceDialog from './UnsavedWorkspaceDialog.jsx';
 
 const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression }) => {
     const {
@@ -37,11 +39,13 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
         handleDeleteVariable, infoTone, infoMessage,
     } = useDataManagerEditor();
 
+    const { replacement, requestReplacement, resolveReplacement } = useWorkspaceReplacement(isDirty);
     const {
         handleFileImport, handleSaveDataset, handleSaveDatasetAsNew, handleOpenSavedDataset,
         handleDeleteDataset, handleDuplicateDataset, handleLaunchAnalysis, handleImportSessionChange,
         handleExportDataset,
     } = useDataManagerFiles({
+        requestReplacement,
         setProblem, clearUndoHistory, setEditorDataset, setIsDirty,
         setFeedback, setBusy, setImportSession, resetTransformDrafts,
         editorDataset, saveDataset, setNotice, duplicateDataset,
@@ -66,10 +70,11 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
 
     return (
         <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
+            {replacement && <UnsavedWorkspaceDialog action={replacement} darkMode={darkMode} onSave={handleSaveDataset} onResolve={resolveReplacement} />}
             <DataManagerHeader {...{
                 darkMode, handleFileImport, setEditorDataset, setImportSession,
                 clearUndoHistory, setDerivedDraft, setIsDirty, setFeedback,
-                infoTone, busy, infoMessage,
+                infoTone, busy, infoMessage, requestReplacement,
             }} />
 
             <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">

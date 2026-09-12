@@ -70,7 +70,7 @@ const PValueWidget = ({ darkMode }) => {
                     <span>Observed Statistic</span>
                     <span className="text-indigo-500 text-xs">p = {pValue.toFixed(4)}</span>
                 </div>
-                <input
+                <input aria-label="Test statistic"
                     type="range" min="-3.5" max="3.5" step="0.01" value={statistic}
                     onChange={(e) => setStatistic(parseFloat(e.target.value))}
                     className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-500"
@@ -133,11 +133,11 @@ const CIWidget = ({ darkMode }) => {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <span className="text-[9px] font-black uppercase text-slate-500">Estimate: {estimate.toFixed(1)}</span>
-                        <input type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-6 cursor-pointer accent-indigo-500" />
+                        <input aria-label="Effect estimate" type="range" min="-1.5" max="3" step="0.1" value={estimate} onChange={(e) => setEstimate(parseFloat(e.target.value))} className="w-full h-6 cursor-pointer accent-indigo-500" />
                     </div>
                     <div className="space-y-1">
                         <span className="text-[9px] font-black uppercase text-slate-500">Half-Width: ±{range.toFixed(1)}</span>
-                        <input type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-6 cursor-pointer accent-indigo-500" />
+                        <input aria-label="Confidence interval half-width" type="range" min="0.2" max="1.5" step="0.1" value={range} onChange={(e) => setRange(parseFloat(e.target.value))} className="w-full h-6 cursor-pointer accent-indigo-500" />
                     </div>
                 </div>
                 <p className={`text-[9px] font-medium leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -208,11 +208,11 @@ const PowerWidget = ({ darkMode }) => {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <span className="text-[9px] font-black uppercase text-slate-500">Effect Size (Cohen's d)</span>
-                        <input type="range" min="0" max="1.5" step="0.1" value={effectSize} onChange={(e) => setEffectSize(parseFloat(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
+                        <input aria-label="Effect size" type="range" min="0" max="1.5" step="0.1" value={effectSize} onChange={(e) => setEffectSize(parseFloat(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
                     </div>
                     <div className="space-y-1">
                         <span className="text-[9px] font-black uppercase text-slate-500">Sample Size (N)</span>
-                        <input type="range" min="2" max="100" step="1" value={sampleSize} onChange={(e) => setSampleSize(parseInt(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
+                        <input aria-label="Sample size" type="range" min="2" max="100" step="1" value={sampleSize} onChange={(e) => setSampleSize(parseInt(e.target.value))} className="w-full h-1 bg-slate-200 rounded-full appearance-none accent-indigo-500" />
                     </div>
                 </div>
                 <div className="flex gap-4">
@@ -289,7 +289,7 @@ const NhstVisual = ({ darkMode }) => {
                                 : (darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100')
                                 }`}
                         >
-                            <div className={`text-[10px] font-black mb-1 flex items-center gap-2 ${activeStep === idx ? 'text-indigo-200' : 'text-slate-500'}`}>
+                            <div className={`text-[10px] font-black mb-1 flex items-center gap-2 ${activeStep === idx ? 'text-white' : 'text-slate-500'}`}>
                                 Step {idx + 1}
                                 {activeStep === idx && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
                             </div>

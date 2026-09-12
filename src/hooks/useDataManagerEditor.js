@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import useWorkspaceDraftState from './useWorkspaceDraftState.js';
 import { useDatasetLibraryContext } from '../hooks/useDatasetLibrary.js';
 import { buildSmartWideToLongReshapePlan, deleteDatasetColumn, getDatasetColumn, getDatasetColumnValues, getRecommendedLongFormatCandidates, getRecommendedVariableGroups, hydrateStoredDataset, isMissingValue, refreshDatasetMetadata, renameDatasetRecord, reshapeWideToLongDataset, updateDatasetColumnTags } from '../utils/datasetImport.js';
 import { DERIVED_OPERATION_OPTIONS } from '../data/dataManagerOptions.js';
@@ -19,23 +20,23 @@ export default function useDataManagerEditor() {
         duplicateDataset,
     } = useDatasetLibraryContext();
 
-    const [editorDataset, setEditorDataset] = useState(null);
+    const [editorDataset, setEditorDataset] = useWorkspaceDraftState('editorDataset', null);
 
-    const [importSession, setImportSession] = useState(null);
+    const [importSession, setImportSession] = useWorkspaceDraftState('importSession', null);
 
-    const [derivedDraft, setDerivedDraft] = useState(buildDefaultDerivedDraft);
+    const [derivedDraft, setDerivedDraft] = useWorkspaceDraftState('derivedDraft', buildDefaultDerivedDraft);
 
-    const [reverseCodeDraft, setReverseCodeDraft] = useState(buildDefaultReverseCodeDraft);
+    const [reverseCodeDraft, setReverseCodeDraft] = useWorkspaceDraftState('reverseCodeDraft', buildDefaultReverseCodeDraft);
 
-    const [recodeDraft, setRecodeDraft] = useState(buildDefaultRecodeDraft);
+    const [recodeDraft, setRecodeDraft] = useWorkspaceDraftState('recodeDraft', buildDefaultRecodeDraft);
 
-    const [meanCenterDraft, setMeanCenterDraft] = useState(buildDefaultMeanCenterDraft);
+    const [meanCenterDraft, setMeanCenterDraft] = useWorkspaceDraftState('meanCenterDraft', buildDefaultMeanCenterDraft);
 
-    const [reshapeDraft, setReshapeDraft] = useState(buildDefaultReshapeDraft);
+    const [reshapeDraft, setReshapeDraft] = useWorkspaceDraftState('reshapeDraft', buildDefaultReshapeDraft);
 
     const [derivedSearchQuery, setDerivedSearchQuery] = useState('');
 
-    const [recommendedConfigs, setRecommendedConfigs] = useState({});
+    const [recommendedConfigs, setRecommendedConfigs] = useWorkspaceDraftState('recommendedConfigs', {});
 
     const [analysisMenuDatasetId, setAnalysisMenuDatasetId] = useState('');
 
@@ -45,9 +46,9 @@ export default function useDataManagerEditor() {
 
     const [problem, setProblem] = useState('');
 
-    const [isDirty, setIsDirty] = useState(false);
+    const [isDirty, setIsDirty] = useWorkspaceDraftState('isDirty', false);
 
-    const [undoStack, setUndoStack] = useState([]);
+    const [undoStack, setUndoStack] = useWorkspaceDraftState('undoStack', []);
 
     const activeOperation = useMemo(
         () => DERIVED_OPERATION_OPTIONS.find((option) => option.id === derivedDraft.operation) || DERIVED_OPERATION_OPTIONS[0],
@@ -281,7 +282,7 @@ export default function useDataManagerEditor() {
                 keyValueOverrides: nextKeyValueOverrides,
             };
         });
-    }, [reshapeCandidates]);
+    }, [reshapeCandidates, setReshapeDraft]);
 
     useEffect(() => {
         const handleKeyDown = (event) => {

@@ -5,6 +5,8 @@ import TabButton from "../../components/common/TabButton";
 import EquationWorkspace from "./EquationWorkspace.jsx";
 import EquationPanel from "./EquationPanel.jsx";
 import ResultVisualizer from "./ResultVisualizer.jsx";
+import { METHOD_AVAILABILITY } from '../../data/methodAvailability.js';
+const MethodScopePage = lazy(() => import('../analysis/MethodScopePage.jsx'));
 const TutorPanel = lazy(() => import('../../components/tutor/TutorPanel'));
 const AssumptionItem = lazy(() => import('../../components/formula/AssumptionItem'));
 const PowerAnalysisTab = lazy(() => import('../../components/power/PowerAnalysisTab'));
@@ -26,6 +28,7 @@ const FrequencyPage = lazy(() => import('../../components/descriptive/FrequencyP
 const ProbabilityPage = lazy(() => import('../../components/probability/ProbabilityPage.jsx'));
 
 export default function ResultPage({
+        showTutorHints,
         darkMode, currentStep, availableResultSections, activeResultSection, handleResultSectionChange,
         isCentralTendencyPage, displayFormulaId, equationProps, isVariabilityPage, setCurrentStats,
         isFrequencyPage, isProbabilityPage, isPearsonCorrelationPage, currentStats, currentTestConfig,
@@ -57,7 +60,9 @@ export default function ResultPage({
                     />
                 )}
 
-                {isCentralTendencyPage ? (
+                {METHOD_AVAILABILITY[currentStepId] ? (
+                    <MethodScopePage step={currentStep} section={activeResultSection} darkMode={darkMode} />
+                ) : isCentralTendencyPage ? (
                     <CentralTendencyPage
                         section={activeResultSection}
                         darkMode={darkMode}
@@ -215,6 +220,7 @@ export default function ResultPage({
                     />
                 ) : isFactorialAnovaPage ? (
                     <FactorialAnovaPage
+                        showTutorHints={showTutorHints}
                         section={activeResultSection}
                         darkMode={darkMode}
                         currentStats={currentStats}

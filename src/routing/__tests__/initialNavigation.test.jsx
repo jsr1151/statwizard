@@ -78,6 +78,31 @@ const clickLabel = async (label) => act(async () => {
     [...container.querySelectorAll('button')].find(node => node.textContent.trim() === label).click();
 });
 
+it.each(['calculator', 'equation', 'power'])('keeps repeated-measures %s deep links out of the independent-groups engine', async section => {
+    await mountAt('#/wizard/res_rm_anova/' + section);
+    await waitForView(() => expect(container.textContent).toContain('An on-site repeated-measures calculator is not available'));
+    expect(container.textContent).not.toContain('ANOVA OBSERVED RESULTS');
+    expect(container.textContent).not.toContain('Live Solver');
+    expect(container.textContent).toContain('Error(sub/time)');
+    expect(container.querySelectorAll('input[type="range"]')).toHaveLength(0);
+});
+
+it('shows test-specific Wilcoxon instructions without the shape fallback', async () => {
+    await mountAt('#/wizard/res_wilcoxon');
+    await waitForView(() => expect(container.textContent).toContain('paired = TRUE'));
+    expect(container.textContent).not.toContain('Describing Shape');
+    expect(container.textContent).not.toContain('Formula not rendered');
+});
+
+it('routes noncontinuous prediction outcomes to an explicit unsupported-design page', async () => {
+    await mountAt('#/wizard/relationship_type');
+    await waitForView(() => expect(container.textContent).toContain('predict an outcome variable'));
+    await clickLabel('Yes, I want to predict an outcome variable');
+    await clickLabel('No, or I am not sure');
+    await waitForView(() => expect(container.textContent).toContain('No test has been selected'));
+    expect(location.hash).toBe('#/wizard/res_unsupported_design');
+});
+
 it('restores sections with browser Back and Forward without extra history entries', async () => {
     const length = await mountAt('#/wizard/res_probability/demos');
     await waitForView(() => expect(container.textContent).toContain('Monty'));

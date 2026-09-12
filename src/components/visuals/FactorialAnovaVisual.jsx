@@ -12,7 +12,7 @@ import { FACTORIAL_PRESETS } from '../../data/factorialPresets';
 
 import { ChevronRight, Info, AlertTriangle, HelpCircle } from 'lucide-react';
 
-const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpdate, datasetSeed = null }) => {
+const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpdate, datasetSeed = null, showTutor = true }) => {
     const [localShowValues, setLocalShowValues] = useState(propShowValues);
     useEffect(() => { setLocalShowValues(propShowValues); }, [propShowValues]);
 
@@ -336,16 +336,16 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
             onMouseMove={() => tutor.resetIdle()}
         >
             <FactorialAnovaTutorPanel
-                tip={tutor.activeTip}
+                tip={showTutor ? tutor.activeTip : null}
                 onDismiss={tutor.dismissTip}
                 onAction={handleTutorAction}
                 darkMode={darkMode}
             />
 
             {/* Visualizer Frame - Increased height for more breathing room */}
-            <div className={`w-full h-[800px] overflow-hidden border-2 rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className={`min-w-0 w-full xl:h-[800px] overflow-hidden border-2 rounded-2xl xl:rounded-[3rem] relative transition-all ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
                 {/* Tab Navigation */}
-                <div className="absolute top-6 left-6 flex gap-3 z-40">
+                <div role="region" aria-label="Factorial analysis views" tabIndex={0} className="relative m-4 overflow-x-auto xl:absolute xl:top-6 xl:left-6 xl:m-0 flex gap-3 z-40">
                     <div className="flex gap-2">
                         {[
                             { id: 'data', label: 'Data', tt: 'Enter your factorial data groups.' },
@@ -371,7 +371,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                                         }
                                         setActiveTab(tab.id);
                                     }}
-                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 text-slate-500 hover:text-slate-300'}`}
                                 >
                                     {tab.label}
                                 </button>
@@ -381,7 +381,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                 </div>
 
                 {/* Header Labels - Integrated into Themes area to avoid tab collision */}
-                <div className="absolute top-[85px] right-8 text-right z-40 pointer-events-none">
+                <div className="relative mx-4 my-3 xl:absolute xl:top-[85px] xl:right-8 xl:m-0 xl:text-right z-40 pointer-events-none">
                     <ProgressiveTooltip
                         term="Design Model"
                         title="Between-Subjects"
@@ -397,7 +397,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                 </div>
 
                 {/* Study Themes (Positioned below tabs, above content) */}
-                <div className="absolute top-[85px] left-6 z-40">
+                <div className="relative mx-4 my-3 xl:absolute xl:top-[85px] xl:left-6 xl:m-0 z-40">
                     <div className="flex flex-col gap-1.5">
                         <ProgressiveTooltip
                             term="Themes"
@@ -409,12 +409,13 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                             <span className="text-[10px] font-black uppercase text-indigo-500/50 tracking-[0.2em] px-1 cursor-help">Study Themes</span>
                         </ProgressiveTooltip>
                         <select
+                            aria-label="Study theme"
                             value={selectedPresetId}
                             onChange={(e) => {
                                 loadPreset(e.target.value);
                                 tutor.triggerEvent({ signal: 'theme_selected' });
                             }}
-                            className={`bg-slate-900/40 backdrop-blur-2xl text-slate-300 text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-2xl border border-white/5 outline-none hover:border-indigo-500/30 hover:text-white transition-all cursor-pointer shadow-2xl min-w-[220px]`}
+                            className={`max-w-full min-w-0 bg-slate-900 backdrop-blur-2xl text-slate-300 text-[10px] font-black uppercase tracking-widest px-3 py-3 rounded-2xl border border-white/5 outline-none hover:border-indigo-500/30 hover:text-white transition-all cursor-pointer shadow-2xl`}
                         >
                             <option value="">Select a Theme...</option>
                             {FACTORIAL_PRESETS.map(p => (
@@ -433,7 +434,7 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
                 </div>
 
                 {/* Main Content Area with increased padding to avoid overlap */}
-                <div className="w-full h-full pt-44">
+                <div className="min-w-0 w-full h-[650px] xl:h-full pt-4 xl:pt-44">
                     {activeTab === 'data' && (
                         <div className="w-full h-full overflow-y-auto p-8 custom-scrollbar">
                             <FactorialDatasetEditor
@@ -935,9 +936,9 @@ const FactorialAnovaVisual = ({ darkMode, showValues: propShowValues, onStatsUpd
 
             {/* Bottom Controls / Interpetation */}
             <div className={`p-8 rounded-[3rem] border-2 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-xl'}`}>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                     <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-500">Interpretation</h5>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {[0.1, 0.05, 0.01].map(a => (
                             <button key={a} onClick={() => setAlpha(a)} className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${alpha === a ? 'bg-indigo-600 text-white' : 'text-slate-600'}`}>α={a}</button>
                         ))}

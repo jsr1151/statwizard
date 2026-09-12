@@ -13,6 +13,8 @@ import AppContent from "./components/app/AppContent.jsx";
 import AppOverlays from "./components/app/AppOverlays.jsx";
 
 import useAppNavigation from './routing/useAppNavigation.js';
+import useThemePreference from './hooks/useThemePreference.js';
+import usePageTitle from './hooks/usePageTitle.js';
 import { getResultPage } from './routing/resultPageConfig.js';
 
 // --- STUB: generateAIResponse ---
@@ -39,7 +41,7 @@ export default function App() {
     const [aiExplanation, setAiExplanation] = useState(null);
     const [aiModalOpen, setAiModalOpen] = useState(false);
     const [symbolKeyOpen, setSymbolKeyOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(true);
+    const [darkMode, setDarkMode] = useThemePreference();
     const [activeTutorScript, setActiveTutorScript] = useState(null);
     const [showEquationValues, setShowEquationValues] = useState(false);
     const [currentStats, setCurrentStats] = useState(null);
@@ -81,6 +83,7 @@ export default function App() {
     }, [restoreCount]);
 
     const resultPage = useMemo(() => getResultPage(currentStepId), [currentStepId]);
+    usePageTitle(appMode, resultPage.currentStep?.title);
     const {
         currentStep,
         currentTestConfig,
@@ -175,7 +178,7 @@ export default function App() {
     const ancovaTutor = useAncovaTutor(currentStats, anovaTutorContext, tooltipsEnabled);
 
     const isAnovaTrulyActive = currentStepId === 'res_anova' || currentStepId === 'res_one_way_anova' || currentStepId === 'res_rm_anova' || currentStepId === 'res_ancova' || currentStep?.visualType === 'anova' || currentStep?.visualType === 'ancova';
-    const isAnovaActive = isAnovaTrulyActive;
+    const isAnovaActive = appMode === 'wizard' && isAnovaTrulyActive && currentStepId !== 'res_rm_anova' && activeResultSection === 'lessons' && tooltipsEnabled;
 
     // The tutor logic itself handles its own onboarded/dismissed state via anovaTutorScripts
     // and useAnovaTutor's persistence. We just need to track if it's the first visit session-wise
@@ -250,6 +253,7 @@ export default function App() {
         setCurrentStats, anovaTutor, factorialAnovaTutor, ancovaTutor, displayFormulaId,
     };
     const resultProps = {
+        showTutorHints: tooltipsEnabled,
         selectPowerMode,
         darkMode, currentStep, availableResultSections, activeResultSection, handleResultSectionChange,
         isCentralTendencyPage, displayFormulaId, equationProps, isVariabilityPage, setCurrentStats,
@@ -268,6 +272,7 @@ export default function App() {
         currentStepId, currentStep, handleOptionClick, resultProps,
     };
     const overlayProps = {
+        showTutorHints: appMode === 'wizard' && activeResultSection === 'lessons' && tooltipsEnabled,
         aiModalOpen, darkMode, setAiModalOpen, aiLoading, aiExplanation,
         activeExplanation, setActiveExplanation, showHistory, setShowHistory, anovaTutor,
         isAnovaActive, setShowEquationValues, showEquationValues, currentStats, currentStepId,
@@ -278,7 +283,7 @@ export default function App() {
         <ErrorBoundary>
             <DatasetLibraryProvider>
                 <Suspense fallback={<RouteLoadingFallback darkMode={darkMode} />}>
-                <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-indigo-500/30 pb-20 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
+                <div data-theme={darkMode ? 'dark' : 'light'} className={`statwizard-app min-h-screen transition-colors duration-500 font-sans selection:bg-indigo-500/30 pb-20 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
                 <Header onBack={handleBack} onHome={handleRestart} canGoBack={appMode !== 'menu'} darkMode={darkMode} onToggleDarkMode={toggleDarkMode} tooltipsEnabled={tooltipsEnabled} onToggleTooltips={toggleTooltips} />
                 {appMode === 'wizard' && !isHelp && <div className="w-full bg-slate-200 h-1.5"><div className="bg-indigo-600 h-1.5 transition-all duration-700 ease-out" style={{ width: `${Math.min((history.length / 5) * 100, 100)}%` }} /></div>}
 

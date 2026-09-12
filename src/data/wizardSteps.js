@@ -12,7 +12,7 @@ export const STEPS = {
         helpId: 'help_start',
         options: [
             { label: "Summarize Data Only (Descriptive)", value: 'descriptive', next: 'descriptive_type' },
-            { label: "Compare Groups / Test Differences", value: 'differences', next: 'num_groups' },
+            { label: "Compare Groups / Test Differences", value: 'differences', next: 'comparison_outcome_type' },
             { label: "Examine Relationships / Associations", value: 'relationships', next: 'relationship_type' }
         ]
     },
@@ -102,8 +102,8 @@ export const STEPS = {
         description: "Choose prediction if one variable is meant to explain or forecast another. Choose association if you only want to know whether variables move together.",
         helpId: 'help_relationship',
         options: [
-            { label: "No, I want to examine an association only", value: 'correlation', next: 'correlation_result' },
-            { label: "Yes, I want to predict an outcome variable", value: 'regression', next: 'regression_type' }
+            { label: "No, I want to examine an association only", value: 'correlation', next: 'association_data_type' },
+            { label: "Yes, I want to predict an outcome variable", value: 'regression', next: 'prediction_outcome_type' }
         ]
     },
     regression_type: {
@@ -163,7 +163,8 @@ export const STEPS = {
         description: "We separate one-factor designs from multi-factor designs first. Repeated-measures and covariate-adjusted versions can branch from the one-factor path.",
         options: [
             { label: "One factor / one independent variable", value: 'one_factor', next: 'one_factor_design' },
-            { label: "Two or more factors (factorial design)", value: 'factorial', next: 'res_factorial_anova' }
+            { label: "Exactly two factors (factorial design)", value: 'factorial', next: 'factorial_design' },
+            { label: "Three or more factors", value: 'more_factors', next: 'res_unsupported_design' }
         ]
     },
     one_factor_design: {
@@ -187,6 +188,67 @@ export const STEPS = {
         ]
     },
 
+    comparison_outcome_type: {
+        id: 'comparison_outcome_type', title: 'Outcome type',
+        question: 'What kind of outcome are you comparing?',
+        description: 'Mean-comparison calculators require a quantitative outcome with meaningful numerical differences.',
+        options: [
+            { label: 'Quantitative measurements (such as height or test score)', value: 'quantitative', next: 'num_groups' },
+            { label: 'Categories, binary outcomes, counts, or ordinal ratings', value: 'other', next: 'res_unsupported_design' },
+            { label: "I'm not sure — show data-type guidance", value: 'unsure', next: 'help_outcome_type' },
+        ],
+    },
+    help_outcome_type: {
+        id: 'help_outcome_type', title: 'Identify your outcome',
+        question: 'Do equal numerical differences have a meaningful interpretation?',
+        description: 'Height and measured time are quantitative. Yes/no and category codes are categorical. Ordered ratings express order but not necessarily equal distances. Counts may need a count model. Do not treat category codes as measurements.',
+        options: [
+            { label: 'Return to outcome choices', value: 'return', next: 'comparison_outcome_type' },
+            { label: 'My outcome needs another type of model', value: 'other', next: 'res_unsupported_design' },
+        ],
+    },
+    association_data_type: {
+        id: 'association_data_type', title: 'Association data',
+        question: 'Are both variables quantitative measurements?',
+        description: 'Pearson correlation summarizes linear association between quantitative variables. Inspect the scatterplot and check independence before inference.',
+        options: [
+            { label: 'Yes, both are quantitative with meaningful distances', value: 'quantitative', next: 'correlation_result' },
+            { label: 'No, they include ranks, categories, or binary outcomes', value: 'other', next: 'res_unsupported_design' },
+            { label: "I'm not sure about the measurement types", value: 'unsure', next: 'res_unsupported_design' },
+        ],
+    },
+    prediction_outcome_type: {
+        id: 'prediction_outcome_type', title: 'Prediction outcome',
+        question: 'Is your outcome quantitative and continuous?',
+        description: 'The linear regression calculators here fit quantitative outcomes. Binary, categorical, count, and ordinal outcomes may need different models.',
+        options: [
+            { label: 'Yes, a quantitative continuous outcome', value: 'continuous', next: 'prediction_predictor_type' },
+            { label: 'No, or I am not sure', value: 'other', next: 'res_unsupported_design' },
+        ],
+    },
+    prediction_predictor_type: {
+        id: 'prediction_predictor_type', title: 'Predictor types',
+        question: 'Are your predictors quantitative, with independent observations?',
+        description: 'These calculators currently accept quantitative predictors. They do not automatically code categories or fit clustered/repeated-observation models.',
+        options: [
+            { label: 'Yes, quantitative predictors and independent observations', value: 'supported', next: 'regression_type' },
+            { label: 'Categorical predictors, dependent observations, or unsure', value: 'other', next: 'res_unsupported_design' },
+        ],
+    },
+    factorial_design: {
+        id: 'factorial_design', title: 'Two-factor design',
+        question: 'Are both factors between subjects, with independent observations?',
+        description: 'The two-factor calculator supports independent groups. Repeated or mixed designs need a model that accounts for participant dependence.',
+        options: [
+            { label: 'Yes, two between-subjects factors', value: 'independent', next: 'res_factorial_anova' },
+            { label: 'No, a repeated/mixed design or I am unsure', value: 'other', next: 'res_unsupported_design' },
+        ],
+    },
+    res_unsupported_design: {
+        id: 'res_unsupported_design', type: 'result', title: 'Find guidance for your design',
+        content: 'The wizard does not yet cover this combination of data types or study design.',
+        formulaId: 'none', assumptions: [],
+    },
     // --- RESULTS ---
 
     res_central_tendency: {
@@ -339,7 +401,7 @@ export const STEPS = {
         content: "Non-parametric alternative to independent t-test.",
         details: ["Uses Ranks."],
         formulaId: 'mann_whitney',
-        software: SOFTWARE_GUIDES.non_parametric,
+        software: SOFTWARE_GUIDES.mann_whitney,
         assumptions: [{ label: "Independence", failAdvice: "Wilcoxon if paired" }]
     },
     res_wilcoxon: {
@@ -349,7 +411,7 @@ export const STEPS = {
         content: "Non-parametric paired test.",
         details: ["Ranks differences."],
         formulaId: 'none',
-        software: SOFTWARE_GUIDES.non_parametric,
+        software: SOFTWARE_GUIDES.wilcoxon_signed_rank,
         assumptions: [{ label: "Symmetric Dist", failAdvice: "Sign Test", visual: "normality" }]
     },
     res_one_way_anova: {
@@ -417,7 +479,7 @@ export const STEPS = {
         id: 'res_factorial_anova',
         type: 'result',
         title: "Factorial ANOVA",
-        content: "Examines the effects of two or more independent categorical variables on a continuous outcome.",
+        content: "Examines two between-subjects categorical factors and their interaction on a continuous outcome.",
         details: ["Main Effect A", "Main Effect B", "Interaction (AxB)"],
         formulaId: 'factorial_anova',
         visualType: 'factorial_anova',
@@ -481,7 +543,7 @@ export const STEPS = {
         content: "Compares means of 3+ related conditions.",
         details: ["Accounts for subject error."],
         formulaId: 'anova',
-        visualType: 'anova',
+        visualType: null,
         software: SOFTWARE_GUIDES.rm_anova,
         assumptions: [
             {

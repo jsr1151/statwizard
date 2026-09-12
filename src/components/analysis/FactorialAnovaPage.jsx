@@ -54,6 +54,7 @@ const FactorialEffectCard = ({ darkMode, label, effect }) => (
 );
 
 const FactorialAnovaPage = ({
+    showTutorHints = true,
     section,
     darkMode,
     currentStats,
@@ -282,6 +283,7 @@ const FactorialAnovaPage = ({
                         darkMode={darkMode}
                         onStatsUpdate={onStatsChange}
                         datasetSeed={datasetSetup.seed}
+                        showTutor={false}
                     />
                 </Card>
             </div>
@@ -305,6 +307,7 @@ const FactorialAnovaPage = ({
             </Card>
 
             <FactorialAnovaVisual
+                showTutor={showTutorHints}
                 darkMode={darkMode}
                 onStatsUpdate={onStatsChange}
             />

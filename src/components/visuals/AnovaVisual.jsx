@@ -276,7 +276,7 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       <div className={`w-full h-[clamp(380px,55vh,520px)] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
         <div className="absolute top-4 left-4 flex gap-2 z-40">
           {['fDist', 'means', 'plots', 'decomp', 'table'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900/90 text-slate-500 hover:text-slate-300'}`}>
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 text-slate-500 hover:text-slate-300'}`}>
               {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : tab === 'plots' ? 'Plots' : tab === 'decomp' ? 'Decomp' : 'Table'}
             </button>
           ))}
@@ -391,8 +391,8 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
 
       {/* Mode Controls */}
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center px-2">
-          <div className="flex items-center gap-6">
+        <div className="flex flex-wrap justify-between items-center gap-4 px-2">
+          <div className="flex flex-wrap items-center gap-4">
             <h6 className="text-[11px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2"><Sigma size={14} /> ANOVA {anovaMode.toUpperCase()}</h6>
             <div className="flex p-1 rounded-2xl bg-slate-900 border border-slate-800">
               {['data', 'calc'].map(m => (
@@ -402,8 +402,8 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
               ))}
             </div>
           </div>
-          <div className="flex gap-4">
-            <div className="flex bg-slate-800/50 p-1.5 rounded-xl border border-slate-700">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex bg-slate-800 p-1.5 rounded-xl border border-slate-700">
               {[0.1, 0.05, 0.01].map(a => (
                 <button key={a} onClick={() => setAlpha(a)} className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${alpha === a ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500'}`}>{a}</button>
               ))}
@@ -424,12 +424,12 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
               { label: 'df2', val: calcDf2, min: 1, max: 250, setter: setCalcDf2 },
               { label: 'F', val: calcF, min: 0, max: 25, step: 0.1, setter: setCalcF }
             ].map(s => (
-              <div key={s.label} className="p-5 bg-slate-900/40 rounded-2xl border border-slate-800">
+              <div key={s.label} className="p-5 bg-slate-900 rounded-2xl border border-slate-800">
                 <div className="flex justify-between text-[9px] font-black text-slate-500 uppercase mb-2">
                   <span>{s.label}</span>
                   <span className="text-indigo-400">{s.val}</span>
                 </div>
-                <input type="range" min={s.min} max={s.max} step={s.step} value={s.val} onChange={e => s.setter(parseFloat(e.target.value))} className="w-full accent-indigo-500" />
+                <input aria-label={s.label === 'F' ? 'F statistic' : s.label === 'df1' ? 'Numerator degrees of freedom' : 'Denominator degrees of freedom'} type="range" min={s.min} max={s.max} step={s.step} value={s.val} onChange={e => s.setter(parseFloat(e.target.value))} className="w-full accent-indigo-500" />
               </div>
             ))}
           </div>

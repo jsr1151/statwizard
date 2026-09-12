@@ -209,6 +209,15 @@ const ObservedFittedPlot = ({
                             strokeWidth={point.isHighlighted ? 2.3 : 1.8}
                             className={onPointSelect ? 'cursor-pointer' : ''}
                             onClick={() => onPointSelect?.(point.id)}
+                            role={onPointSelect ? 'button' : undefined}
+                            tabIndex={onPointSelect ? 0 : undefined}
+                            aria-label={onPointSelect ? `Inspect case ${point.id}` : undefined}
+                            onKeyDown={event => {
+                                if (onPointSelect && (event.key === 'Enter' || event.key === ' ')) {
+                                    event.preventDefault();
+                                    onPointSelect(point.id);
+                                }
+                            }}
                         />
                     ))}
 

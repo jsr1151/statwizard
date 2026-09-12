@@ -4,7 +4,7 @@ import { buildCorrelationGuidance, buildPearsonTutorBaseDataset, calculatePearso
 import { parseDelimitedTable } from "../../utils/delimitedTable.js";
 import { buildNumericAnalysisColumn, countCompleteRows } from "../../utils/datasetImport.js";
 import { useDatasetLibraryContext } from "../../hooks/useDatasetLibrary.js";
-import { ACTIVE_DATASET_SESSION_KEY, consumeAnalysisLaunchPayload } from "../../utils/analysisLaunch.js";
+import { ACTIVE_DATASET_SESSION_KEY, readAnalysisLaunchPayload, consumeAnalysisLaunchPayload } from "../../utils/analysisLaunch.js";
 import { PEARSON_TUTOR_PRESETS as TUTOR_PRESETS } from '../../data/pearsonCorrelationPresets.js';
 import { PEARSON_SAMPLE_DATASET as SAMPLE_DATASET } from '../../data/pearsonCorrelationPresets.js';
 import PearsonPowerSection from './PearsonPowerSection.jsx';
@@ -116,13 +116,16 @@ const PearsonCorrelationPage = ({
     };
 
     const [tableText, setTableText] = useState(SAMPLE_DATASET);
-    const [calculatorInputMode, setCalculatorInputMode] = useState('paste');
-    const [selectedDatasetId, setSelectedDatasetId] = useState('');
-    const [launchPayload] = useState(() => consumeAnalysisLaunchPayload('pearson_correlation'));
+    const [launchPayload] = useState(() => readAnalysisLaunchPayload('pearson_correlation'));
+    const [calculatorInputMode, setCalculatorInputMode] = useState(launchPayload?.datasetId ? 'saved' : 'paste');
+    const [selectedDatasetId, setSelectedDatasetId] = useState(launchPayload?.datasetId || '');
+    useEffect(() => {
+        if (launchPayload) consumeAnalysisLaunchPayload('pearson_correlation');
+    }, [launchPayload]);
     const [launchPayloadApplied, setLaunchPayloadApplied] = useState(false);
     const [savedRoleSelection, setSavedRoleSelection] = useState({
-        x: '',
-        y: '',
+        x: launchPayload?.x || '',
+        y: launchPayload?.y || '',
     });
     const [selectedX, setSelectedX] = useState('');
     const [selectedY, setSelectedY] = useState('');

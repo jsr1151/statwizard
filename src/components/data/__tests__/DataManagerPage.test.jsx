@@ -71,6 +71,57 @@ const chooseSource = async label => {
     await change(source, [...source.options].find(option => option.textContent === label).value);
 };
 
+it('keeps an unsaved workspace and undo history when leaving and returning to the page', async () => {
+    await mount();
+    await upload();
+    const name = [...container.querySelectorAll('input')].find(node => node.value === 'Pairs');
+    await change(name, 'Draft name');
+    await act(async () => container.querySelector('input[type="radio"]').click());
+    await click('Add Derived Variable');
+    const beforeUnload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
+    await act(async () => root.render(<DatasetLibraryProvider><div>Another module</div></DatasetLibraryProvider>));
+    await act(async () => render());
+    expect([...container.querySelectorAll('input')].some(node => node.value === 'Draft name')).toBe(true);
+    expect(container.textContent).toContain('Unsaved edits');
+    expect(button('Undo').disabled).toBe(false);
+    await click('Save Dataset');
+    const afterSave = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(afterSave);
+    expect(afterSave.defaultPrevented).toBe(false);
+});
+
+it('cancels replacement and preserves unsaved data when saving fails', async () => {
+    await mount();
+    await upload();
+    await click('New Workspace');
+    expect(container.querySelector('dialog').textContent).toContain('Save your workspace first?');
+    await click('Cancel');
+    expect(container.querySelector('table')).not.toBeNull();
+    await click('New Workspace');
+    persistDatasetRecord.mockRejectedValueOnce(new Error('Storage unavailable'));
+    await click('Save and continue');
+    expect(container.querySelector('dialog [role="alert"]').textContent).toContain('Saving failed');
+    expect(container.querySelector('table')).not.toBeNull();
+    await click('Save and continue');
+    expect(container.querySelector('dialog')).toBeNull();
+    expect(container.querySelector('table')).toBeNull();
+    expect(saved().rowCount).toBe(5);
+});
+
+it('requires an explicit choice before importing over an unsaved workspace', async () => {
+    await mount();
+    await upload();
+    await upload({ name: 'Replacement.csv', text: async () => 'A,B\n20,30\n40,50' });
+    await click('Cancel');
+    expect(container.textContent).toContain('Pairs.csv');
+    await upload({ name: 'Replacement.csv', text: async () => 'A,B\n20,30\n40,50' });
+    await click('Discard changes');
+    expect(container.textContent).toContain('Prepared Replacement with 2 rows and 2 variables');
+    expect(container.querySelector('input[type="file"]').className).toBe('sr-only');
+});
+
 it('handles empty and invalid imports, recovers with CSV, and rebuilds header selection', async () => {
     await mount();
     expect(container.textContent).toContain('No saved datasets yet');

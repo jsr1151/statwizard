@@ -1,0 +1,461 @@
+{
+  "review": "2026-09-11 audit implementation",
+  "initialSweepViews": 182,
+  "targetedViews": 56,
+  "accessibilitySnapshots": 50,
+  "applicationErrors": 0,
+  "documentOverflows": 0,
+  "automatedAccessibilityViolations": 0,
+  "routes": [
+    {
+      "route": "menu",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "modules",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "data_manager",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "power",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "lessons",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "search",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_central_tendency/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_variability/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_frequency/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_probability/lessons",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_probability/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_nhst",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_ztest/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_ancova/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/lessons",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": false,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/equation",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": false,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_rm_anova/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_rm_anova/power",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": false,
+      "violations": []
+    },
+    {
+      "route": "wizard/correlation_result/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/regression_result/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/calculator",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_mann_whitney",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_wilcoxon",
+      "viewport": 1440,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "menu",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "modules",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "data_manager",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "power",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "lessons",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "search",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_central_tendency/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_variability/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_frequency/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_probability/lessons",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_probability/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_nhst",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_ztest/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_ancova/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/lessons",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": false,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/equation",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": false,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_rm_anova/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_rm_anova/power",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": false,
+      "violations": []
+    },
+    {
+      "route": "wizard/correlation_result/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/regression_result/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/calculator",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_mann_whitney",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    },
+    {
+      "route": "wizard/res_wilcoxon",
+      "viewport": 375,
+      "ready": true,
+      "overflow": false,
+      "accessibilityChecked": true,
+      "violations": []
+    }
+  ],
+  "workflowChecks": "theme, keyboard upload, draft retention, cancel, save-before-replace, saved launch, mobile sections, scope gates, all seven factorial views",
+  "limitations": "Snapshots cover selected default states, not every nested interaction or complete accessibility conformance."
+}

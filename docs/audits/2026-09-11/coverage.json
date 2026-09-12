@@ -1,0 +1,2380 @@
+{
+  "deployment": "https://jsr1151.github.io/statwizard/",
+  "commit": "ebdd91668c53cbd118fcf0cf6546f521025a0e4d",
+  "date": "2026-09-11 America/New_York",
+  "browser": "Headless Microsoft Edge",
+  "configurations": [
+    {
+      "width": 1440,
+      "height": 900,
+      "theme": "dark"
+    },
+    {
+      "width": 375,
+      "height": 900,
+      "theme": "light"
+    }
+  ],
+  "notes": "Viewport simulations, not physical phone tests. Initial top-level states; nested controls sampled separately. Axe findings can depend on active tutor overlays. Counts contain repeated elements.",
+  "checks": [
+    {
+      "route": "menu",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1504,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 8
+        }
+      ]
+    },
+    {
+      "route": "modules",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1162,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 4
+        }
+      ]
+    },
+    {
+      "route": "data_manager",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1200,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 13
+        }
+      ]
+    },
+    {
+      "route": "lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 977,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "route": "search",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2488,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 20
+        }
+      ]
+    },
+    {
+      "route": "wizard/start",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1408,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1204,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 5
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_central_tendency/explorer",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1949,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/software",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1098,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1173,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_variability/explorer",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1815,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1121,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/software",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1061,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1473,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_frequency/explorer",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2182,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 997,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/software",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_probability/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1196,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_probability/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 970,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_probability/simulations",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1182,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_probability/demos",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1248,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_probability/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1115,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_nhst",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2357,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 33
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_ztest/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1935,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ztest/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1650,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 11
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 4
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_ztest/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1020,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ztest/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ztest/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1658,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1531,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2319,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 15
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 5
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_onesample_ttest/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1207,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1027,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1879,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1747,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2523,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 33
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 7
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_indep_ttest/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1035,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 950,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1908,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1595,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2189,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 22
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_paired_ttest/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 992,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1027,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1879,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1976,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2706,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 1
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 17
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_one_way_anova/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2316,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/effect_size",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 980,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1104,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2257,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2717,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2968,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 6
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 8
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_ancova/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1091,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/effect_size",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1025,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1054,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2333,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1841,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2571,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 1
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 31
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 4
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_factorial_anova/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1641,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/effect_size",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1131,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2136,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2436,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2053,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 1
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 16
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_rm_anova/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2316,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1440,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2109,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2082,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 3215,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 17
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/correlation_result/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 903,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/effect_size",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1297,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1258,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1930,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2203,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 3153,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 22
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/regression_result/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 930,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/effect_size",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1476,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1208,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2233,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/lessons",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 3572,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/calculator",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 3597,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 30
+        }
+      ]
+    },
+    {
+      "route": "wizard/multiple_regression_result/equation",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 930,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/effect_size",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1816,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/assumptions",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1362,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/power",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 2333,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_mann_whitney",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1326,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_wilcoxon",
+      "width": 1440,
+      "ready": true,
+      "documentWidth": 1425,
+      "documentHeight": 1326,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "route": "menu",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2172,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "modules",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1817,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "data_manager",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1250,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2043,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1161,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 8
+        }
+      ]
+    },
+    {
+      "route": "search",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2706,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 19
+        }
+      ]
+    },
+    {
+      "route": "wizard/start",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 375,
+      "documentHeight": 900,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2783,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2076,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_central_tendency/explorer",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2622,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1518,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_central_tendency/software",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1337,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2121,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1961,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_variability/explorer",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2324,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1968,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_variability/software",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1339,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1915,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2158,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        },
+        {
+          "rule": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_frequency/explorer",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2479,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1662,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_frequency/software",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1390,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_probability/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2422,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_probability/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1866,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_probability/simulations",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1702,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_probability/demos",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1764,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_probability/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2156,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_nhst",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4398,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 27
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_ztest/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2592,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ztest/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2506,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 6
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 4
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_ztest/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1303,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ztest/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1210,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ztest/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3893,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2308,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3663,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 5
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_onesample_ttest/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1719,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1385,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_onesample_ttest/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4214,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3036,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4117,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 11
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 7
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_indep_ttest/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1342,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1352,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_indep_ttest/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4680,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2693,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3537,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 6
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_paired_ttest/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1323,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1460,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_paired_ttest/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4373,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 483,
+      "documentHeight": 2998,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 483
+        },
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 483
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.1",
+          "right": 382
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.05",
+          "right": 430
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.01",
+          "right": 477
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_one_way_anova/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 507,
+      "documentHeight": 4037,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 507
+        },
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 507
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.1",
+          "right": 406
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.05",
+          "right": 454
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.01",
+          "right": 500
+        }
+      ],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 1
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 19
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_one_way_anova/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3164,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/effect_size",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2039,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1502,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_one_way_anova/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 5092,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4344,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4164,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": []
+    },
+    {
+      "route": "wizard/res_ancova/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1487,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/effect_size",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1864,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1555,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_ancova/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 5634,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 448,
+      "documentHeight": 2362,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": "α=0.1α=0.05α=0.01",
+          "right": 448
+        },
+        {
+          "tag": "BUTTON",
+          "text": "α=0.01",
+          "right": 448
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_factorial_anova/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 472,
+      "documentHeight": 3422,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": "α=0.1α=0.05α=0.01",
+          "right": 472
+        },
+        {
+          "tag": "BUTTON",
+          "text": "α=0.05",
+          "right": 394
+        },
+        {
+          "tag": "BUTTON",
+          "text": "α=0.01",
+          "right": 472
+        }
+      ],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 1
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 13
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 4
+        },
+        {
+          "rule": "select-name",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_factorial_anova/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 398,
+      "documentHeight": 2256,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": "Mean Square (Effect)Estimates variation due to .MSA×B=SSA×BdfA×BdfA×B = (a-1)(b-1)",
+          "right": 398
+        },
+        {
+          "tag": "DIV",
+          "text": "MSA×B=SSA×BdfA×BdfA×B = (a-1)(b-1)",
+          "right": 378
+        },
+        {
+          "tag": "DIV",
+          "text": "Mean Square Error (Residual)Estimates the typical unexplained variability (noise).MSerror=SSerrordferrordferror = N - (a",
+          "right": 398
+        },
+        {
+          "tag": "DIV",
+          "text": "Estimates the typical unexplained variability (noise).",
+          "right": 378
+        },
+        {
+          "tag": "DIV",
+          "text": "MSerror=SSerrordferrordferror = N - (a × b)(requires all a × b cells populated)",
+          "right": 378
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_factorial_anova/effect_size",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1267,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1549,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_factorial_anova/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4851,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 538,
+      "documentHeight": 3159,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": " Visual ConceptF-DistMeansPlotsDecompTable0123456F-Ratio OutcomeReject H0Observed pFcrit = 3.39F = 3.50 ANOVA CALCComput",
+          "right": 538
+        },
+        {
+          "tag": "DIV",
+          "text": " Visual ConceptF-DistMeansPlotsDecompTable0123456F-Ratio OutcomeReject H0Observed pFcrit = 3.39F = 3.50 ANOVA CALCComput",
+          "right": 538
+        },
+        {
+          "tag": "H4",
+          "text": " Visual Concept",
+          "right": 514
+        },
+        {
+          "tag": "DIV",
+          "text": "F-DistMeansPlotsDecompTable0123456F-Ratio OutcomeReject H0Observed pFcrit = 3.39F = 3.50 ANOVA CALCComputeExplore0.10.05",
+          "right": 514
+        },
+        {
+          "tag": "DIV",
+          "text": "F-DistMeansPlotsDecompTable0123456F-Ratio OutcomeReject H0Observed pFcrit = 3.39F = 3.50 ANOVA CALCComputeExplore0.10.05",
+          "right": 514
+        },
+        {
+          "tag": "DIV",
+          "text": "F-DistMeansPlotsDecompTable0123456F-Ratio OutcomeReject H0Observed pFcrit = 3.39F = 3.50",
+          "right": 514
+        },
+        {
+          "tag": "DIV",
+          "text": " ANOVA CALCComputeExplore0.10.050.01df12df225F3.5",
+          "right": 514
+        },
+        {
+          "tag": "DIV",
+          "text": " ANOVA CALCComputeExplore0.10.050.01",
+          "right": 514
+        },
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 507
+        },
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 507
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.1",
+          "right": 406
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.05",
+          "right": 454
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_rm_anova/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 507,
+      "documentHeight": 2999,
+      "consoleIssues": 0,
+      "overflowContributors": [
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 507
+        },
+        {
+          "tag": "DIV",
+          "text": "0.10.050.01",
+          "right": 507
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.1",
+          "right": 406
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.05",
+          "right": 454
+        },
+        {
+          "tag": "BUTTON",
+          "text": "0.01",
+          "right": 500
+        }
+      ],
+      "accessibility": [
+        {
+          "rule": "button-name",
+          "impact": "critical",
+          "nodes": 1
+        },
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 18
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_rm_anova/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3142,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1215,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_rm_anova/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4904,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3617,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 5560,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 2
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/correlation_result/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1281,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/effect_size",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2522,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1781,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/correlation_result/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 4576,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 5345,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 6177,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 2
+        },
+        {
+          "rule": "label",
+          "impact": "critical",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "route": "wizard/regression_result/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1276,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/effect_size",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 2876,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1734,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/regression_result/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 5063,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/lessons",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 11828,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/calculator",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 7258,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 3
+        }
+      ]
+    },
+    {
+      "route": "wizard/multiple_regression_result/equation",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1304,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/effect_size",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 3655,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/assumptions",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1961,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/multiple_regression_result/power",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 5262,
+      "consoleIssues": 0,
+      "overflowContributors": []
+    },
+    {
+      "route": "wizard/res_mann_whitney",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1648,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "route": "wizard/res_wilcoxon",
+      "width": 375,
+      "ready": true,
+      "documentWidth": 360,
+      "documentHeight": 1519,
+      "consoleIssues": 0,
+      "overflowContributors": [],
+      "accessibility": [
+        {
+          "rule": "color-contrast",
+          "impact": "serious",
+          "nodes": 5
+        }
+      ]
+    }
+  ]
+}

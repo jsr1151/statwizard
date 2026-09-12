@@ -46,7 +46,7 @@ export default function PearsonDataSourceCard({
                         <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border cursor-pointer text-sm font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-indigo-500'}`}>
                             <FileUp size={16} />
                             Upload CSV
-                            <input type="file" accept=".csv,.txt,.tsv" className="hidden" onChange={onUpload} />
+                            <input type="file" accept=".csv,.txt,.tsv" className="sr-only" onChange={onUpload} />
                         </label>
                         <button
                             onClick={() => setTableText(SAMPLE_DATASET)}
@@ -58,6 +58,7 @@ export default function PearsonDataSourceCard({
                     </div>
 
                     <textarea
+                        aria-label="Paste correlation data as CSV or a table"
                         value={tableText}
                         onChange={(event) => setTableText(event.target.value)}
                         className={`w-full h-64 rounded-2xl border p-4 text-sm font-mono outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}

@@ -1,0 +1,166 @@
+{
+  "theme": {
+    "lightAfterToggle": true,
+    "lightAfterReload": false
+  },
+  "search": {
+    "average": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\n\nNo modules found matching \"average\"",
+    "standard deviation": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\n\nNo modules found matching \"standard deviation\"",
+    "SD": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\nVariability (SD, Range, Skew)\nDESCRIPTIVE\nProbability Basics & Demos\nDESCRIPTIVE",
+    "chi square": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\n\nNo modules found matching \"chi square\"",
+    "nonparametric": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\nMann-Whitney U Test (Non-parametric)\nNON-PARAMETRIC\nWilcoxon Signed-Rank Test (Non-parametric)\nNON-PARAMETRIC",
+    "t test": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\nOne-Sample T-Test\nMEAN COMPARISONS\nIndependent Samples T-Test\nMEAN COMPARISONS\nPaired Samples T-Test\nMEAN COMPARISONS",
+    "mean": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nFind a Statistic\n\nSearch across all modules and concepts.\n\nSearch statistical modules and concepts\nCentral Tendency (Mean, Median, Mode)\nDESCRIPTIVE\nOne-Sample Z-Test\nMEAN COMPARISONS\nOne-Sample T-Test\nMEAN COMPARISONS\nIndependent Samples T-Test\nMEAN COMPARISONS\nPaired Samples T-Test\nMEAN COMPARISONS\nOne-Way ANOVA\nMEAN COMPARISONS\nANCOVA (Analysis of Covariance)\nMEAN COMPARISONS\nFactorial ANOVA (Two-Way)\nMEAN COMPARISONS\nRepeated Measures ANOVA\nMEAN COMPARISONS"
+  },
+  "importFocusability": {
+    "display": "none",
+    "labelTabIndex": -1,
+    "labelTag": "LABEL"
+  },
+  "afterLeavingUnsavedWorkspace": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nDATA IMPORT / DATA MANAGER\nPrepare once, reuse everywhere\n\nImport CSV, Excel, or SPSS data, browse large variable sets without overwhelm, organize variables with editable chips, build derived variables and reshaped datasets, then launch the analysis page with the dataset already active.\n\nImport Data File\nNew Workspace\nImport a file or open a saved dataset to start preparing data.\nDataset library\n\nSaved datasets persist between sessions. Open one to refine variables, export a cleaned copy, or send it straight into a supported analysis page.\n\nNo saved datasets yet. Import a CSV, Excel, or SPSS file to start your local library.\nImport a dataset or open one from the library\n\nThis workspace is where you confirm headers, inspect missingness, tag variables, build scale scores, reshape repeated-measures data, export cleaned files, and launch directly into a supported calculator page with the dataset already active.",
+  "savedDataAfterReload": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nDATA IMPORT / DATA MANAGER\nPrepare once, reuse everywhere\n\nImport CSV, Excel, or SPSS data, browse large variable sets without overwhelm, organize variables with editable chips, build derived variables and reshaped datasets, then launch the analysis page with the dataset already active.\n\nImport Data File\nNew Workspace\nImport a file or open a saved dataset to start preparing data.\nDataset library\n\nSaved datasets persist between sessions. Open one to refine variables, export a cleaned copy, or send it straight into a supported analysis page.\n\nAuditExample\n\nAuditExample.csv / CSV\n\n6 ROWS\nREADY TO ANALYZE\n3 variables / Updated Sep 11, 2026, 11:03 PM\nOPEN\nDUPLICATE\nANALYZE DATASET\nDELETE\nImport a dataset or open one from the library\n\nThis workspace is where you confirm headers, inspect missingness, tag variables, build scale scores, reshape repeated-measures data, export cleaned files, and launch directly into a supported calculator page with the dataset already active.",
+  "wilcoxonR": {
+    "text": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nWilcoxon Signed-Rank Test\n\nNon-parametric paired test.\n\nDescribing Shape\n\nInstead of a formula, we look at symmetry (Skewness) and peak height (Kurtosis).\n\nVisual Concept\nASSUMPTIONS TO CHECK\nSymmetric Dist\nPART 2: RUN THE TEST\nSPSS\nJASP\nExcel\nG-Sheets\nR Code\n\nwilcox.test(y1, y2)",
+    "buttons": [
+      "StatWizardInteractive Statistics",
+      "Back",
+      "Tips On",
+      "",
+      "SPSS",
+      "JASP",
+      "Excel",
+      "G-Sheets",
+      "R Code"
+    ],
+    "url": "https://jsr1151.github.io/statwizard/#/wizard/res_wilcoxon"
+  },
+  "wilcoxonExcel": {
+    "text": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nWilcoxon Signed-Rank Test\n\nNon-parametric paired test.\n\nDescribing Shape\n\nInstead of a formula, we look at symmetry (Skewness) and peak height (Kurtosis).\n\nVisual Concept\nASSUMPTIONS TO CHECK\nSymmetric Dist\nPART 2: RUN THE TEST\nSPSS\nJASP\nExcel\nG-Sheets\nR Code\n\n1. Use =RANK(cell, range) for every score.\n2. Perform a standard T.TEST on the new Rank columns.",
+    "buttons": [
+      "StatWizardInteractive Statistics",
+      "Back",
+      "Tips On",
+      "",
+      "SPSS",
+      "JASP",
+      "Excel",
+      "G-Sheets",
+      "R Code"
+    ],
+    "url": "https://jsr1151.github.io/statwizard/#/wizard/res_wilcoxon"
+  },
+  "repeatedMeasuresTable": {
+    "text": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nRepeated Measures ANOVA\n\nCompares means of 3+ related conditions.\n\nTUTOR / LESSONS\nTEST CALCULATOR\nEQUATION\nASSUMPTIONS\nPOWER ANALYSIS\nTEST CALCULATOR\n\nUse this workspace to enter or inspect data-driven analysis inputs and outputs. Formulas, assumptions, software walkthroughs, and guided explanations stay in Tutor / Lessons.\n\nAnalysis Workspace\nF-DIST\nMEANS\nPLOTS\nDECOMP\nTABLE\nSOURCE\tSS\tDF\tMS\tF\tP\tΗ²\nBetween (Group)\t53.20\t2\t26.60\t38.00\t< .001\t0.864\nWithin (Error)\t8.40\t12\t0.70\t—\t—\t—\nTotal\t61.60\t14\t—\t—\t—\t—\n\nHover over any cell to see what it means.\n\nANOVA DATA\nCOMPUTE\nEXPLORE\n0.1\n0.05\n0.01\nADD GROUP\nN=5\n|\nM=5.80\n|\nSD=0.80\nRAW DATA\nSUMMARY STATS\nN=5\n|\nM=7.80\n|\nSD=0.80\nRAW DATA\nSUMMARY STATS\nN=5\n|\nM=3.20\n|\nSD=0.80\nRAW DATA\nSUMMARY STATS\nANOVA OBSERVED RESULTS\nF\n(2,12)\n=\n38.00\nP < .001\n(SIGNIFICANT)\nF CRITICAL VALUE\n3.89\nEFFECT SIZE (η2)\nη2\nCOPY TO CLIPBOARD\nPAIRWISE POST-HOC COMPARISONS\n\nTukey's HSD adjusted p-values for identifying which group means differ.\n\nRUN PAIRWISE TESTS\n\nREADY FOR POST-HOC ANALYSIS\n\nClick to reveal specific pairwise differences and identify which groups are driving your results.\n\nENRICHMENT\nSignificant F-ratio\nWhen F is significantly larger than F_crit (and p < alpha), it suggests group differences are larger than expected by random noise.\nHighlight what changed\nGot it\nANOVA TUTOR AI • VERSION 1.0",
+    "buttons": [
+      "StatWizardInteractive Statistics",
+      "Back",
+      "Tips On",
+      "",
+      "Tutor / Lessons",
+      "Test Calculator",
+      "Equation",
+      "Assumptions",
+      "Power Analysis",
+      "F-Dist",
+      "Means",
+      "Plots",
+      "Decomp",
+      "Table",
+      "Compute",
+      "Explore",
+      "0.1",
+      "0.05",
+      "0.01",
+      "ADD GROUP",
+      "",
+      "",
+      "Raw Data",
+      "Summary Stats",
+      "",
+      "",
+      "Raw Data",
+      "Summary Stats",
+      "",
+      "",
+      "Raw Data",
+      "Summary Stats",
+      "F",
+      "2",
+      "12",
+      "F",
+      "η2",
+      "η2",
+      "COPY TO CLIPBOARD",
+      "Run Pairwise Tests",
+      "",
+      "",
+      "Highlight what changed",
+      "Got it"
+    ],
+    "url": "https://jsr1151.github.io/statwizard/#/wizard/res_rm_anova/calculator"
+  },
+  "initialLaunchCapture": {
+    "note": "Captured early, not a confirmed persistent failure. Subsequent five multiple-regression launches settled on correct data.",
+    "observation": {
+      "text": "StatWizard\nINTERACTIVE STATISTICS\nBack\nTIPS ON\nv1.0.0\nMultiple Regression\n\nModels how one quantitative outcome changes as two or more quantitative predictors vary together.\n\nTUTOR / LESSONS\nTEST CALCULATOR\nEQUATION\nEFFECT SIZE\nASSUMPTIONS\nPOWER ANALYSIS\nTEST CALCULATOR\nFit a multiple-regression model from your data\n\nChoose one quantitative outcome and at least two quantitative predictors. The page estimates the fitted equation, coefficient table, omnibus model test, prediction outputs, and compact collinearity guidance.\n\nData workspace\nPASTE / UPLOAD\nSAVED DATASET\nUpload CSV\nLoad Sample Dataset\nPASTE CSV / TABLE DATA\nOUTCOME VARIABLE (Y)\nStudy Hours\nSleep Hours\nPractice Problems\nStress Level\nExam Score\nPREDICTOR VARIABLES (SELECT 2+)\nStudy Hours\nSleep Hours\nPractice Problems\nStress Level\n\nThis fast lane keeps the existing quick-entry workflow intact for sample data and pasted tables.\n\nCONFIDENCE LEVEL\nCOMPLETE-CASE SUMMARY\n15 usable rows remain for this model\n\nAll rows are currently usable for the selected variables.\n\n15 / 15 ROWS\nR^2\n0.993\n\n99.3% variance explained\n\nADJUSTED R^2\n0.992\n\nComplexity-adjusted model fit\n\nRMSE\n1.312\n\nTypical prediction error size\n\nMODEL F\n547.889\n\np < .001\n\nMAX VIF\n563.85\n\nSevere predictor overlap\n\nFITTED MODEL\nExam Score = -48.114 + 1.374 * Study Hours + 17.873 * Sleep Hours - 0.247 * Practice Problems\n\nThe model explains about 99% of the variance in Exam Score. Holding the other predictors constant, Sleep Hours has the strongest partial slope in this fit.\n\nF(3, 11) = 547.889, P < .001\nObserved vs Fitted\n\nThe diagonal is perfect prediction. Click a case to inspect how far its observed outcome sits above or below the fitted value.\n\n52.1\n52.1\n65\n65\n77.8\n77.8\n90.7\n90.7\n104\n104\nPredicted mean\nFitted Y\nExam Score\nResidual Plot\n\nResiduals should look roughly patternless around zero if the linear conditional mean is doing a reasonable job.\n\n-2.33\n-1.16\n0\n1.16\n2.33\n52.1\n65\n77.8\n90.7\n103.6\nFitted Y\nResidual\nPredict from the fitted model\nSTUDY HOURS\nObserved range 2 to 16\nSLEEP HOURS\nObserved range 5.9 to 8.3\nPRACTICE PROBLEMS\nObserved range 18 to 90\nPREDICTED MEAN EXAM SCORE\n\n78.733\n\n95% MEAN CI\n\n[77.988, 79.479]\n\n95% PREDICTION INTERVAL\n\n[75.751, 81.716]\n\nMultiple regression predicts the mean outcome from the whole predictor profile at once. The prediction interval is wider because individual cases still vary around that mean prediction.\n\nSELECTED CASE\n\nClick a point in the observed-vs-fitted plot to inspect how one case sits around the model.\n\nOBSERVED EXAM SCORE\n\n69\n\nFITTED EXAM SCORE\n\n67.919\n\nRESIDUAL\n\n1.081\n\nCoefficient summary\nTERM\tESTIMATE\tSE\tT\tP\tSTD. BETA\tVIF\t95% CI\nIntercept\t-48.114\t40.105\t-1.2\tp = .255\t--\t--\t[-136.385, 40.157]\nStudy Hours\t1.374\t1.862\t0.738\tp = .476\t0.431\t563.85\t[-2.724, 5.473]\nSleep Hours\t17.873\t7.198\t2.483\tp = .030\t0.976\t255.89\t[2.03, 33.715]\nPractice Problems\t-0.247\t0.233\t-1.058\tp = .313\t-0.412\t250.91\t[-0.76, 0.266]\nConditional predictor summaries\nStudy Hours\nVIF 563.85\n\nHolding the other predictors constant, predicted Exam Score increases by about 1.374 units for each 1-unit increase in Study Hours.\n\nZERO-ORDER R 0.994 | PARTIAL R^2 0.047\n\nSleep Hours\nVIF 255.89\n\nHolding the other predictors constant, predicted Exam Score increases by about 17.873 units for each 1-unit increase in Sleep Hours.\n\nZERO-ORDER R 0.996 | PARTIAL R^2 0.359\n\nPractice Problems\nVIF 250.91\n\nHolding the other predictors constant, predicted Exam Score decreases by about 0.247 units for each 1-unit increase in Practice Problems.\n\nZERO-ORDER R 0.99 | PARTIAL R^2 0.092\n\nPractical model guidance\nPlot before trusting the model\n\nStart with observed-vs-fitted and residual views. Multiple regression assumes the conditional mean of Y is linear in the predictors, not just that the coefficients can be estimated.\n\nCoefficients are conditional\n\nEach slope describes how predicted Y changes as that predictor changes while the other predictors in the model are held constant.\n\nCollinearity warning\n\nThe predictor set shows elevated overlap (max VIF = 563.85). Coefficients can become unstable even when overall R^2 looks strong.\n\nSmall-sample caution\n\nWith multiple predictors and a modest sample, p-values and confidence intervals become more sensitive to outliers, non-normal residuals, and collinearity.",
+      "buttons": [
+        "StatWizardInteractive Statistics",
+        "Back",
+        "Tips On",
+        "",
+        "Tutor / Lessons",
+        "Test Calculator",
+        "Equation",
+        "Effect Size",
+        "Assumptions",
+        "Power Analysis",
+        "Paste / Upload",
+        "Saved Dataset",
+        "Load Sample Dataset"
+      ],
+      "url": "https://jsr1151.github.io/statwizard/#/wizard/multiple_regression_result/calculator"
+    }
+  },
+  "settledLaunchChecks": {
+    "0-Multiple Regression": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/multiple_regression_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "1-Multiple Regression": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/multiple_regression_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "2-Pearson Correlation": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/correlation_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "3-Pearson Correlation": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/correlation_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "4-One-Sample t-Test": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/res_onesample_ttest/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "attempt-0": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/multiple_regression_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "attempt-1": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/multiple_regression_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    },
+    "attempt-2": {
+      "route": "https://jsr1151.github.io/statwizard/#/wizard/multiple_regression_result/calculator",
+      "usesSixRows": true,
+      "containsSample15Rows": false
+    }
+  }
+}

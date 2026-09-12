@@ -5,6 +5,7 @@ const FactorialAnovaTutorPanel = lazy(() => import('../../components/tutor/Facto
 const AncovaTutorPanel = lazy(() => import('../../components/tutor/AncovaTutorPanel'));
 
 export default function AppOverlays({
+        showTutorHints,
         aiModalOpen, darkMode, setAiModalOpen, aiLoading, aiExplanation,
         activeExplanation, setActiveExplanation, showHistory, setShowHistory, anovaTutor,
         isAnovaActive, setShowEquationValues, showEquationValues, currentStats, currentStepId,
@@ -197,7 +198,7 @@ export default function AppOverlays({
         />
     )}
 
-    {currentStepId === 'res_factorial_anova' && factorialAnovaTutor.activeTip && (
+    {showTutorHints && currentStepId === 'res_factorial_anova' && factorialAnovaTutor.activeTip && (
         <FactorialAnovaTutorPanel
             tip={factorialAnovaTutor.activeTip}
             onDismiss={factorialAnovaTutor.dismissTip}
@@ -237,7 +238,7 @@ export default function AppOverlays({
         />
     )}
 
-    {currentStepId === 'res_ancova' && ancovaTutor.activeTip && (
+    {showTutorHints && currentStepId === 'res_ancova' && ancovaTutor.activeTip && (
         <AncovaTutorPanel
             tip={ancovaTutor.activeTip}
             onDismiss={ancovaTutor.dismissTip}

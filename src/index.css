@@ -20,7 +20,7 @@
 
     .ms-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
         gap: 1rem;
     }
 
@@ -63,6 +63,48 @@ html {
 
 body {
     line-height: 1.5;
+}
+
+/* Text follows the nearest surface, including dark controls in the light theme. */
+.statwizard-app[data-theme="dark"],
+.statwizard-app :is(.bg-slate-800, .bg-slate-900, .bg-slate-950) {
+    --readable-muted: var(--color-slate-300);
+    --readable-indigo: var(--color-indigo-300);
+    --readable-emerald: var(--color-emerald-300);
+    --readable-amber: var(--color-amber-300);
+    --readable-red: var(--color-red-300);
+    --readable-cyan: var(--color-cyan-300);
+}
+.statwizard-app[data-theme="light"],
+.statwizard-app :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-indigo-50, .bg-indigo-100) {
+    --readable-muted: var(--color-slate-700);
+    --readable-indigo: var(--color-indigo-800);
+    --readable-emerald: var(--color-emerald-800);
+    --readable-amber: var(--color-amber-800);
+    --readable-red: var(--color-red-800);
+    --readable-cyan: var(--color-cyan-800);
+}
+.statwizard-app :is(.text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700) {
+    color: var(--readable-muted);
+}
+.statwizard-app :is(.text-indigo-200, .text-indigo-300, .text-indigo-400, .text-indigo-500, .text-indigo-600, [class~="text-indigo-400/60"], [class~="text-indigo-500/50"], [class~="text-indigo-500/60"]) {
+    color: var(--readable-indigo);
+}
+.statwizard-app :is(.text-emerald-400, .text-emerald-500) {
+    color: var(--readable-emerald);
+}
+.statwizard-app :is(.text-amber-200, [class~="text-amber-200/70"], .text-amber-500, [class~="text-amber-500/60"]) {
+    color: var(--readable-amber);
+}
+.statwizard-app :is(.text-red-400, .text-red-500) {
+    color: var(--readable-red);
+}
+.statwizard-app .text-cyan-400 {
+    color: var(--readable-cyan);
+}
+.statwizard-app :is(button, input, select, textarea, a):focus-visible {
+    outline: 2px solid var(--color-indigo-500);
+    outline-offset: 3px;
 }
 
 /* Probability panels share a readable palette, including inset dark controls. */

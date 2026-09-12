@@ -1,15 +1,9 @@
 import React from "react";
 import { Search, Activity, AlertCircle } from "lucide-react";
 import { STAT_PAGE_LIST } from "../../data/wizardSteps";
+import { searchModules } from '../../utils/moduleSearch.js';
 const SearchView = ({ onSelect, darkMode, searchQuery, setSearchQuery }) => {
-  const normalize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const normQuery = normalize(searchQuery);
-
-  const filtered = STAT_PAGE_LIST.filter(
-    (p) =>
-      normalize(p.title).includes(normQuery) ||
-      normalize(p.category).includes(normQuery),
-  );
+  const filtered = searchModules(STAT_PAGE_LIST, searchQuery);
 
   return (
     <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -45,6 +39,7 @@ const SearchView = ({ onSelect, darkMode, searchQuery, setSearchQuery }) => {
         />
       </div>
 
+      <p role="status" className={`mb-4 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{filtered.length} matching modules</p>
       <div className="space-y-4">
         {filtered.length > 0 ? (
           filtered.map((p) => (
@@ -85,6 +80,7 @@ const SearchView = ({ onSelect, darkMode, searchQuery, setSearchQuery }) => {
             >
               No modules found matching "{searchQuery}"
             </p>
+            <p className={`mt-3 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Try a related term such as average, standard deviation, t-test, or regression. Some methods are not yet available.</p>
           </div>
         )}
       </div>

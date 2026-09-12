@@ -25,7 +25,7 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, onShowHistory, darkMode }) 
 
     return (
         <div
-            className={`fixed right-6 top-[20%] w-80 transition-all duration-300 ${isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100 animate-in slide-in-from-right-4'}`}
+            className={`relative mx-4 my-4 w-auto sm:fixed sm:right-6 sm:top-[20%] sm:w-80 sm:m-0 transition-all duration-300 ${isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100 animate-in slide-in-from-right-4'}`}
             style={{ zIndex: 20000 }}
         >
             <div className={`relative overflow-hidden rounded-2xl border-2 shadow-2xl backdrop-blur-xl ${darkMode ? 'bg-slate-900/90 border-slate-800 shadow-black/50' : 'bg-white/90 border-slate-100 shadow-slate-200'}`}>
@@ -58,7 +58,7 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, onShowHistory, darkMode }) 
                                 </button>
                             )}
                             <button
-                                onClick={() => handleDismiss(false)}
+                                aria-label="Dismiss guided hint" onClick={() => handleDismiss(false)}
                                 className={`p-1.5 rounded-lg transition-all ${darkMode ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-900'}`}
                             >
                                 <X size={15} />
@@ -97,7 +97,7 @@ const AnovaTutorPanel = ({ tip, onDismiss, onAction, onShowHistory, darkMode }) 
 
                 {/* Subtle Bottom Accent */}
                 <div className={`p-3 text-[8px] font-black uppercase tracking-widest text-center border-t ${darkMode ? 'bg-slate-950/50 border-slate-800 text-slate-600' : 'bg-slate-50/50 border-slate-100 text-slate-400'}`}>
-                    ANOVA TUTOR AI • VERSION 1.0
+                    ANOVA guided hints
                 </div>
             </div>
         </div>

@@ -778,7 +778,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                         <div className={`text-[7px] font-black uppercase tracking-tighter ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Hypothesized Effect (Cohen's d)</div>
                         <div className="text-[7px] font-bold text-indigo-400">{targetEffect.toFixed(2)}</div>
                       </div>
-                      <input
+                      <input aria-label="Target standardized effect size"
                         type="range" min="0" max="1.2" step="0.05"
                         value={targetEffect}
                         onChange={(e) => setTargetEffect(parseFloat(e.target.value))}
@@ -844,7 +844,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                 </button>
                 <label className="ml-auto flex min-w-[180px] items-center gap-2">
                   <span className={`shrink-0 font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>d = {targetEffect.toFixed(2)}</span>
-                  <input
+                  <input aria-label="Target standardized effect size"
                     type="range"
                     min="0"
                     max="1.2"
@@ -903,7 +903,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                         ? `[${ciLower === -Infinity ? '-∞' : ciLower.toFixed(precision)}, ∞)`
                         : `(-∞, ${ciUpper === Infinity ? '∞' : ciUpper.toFixed(precision)}]`)}
                   </span>
-                  <select
+                  <select aria-label="Confidence interval type"
                     value={ciType}
                     onChange={(e) => setCiType(e.target.value)}
                     className={`rounded px-2 py-1 text-[10px] font-black uppercase border ${darkMode ? 'bg-slate-900 border-slate-700 text-indigo-300' : 'bg-slate-900 border-slate-700 text-white'}`}
@@ -930,7 +930,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                     ))}
                   </div>
                 </div>
-                <input type="range" min="1" max="100" step="1" value={df} onChange={(e) => setDf(parseInt(e.target.value))} className="w-full h-1.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-indigo-500" />
+                <input aria-label="Degrees of freedom" type="range" min="1" max="100" step="1" value={df} onChange={(e) => setDf(parseInt(e.target.value))} className="w-full h-1.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-indigo-500" />
                 <div className={`text-[8px] font-medium leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   {df < 10 ? <span><Sparkles className="inline w-3 h-3 mr-1 text-amber-500" /> <b>Tip:</b> Watch how low $df$ makes the tails much "heavier" (higher).</span> : "Notice how the T-distribution looks more like the Z-distribution as $df$ increases."}
                 </div>
@@ -989,11 +989,11 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                     </span>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded ${isSignificant ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'}`}>{isSignificant ? "Significant" : "Not Significant"}</span>
                   </div>
-                  <input type="range" min="-4" max="4" step="0.01" value={val} onChange={(e) => setVal(parseFloat(e.target.value))} className={`w-full h-1.5 rounded-full appearance-none cursor-pointer ${isSignificant ? 'bg-red-400/30 accent-red-500' : 'bg-indigo-400/30 accent-indigo-500'}`} />
+                  <input aria-label="Test statistic" type="range" min="-4" max="4" step="0.01" value={val} onChange={(e) => setVal(parseFloat(e.target.value))} className={`w-full h-1.5 rounded-full appearance-none cursor-pointer ${isSignificant ? 'bg-red-400/30 accent-red-500' : 'bg-indigo-400/30 accent-indigo-500'}`} />
                 </div>
                 <div className="w-full md:w-32 space-y-1.5">
                   <label className={`text-[9px] font-black uppercase tracking-widest block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Manual Input</label>
-                  <input type="number" step="0.01" value={val} onChange={(e) => setVal(parseFloat(e.target.value) || 0)} className={`w-full border rounded p-1.5 text-xs font-bold text-center focus:outline-none focus:border-indigo-500 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'}`} />
+                  <input aria-label="Test statistic" type="number" step="0.01" value={val} onChange={(e) => setVal(parseFloat(e.target.value) || 0)} className={`w-full border rounded p-1.5 text-xs font-bold text-center focus:outline-none focus:border-indigo-500 transition-colors ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-800 border-slate-700'}`} />
                 </div>
               </div>
             ) : (
@@ -1011,7 +1011,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                       <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Enter Raw Data</span>
                       <span className="text-[7px] text-slate-500 italic">Separated by commas, spaces, or lines</span>
                     </div>
-                    <textarea
+                    <textarea aria-label="Raw sample values"
                       value={rawData}
                       onChange={(e) => { setRawData(e.target.value); parseRawData(e.target.value); }}
                       placeholder="Example: 10, 12, 14, 16..."
@@ -1029,7 +1029,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                   ].map(param => (
                     <div key={param.key} className={`border p-2 rounded-xl flex flex-col gap-1 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-900 border-slate-700'}`}>
                       <span className="text-[7px] font-black text-indigo-400 uppercase tracking-widest">{param.label}</span>
-                      <input
+                      <input aria-label={param.label}
                         type="number"
                         value={calcData[param.key]}
                         onChange={(e) => setCalcData({ ...calcData, [param.key]: parseFloat(e.target.value) || 0 })}
@@ -1083,7 +1083,7 @@ const NormalDistributionVisual = ({ highlight = null, label = "Distribution", ty
                       <span className="text-[8px] font-black text-indigo-300 uppercase leading-none mb-1">{(1 - alpha) * 100}% Confidence Interval</span>
                       <span className="text-[7px] text-indigo-400/60 font-bold uppercase tracking-tighter">True Population Mean (μ)</span>
                     </div>
-                    <select
+                    <select aria-label="Confidence interval type"
                       value={ciType}
                       onChange={(e) => setCiType(e.target.value)}
                       className="bg-indigo-500/30 text-[7px] font-black uppercase text-indigo-100 rounded px-1.5 py-0.5 border border-indigo-500/40 outline-none focus:ring-1 ring-indigo-400 transition-all cursor-pointer"

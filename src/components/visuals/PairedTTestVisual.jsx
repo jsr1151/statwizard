@@ -358,15 +358,15 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Mean (͸1)</label>
-                    <input type="number" step="0.1" value={summaryData.mean1} onChange={e => setSummaryData({ ...summaryData, mean1: parseFloat(e.target.value) || 0 })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Condition 1 mean" type="number" step="0.1" value={summaryData.mean1} onChange={e => setSummaryData({ ...summaryData, mean1: parseFloat(e.target.value) || 0 })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">SD (s₁)</label>
-                    <input type="number" step="0.1" min="0.01" value={summaryData.sd1} onChange={e => setSummaryData({ ...summaryData, sd1: Math.max(0.01, parseFloat(e.target.value) || 0.01) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Condition 1 standard deviation" type="number" step="0.1" min="0.01" value={summaryData.sd1} onChange={e => setSummaryData({ ...summaryData, sd1: Math.max(0.01, parseFloat(e.target.value) || 0.01) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                 </div>
               ) : (
-                <textarea placeholder="Paste Condition 1 values..." value={group1.raw} onChange={e => setGroup1({ ...group1, raw: e.target.value })} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
+                <textarea aria-label="Condition 1 raw values" placeholder="Paste Condition 1 values..." value={group1.raw} onChange={e => setGroup1({ ...group1, raw: e.target.value })} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
               )}
             </div>
             <div className={`p-4 rounded-xl border-2 transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
@@ -378,15 +378,15 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">Mean (͸2)</label>
-                    <input type="number" step="0.1" value={summaryData.mean2} onChange={e => setSummaryData({ ...summaryData, mean2: parseFloat(e.target.value) || 0 })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Condition 2 mean" type="number" step="0.1" value={summaryData.mean2} onChange={e => setSummaryData({ ...summaryData, mean2: parseFloat(e.target.value) || 0 })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[8px] font-bold text-slate-500 uppercase">SD (s₂)</label>
-                    <input type="number" step="0.1" min="0.01" value={summaryData.sd2} onChange={e => setSummaryData({ ...summaryData, sd2: Math.max(0.01, parseFloat(e.target.value) || 0.01) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                    <input aria-label="Condition 2 standard deviation" type="number" step="0.1" min="0.01" value={summaryData.sd2} onChange={e => setSummaryData({ ...summaryData, sd2: Math.max(0.01, parseFloat(e.target.value) || 0.01) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   </div>
                 </div>
               ) : (
-                <textarea placeholder="Paste Condition 2 values..." value={group2.raw} onChange={e => setGroup2({ ...group2, raw: e.target.value })} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
+                <textarea aria-label="Condition 2 raw values" placeholder="Paste Condition 2 values..." value={group2.raw} onChange={e => setGroup2({ ...group2, raw: e.target.value })} className={`w-full h-16 p-2 rounded text-[10px] font-mono border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`} />
               )}
             </div>
           </div>
@@ -395,13 +395,13 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
               <div className={`p-3 rounded-xl border transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex flex-col gap-1">
                   <label className="text-[8px] font-bold text-slate-500 uppercase">Number of Pairs (n)</label>
-                  <input type="number" step="1" min="1" value={summaryData.n} onChange={e => setSummaryData({ ...summaryData, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                  <input aria-label="Number of pairs" type="number" step="1" min="1" value={summaryData.n} onChange={e => setSummaryData({ ...summaryData, n: Math.max(1, parseInt(e.target.value) || 1) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                 </div>
               </div>
               <div className={`p-3 rounded-xl border transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <div className="flex flex-col gap-1">
                   <label className="text-[8px] font-bold text-slate-500 uppercase">Correlation (r)</label>
-                  <input type="number" step="0.05" min="-1" max="1" value={summaryData.r} onChange={e => setSummaryData({ ...summaryData, r: Math.max(-1, Math.min(1, parseFloat(e.target.value) || 0)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
+                  <input aria-label="Correlation between paired measurements" type="number" step="0.05" min="-1" max="1" value={summaryData.r} onChange={e => setSummaryData({ ...summaryData, r: Math.max(-1, Math.min(1, parseFloat(e.target.value) || 0)) })} className={`p-2 rounded text-sm font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} />
                   <span className={`text-[7px] italic ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>Used to derive s<sub>d</sub> = √(s₁² + s₂² - 2r·s₁·s₂)</span>
                 </div>
               </div>
@@ -411,7 +411,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Significance Level (α)</span>
-              <select value={alpha} onChange={e => setAlpha(parseFloat(e.target.value))} className={`p-2 rounded text-xs font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+              <select aria-label="Significance level" value={alpha} onChange={e => setAlpha(parseFloat(e.target.value))} className={`p-2 rounded text-xs font-bold border transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                 <option value={0.01}>0.01 (Conservative)</option>
                 <option value={0.05}>0.05 (Standard)</option>
                 <option value={0.10}>0.10 (Exploratory)</option>
@@ -439,7 +439,7 @@ const PairedTTestVisual = ({ highlight = null, darkMode, onTutorUpdate, onStatsU
                 <div className={`flex-1 py-2 px-3 text-[10px] font-black rounded border uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
                   {ciType === 'two-sided' ? 'Two-Sided CI' : 'One-Sided Bound'}
                 </div>
-                <select value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
+                <select aria-label="Confidence interval type" value={ciType} onChange={e => setCiType(e.target.value)} className={`p-2 rounded text-[8px] font-black border uppercase transition-colors ${darkMode ? 'bg-slate-950 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}>
                   <option value="two-sided">Two-Sided</option>
                   <option value="one-sided">One-Sided</option>
                 </select>

@@ -44,7 +44,7 @@ export default function MultipleRegressionDataSourceCard({
                         <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl cursor-pointer font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
                             <FileUp size={16} />
                             Upload CSV
-                            <input type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={onUpload} />
+                            <input type="file" accept=".csv,.tsv,.txt" className="sr-only" onChange={onUpload} />
                         </label>
                         <button
                             onClick={() => setTableText(SAMPLE_DATASET)}

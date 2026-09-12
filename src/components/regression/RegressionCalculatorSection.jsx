@@ -55,7 +55,7 @@ export default function RegressionCalculatorSection({
                             <label className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest cursor-pointer transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-indigo-500'}`}>
                                 <FileUp size={14} />
                                 Upload CSV
-                                <input type="file" accept=".csv,.txt" onChange={onUpload} className="hidden" />
+                                <input type="file" accept=".csv,.txt" onChange={onUpload} className="sr-only" />
                             </label>
                             <button onClick={() => setTableText(SAMPLE_DATASET)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-indigo-500'}`}>
                                 Load Sample Data
@@ -63,6 +63,7 @@ export default function RegressionCalculatorSection({
                         </div>
 
                         <textarea
+                            aria-label="Paste regression data as CSV or a table"
                             value={tableText}
                             onChange={(event) => setTableText(event.target.value)}
                             rows={12}
