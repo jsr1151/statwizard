@@ -306,12 +306,57 @@ All 33 test files / 300 tests pass, together with lint, production build,
 documentation checks, and all 30 power fixtures. All touched components
 remain below 500 lines.
 
-## Follow-ups
+## Completed: bundle review and deferred dependencies
 
-- Bundle optimization remains separate. This build reports approximately
-  313 kB for the main chunk, 492 kB for SheetJS, and 55 kB for the Simple Linear
-  Regression feature chunk before gzip. The extracted Pearson feature chunk
-  is approximately 50 kB before gzip.
+The production module audit found that route metadata imported every power
+solver into the initial bundle. Power configurations now reference solver
+and curve-builder keys; the power engine resolves those keys in a separate
+implementation registry. Explicit function callbacks remain supported.
+The numerical algorithms are unchanged.
+
+Data Manager previously loaded SheetJS even for CSV-only work. Excel
+import and export now load a small workbook adapter on demand. The adapter
+uses static named SheetJS imports so tree shaking retains the same library
+size. Import loading and error feedback still cover the asynchronous work;
+export failures still use the existing error feedback.
+
+Production browser measurements, with cache disabled:
+
+| JavaScript downloaded | Before | After | Reduction |
+| --- | ---: | ---: | ---: |
+| Main application chunk | 313.44 kB | 232.72 kB | 25.8% |
+| Initial page, including vendor | 521.16 kB | 440.45 kB | 15.5% |
+| Cold Data Manager visit and CSV workflow | 1,109.04 kB | 536.63 kB | 51.6% |
+
+These are decoded JavaScript bytes, using decimal kB; images and CSS are
+excluded. Initial JavaScript is approximately 129.8 kB when each chunk is
+gzipped separately. The savings come from loading dependencies later: the
+491.83 kB SheetJS chunk is unchanged, and the power UI chunk grows from
+about 33.5 kB to 96.6 kB as it takes ownership of the solver code. Analysis
+feature bundles can load power support before the power tab is selected.
+
+`npm run bundle:check` builds in memory and checks the final static import
+graph. It excludes power solvers from startup, excludes SheetJS from both
+startup and the CSV workspace, verifies the Excel adapter remains in the
+build, and enforces a 140 kB gzip startup budget. The command is documented
+in the README and runs in the deployment workflow before the production
+build.
+
+Production Edge checks compared all 27 supported power-mode screens with
+the baseline; visible results and inputs matched. CSV export, Excel export
+with matching cell values, and multi-sheet Excel import passed. Network
+records confirmed SheetJS is absent for CSV and requested for Excel. No
+console errors or React warnings occurred. New tests exercise all registered
+power modes, sample/effect curves, and solver error handling; the existing
+real-workbook test now waits for the deferred import.
+
+All 34 test files / 337 tests pass, together with lint, production build,
+documentation checks, all 30 power fixtures, and the new bundle check.
+No dependencies were added.
+
+The handoff's probability hardening, five component extractions, documented
+layout follow-ups, and bundle review are complete. Further reductions to
+individual feature chunks can be considered separately.
 
 Browser comparison artifacts and temporary extraction scripts remain ignored
 under `.vite`; they are not production dependencies.

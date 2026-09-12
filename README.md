@@ -40,6 +40,7 @@ The development server listens on `127.0.0.1:5174` by default. Vite prints the e
 | ------------------------ | -------------------------------------------------------------- |
 | `npm run dev`            | Start the local Vite development server.                       |
 | `npm run build`          | Create the GitHub Pages production bundle in `dist/`.          |
+| `npm run bundle:check`   | Check startup size and deferred power/Excel dependencies.       |
 | `npm run preview`        | Preview the production bundle locally.                         |
 | `npm run lint`           | Run the ESLint repository gate.                                |
 | `npm test`               | Run all Vitest suites once.                                    |
@@ -55,6 +56,7 @@ npm run lint
 npm test
 npm run power:fixtures
 npm run docs:check
+npm run bundle:check
 npm run build
 ```
 

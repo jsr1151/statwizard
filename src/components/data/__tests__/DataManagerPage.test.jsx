@@ -56,7 +56,10 @@ const change = async (node, value) => act(async () => {
 const upload = async (file = { name: 'Pairs.csv', text: async () => csv }) => {
     const input = container.querySelector('input[type="file"]');
     Object.defineProperty(input, 'files', { configurable: true, value: [file] });
-    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+    await act(async () => {
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        await vi.dynamicImportSettled();
+    });
 };
 const saved = () => persistDatasetRecord.mock.lastCall[0];
 const values = (dataset, label) => {

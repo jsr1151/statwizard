@@ -1,22 +1,3 @@
-import { solveOneSampleZPower } from './solvers/oneSampleZ.js';
-import { solveOneSampleTPower } from './solvers/oneSampleT.js';
-import { solvePairedTPower } from './solvers/pairedT.js';
-import { solveIndependentTPower } from './solvers/independentT.js';
-import { solveOneWayAnovaPower } from './solvers/oneWayAnova.js';
-import { solveAncovaPower } from './solvers/ancova.js';
-import {
-    buildPearsonCorrelationCurveModel,
-    solvePearsonCorrelationPower,
-} from './solvers/pearsonCorrelation.js';
-import {
-    buildSimpleLinearRegressionCurveModel,
-    solveSimpleLinearRegressionPower,
-} from './solvers/simpleLinearRegression.js';
-import {
-    buildMultipleRegressionCurveModel,
-    solveMultipleRegressionPower,
-} from './solvers/multipleRegression.js';
-
 const ALL_GPOWER_MODES = ['a_priori', 'post_hoc', 'sensitivity', 'compromise', 'criterion'];
 
 const buildTailFields = () => ([
@@ -832,7 +813,7 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: oneSampleZEffectTransform,
-            solver: solveOneSampleZPower,
+            solver: 'one_sample_z',
             availableVisualizerModes: ['test', 'power'],
             buildInitialInputs: buildZDefaults,
         },
@@ -935,7 +916,7 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: oneSampleTEffectTransform,
-            solver: solveOneSampleTPower,
+            solver: 'one_sample_t',
             availableVisualizerModes: ['test', 'power'],
             buildInitialInputs: buildOneSampleTDefaults,
         },
@@ -1040,7 +1021,7 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: pairedTEffectTransform,
-            solver: solvePairedTPower,
+            solver: 'paired_t',
             availableVisualizerModes: ['test', 'power'],
             buildInitialInputs: buildPairedTDefaults,
         },
@@ -1170,7 +1151,7 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: independentTEffectTransform,
-            solver: solveIndependentTPower,
+            solver: 'independent_t',
             availableVisualizerModes: ['test', 'power'],
             buildInitialInputs: buildIndependentTDefaults,
         },
@@ -1301,7 +1282,7 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: oneWayAnovaEffectTransform,
-            solver: solveOneWayAnovaPower,
+            solver: 'one_way_anova',
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildOneWayAnovaDefaults,
         },
@@ -1459,7 +1440,7 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: ancovaEffectTransform,
-            solver: solveAncovaPower,
+            solver: 'ancova',
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildAncovaDefaults,
         },
@@ -1561,8 +1542,8 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: simpleLinearRegressionEffectTransform,
-            solver: solveSimpleLinearRegressionPower,
-            buildCurveModel: buildSimpleLinearRegressionCurveModel,
+            solver: 'simple_linear_regression',
+            buildCurveModel: 'simple_linear_regression',
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildSimpleLinearRegressionDefaults,
         },
@@ -1688,8 +1669,8 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: multipleRegressionEffectTransform,
-            solver: solveMultipleRegressionPower,
-            buildCurveModel: buildMultipleRegressionCurveModel,
+            solver: 'multiple_regression',
+            buildCurveModel: 'multiple_regression',
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildMultipleRegressionDefaults,
         },
@@ -1819,8 +1800,8 @@ export const POWER_TEST_REGISTRY = [
                 ],
             },
             effectSizeTransforms: pearsonCorrelationEffectTransform,
-            solver: solvePearsonCorrelationPower,
-            buildCurveModel: buildPearsonCorrelationCurveModel,
+            solver: 'pearson_correlation',
+            buildCurveModel: 'pearson_correlation',
             availableVisualizerModes: ['test', 'power', 'curve'],
             buildInitialInputs: buildPearsonCorrelationDefaults,
         },

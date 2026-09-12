@@ -1,4 +1,5 @@
 import { runPowerAnalysis } from './engine.js';
+import { resolvePowerCurveBuilder } from './solverRegistry.js';
 import { roundTo } from './math.js';
 import { resolveIndependentTSamplePlan } from './tMath.js';
 
@@ -386,8 +387,9 @@ export const buildPowerCurveModel = ({ testConfig, result, curveType = 'sample_s
         return null;
     }
 
-    if (typeof testConfig?.power?.buildCurveModel === 'function') {
-        const customCurveModel = testConfig.power.buildCurveModel({
+    const buildCustomCurve = resolvePowerCurveBuilder(testConfig?.power?.buildCurveModel);
+    if (buildCustomCurve) {
+        const customCurveModel = buildCustomCurve({
             testConfig,
             result,
             curveType,

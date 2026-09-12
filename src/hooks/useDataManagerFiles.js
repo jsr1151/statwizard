@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import { autoDetectHeaderRow, buildDatasetCsv, buildDatasetFromColumnRecords, buildDatasetExportRows, buildDatasetFromGrid, hydrateStoredDataset, isMissingValue, parseDelimitedTextGrid } from '../utils/datasetImport.js';
 import { inferAnalysisLaunchSelection, writeAnalysisLaunchPayload } from '../utils/analysisLaunch.js';
 import { stripExtension } from '../utils/dataManagerHelpers.js';
@@ -56,15 +55,9 @@ export default function useDataManagerFiles({
             const lowerName = file.name.toLowerCase();
 
             if (lowerName.endsWith('.xlsx')) {
-                const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
-                const sheets = workbook.SheetNames.map((sheetName) => ({
-                    name: sheetName,
-                    grid: XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-                        header: 1,
-                        raw: false,
-                        defval: null,
-                    }),
-                })).filter((sheet) => sheet.grid.some((row) => row.some((value) => !isMissingValue(value))));
+                const { readExcelSheets } = await import('../utils/excelWorkbook.js');
+                const sheets = readExcelSheets(await file.arrayBuffer())
+                    .filter((sheet) => sheet.grid.some((row) => row.some((value) => !isMissingValue(value))));
 
                 if (!sheets.length) {
                     throw new Error('The Excel workbook did not contain any readable rows.');
@@ -327,7 +320,7 @@ export default function useDataManagerFiles({
         });
     };
 
-    const handleExportDataset = (format) => {
+    const handleExportDataset = async (format) => {
         if (!editorDataset) {
             return;
         }
@@ -348,10 +341,8 @@ export default function useDataManagerFiles({
                 return;
             }
 
-            const workbook = XLSX.utils.book_new();
-            const worksheet = XLSX.utils.json_to_sheet(buildDatasetExportRows(editorDataset));
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Dataset');
-            XLSX.writeFile(workbook, `${baseFileName}.xlsx`);
+            const { writeExcelDataset } = await import('../utils/excelWorkbook.js');
+            writeExcelDataset(buildDatasetExportRows(editorDataset), `${baseFileName}.xlsx`);
             setNotice(`Exported ${editorDataset.name} as Excel.`);
         } catch (exportError) {
             setProblem(exportError instanceof Error ? exportError.message : 'Could not export the dataset.');

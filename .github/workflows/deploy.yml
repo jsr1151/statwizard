@@ -42,6 +42,9 @@ jobs:
       - name: Check documentation
         run: npm run docs:check
 
+      - name: Check bundle dependencies and size
+        run: npm run bundle:check
+
       - name: Build
         run: npm run build
 

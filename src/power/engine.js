@@ -1,3 +1,5 @@
+import { resolvePowerSolver } from './solverRegistry.js';
+
 export const runPowerAnalysis = (testConfig, inputs) => {
     const powerConfig = testConfig?.power;
 
@@ -8,7 +10,8 @@ export const runPowerAnalysis = (testConfig, inputs) => {
         };
     }
 
-    if (powerConfig.status !== 'available' || typeof powerConfig.solver !== 'function') {
+    const solver = resolvePowerSolver(powerConfig.solver);
+    if (powerConfig.status !== 'available' || !solver) {
         return {
             ok: false,
             planned: true,
@@ -19,7 +22,7 @@ export const runPowerAnalysis = (testConfig, inputs) => {
     }
 
     try {
-        return powerConfig.solver(inputs);
+        return solver(inputs);
     } catch (error) {
         return {
             ok: false,
