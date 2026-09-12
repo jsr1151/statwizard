@@ -194,8 +194,18 @@ export const STEPS = {
         description: 'Mean-comparison calculators require a quantitative outcome with meaningful numerical differences.',
         options: [
             { label: 'Quantitative measurements (such as height or test score)', value: 'quantitative', next: 'num_groups' },
-            { label: 'Categories, binary outcomes, counts, or ordinal ratings', value: 'other', next: 'res_unsupported_design' },
+            { label: 'Ordered ratings or ranks', value: 'ordinal', next: 'ordinal_group_design' },
+            { label: 'Unordered categories, binary outcomes, or counts', value: 'other', next: 'res_unsupported_design' },
             { label: "I'm not sure — show data-type guidance", value: 'unsure', next: 'help_outcome_type' },
+        ],
+    },
+    ordinal_group_design: {
+        id: 'ordinal_group_design', title: 'Ordered outcomes',
+        question: 'Are you comparing exactly two independent groups?',
+        description: 'Mann–Whitney can compare meaningfully ordered scores. Paired signed-rank analysis additionally needs meaningful magnitudes of differences; arbitrary rating codes do not establish that.',
+        options: [
+            { label: 'Yes, two independent groups with meaningfully ordered scores', value: 'independent', next: 'res_mann_whitney' },
+            { label: 'Paired observations, more groups, or unsure', value: 'other', next: 'res_unsupported_design' },
         ],
     },
     help_outcome_type: {

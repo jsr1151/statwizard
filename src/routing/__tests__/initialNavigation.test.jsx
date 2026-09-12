@@ -88,7 +88,7 @@ it.each(['calculator', 'equation', 'power'])('keeps repeated-measures %s deep li
 });
 
 it('shows test-specific Wilcoxon instructions without the shape fallback', async () => {
-    await mountAt('#/wizard/res_wilcoxon');
+    await mountAt('#/wizard/res_wilcoxon/software');
     await waitForView(() => expect(container.textContent).toContain('paired = TRUE'));
     expect(container.textContent).not.toContain('Describing Shape');
     expect(container.textContent).not.toContain('Formula not rendered');

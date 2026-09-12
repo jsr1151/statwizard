@@ -1,0 +1,123 @@
+{
+  "checks": [
+    {
+      "label": "res_mann_whitney/lessons/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/calculator/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/equation/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/assumptions/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/software/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/lessons/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/calculator/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/equation/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/assumptions/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/software/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/lessons/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/calculator/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/equation/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/assumptions/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_mann_whitney/software/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/lessons/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/calculator/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/equation/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/assumptions/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_wilcoxon/software/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-mann-whitney",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-signed-rank",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "explicit examples",
+    "result focus",
+    "paired missing and zero exclusions",
+    "stale result clearing",
+    "invalid pairs",
+    "Data Manager saved launch into both calculators"
+  ]
+}

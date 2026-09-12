@@ -9,6 +9,20 @@ export const DERIVED_OPERATION_OPTIONS = [
 
 export const ANALYSIS_OPTIONS = [
     {
+        id: 'mann_whitney',
+        label: 'Mann–Whitney U',
+        summary: 'Compare a numeric or ordered-score outcome across two independent groups.',
+        isCompatible: ({ numericCount, binaryCategoricalCount }) => numericCount >= 1 && binaryCategoricalCount >= 1,
+        buildDetail: ({ numericCount, binaryCategoricalCount }) => `${numericCount} numeric and ${binaryCategoricalCount} binary grouping variables detected. Confirm independence and meaningful ordering.`,
+    },
+    {
+        id: 'wilcoxon_signed_rank',
+        label: 'Wilcoxon Signed-Rank',
+        summary: 'Compare two matched numeric measurements, preserving row pairs.',
+        isCompatible: ({ numericCount }) => numericCount >= 2,
+        buildDetail: ({ numericCount }) => `${numericCount} numeric variables detected. Confirm one participant per row and meaningful paired differences.`,
+    },
+    {
         id: 'pearson_correlation',
         label: 'Pearson Correlation',
         summary: 'Load two numeric variables into the correlation calculator.',

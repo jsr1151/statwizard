@@ -4,6 +4,8 @@ import { POWER_TEST_BY_STEP_ID } from "../power/testRegistry";
 import { METHOD_AVAILABILITY } from '../data/methodAvailability.js';
 
 const STRUCTURED_RESULT_STEP_IDS = new Set([
+    'res_mann_whitney',
+    'res_wilcoxon',
     'res_central_tendency',
     'res_variability',
     'res_frequency',
@@ -74,6 +76,13 @@ export const getResultPage = (currentStepId) => {
     const isStructuredResultPage = isResult && (STRUCTURED_RESULT_STEP_IDS.has(currentStepId) || Boolean(currentTestConfig) || Boolean(METHOD_AVAILABILITY[currentStepId]));
 
     const availableResultSections = (() => {
+        if (['res_mann_whitney', 'res_wilcoxon'].includes(currentStepId)) return [
+            { id: 'lessons', label: 'Learn', icon: BookOpen },
+            { id: 'calculator', label: 'Calculator', icon: Calculator },
+            { id: 'equation', label: 'Ranks & equations', icon: Sigma },
+            { id: 'assumptions', label: 'Assumptions', icon: CheckCircle },
+            { id: 'software', label: 'Software', icon: Terminal },
+        ];
         if (METHOD_AVAILABILITY[currentStepId]) {
             if (currentStepId === 'res_unsupported_design') return [];
             return [

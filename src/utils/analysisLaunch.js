@@ -95,7 +95,7 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
         };
     }
 
-    if (analysisId === 'independent_t_test') {
+    if (analysisId === 'independent_t_test' || analysisId === 'mann_whitney') {
         const groupingCandidates = rankGroupingColumns(
             categoricalColumns.filter((column) => getUsableLevelCount(column) === 2)
         );
@@ -125,7 +125,7 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
         };
     }
 
-    if (analysisId === 'paired_t_test') {
+    if (analysisId === 'paired_t_test' || analysisId === 'wilcoxon_signed_rank') {
         if (numericColumns.length < 2) {
             return null;
         }

@@ -2,7 +2,15 @@
 
 This tracks the first implementation pass following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
-## Completed in this pass
+## September 12: rank-test calculators
+
+Mann–Whitney U and Wilcoxon signed-rank now have dedicated calculators, worked examples, rank tables, effect estimates, assumption guidance, and report text. Both accept entered values and saved datasets launched from Data Manager. Small-sample exact inference includes ties; large-sample normal inference states the correction used. Missing pairs retain their positions and exclusions are reported. Edited inputs clear stale output.
+
+Validation: 417 tests across 38 files passed, including 45 independent R reference cases and exhaustive tied-sample checks. See the [model contract and validation evidence](NONPARAMETRIC_VALIDATION.md). Repeated-measures ANOVA remains an explicit availability page pending its own validated model.
+
+The production browser review passed 22 accessibility snapshots across both themes, all ten module sections, and both Data Manager launch paths, with no page overflow or application errors. It also checked paired exclusions, stale-result clearing, and keyboard focus after calculation. [Browser evidence](audits/2026-09-12/rank-calculators.json).
+
+## Completed in the first pass
 
 | Audit area | Result |
 | --- | --- |
@@ -32,7 +40,7 @@ Automated accessibility snapshots do not establish complete accessibility confor
 
 ## Remaining work, in recommended order
 
-1. **Complete the method destinations.** Build and independently validate dedicated repeated-measures, Mann–Whitney, and signed-rank calculators, including subject matching, ties/zeros, assumptions, effect sizes, reference examples, and reporting. Availability pages are an immediate correctness fix, not these implementations.
+1. **Complete repeated-measures ANOVA.** Build and independently validate its dedicated model, including participant matching, within-subject error, sphericity/corrections, assumptions, effect sizes, reference examples, and reporting. The rank-test calculators are now implemented; location-shift confidence intervals remain a possible follow-up.
 2. **Unify the analysis workflow.** Reduce the distance from opening a calculator to entering data; clearly distinguish sample and user data; make excluded rows, variable roles, result summaries, and next actions consistent. Complete an end-to-end keyboard and screen-reader review of nested plots and editors.
 3. **Make the Learning Lab usable.** Replace its placeholder levels with a small complete learning path containing worked examples, practice, feedback, and progress. Simplify the home-page choices and connect the learning path to the existing modules.
 4. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators instead of suggesting an unsupported method.
