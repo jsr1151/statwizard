@@ -1,0 +1,88 @@
+{
+  "checks": [
+    {
+      "label": "restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/scope",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/blank-prediction",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "coherent table, roles, confidence and prediction restoration",
+    "out-of-range predictions retained",
+    "blank predictions stay incomplete",
+    "cleared predictors and outcome remain cleared",
+    "explicit variable reset",
+    "uploaded source recovery",
+    "Data Manager launch overrides prior draft",
+    "saved dataset roles and settings recovery",
+    "separate predictions for saved and pasted sources",
+    "removal cancellation, confirmation and keyboard activation",
+    "failed saves retain previous draft"
+  ]
+}

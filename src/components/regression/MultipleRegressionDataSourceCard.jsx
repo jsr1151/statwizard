@@ -9,7 +9,7 @@ export default function MultipleRegressionDataSourceCard({
     setTableText, tableText, selectedOutcome, setSelectedOutcome,
     numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
     setSelectedDatasetId, datasets, savedDataset, onOpenDataManager,
-    savedRoleSelection, setSavedRoleSelection, confidenceLevel, setConfidenceLevel,
+    savedRoleSelection, setSavedRoleSelection, confidenceLevel, setConfidenceLevel, resetVariableChoices,
 }) {
     return (
         <Card darkMode={darkMode}>
@@ -21,6 +21,7 @@ export default function MultipleRegressionDataSourceCard({
                             Outcome Variable (Y)
                         </span>
                         <select value={selectedOutcome} onChange={(event) => setSelectedOutcome(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                            <option value="">Choose numeric outcome</option>
                             {numericColumns.map((column) => (
                                 <option key={column.name} value={column.name}>{column.name}</option>
                             ))}
@@ -86,6 +87,8 @@ export default function MultipleRegressionDataSourceCard({
                 </div>
             )}
 
+            <button type="button" onClick={resetVariableChoices} className={`my-4 rounded-xl border px-3 py-2 text-sm font-bold ${darkMode ? 'border-slate-700 text-slate-200' : 'border-slate-300 text-slate-800'}`}>Reset variable choices</button>
+            <p className={`mb-4 text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Reset selects the last numeric variable as the outcome and up to three preceding numeric variables as predictors.</p>
             <label className="block">
                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
                     Confidence Level

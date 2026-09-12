@@ -42,6 +42,7 @@ export default function MultipleRegressionPredictionCard({
                 </div>
 
                 <div className="lg:col-span-7">
+                    {!calculatorPrediction && <p role="status" className={`mb-4 text-sm ${darkMode ? 'text-amber-200' : 'text-amber-800'}`}>Enter a numeric value for every predictor to calculate a prediction.</p>}
                     <div className="grid md:grid-cols-3 gap-4">
                         <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
                             <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {activeOutcomeLabel}</div>

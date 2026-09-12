@@ -1,316 +1,55 @@
-import useAnalysisTableInput from './useAnalysisTableInput.js';
-import { summarizeAnalysisRows } from '../utils/analysisRows.js';
 import { useEffect, useMemo, useState } from 'react';
-import { buildMultipleRegressionGuidance, calculateMultipleRegressionPrediction, calculateMultipleRegressionStats } from '../stats/multipleRegression.js';
-import { parseDelimitedTable } from '../utils/delimitedTable.js';
-import { buildNumericAnalysisColumn, countCompleteRows } from '../utils/datasetImport.js';
-import { useDatasetLibraryContext } from '../hooks/useDatasetLibrary.js';
-import { ACTIVE_DATASET_SESSION_KEY, readAnalysisLaunchPayload, consumeAnalysisLaunchPayload } from '../utils/analysisLaunch.js';
+import useMultipleRegressionInput from './useMultipleRegressionInput.js';
 import { SAMPLE_DATASET } from '../data/multipleRegressionLesson.js';
-import { countNumericCompleteCasesFromColumns, buildPredictionInputsFromStats, findDefaultPointId } from '../utils/multipleRegressionLesson.js';
+import { summarizeAnalysisRows } from '../utils/analysisRows.js';
+import { findDefaultPointId } from '../utils/multipleRegressionLesson.js';
+import { buildMultipleRegressionGuidance, calculateMultipleRegressionPrediction, calculateMultipleRegressionStats } from '../stats/multipleRegression.js';
 
 export default function useMultipleRegressionCalculator({ onStatsChange }) {
-    const { datasets } = useDatasetLibraryContext();
-
-
-
-    const [launchPayload] = useState(() => readAnalysisLaunchPayload('multiple_regression'));
-    const [calculatorInputMode, setCalculatorInputMode] = useState(launchPayload?.datasetId ? 'saved' : 'paste');
-    const { tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending } = useAnalysisTableInput(SAMPLE_DATASET, calculatorInputMode);
-    const [selectedDatasetId, setSelectedDatasetId] = useState(launchPayload?.datasetId || '');
-    useEffect(() => {
-        if (launchPayload) consumeAnalysisLaunchPayload('multiple_regression');
-    }, [launchPayload]);
-
-
-
-    const [savedRoleSelection, setSavedRoleSelection] = useState({
-        outcome: launchPayload?.outcome || '',
-        predictors: launchPayload?.predictors || [],
-    });
-
-    const [selectedOutcome, setSelectedOutcome] = useState('');
-
-    const [selectedPredictors, setSelectedPredictors] = useState([]);
-
-    const [confidenceLevel, setConfidenceLevel] = useState(0.95);
-
+    const input = useMultipleRegressionInput(SAMPLE_DATASET);
+    const { calculatorInputMode, savedDataset, activeRoles, activeOutcomeColumn, activePredictorColumns,
+        unavailablePredictors, confidenceLevel, totalRows, predictionValues, setPredictionValues } = input;
     const [calculatorSelectedPointId, setCalculatorSelectedPointId] = useState(null);
+    const roleError = calculatorInputMode === 'saved' && !savedDataset
+        ? 'The selected saved dataset is unavailable. Open Data Manager or choose an available dataset.'
+        : !activeOutcomeColumn ? 'Choose a numeric outcome variable to fit the model.'
+            : unavailablePredictors.length ? 'A selected predictor is unavailable, no longer numeric, or also selected as the outcome. Review the variables or reset variable choices.'
+                : activeRoles.predictors.length < 2 ? 'Select at least two quantitative predictors for the multiple-regression model.' : '';
+    const calculatorStats = useMemo(() => roleError ? null : calculateMultipleRegressionStats({
+        outcomeValues: activeOutcomeColumn?.numericValues || [], predictorColumns: activePredictorColumns,
+        confidenceLevel, alpha: 1 - confidenceLevel,
+    }), [roleError, activeOutcomeColumn, activePredictorColumns, confidenceLevel]);
+    const calculatorModelErrors = roleError ? [roleError] : calculatorStats?.errors || [];
+    const calculatorNeedsSetup = !!roleError || !calculatorStats?.ok;
+    const rowSummary = useMemo(() => roleError ? null : summarizeAnalysisRows([activeOutcomeColumn, ...activePredictorColumns], totalRows),
+        [roleError, activeOutcomeColumn, activePredictorColumns, totalRows]);
+    const calculatorGuidance = useMemo(() => buildMultipleRegressionGuidance(calculatorStats), [calculatorStats]);
 
-    const [calculatorPredictionInputs, setCalculatorPredictionInputs] = useState({});
-
-    const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
-
-    const numericColumns = useMemo(() => parsedTable.numericColumns || [], [parsedTable]);
-
-    const savedDataset = useMemo(
-        () => datasets.find((dataset) => dataset.id === selectedDatasetId) || null,
-        [datasets, selectedDatasetId]
-    );
-
+    // Saved predictions use stable column IDs; the statistical engine uses display labels.
+    const calculatorPredictionInputs = useMemo(() => Object.fromEntries((calculatorStats?.predictorSummaries || []).map((summary, index) => {
+        const key = activeRoles.predictors[index];
+        return [summary.label, Object.hasOwn(predictionValues, key) ? predictionValues[key] : Number(summary.mean.toFixed(3))];
+    })), [calculatorStats, activeRoles.predictors, predictionValues]);
+    const setCalculatorPredictionInputs = next => {
+        const resolved = typeof next === 'function' ? next(calculatorPredictionInputs) : next;
+        setPredictionValues({ ...predictionValues, ...Object.fromEntries(calculatorStats.predictorSummaries.map((summary, index) => [activeRoles.predictors[index], resolved[summary.label]])) });
+    };
+    const calculatorPrediction = useMemo(() => {
+        if (!calculatorStats?.ok || Object.values(calculatorPredictionInputs).some(value => String(value).trim() === '' || !Number.isFinite(Number(value)))) return null;
+        return calculateMultipleRegressionPrediction({ stats: calculatorStats, predictorValues: calculatorPredictionInputs, confidenceLevel });
+    }, [calculatorStats, calculatorPredictionInputs, confidenceLevel]);
+    const calculatorSelectedPair = useMemo(() => calculatorStats?.pairs?.find(pair => pair.id === calculatorSelectedPointId || pair.index === calculatorSelectedPointId) || null,
+        [calculatorStats, calculatorSelectedPointId]);
+    useEffect(() => { onStatsChange?.(calculatorNeedsSetup ? null : calculatorStats); }, [calculatorStats, calculatorNeedsSetup, onStatsChange]);
     useEffect(() => {
-        if (launchPayload?.datasetId) {
-            setCalculatorInputMode('saved');
-        }
-    }, [launchPayload]);
-
-    useEffect(() => {
-        if (!datasets.length) {
-            return;
-        }
-
-        let preferredDatasetId = '';
-
-        try {
-            preferredDatasetId = window.sessionStorage.getItem(ACTIVE_DATASET_SESSION_KEY) || '';
-        } catch (error) {
-            preferredDatasetId = '';
-        }
-
-        setSelectedDatasetId((previous) => {
-            if (previous) {
-                return previous;
-            }
-
-            if (launchPayload?.datasetId && datasets.some((dataset) => dataset.id === launchPayload.datasetId)) {
-                return launchPayload.datasetId;
-            }
-
-            if (preferredDatasetId && datasets.some((dataset) => dataset.id === preferredDatasetId)) {
-                try {
-                    window.sessionStorage.removeItem(ACTIVE_DATASET_SESSION_KEY);
-                } catch (error) {
-                    // Ignore sessionStorage access problems and keep going.
-                }
-
-                return preferredDatasetId;
-            }
-
-            return datasets[0]?.id || '';
-        });
-    }, [datasets, launchPayload?.datasetId]);
-
-    useEffect(() => {
-        if (!savedDataset) return;
-        const numericIds = savedDataset.columns.filter(column => column.summary?.detectedType === 'numeric').map(column => column.id);
-        const fromLaunch = launchPayload?.datasetId === savedDataset.id;
-        setSavedRoleSelection(previous => {
-            const outcome = numericIds.includes(previous.outcome) ? previous.outcome : (fromLaunch ? '' : numericIds.at(-1) || '');
-            const available = numericIds.filter(id => id !== outcome);
-            const predictors = previous.predictors.filter(id => available.includes(id));
-            return { outcome, predictors: fromLaunch ? predictors : (predictors.length ? predictors : available.slice(0, 3)) };
-        });
-    }, [savedDataset, launchPayload]);
-
-    useEffect(() => {
-        if (!numericColumns.length) {
-            setSelectedOutcome('');
-            setSelectedPredictors([]);
-            return;
-        }
-
-        setSelectedOutcome((previous) => {
-            if (numericColumns.some((column) => column.name === previous)) {
-                return previous;
-            }
-
-            return numericColumns[numericColumns.length - 1]?.name || '';
-        });
-    }, [numericColumns]);
-
-    useEffect(() => {
-        if (!numericColumns.length || !selectedOutcome) {
-            return;
-        }
-
-        setSelectedPredictors((previous) => {
-            const valid = previous.filter((name) => (
-                name !== selectedOutcome && numericColumns.some((column) => column.name === name)
-            ));
-
-            if (valid.length >= 2) {
-                return valid;
-            }
-
-            const fallback = numericColumns
-                .filter((column) => column.name !== selectedOutcome)
-                .slice(0, Math.max(0, Math.min(3, numericColumns.length - 1)))
-                .map((column) => column.name);
-
-            return [...new Set([...valid, ...fallback])].slice(0, Math.max(0, Math.min(3, numericColumns.length - 1)));
-        });
-    }, [numericColumns, selectedOutcome]);
-
-    const selectedOutcomeColumn = numericColumns.find((column) => column.name === selectedOutcome) || null;
-
-    const selectedPredictorColumns = useMemo(
-        () => numericColumns.filter((column) => selectedPredictors.includes(column.name)),
-        [numericColumns, selectedPredictors]
-    );
-
-    const savedOutcomeColumn = useMemo(
-        () => buildNumericAnalysisColumn(savedDataset, savedRoleSelection.outcome),
-        [savedDataset, savedRoleSelection.outcome]
-    );
-
-    const savedPredictorColumns = useMemo(
-        () => (savedRoleSelection.predictors || [])
-            .map((columnId) => buildNumericAnalysisColumn(savedDataset, columnId))
-            .filter(Boolean),
-        [savedDataset, savedRoleSelection.predictors]
-    );
-
-    const pasteCompleteCaseSummary = useMemo(
-        () => countNumericCompleteCasesFromColumns(
-            [selectedOutcomeColumn, ...selectedPredictorColumns].filter(Boolean),
-            parsedTable.rowCount || 0
-        ),
-        [parsedTable.rowCount, selectedOutcomeColumn, selectedPredictorColumns]
-    );
-
-    const savedCompleteCaseSummary = useMemo(
-        () => countCompleteRows(
-            savedDataset,
-            [savedRoleSelection.outcome, ...(savedRoleSelection.predictors || [])].filter(Boolean),
-            true
-        ),
-        [savedDataset, savedRoleSelection]
-    );
-
-    const activeOutcomeColumn = calculatorInputMode === 'saved' ? savedOutcomeColumn : selectedOutcomeColumn;
-
-    const activePredictorColumns = calculatorInputMode === 'saved' ? savedPredictorColumns : selectedPredictorColumns;
-
-    const activeCompleteCaseSummary = calculatorInputMode === 'saved' ? savedCompleteCaseSummary : pasteCompleteCaseSummary;
-
-    const activeOutcomeLabel = calculatorInputMode === 'saved'
-    ? (savedOutcomeColumn?.label || 'Y')
-    : (selectedOutcome || 'Y');
-
-    const calculatorSetupErrors = useMemo(() => {
-        if (calculatorInputMode === 'saved') {
-            if (!datasets.length) {
-                return ['No saved datasets are available yet. Open the Data Manager to import and save one first.'];
-            }
-
-            if (!savedDataset) {
-                return ['Choose a saved dataset to begin.'];
-            }
-
-            const numericVariableCount = savedDataset.columns.filter((column) => column.summary?.detectedType === 'numeric').length;
-
-            if (!savedRoleSelection.outcome) {
-                return ['Outcome variable must be numeric.'];
-            }
-
-            if ((savedRoleSelection.predictors || []).length < 2) {
-                return ['Select at least two quantitative predictors.'];
-            }
-
-            if (numericVariableCount < 3) {
-                return ['This saved dataset needs at least three numeric variables for the current multiple-regression setup.'];
-            }
-
-            if (activeCompleteCaseSummary.usable === 0) {
-                return ['No usable rows remain after excluding missing values.'];
-            }
-
-            return [];
-        }
-
-        if (!selectedOutcome) {
-            return ['Choose one outcome variable and at least two predictors to fit the multiple-regression model.'];
-        }
-
-        if (selectedPredictors.length < 2) {
-            return ['Select at least two quantitative predictors for the multiple-regression model.'];
-        }
-
-        if (activeCompleteCaseSummary.usable === 0) {
-            return ['No usable rows remain after excluding missing values.'];
-        }
-
-        return [];
-    }, [
-        activeCompleteCaseSummary.usable,
-        calculatorInputMode,
-        datasets.length,
-        savedDataset,
-        savedRoleSelection.outcome,
-        savedRoleSelection.predictors,
-        selectedOutcome,
-        selectedPredictors.length,
-    ]);
-
-    const calculatorStats = useMemo(() => calculateMultipleRegressionStats({
-        outcomeValues: activeOutcomeColumn?.numericValues || [],
-        predictorColumns: activePredictorColumns,
-        confidenceLevel,
-        alpha: 1 - confidenceLevel,
-    }), [activeOutcomeColumn, activePredictorColumns, confidenceLevel]);
-
-    const calculatorModelErrors = calculatorSetupErrors.length
-    ? calculatorSetupErrors
-    : (calculatorStats?.errors || []);
-
-    const calculatorNeedsSetup = calculatorSetupErrors.length > 0 || !calculatorStats?.ok;
-
-    const rowSummary = useMemo(() => summarizeAnalysisRows([activeOutcomeColumn, ...activePredictorColumns], activeCompleteCaseSummary.total), [activeOutcomeColumn, activePredictorColumns, activeCompleteCaseSummary.total]);
-    const sourceLabel = calculatorInputMode === 'saved' ? savedDataset?.name || 'No dataset selected' : tableSource;
-    const calculatorGuidance = useMemo(
-        () => buildMultipleRegressionGuidance(calculatorStats),
-        [calculatorStats]
-    );
-
-    const calculatorPrediction = useMemo(() => calculateMultipleRegressionPrediction({
-        stats: calculatorStats,
-        predictorValues: calculatorPredictionInputs,
-        confidenceLevel,
-    }), [calculatorStats, calculatorPredictionInputs, confidenceLevel]);
-
-    const calculatorSelectedPair = useMemo(
-        () => calculatorStats?.pairs?.find((pair) => pair.id === calculatorSelectedPointId || pair.index === calculatorSelectedPointId) || null,
-        [calculatorStats, calculatorSelectedPointId]
-    );
-
-    useEffect(() => {
-        onStatsChange?.(calculatorNeedsSetup ? null : calculatorStats);
-    }, [calculatorStats, calculatorNeedsSetup, onStatsChange]);
-
-    useEffect(() => {
-        if (!calculatorStats?.ok) {
-            setCalculatorSelectedPointId(null);
-            setCalculatorPredictionInputs({});
-            return;
-        }
-
-        setCalculatorSelectedPointId((previous) => {
-            const hasPrevious = calculatorStats.pairs.some((pair) => pair.id === previous || pair.index === previous);
-            return hasPrevious ? previous : findDefaultPointId(calculatorStats);
-        });
-        setCalculatorPredictionInputs((previous) => buildPredictionInputsFromStats(calculatorStats, previous));
+        setCalculatorSelectedPointId(previous => calculatorStats?.ok
+            ? calculatorStats.pairs.some(pair => pair.id === previous || pair.index === previous) ? previous : findDefaultPointId(calculatorStats)
+            : null);
     }, [calculatorStats]);
 
-
-
-    const togglePredictor = (predictorName) => {
-        setSelectedPredictors((previous) => {
-            if (previous.includes(predictorName)) {
-                return previous.filter((item) => item !== predictorName);
-            }
-
-            return [...previous, predictorName];
-        });
-    };
-
     return {
-        calculatorStats, setCalculatorInputMode, calculatorInputMode, onUpload,
-        setTableText, tableText, selectedOutcome, setSelectedOutcome,
-        numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
-        setSelectedDatasetId, datasets, savedDataset, savedRoleSelection,
-        setSavedRoleSelection, confidenceLevel, setConfidenceLevel, activeCompleteCaseSummary,
-        calculatorNeedsSetup, calculatorModelErrors, activeOutcomeLabel, calculatorSelectedPointId,
-        setCalculatorSelectedPointId, calculatorPrediction, calculatorPredictionInputs, setCalculatorPredictionInputs,
-        calculatorSelectedPair, calculatorGuidance, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
+        ...input, calculatorStats, calculatorNeedsSetup, calculatorModelErrors, rowSummary, calculatorGuidance,
+        calculatorSelectedPointId, setCalculatorSelectedPointId, calculatorSelectedPair,
+        calculatorPredictionInputs, setCalculatorPredictionInputs, calculatorPrediction,
     };
 }

@@ -11,7 +11,7 @@ const MESSAGES = {
     'remove-failed': 'Could not remove this draft. Try again when browser storage is available.',
 };
 
-export default function CalculatorDraftNotice({ draft, darkMode }) {
+export default function CalculatorDraftNotice({ draft, darkMode, scope = 'Recovery includes the entered or uploaded table, data source, variable choices, confidence level, prediction input, and line and interval display settings.' }) {
     const [confirm, setConfirm] = useState(false);
     const button = useRef(null);
     const cancel = () => { setConfirm(false); button.current?.focus(); };
@@ -19,7 +19,7 @@ export default function CalculatorDraftNotice({ draft, darkMode }) {
         <p role="status">{MESSAGES[draft.status]}</p>
         <details className="space-y-2">
             <summary className="cursor-pointer font-semibold">What is saved?</summary>
-            <p>Recovery includes the entered or uploaded table, data source, variable choices, confidence level, prediction input, and line and interval display settings. Saved datasets use the current version in your library. Lesson, power, effect-size, and highlighted-point choices are not saved.</p>
+            <p>{scope} Saved datasets use the current version in your library. Lesson, power, effect-size, and highlighted-point choices are not saved.</p>
             <p>Drafts stay in this browser and are removed when site data is cleared.</p>
         </details>
         <button ref={button} aria-expanded={confirm} className="underline font-semibold" onClick={() => setConfirm(!confirm)}>Remove saved calculator draft</button>

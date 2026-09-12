@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
 import AnalysisRowSummary from '../analysis/AnalysisRowSummary.jsx';
 import { AlertTriangle, Calculator, Info } from 'lucide-react';
 import RegressionResidualPlot from './RegressionResidualPlot';
@@ -13,7 +14,7 @@ import MultipleRegressionPredictionCard from './MultipleRegressionPredictionCard
 import MultipleRegressionCoefficientCard from './MultipleRegressionCoefficientCard.jsx';
 
 export default function MultipleRegressionCalculatorSection({
-    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
+    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary, draft, resetVariableChoices,
 
     darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
     setTableText, tableText, selectedOutcome, setSelectedOutcome,
@@ -49,13 +50,14 @@ export default function MultipleRegressionCalculatorSection({
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div className="min-w-0 lg:col-span-4 space-y-6">
+                    <CalculatorDraftNotice {...{ draft, darkMode }} scope="Recovery includes the entered or uploaded table, data source, outcome and predictor choices, confidence level, and prediction inputs for each data source." />
                     <MultipleRegressionDataSourceCard {...{
                         tableSource, loadExample, uploadError, uploadPending, onGoResults, hasResults: !calculatorNeedsSetup,
                         darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
                         setTableText, tableText, selectedOutcome, setSelectedOutcome,
                         numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
                         setSelectedDatasetId, datasets, savedDataset, onOpenDataManager,
-                        savedRoleSelection, setSavedRoleSelection, confidenceLevel, setConfidenceLevel,
+                        savedRoleSelection, setSavedRoleSelection, confidenceLevel, setConfidenceLevel, resetVariableChoices,
                     }} />
                 </div>
 

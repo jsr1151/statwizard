@@ -36,7 +36,7 @@ const MultipleRegressionPage = ({
     } = useMultipleRegressionLesson();
 
     const {
-        calculatorStats, setCalculatorInputMode, calculatorInputMode, onUpload,
+        calculatorStats, setCalculatorInputMode, calculatorInputMode, onUpload, draft, resetVariableChoices,
         setTableText, tableText, selectedOutcome, setSelectedOutcome,
         numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
         setSelectedDatasetId, datasets, savedDataset, savedRoleSelection,
@@ -102,7 +102,7 @@ const MultipleRegressionPage = ({
     if (section === 'calculator') {
         return (
             <MultipleRegressionCalculatorSection {...{
-                darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
+                darkMode, setCalculatorInputMode, calculatorInputMode, onUpload, draft, resetVariableChoices,
                 setTableText, tableText, selectedOutcome, setSelectedOutcome,
                 numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
                 setSelectedDatasetId, datasets, savedDataset, onOpenDataManager,

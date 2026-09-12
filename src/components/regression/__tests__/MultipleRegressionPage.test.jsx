@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import MultipleRegressionPage from '../MultipleRegressionPage.jsx';
 import { DatasetLibraryProvider } from '../../../hooks/useDatasetLibrary.js';
 import { loadStoredDatasets } from '../../../utils/datasetStore.js';
@@ -18,6 +18,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root;
 let container;
 let props;
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 const render = () => root.render(<StrictMode><DatasetLibraryProvider><MultipleRegressionPage {...props} /></DatasetLibraryProvider></StrictMode>);
 const mount = async (section = 'calculator') => {
     props = { section, darkMode: true, onStatsChange: vi.fn(), testConfig: POWER_TEST_BY_STEP_ID.multiple_regression_result };
