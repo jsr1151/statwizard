@@ -1,10 +1,10 @@
 export const PEARSON_TUTOR_PRESETS = [
     ['strong_positive', 'Strong Positive', 'Positive linear trend with modest noise.'],
-    ['weak_positive', 'Weak Positive', 'The upward trend competes with substantial noise.'],
-    ['near_zero', 'Near Zero', 'X and Y are largely independent, so the cloud looks patternless.'],
+    ['weak_positive', 'Weak Positive', 'Same upward idea, but the noise now competes with the trend.'],
+    ['near_zero', 'Near Zero', 'X and Y are generated to be largely independent, so the cloud looks patternless.'],
     ['strong_negative', 'Strong Negative', 'Negative linear trend with modest noise.'],
     ['nonlinear', 'Nonlinear', 'A clear curve can still produce a small r.'],
-    ['restricted_range', 'Restricted Range', 'The observed X-slice compresses the range and shrinks r.'],
+    ['restricted_range', 'Restricted Range', 'Faded points show the full relationship while the observed X-slice shrinks r.'],
 ];
 
 export const PEARSON_SAMPLE_DATASET = `Study Hours,Exam Score,Sleep Hours,Stress

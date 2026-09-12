@@ -68,14 +68,55 @@ table without scrolling the page horizontally. Screenshots were inspected;
 no console warnings or errors occurred. All 260 tests, lint, build,
 documentation checks, and 30 power fixtures passed again.
 
+## Completed: Pearson Correlation
+
+`PearsonCorrelationPage.jsx` decreased from 1,233 to 376 lines. The page
+retains its state, dataset launch handling, calculations, and event handlers.
+Its live views now use the existing section files, replacing their previously
+unused, simplified implementations:
+
+| Component | Lines | Responsibility |
+| --- | ---: | --- |
+| `PearsonCalculatorSection.jsx` | 402 | Variable mapping, inference settings, scatterplot, results, and guidance |
+| `PearsonDataSourceCard.jsx` | 101 | Pasted/uploaded data and saved-dataset selection |
+| `PearsonLessonSection.jsx` | 173 | Presets, plot controls, and concept explanations |
+| `PearsonEffectSizeSection.jsx` | 157 | Signed correlation and explained-variance controls |
+| `PearsonPowerSection.jsx` | 34 | Shared power-planning surface |
+
+The sections reuse shared analysis cards, metric tiles, and statistical
+formatters. `src/data/pearsonCorrelationPresets.js` now contains the live
+page's preset descriptions and sample data. The statistical algorithms,
+dataset storage, and scatterplot implementation are unchanged.
+
+Interaction coverage passed against the original page before extraction.
+The final nine tests cover known correlations, directional and nonzero-null
+tests, confidence levels, invalid data and recovery, CSV upload, persistence
+across sections/themes, lesson controls and regeneration, effect-size
+conversion, power-mode selection, empty saved libraries, and dataset launch
+roles with incomplete observations. The longer lesson journey was split
+into two focused tests after hitting the five-second timeout during a
+concurrent build and full-suite run.
+
+All 36 browser comparisons matched for displayed content, control values,
+plot points, and overflow status: six sections at 375, 768, and 1440 px in
+both themes. No page overflow, console errors, or React warnings occurred.
+Calculator and lesson screenshots were inspected. A source-tree comparison
+also confirmed that state, effects, calculations, handlers, and the four
+section render trees (including the extracted data-source card) preserve
+the original implementation, ignoring formatting.
+
+Repository validation: 30 test files / 269 tests passed, along with lint,
+production build, documentation checks, and all 30 power fixtures.
+
 ## Follow-ups
 
-- Pearson Correlation, Data Manager, and Multiple Regression still exceed
+- Data Manager and Multiple Regression still exceed
   the 500-line component limit. Extract each separately with regression
   coverage; do not replace the current live views with older simplified ones.
 - Bundle optimization remains separate. This build reports approximately
   313 kB for the main chunk, 492 kB for SheetJS, and 55 kB for the Simple Linear
-  Regression feature chunk before gzip.
+  Regression feature chunk before gzip. The extracted Pearson feature chunk
+  is approximately 50 kB before gzip.
 
 Browser comparison artifacts and temporary extraction scripts remain ignored
 under `.vite`; they are not production dependencies.
