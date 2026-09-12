@@ -16,10 +16,11 @@ const readPreferredDatasetId = () => {
 const useAnalysisDatasetSelection = ({
     analysisId,
     datasets,
+    initialSelection,
 }) => {
     const [launchPayload] = useState(() => readAnalysisLaunchPayload(analysisId));
-    const [selectedDatasetId, setSelectedDatasetId] = useState(() => launchPayload?.datasetId || '');
-    const [dataSource, setDataSource] = useState(() => launchPayload ? 'saved' : 'manual');
+    const [selectedDatasetId, setSelectedDatasetId] = useState(() => launchPayload?.datasetId || initialSelection?.selectedDatasetId || '');
+    const [dataSource, setDataSource] = useState(() => launchPayload ? 'saved' : initialSelection?.mode === 'saved' ? 'saved' : 'manual');
 
     useEffect(() => {
         consumeAnalysisLaunchPayload(analysisId);

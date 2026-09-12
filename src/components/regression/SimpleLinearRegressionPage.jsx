@@ -142,11 +142,13 @@ const SimpleLinearRegressionPage = ({
 
     const dataInput = useSimpleRegressionInput(SAMPLE_DATASET);
     const { selectedXColumn, selectedYColumn, selectedX, selectedY } = dataInput;
-    const [confidenceLevel, setConfidenceLevel] = useState(0.95);
-    const [calculatorShowLine, setCalculatorShowLine] = useState(true);
-    const [calculatorShowBand, setCalculatorShowBand] = useState(false);
-    const [calculatorShowPredictionBand, setCalculatorShowPredictionBand] = useState(false);
-    const [calculatorPredictionX, setCalculatorPredictionX] = useState('');
+    const { settings, setSetting } = dataInput;
+    const { confidenceLevel, showLine: calculatorShowLine, showBand: calculatorShowBand, showPredictionBand: calculatorShowPredictionBand } = settings;
+    const setConfidenceLevel = value => setSetting('confidenceLevel', value);
+    const setCalculatorShowLine = value => setSetting('showLine', value);
+    const setCalculatorShowBand = value => setSetting('showBand', value);
+    const setCalculatorShowPredictionBand = value => setSetting('showPredictionBand', value);
+    const setCalculatorPredictionX = value => setSetting('predictionX', value);
     const [calculatorSelectedPointId, setCalculatorSelectedPointId] = useState(null);
 
     const calculatorStats = useMemo(() => {
@@ -174,6 +176,7 @@ const SimpleLinearRegressionPage = ({
     const influentialIndex = calculatorStats?.influence?.maxCooksDistance > 0.5 || calculatorStats?.influence?.maxDeltaSlope > 0.35
         ? calculatorStats.influence.influentialIndex
         : null;
+    const calculatorPredictionX = settings.predictionX ?? (calculatorStats?.ok ? calculatorStats.meanX : '');
     const calculatorPrediction = useMemo(() => calculateRegressionPrediction({
         stats: calculatorStats,
         xValue: calculatorPredictionX,
@@ -190,14 +193,6 @@ const SimpleLinearRegressionPage = ({
             return;
         }
 
-        setCalculatorPredictionX((previous) => {
-            if (previous === '' || previous == null) {
-                return calculatorStats.meanX;
-            }
-
-            const numeric = Number(previous);
-            return Number.isFinite(numeric) ? numeric : calculatorStats.meanX;
-        });
         setCalculatorSelectedPointId((previous) => {
             const hasPrevious = calculatorStats.pairs.some((pair) => pair.id === previous || pair.index === previous);
             return hasPrevious ? previous : findDefaultPointId(calculatorStats);

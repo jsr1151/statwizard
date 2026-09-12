@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
 import TableDataSourceFields from '../analysis/TableDataSourceFields.jsx';
 import AnalysisRowSummary from '../analysis/AnalysisRowSummary.jsx';
 import { AlertTriangle, Calculator, TrendingUp } from "lucide-react";
@@ -13,7 +14,7 @@ import { formatPValue } from '../../utils/statFormatters.js';
 import { buildEquationText } from '../../utils/simpleRegressionPage.js';
 
 export default function RegressionCalculatorSection({
-    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary, onOpenDataManager,
+    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary, onOpenDataManager, draft,
     darkMode, onUpload, setTableText, tableText,
     parsedTable, selectedX, setSelectedX, numericColumns,
     selectedY, setSelectedY, confidenceLevel, setConfidenceLevel,
@@ -45,6 +46,7 @@ export default function RegressionCalculatorSection({
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div className="min-w-0 lg:col-span-4 space-y-6">
+                    <CalculatorDraftNotice {...{ draft, darkMode }} />
                     <Card darkMode={darkMode}>
                         <TableDataSourceFields {...{darkMode, tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending, onOpenDataManager, onGoResults, calculatorInputMode, setCalculatorInputMode, datasets, savedDataset, selectedDatasetId, setSelectedDatasetId, hasResults: !!calculatorStats?.ok}} sampleLabel="Load example data" />
 

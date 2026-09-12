@@ -1,0 +1,86 @@
+{
+  "checks": [
+    {
+      "label": "restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/scope-expanded",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/empty-restored",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "table, roles, confidence, prediction and plot settings reload together",
+    "invalid and empty input retained",
+    "uploaded source restored",
+    "fresh Data Manager launch overrides older draft settings",
+    "saved dataset and roles restored",
+    "cleared role stays empty",
+    "remove cancellation and confirmation",
+    "failed save preserves prior draft",
+    "keyboard confirmation activation"
+  ]
+}

@@ -16,7 +16,7 @@ const savedPages = [['pearson_correlation', PearsonCorrelationPage], ['simple_re
 const table = 'X1,X2,Y\n-1,-1,4\n-1,-1,6\n-1,1,10\n-1,1,12\n1,-1,8\n1,-1,10\n1,1,14\n1,1,16';
 let root, container, props;
 beforeEach(() => {
-    library.datasets = []; sessionStorage.clear();
+    library.datasets = []; sessionStorage.clear(); localStorage.clear();
     container = document.createElement('main'); document.body.appendChild(container); root = createRoot(container);
     props = { section: 'calculator', darkMode: true, onStatsChange: vi.fn(), onOpenDataManager: vi.fn() };
 });

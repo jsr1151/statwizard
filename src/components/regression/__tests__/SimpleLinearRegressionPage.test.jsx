@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import SimpleLinearRegressionPage from '../SimpleLinearRegressionPage.jsx';
 import { POWER_TEST_BY_STEP_ID } from '../../../power/testRegistry.js';
 
@@ -11,6 +11,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root;
 let container;
 let props;
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 const mount = async (section = 'calculator') => {
     props = { section, darkMode: true, onStatsChange: vi.fn(), testConfig: POWER_TEST_BY_STEP_ID.regression_result };
     container = document.createElement('main');
