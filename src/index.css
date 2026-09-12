@@ -90,10 +90,10 @@ body {
 .statwizard-app :is(.text-indigo-200, .text-indigo-300, .text-indigo-400, .text-indigo-500, .text-indigo-600, [class~="text-indigo-400/60"], [class~="text-indigo-500/50"], [class~="text-indigo-500/60"]) {
     color: var(--readable-indigo);
 }
-.statwizard-app :is(.text-emerald-400, .text-emerald-500) {
+.statwizard-app :is(.text-emerald-200, [class~="text-emerald-200/70"], .text-emerald-400, .text-emerald-500) {
     color: var(--readable-emerald);
 }
-.statwizard-app :is(.text-amber-200, [class~="text-amber-200/70"], .text-amber-500, [class~="text-amber-500/60"]) {
+.statwizard-app :is(.text-amber-200, [class~="text-amber-200/70"], .text-amber-500, [class~="text-amber-500/60"], [class~="text-amber-600/80"]) {
     color: var(--readable-amber);
 }
 .statwizard-app :is(.text-red-400, .text-red-500) {

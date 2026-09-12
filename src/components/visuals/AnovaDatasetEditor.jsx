@@ -16,9 +16,9 @@ const AnovaDatasetEditor = ({
                 const isValid = n >= 2;
 
                 return (
-                    <div key={g.id} className={`min-w-[280px] flex-1 max-w-[360px] p-3 rounded-[1.2rem] border-2 transition-all relative group ${darkMode ? 'bg-slate-900 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
+                    <div key={g.id} className={`min-w-0 basis-72 flex-1 max-w-full sm:max-w-[360px] p-3 rounded-[1.2rem] border-2 transition-all relative group ${darkMode ? 'bg-slate-900 border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-lg'}`}>
+                        <div className="flex flex-wrap justify-between items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-3 min-w-0">
                                 <div className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]" style={{ backgroundColor: g.color }} />
                                 <input aria-label={"Group name: " + g.label}
                                     value={g.label}
@@ -43,13 +43,16 @@ const AnovaDatasetEditor = ({
                             </div>
                             <div className="flex items-center gap-1">
                                 <button
+                                    type="button"
+                                    aria-label={`${g.collapsed ? 'Expand' : 'Collapse'} ${g.label} inputs`}
+                                    aria-expanded={!g.collapsed}
                                     onClick={() => updateGroup(g.id, 'collapsed', !g.collapsed)}
                                     className="text-slate-500 hover:text-indigo-500 transition-colors bg-slate-800/10 p-1.5 rounded-lg"
                                 >
                                     {g.collapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
                                 </button>
                                 {groups.length > 2 && (
-                                    <button onClick={() => removeGroup(g.id)} className="text-slate-500 hover:text-rose-500 transition-colors bg-slate-800/10 p-1.5 rounded-lg">
+                                    <button type="button" aria-label={`Remove ${g.label} group`} onClick={() => removeGroup(g.id)} className="text-slate-500 hover:text-rose-500 transition-colors bg-slate-800/10 p-1.5 rounded-lg">
                                         <Trash2 size={12} />
                                     </button>
                                 )}
@@ -79,6 +82,7 @@ const AnovaDatasetEditor = ({
                                             <div key={field} className={`group flex flex-col gap-0.5 p-2 rounded-xl border-2 transition-all ${darkMode ? 'bg-slate-900 border-slate-800 focus-within:border-indigo-500' : 'bg-white border-slate-100 focus-within:border-indigo-600'}`}>
                                                 <label className={`text-[7px] font-black uppercase tracking-[0.2em] ml-1 ${darkMode ? 'text-slate-500 group-focus-within:text-indigo-400' : 'text-slate-400 group-focus-within:text-indigo-600'}`}>{field}</label>
                                                 <input
+                                                    aria-label={`${g.label} ${field}`}
                                                     type="text"
                                                     value={g.summary[field]}
                                                     onFocus={(e) => e.target.select()}
@@ -92,6 +96,7 @@ const AnovaDatasetEditor = ({
                                 ) : (
                                     <div className="relative mt-4">
                                         <textarea
+                                            aria-label={`${g.label} raw values`}
                                             placeholder="Enter numbers (5, 8, 12...)"
                                             value={g.values?.join(', ')}
                                             onChange={e => parseRaw(g.id, e.target.value)}

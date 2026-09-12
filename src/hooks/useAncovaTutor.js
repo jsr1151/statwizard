@@ -84,11 +84,12 @@ const useAncovaTutor = (results, context, isActive = true) => {
     }, []);
 
     const dismissTip = useCallback((id, permanent = false) => {
-        if (activeTipRef.current && activeTipRef.current.id === id) {
+        const tip = activeTipRef.current;
+        if (tip && tip.id === id) {
             setHistory(prev => {
                 const exists = prev.find(t => t.id === id);
                 if (exists) return prev;
-                return [...prev, activeTipRef.current];
+                return [...prev, tip];
             });
         }
 

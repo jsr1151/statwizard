@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calculator, Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
+import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
 import IndependentTTestVisual from '../visuals/IndependentTTestVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
@@ -33,6 +34,8 @@ const IndependentTTestPage = ({
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const {
+        dataSource,
+        setDataSource,
         launchPayload,
         selectedDataset,
         selectedDatasetId,
@@ -102,10 +105,6 @@ const IndependentTTestPage = ({
         return warnings;
     }, [datasetSetup.droppedRows, datasetSetup.ok, roleSelection.outcome, selectedDataset]);
 
-    const successMessages = datasetSetup.ok
-        ? ['The saved dataset has been preloaded into the independent-samples calculator below.']
-        : [];
-
     const summaryItems = datasetSetup.ok ? [
         {
             label: 'Usable rows',
@@ -168,32 +167,39 @@ const IndependentTTestPage = ({
                 title="Independent-samples t-test assumptions"
                 description="Review the assumptions before trusting the observed t statistic. The calculator tab uses your saved dataset; this section explains what to check and what to do if the assumptions are weak."
                 assumptions={assumptions}
-                summaryItems={summaryItems}
+                summaryItems={dataSource === 'saved' ? summaryItems : []}
             />
         );
     }
 
     if (section === 'calculator') {
         return (
-            <div className="space-y-8">
-                <AnalysisDatasetWorkspace
-                    darkMode={darkMode}
-                    title="Load a saved dataset into the independent-samples calculator"
-                    description="Choose a saved dataset, map one numeric outcome plus one 2-level grouping variable, and the calculator below will preload those values immediately."
-                    datasets={datasets}
-                    selectedDatasetId={selectedDatasetId}
-                    onSelectDatasetId={setSelectedDatasetId}
-                    dataset={selectedDataset}
-                    roles={roles}
-                    roleSelection={roleSelection}
-                    onRoleSelectionChange={setRoleSelection}
-                    emptyMessage="Save a dataset in Data Manager first, then come back here to run the independent-samples t-test."
-                    validationMessages={datasetSetup.errors}
-                    warningMessages={warningMessages}
-                    successMessages={successMessages}
-                    summaryItems={summaryItems}
-                    onOpenDataManager={onOpenDataManager}
-                />
+            <AnalysisCalculatorWorkspace
+                darkMode={darkMode}
+                dataSource={dataSource}
+                onSourceChange={setDataSource}
+                dataset={selectedDataset}
+                datasetSetup={datasetSetup}
+                onOpenDataManager={onOpenDataManager}
+                onStatsChange={onStatsChange}
+                savedWorkspace={
+                    <AnalysisDatasetWorkspace
+                        darkMode={darkMode}
+                        description="Choose a saved dataset, map one numeric outcome plus one 2-level grouping variable, and the calculator below will preload those values immediately."
+                        datasets={datasets}
+                        selectedDatasetId={selectedDatasetId}
+                        onSelectDatasetId={setSelectedDatasetId}
+                        dataset={selectedDataset}
+                        roles={roles}
+                        roleSelection={roleSelection}
+                        onRoleSelectionChange={setRoleSelection}
+                        emptyMessage="Save a dataset in Data Manager first, then come back here to run the independent-samples t-test."
+                        validationMessages={datasetSetup.errors}
+                        warningMessages={warningMessages}
+                        summaryItems={dataSource === 'saved' ? summaryItems : []}
+                    />
+                }
+            >
 
                 <Card darkMode={darkMode}>
                     <div className="flex items-start gap-4 mb-6">
@@ -203,7 +209,7 @@ const IndependentTTestPage = ({
                         <div>
                             <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Independent-samples calculator</h3>
                             <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                The saved-dataset mapping preloads the calculator, but you can still inspect or adjust the values inside the workspace if you want to explore alternatives.
+                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
                             </p>
                         </div>
                     </div>
@@ -213,10 +219,10 @@ const IndependentTTestPage = ({
                         onTutorUpdate={onTutorUpdate || noop}
                         onStatsUpdate={onStatsChange}
                         mode="calculator"
-                        datasetSeed={datasetSetup.seed}
+                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
                     />
                 </Card>
-            </div>
+            </AnalysisCalculatorWorkspace>
         );
     }
 

@@ -82,11 +82,12 @@ const useAnovaTutor = (stats, context, resetKey = null, isActive = true) => {
     }, []);
 
     const dismissTip = useCallback((id, permanent = false) => {
-        if (activeTipRef.current && activeTipRef.current.id === id) {
+        const tip = activeTipRef.current;
+        if (tip && tip.id === id) {
             setHistory(prev => {
                 const exists = prev.find(t => t.id === id);
                 if (exists) return prev;
-                return [...prev, activeTipRef.current];
+                return [...prev, tip];
             });
         }
 
@@ -140,10 +141,11 @@ const useAnovaTutor = (stats, context, resetKey = null, isActive = true) => {
 
         // Save old tip to history if overriding
         if (shouldOverride && activeTipRef.current) {
+            const previousTip = activeTipRef.current;
             setHistory(prev => {
-                const exists = prev.find(t => t.id === activeTipRef.current.id);
+                const exists = prev.find(t => t.id === previousTip.id);
                 if (exists) return prev;
-                return [...prev, activeTipRef.current];
+                return [...prev, previousTip];
             });
         }
 

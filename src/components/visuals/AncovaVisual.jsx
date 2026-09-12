@@ -540,6 +540,7 @@ export default function AncovaVisual({ darkMode, showValues, onStatsUpdate, tuto
                                         <span className="text-xs font-black text-indigo-500 font-mono">X = {stats.adjustX.toFixed(2)}</span>
                                     </div>
                                     <input
+                                        aria-label="Covariate adjustment value"
                                         type="range"
                                         min={stats.pMinX}
                                         max={stats.pMaxX}

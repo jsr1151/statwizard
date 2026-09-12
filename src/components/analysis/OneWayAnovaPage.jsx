@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calculator, Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
+import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
 import AnovaVisual from '../visuals/AnovaVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
@@ -33,6 +34,8 @@ const OneWayAnovaPage = ({
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const {
+        dataSource,
+        setDataSource,
         launchPayload,
         selectedDataset,
         selectedDatasetId,
@@ -98,10 +101,6 @@ const OneWayAnovaPage = ({
         return warnings;
     }, [datasetSetup.droppedRows, datasetSetup.ok, roleSelection.outcome, selectedDataset]);
 
-    const successMessages = datasetSetup.ok
-        ? ['The saved dataset has been preloaded into the one-way ANOVA calculator below.']
-        : [];
-
     const summaryItems = datasetSetup.ok ? [
         {
             label: 'Usable rows',
@@ -164,32 +163,39 @@ const OneWayAnovaPage = ({
                 title="One-way ANOVA assumptions"
                 description="Review the assumptions before trusting the observed F statistic. The calculator tab uses your saved dataset; this section explains what to check and what to do when those assumptions look weak."
                 assumptions={assumptions}
-                summaryItems={summaryItems}
+                summaryItems={dataSource === 'saved' ? summaryItems : []}
             />
         );
     }
 
     if (section === 'calculator') {
         return (
-            <div className="space-y-8">
-                <AnalysisDatasetWorkspace
-                    darkMode={darkMode}
-                    title="Load a saved dataset into the one-way ANOVA calculator"
-                    description="Choose a saved dataset, map one numeric dependent variable plus one categorical grouping variable, and the calculator below will preload those groups immediately."
-                    datasets={datasets}
-                    selectedDatasetId={selectedDatasetId}
-                    onSelectDatasetId={setSelectedDatasetId}
-                    dataset={selectedDataset}
-                    roles={roles}
-                    roleSelection={roleSelection}
-                    onRoleSelectionChange={setRoleSelection}
-                    emptyMessage="Save a dataset in Data Manager first, then come back here to run the one-way ANOVA."
-                    validationMessages={datasetSetup.errors}
-                    warningMessages={warningMessages}
-                    successMessages={successMessages}
-                    summaryItems={summaryItems}
-                    onOpenDataManager={onOpenDataManager}
-                />
+            <AnalysisCalculatorWorkspace
+                darkMode={darkMode}
+                dataSource={dataSource}
+                onSourceChange={setDataSource}
+                dataset={selectedDataset}
+                datasetSetup={datasetSetup}
+                onOpenDataManager={onOpenDataManager}
+                onStatsChange={onStatsChange}
+                savedWorkspace={
+                    <AnalysisDatasetWorkspace
+                        darkMode={darkMode}
+                        description="Choose a saved dataset, map one numeric dependent variable plus one categorical grouping variable, and the calculator below will preload those groups immediately."
+                        datasets={datasets}
+                        selectedDatasetId={selectedDatasetId}
+                        onSelectDatasetId={setSelectedDatasetId}
+                        dataset={selectedDataset}
+                        roles={roles}
+                        roleSelection={roleSelection}
+                        onRoleSelectionChange={setRoleSelection}
+                        emptyMessage="Save a dataset in Data Manager first, then come back here to run the one-way ANOVA."
+                        validationMessages={datasetSetup.errors}
+                        warningMessages={warningMessages}
+                        summaryItems={dataSource === 'saved' ? summaryItems : []}
+                    />
+                }
+            >
 
                 <Card darkMode={darkMode}>
                     <div className="flex items-start gap-4 mb-6">
@@ -199,7 +205,7 @@ const OneWayAnovaPage = ({
                         <div>
                             <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>One-way ANOVA calculator</h3>
                             <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                The saved-dataset mapping preloads the ANOVA groups, but you can still inspect or adjust the values inside the workspace if you want to explore alternatives.
+                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
                             </p>
                         </div>
                     </div>
@@ -210,10 +216,10 @@ const OneWayAnovaPage = ({
                         onTutorUpdate={onTutorUpdate || noop}
                         onStatsUpdate={onStatsChange}
                         tutor={tutor}
-                        datasetSeed={datasetSetup.seed}
+                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
                     />
                 </Card>
-            </div>
+            </AnalysisCalculatorWorkspace>
         );
     }
 

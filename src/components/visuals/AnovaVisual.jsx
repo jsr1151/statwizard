@@ -273,10 +273,13 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
       onMouseMove={() => tutor?.resetIdle?.()}
     >
       {/* Visualizer Frame */}
-      <div className={`w-full h-[clamp(380px,55vh,520px)] overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
-        <div className="absolute top-4 left-4 flex gap-2 z-40">
+      <div className={`w-full ${activeTab === 'plots' ? 'h-auto' : 'h-[clamp(380px,55vh,520px)]'} overflow-hidden border-2 rounded-3xl relative transition-all ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-white border-slate-200'}`}>
+        <select aria-label="ANOVA view" value={activeTab} onChange={event => setActiveTab(event.target.value)} className={`absolute top-4 left-4 right-4 z-40 sm:hidden rounded-xl border p-2 text-sm font-bold ${darkMode ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-900'}`}>
+          <option value="fDist">F distribution</option><option value="means">Group means</option><option value="plots">Plots</option><option value="decomp">Variance decomposition</option><option value="table">ANOVA table</option>
+        </select>
+        <div className="absolute top-4 left-4 hidden sm:flex gap-2 z-40">
           {['fDist', 'means', 'plots', 'decomp', 'table'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 text-slate-500 hover:text-slate-300'}`}>
+            <button key={tab} aria-pressed={activeTab === tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 text-slate-500 hover:text-slate-300'}`}>
               {tab === 'fDist' ? 'F-Dist' : tab === 'means' ? 'Means' : tab === 'plots' ? 'Plots' : tab === 'decomp' ? 'Decomp' : 'Table'}
             </button>
           ))}
@@ -331,8 +334,8 @@ const AnovaVisual = ({ highlight = null, darkMode, showValues: propShowValues, o
                 </td>
               );
               return (
-                <div className="w-full h-full overflow-auto p-6 flex flex-col gap-4">
-                  <div className="overflow-x-auto">
+                <div className="w-full h-full overflow-auto p-6 pt-20 flex flex-col gap-4">
+                  <div role="region" aria-label="ANOVA results table" tabIndex={0} className="overflow-x-auto shrink-0">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className={`border-b-2 text-[10px] uppercase tracking-widest ${darkMode ? 'border-slate-700 text-slate-500' : 'border-slate-300 text-slate-500'}`}>

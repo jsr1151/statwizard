@@ -150,14 +150,14 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
                         <button
                             key={key}
                             onClick={() => setSettings((previous) => ({ ...previous, [key]: !previous[key] }))}
-                            className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${settings[key] ? 'bg-emerald-600 border-emerald-500 text-white' : (darkMode ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
+                            className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${settings[key] ? 'bg-emerald-700 border-emerald-600 text-white' : (darkMode ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
                         >
                             {label}
                         </button>
                     ))}
                     <button
                         onClick={() => setCategoryPositions({})}
-                        className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${Object.keys(categoryPositions).length ? 'bg-amber-600 border-amber-500 text-white' : (darkMode ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
+                        className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${Object.keys(categoryPositions).length ? 'bg-amber-700 border-amber-600 text-white' : (darkMode ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
                     >
                         Reset positions
                     </button>
@@ -173,7 +173,7 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
                             ['bar', 'Bar'],
                             ['line', 'Line'],
                         ].map(([id, label]) => (
-                            <button key={id} onClick={() => setSettings((previous) => ({ ...previous, type: id }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${settings.type === id ? 'bg-amber-500 text-white' : 'text-slate-500'}`}>
+                            <button key={id} onClick={() => setSettings((previous) => ({ ...previous, type: id }))} className={`flex-1 py-1 rounded text-[8px] font-black uppercase ${settings.type === id ? 'bg-amber-700 text-white' : 'text-slate-500'}`}>
                                 {label}
                             </button>
                         ))}
@@ -193,17 +193,17 @@ const AnovaPlotMaker = ({ groups = [], grandMean = 0, darkMode }) => {
                     </div>
                 )}
 
-                <input type="text" value={settings.yLabel} onChange={(event) => setSettings((previous) => ({ ...previous, yLabel: event.target.value }))} className={`self-end p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y-axis label" />
+                <input type="text" value={settings.yLabel} onChange={(event) => setSettings((previous) => ({ ...previous, yLabel: event.target.value }))} className={`self-end min-w-0 w-full p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y-axis label" />
                 <div className="grid grid-cols-2 gap-2 self-end">
-                    <input type="number" value={settings.yMin} onChange={(event) => setSettings((previous) => ({ ...previous, yMin: event.target.value }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y min" />
-                    <input type="number" value={settings.yMax} onChange={(event) => setSettings((previous) => ({ ...previous, yMax: event.target.value }))} className={`p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y max" />
+                    <input type="number" value={settings.yMin} onChange={(event) => setSettings((previous) => ({ ...previous, yMin: event.target.value }))} className={`min-w-0 w-full p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y min" />
+                    <input type="number" value={settings.yMax} onChange={(event) => setSettings((previous) => ({ ...previous, yMax: event.target.value }))} className={`min-w-0 w-full p-2 rounded text-xs font-bold border ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`} placeholder="Y max" />
                 </div>
             </div>
 
-            <div className={`min-h-0 flex-1 rounded-xl border ${darkMode ? 'bg-slate-900/70 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className={`min-h-64 flex-1 rounded-xl border ${darkMode ? 'bg-slate-900/70 border-slate-800' : 'bg-white border-slate-200'}`}>
                 <svg
                     viewBox={`0 0 ${width} ${height}`}
-                    className="w-full h-full overflow-visible font-sans"
+                    className="w-full h-full min-h-64 overflow-visible font-sans"
                     onPointerMove={updateDraggedCategory}
                     onPointerUp={() => setDraggingGroupId(null)}
                     onPointerLeave={() => setDraggingGroupId(null)}

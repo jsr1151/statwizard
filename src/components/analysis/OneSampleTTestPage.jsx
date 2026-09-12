@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calculator, Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
+import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
 import NormalDistributionVisual from '../visuals/NormalDistributionVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
@@ -31,6 +32,8 @@ const OneSampleTTestPage = ({
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const {
+        dataSource,
+        setDataSource,
         launchPayload,
         selectedDataset,
         selectedDatasetId,
@@ -80,10 +83,6 @@ const OneSampleTTestPage = ({
 
         return warnings;
     }, [datasetSetup.droppedRows, datasetSetup.ok, roleSelection.outcome, selectedDataset]);
-
-    const successMessages = datasetSetup.ok
-        ? ['The saved dataset has been preloaded into the one-sample t-test calculator below.']
-        : [];
 
     const summaryItems = datasetSetup.ok ? [
         {
@@ -147,32 +146,39 @@ const OneSampleTTestPage = ({
                 title="One-sample t-test assumptions"
                 description="Review the assumptions before trusting the observed one-sample t statistic. The calculator tab uses your saved dataset; this section explains what to check before interpreting the result."
                 assumptions={assumptions}
-                summaryItems={summaryItems}
+                summaryItems={dataSource === 'saved' ? summaryItems : []}
             />
         );
     }
 
     if (section === 'calculator') {
         return (
-            <div className="space-y-8">
-                <AnalysisDatasetWorkspace
-                    darkMode={darkMode}
-                    title="Load a saved dataset into the one-sample calculator"
-                    description="Choose a saved dataset, map one numeric sample variable, and the calculator below will preload those values immediately."
-                    datasets={datasets}
-                    selectedDatasetId={selectedDatasetId}
-                    onSelectDatasetId={setSelectedDatasetId}
-                    dataset={selectedDataset}
-                    roles={roles}
-                    roleSelection={roleSelection}
-                    onRoleSelectionChange={setRoleSelection}
-                    emptyMessage="Save a dataset in Data Manager first, then come back here to run the one-sample t-test."
-                    validationMessages={datasetSetup.errors}
-                    warningMessages={warningMessages}
-                    successMessages={successMessages}
-                    summaryItems={summaryItems}
-                    onOpenDataManager={onOpenDataManager}
-                />
+            <AnalysisCalculatorWorkspace
+                darkMode={darkMode}
+                dataSource={dataSource}
+                onSourceChange={setDataSource}
+                dataset={selectedDataset}
+                datasetSetup={datasetSetup}
+                onOpenDataManager={onOpenDataManager}
+                onStatsChange={onStatsChange}
+                savedWorkspace={
+                    <AnalysisDatasetWorkspace
+                        darkMode={darkMode}
+                        description="Choose a saved dataset, map one numeric sample variable, and the calculator below will preload those values immediately."
+                        datasets={datasets}
+                        selectedDatasetId={selectedDatasetId}
+                        onSelectDatasetId={setSelectedDatasetId}
+                        dataset={selectedDataset}
+                        roles={roles}
+                        roleSelection={roleSelection}
+                        onRoleSelectionChange={setRoleSelection}
+                        emptyMessage="Save a dataset in Data Manager first, then come back here to run the one-sample t-test."
+                        validationMessages={datasetSetup.errors}
+                        warningMessages={warningMessages}
+                        summaryItems={dataSource === 'saved' ? summaryItems : []}
+                    />
+                }
+            >
 
                 <Card darkMode={darkMode}>
                     <div className="flex items-start gap-4 mb-6">
@@ -182,7 +188,7 @@ const OneSampleTTestPage = ({
                         <div>
                             <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>One-sample calculator</h3>
                             <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                The saved-dataset mapping preloads the raw sample values. Adjust the hypothesized mean inside the workspace to test the benchmark you care about.
+                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
                             </p>
                         </div>
                     </div>
@@ -193,10 +199,10 @@ const OneSampleTTestPage = ({
                         showTutor={false}
                         onTutorUpdate={onTutorUpdate || noop}
                         onStatsUpdate={onStatsChange}
-                        datasetSeed={datasetSetup.seed}
+                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
                     />
                 </Card>
-            </div>
+            </AnalysisCalculatorWorkspace>
         );
     }
 

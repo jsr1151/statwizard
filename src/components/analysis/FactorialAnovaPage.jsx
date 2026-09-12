@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calculator, Sigma, Sparkles } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
+import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
 import FactorialAnovaVisual from '../visuals/FactorialAnovaVisual.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
 import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
@@ -66,6 +67,8 @@ const FactorialAnovaPage = ({
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const {
+        dataSource,
+        setDataSource,
         launchPayload,
         selectedDataset,
         selectedDatasetId,
@@ -144,10 +147,6 @@ const FactorialAnovaPage = ({
 
         return warnings;
     }, [datasetSetup.droppedRows, datasetSetup.ok, roleSelection.outcome, selectedDataset]);
-
-    const successMessages = datasetSetup.ok
-        ? ['The saved dataset has been preloaded into the factorial ANOVA calculator below.']
-        : [];
 
     const summaryItems = datasetSetup.ok ? [
         {
@@ -228,7 +227,7 @@ const FactorialAnovaPage = ({
                 title="Factorial ANOVA assumptions"
                 description="Review the assumptions before trusting the main effects and interaction. The calculator tab uses your saved dataset; this section explains what to check and what to do when those assumptions look weak."
                 assumptions={assumptions}
-                summaryItems={summaryItems}
+                summaryItems={dataSource === 'saved' ? summaryItems : []}
             />
         );
     }
@@ -246,25 +245,32 @@ const FactorialAnovaPage = ({
 
     if (section === 'calculator') {
         return (
-            <div className="space-y-8">
-                <AnalysisDatasetWorkspace
-                    darkMode={darkMode}
-                    title="Load a saved dataset into the factorial ANOVA calculator"
-                    description="Choose a saved dataset, map one numeric dependent variable plus two categorical factors, and the calculator below will preload the full cell structure immediately."
-                    datasets={datasets}
-                    selectedDatasetId={selectedDatasetId}
-                    onSelectDatasetId={setSelectedDatasetId}
-                    dataset={selectedDataset}
-                    roles={roles}
-                    roleSelection={roleSelection}
-                    onRoleSelectionChange={setRoleSelection}
-                    emptyMessage="Save a dataset in Data Manager first, then come back here to run the factorial ANOVA."
-                    validationMessages={datasetSetup.errors}
-                    warningMessages={warningMessages}
-                    successMessages={successMessages}
-                    summaryItems={summaryItems}
-                    onOpenDataManager={onOpenDataManager}
-                />
+            <AnalysisCalculatorWorkspace
+                darkMode={darkMode}
+                dataSource={dataSource}
+                onSourceChange={setDataSource}
+                dataset={selectedDataset}
+                datasetSetup={datasetSetup}
+                onOpenDataManager={onOpenDataManager}
+                onStatsChange={onStatsChange}
+                savedWorkspace={
+                    <AnalysisDatasetWorkspace
+                        darkMode={darkMode}
+                        description="Choose a saved dataset, map one numeric dependent variable plus two categorical factors, and the calculator below will preload the full cell structure immediately."
+                        datasets={datasets}
+                        selectedDatasetId={selectedDatasetId}
+                        onSelectDatasetId={setSelectedDatasetId}
+                        dataset={selectedDataset}
+                        roles={roles}
+                        roleSelection={roleSelection}
+                        onRoleSelectionChange={setRoleSelection}
+                        emptyMessage="Save a dataset in Data Manager first, then come back here to run the factorial ANOVA."
+                        validationMessages={datasetSetup.errors}
+                        warningMessages={warningMessages}
+                        summaryItems={dataSource === 'saved' ? summaryItems : []}
+                    />
+                }
+            >
 
                 <Card darkMode={darkMode}>
                     <div className="flex items-start gap-4 mb-6">
@@ -274,7 +280,7 @@ const FactorialAnovaPage = ({
                         <div>
                             <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Factorial ANOVA calculator</h3>
                             <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                The saved-dataset mapping preloads the full cell table, interaction plot, and ANOVA results workspace so users can move straight into interpreting main effects and interactions.
+                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
                             </p>
                         </div>
                     </div>
@@ -282,11 +288,11 @@ const FactorialAnovaPage = ({
                     <FactorialAnovaVisual
                         darkMode={darkMode}
                         onStatsUpdate={onStatsChange}
-                        datasetSeed={datasetSetup.seed}
+                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
                         showTutor={false}
                     />
                 </Card>
-            </div>
+            </AnalysisCalculatorWorkspace>
         );
     }
 

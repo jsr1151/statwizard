@@ -1,0 +1,189 @@
+{
+  "checks": [
+    {
+      "label": "res_onesample_ttest/manual/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_onesample_ttest/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_indep_ttest/manual/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_indep_ttest/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_paired_ttest/manual/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_paired_ttest/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_one_way_anova/manual/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_one_way_anova/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_factorial_anova/manual/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_factorial_anova/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_ancova/manual/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_ancova/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_onesample_ttest/manual/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_onesample_ttest/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_indep_ttest/manual/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_indep_ttest/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_paired_ttest/manual/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_paired_ttest/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_one_way_anova/manual/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_one_way_anova/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_factorial_anova/manual/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_factorial_anova/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_ancova/manual/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_ancova/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Sample t-Test/saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Independent Samples t-Test/saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Paired Samples t-Test/saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-Way ANOVA/saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-way ANOVA/means/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-way ANOVA/plots/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-way ANOVA/decomp/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-way ANOVA/table/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "One-way ANOVA/fDist/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Factorial ANOVA/saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "ANCOVA/saved/375",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "explicit example source",
+    "saved-data empty state",
+    "keyboard focus shortcut",
+    "CSV import and saved launches into six calculators",
+    "cleared roles remove output",
+    "mobile ANOVA view selection"
+  ],
+  "note": "Populated views checked after entry animations settled. The final ANOVA follow-up replaces the earlier plot/table findings."
+}

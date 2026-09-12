@@ -77,6 +77,7 @@ const VariableRolePicker = ({
 
                         {role.selection === 'single' ? (
                             <select
+                                aria-label={role.label}
                                 value={currentValue || ''}
                                 onChange={(event) => updateSelection(role.id, event.target.value)}
                                 className={`w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}

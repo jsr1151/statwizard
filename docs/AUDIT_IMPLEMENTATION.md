@@ -2,6 +2,16 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: shared calculator entry workflow
+
+One-sample, independent, and paired t-tests, one-way and factorial ANOVA, and ANCOVA now share a compact source selector. Example/manual input opens directly; saved-data setup appears only when selected. The active dataset, variable roles, usable rows, and excluded rows stay together. A keyboard-operable shortcut moves focus to the calculator. Import opens Data Manager.
+
+Saved-data mode mounts a calculator only after its data mapping is valid. Incomplete roles clear the displayed results and shared statistics. Saved-data launch requests survive React Strict Mode and delayed library loading; a missing launch target cannot silently select a different dataset. Changing sources reloads calculator inputs, with a visible notice to copy edits first; this is not durable calculator draft recovery.
+
+The browser review also fixed a deferred tutor-history update that could crash ANOVA navigation, mobile group-editor overflow, clipped ANOVA view controls, unnamed group buttons and the ANCOVA adjustment slider, and contrast in populated result notices. See [workflow scope and validation](ANALYSIS_WORKFLOW_VALIDATION.md).
+
+Validation: 455 tests across 43 files passed, along with lint, build, documentation, power fixtures, and bundle checks. The final browser review contains 35 clean accessibility/overflow snapshots and no application errors, including all six saved-data launch paths and all five mobile ANOVA views. [Browser evidence](audits/2026-09-12/analysis-workflow.json).
+
 ## September 12: repeated-measures ANOVA
 
 A dedicated one-factor repeated-measures calculator now supports wide and long data with explicit participant IDs. It reports the within-participant error model, Greenhouse–Geisser/Huynh–Feldt/lower-bound corrections, Mauchly's diagnostic when estimable, effect sizes, matched rows, exclusions, and report text. Complete measurements are required by default; users must explicitly choose incomplete-participant exclusion. Data Manager requires explicit selection of repeated columns.
@@ -48,7 +58,7 @@ Automated accessibility snapshots do not establish complete accessibility confor
 
 ## Remaining work, in recommended order
 
-1. **Unify the analysis workflow.** Reduce the distance from opening a calculator to entering data; clearly distinguish sample and user data; make excluded rows, variable roles, result summaries, and next actions consistent. Complete an end-to-end keyboard and screen-reader review of nested plots and editors.
+1. **Extend the shared analysis workflow.** The six saved-data wrappers now have compact source selection and result gating. Extend consistent source/provenance controls to correlation, regression, and descriptive modules; add row-level exclusion details, durable calculator drafts, and consistent reporting actions. Complete an end-to-end keyboard and screen-reader review of nested plots and editors.
 2. **Make the Learning Lab usable.** Replace its placeholder levels with a small complete learning path containing worked examples, practice, feedback, and progress. Simplify the home-page choices and connect the learning path to the existing modules.
 3. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators. Repeated-measures power, mixed/factorial repeated designs, post-hoc comparisons, and additional confidence intervals need separate validation.
 4. **Improve reproducibility and recovery.** Add analysis/report export with inputs, exclusions, assumptions, and results; consider durable draft recovery and clearer backup/restore controls. Review power interpretation and advanced model limitations as part of this work.

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     ACTIVE_DATASET_SESSION_KEY,
     consumeAnalysisLaunchPayload,
+    readAnalysisLaunchPayload,
 } from '../utils/analysisLaunch.js';
 
 const readPreferredDatasetId = () => {
@@ -16,21 +17,21 @@ const useAnalysisDatasetSelection = ({
     analysisId,
     datasets,
 }) => {
-    const [selectedDatasetId, setSelectedDatasetId] = useState('');
-    const [launchPayload, setLaunchPayload] = useState(null);
+    const [launchPayload] = useState(() => readAnalysisLaunchPayload(analysisId));
+    const [selectedDatasetId, setSelectedDatasetId] = useState(() => launchPayload?.datasetId || '');
+    const [dataSource, setDataSource] = useState(() => launchPayload ? 'saved' : 'manual');
 
     useEffect(() => {
-        setLaunchPayload(consumeAnalysisLaunchPayload(analysisId));
+        consumeAnalysisLaunchPayload(analysisId);
     }, [analysisId]);
 
     useEffect(() => {
         if (!datasets.length) {
-            setSelectedDatasetId('');
             return;
         }
 
         setSelectedDatasetId((previous) => {
-            if (previous && datasets.some((dataset) => dataset.id === previous)) {
+            if (previous) {
                 return previous;
             }
 
@@ -58,6 +59,8 @@ const useAnalysisDatasetSelection = ({
         selectedDataset,
         selectedDatasetId,
         setSelectedDatasetId,
+        dataSource,
+        setDataSource,
     };
 };
 
