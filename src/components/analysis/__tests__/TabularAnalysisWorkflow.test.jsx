@@ -12,7 +12,7 @@ const library = vi.hoisted(() => ({ datasets: [] }));
 vi.mock('../../../hooks/useDatasetLibrary.js', () => ({ useDatasetLibraryContext: () => library }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const pages = [['Pearson', PearsonCorrelationPage], ['Simple regression', SimpleLinearRegressionPage], ['Multiple regression', MultipleRegressionPage]];
-const savedPages = [['pearson_correlation', PearsonCorrelationPage], ['multiple_regression', MultipleRegressionPage]];
+const savedPages = [['pearson_correlation', PearsonCorrelationPage], ['simple_regression', SimpleLinearRegressionPage], ['multiple_regression', MultipleRegressionPage]];
 const table = 'X1,X2,Y\n-1,-1,4\n-1,-1,6\n-1,1,10\n-1,1,12\n1,-1,8\n1,-1,10\n1,1,14\n1,1,16';
 let root, container, props;
 beforeEach(() => {
@@ -70,4 +70,32 @@ it.each(savedPages)('%s waits for the requested dataset and respects a cleared r
     expect(container.textContent).toContain('Active source: Requested study.');
     await change(container.querySelector('select[aria-label]'), ''); expect(stats()).toBeNull();
     expect([...container.querySelectorAll('button')].some(n => n.textContent === 'Go to results')).toBe(false);
+});
+
+it('simple regression preserves saved row pairs, labels, and cleared roles across source switches', async () => {
+    const { dataset } = buildDatasetFromDelimitedText({ text: 'Hours,Score\n1,3\n2,6\n3,6\n4,9\n,20\n6,\n7,16', datasetName: 'Study data' });
+    library.datasets = [dataset];
+    writeAnalysisLaunchPayload({ ...inferAnalysisLaunchSelection(dataset, 'simple_regression'), analysisId: 'simple_regression' });
+    await mount(SimpleLinearRegressionPage);
+    expect(stats().n).toBe(5);
+    expect(stats().pairs.map(pair => [pair.x, pair.y])).toEqual([[1, 3], [2, 6], [3, 6], [4, 9], [7, 16]]);
+    const summary = container.querySelector('[aria-label="Analysis data summary"]');
+    expect(summary.textContent).toContain('Data row 5: Hours');
+    expect(summary.textContent).toContain('Data row 6: Score');
+    expect(container.textContent).toContain('Predicted Mean Score');
+    await change(container.querySelector('select[aria-label="Outcome Y"]'), '');
+    expect(stats()).toBeNull();
+    await click('Paste / Upload'); await change(container.querySelector('textarea'), table);
+    expect(stats().n).toBe(8);
+    await click('Saved Dataset'); expect(stats()).toBeNull();
+    expect(container.querySelector('select[aria-label="Outcome Y"]').value).toBe('');
+    await change(container.querySelector('select[aria-label="Outcome Y"]'), dataset.columns[1].id);
+    expect(stats().n).toBe(5);
+});
+
+it('simple regression honors outcome and predictor tags instead of column order when launching', () => {
+    const { dataset } = buildDatasetFromDelimitedText({ text: 'Outcome,Other,Predictor\n3,20,1\n5,30,2\n8,40,3', datasetName: 'Tagged study' });
+    dataset.columns[0].manualTags = ['outcome']; dataset.columns[2].manualTags = ['predictor'];
+    expect(inferAnalysisLaunchSelection(dataset, 'simple_regression')).toMatchObject({ x: dataset.columns[2].id, y: dataset.columns[0].id });
+    expect(inferAnalysisLaunchSelection({ ...dataset, columns: [dataset.columns[0]] }, 'simple_regression')).toBeNull();
 });

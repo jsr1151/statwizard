@@ -227,16 +227,16 @@ it('reverse-codes values using the chosen bounds', async () => {
     expect(values(saved(), 'Reversed X').map(Number)).toEqual([5, 4, 3, 2, 1]);
 });
 
-it('saves dirty data before launching a compatible analysis with variable roles', async () => {
+it.each([['Pearson Correlation', 'pearson_correlation'], ['Simple Linear Regression', 'simple_regression']])('saves dirty data before launching %s with variable roles', async (label, analysisId) => {
     await mount();
     await upload();
     await click('Use in Analysis');
-    const panel = [...container.querySelectorAll('h4')].find(node => node.textContent === 'Pearson Correlation').parentElement.parentElement.parentElement;
+    const panel = [...container.querySelectorAll('h4')].find(node => node.textContent === label).parentElement.parentElement.parentElement;
     await click('Open Calculator', panel);
     expect(persistDatasetRecord).toHaveBeenCalledTimes(1);
-    expect(props.onOpenAnalysis).toHaveBeenCalledWith('pearson_correlation');
+    expect(props.onOpenAnalysis).toHaveBeenCalledWith(analysisId);
     const launch = JSON.parse(sessionStorage.getItem(ANALYSIS_LAUNCH_SESSION_KEY));
-    expect(launch).toMatchObject({ datasetId: saved().id, analysisId: 'pearson_correlation', x: saved().columns[0].id, y: saved().columns[1].id });
+    expect(launch).toMatchObject({ datasetId: saved().id, analysisId, x: saved().columns[0].id, y: saved().columns[1].id });
 });
 
 it('keeps unsaved data available after a save failure', async () => {

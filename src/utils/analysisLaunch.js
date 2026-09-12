@@ -69,6 +69,13 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
         };
     }
 
+    if (analysisId === 'simple_regression') {
+        if (numericColumns.length < 2) return null;
+        const outcome = findPreferredOutcomeColumn(numericColumns);
+        const predictor = rankPredictorColumns(numericColumns.filter(column => column.id !== outcome.id))[0];
+        return { datasetId: dataset.id, x: predictor.id, y: outcome.id };
+    }
+
     if (analysisId === 'pearson_correlation') {
         if (numericColumns.length < 2) {
             return null;

@@ -1,5 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { BarChart3, BookOpen, Calculator, Check, Clipboard, Code2, Lightbulb, Plus, RotateCcw } from 'lucide-react';
+import useDescriptiveInput from '../../hooks/useDescriptiveInput.js';
+import DescriptiveInputNotice from './DescriptiveInputNotice.jsx';
+import DescriptiveDataSummary from './DescriptiveDataSummary.jsx';
+import CopyResultsButton from '../common/CopyResultsButton.jsx';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BarChart3, BookOpen, Calculator, Code2, Lightbulb, Plus, RotateCcw } from 'lucide-react';
 import { calculateCentralTendency, parseNumericInput } from '../../stats/centralTendency';
 import { SOFTWARE_GUIDES } from '../../data/softwareGuides';
 
@@ -127,22 +131,19 @@ const DataPlot = ({ stats, darkMode }) => {
     );
 };
 
-export default function CentralTendencyPage({ section, darkMode }) {
-    const [input, setInput] = useState(EXAMPLES.symmetric);
+export default function CentralTendencyPage({ section, darkMode, onStatsChange }) {
+    const { input, setInput, source, loadExample } = useDescriptiveInput(EXAMPLES, 'symmetric');
+    const resultsRef = useRef(null);
+    const goToResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
     const [precision, setPrecision] = useState(2);
     const [software, setSoftware] = useState('spss');
-    const [copied, setCopied] = useState(false);
     const parsed = useMemo(() => parseNumericInput(input), [input]);
     const stats = useMemo(() => calculateCentralTendency(parsed.values), [parsed.values]);
     const guide = SOFTWARE_GUIDES.central_tendency;
 
-    const copySummary = async () => {
-        if (!stats || !navigator.clipboard) return;
-        const modes = stats.modes.length ? stats.modes.map((value) => format(value, precision)).join(', ') : 'none';
-        await navigator.clipboard.writeText(`n = ${stats.n}; mean = ${format(stats.mean, precision)}; median = ${format(stats.median, precision)}; mode(s) = ${modes}`);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1500);
-    };
+    const summary = stats ? `n = ${stats.n}; mean = ${format(stats.mean, precision)}; median = ${format(stats.median, precision)}; mode(s) = ${stats.modes.length ? stats.modes.map(value => format(value, precision)).join(', ') : 'none'}` : '';
+    const copyText = `Source: ${source}\nIncluded: ${parsed.values.length}; excluded: ${parsed.invalid.length}\nExcluded entries: ${parsed.invalid.join(', ') || 'none'}\nInput: ${input}\n${summary}`;
+    useEffect(() => { onStatsChange?.(stats); }, [onStatsChange, stats]);
 
     if (section === 'calculator' || section === 'explorer') return (
         <div className="space-y-6">
@@ -151,17 +152,17 @@ export default function CentralTendencyPage({ section, darkMode }) {
                     <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400">{section === 'calculator' ? <Calculator size={21} /> : <BarChart3 size={21} />}</div>
                     <div><h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{section === 'calculator' ? 'Central tendency calculator' : 'Distribution explorer'}</h3><p className={`mt-1 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Enter numbers separated by commas, spaces, semicolons, or new lines. Results update immediately.</p></div>
                 </div>
-                <label htmlFor="central-values" className="block mt-6 mb-2 text-sm font-bold">Observed values</label>
+                <DescriptiveInputNotice source={source} darkMode={darkMode} categorical={false} hasResults={!!stats} onGoResults={goToResults} /><label htmlFor="central-values" className="block mt-6 mb-2 text-sm font-bold">Observed values</label>
                 <textarea id="central-values" value={input} onChange={(event) => setInput(event.target.value)} rows={4} className={`w-full rounded-xl border p-4 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 ${darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-white border-slate-300'}`} />
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {Object.entries(EXAMPLES).map(([id, values]) => <button key={id} type="button" onClick={() => setInput(values)} className={`px-3 py-2 rounded-lg text-xs font-bold capitalize ${darkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-100 hover:bg-slate-200'}`}>{id}</button>)}
+                    {Object.entries(EXAMPLES).map(([id, values]) => <button key={id} type="button" onClick={() => loadExample(id)} className={`px-3 py-2 rounded-lg text-xs font-bold capitalize ${darkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-100 hover:bg-slate-200'}`}>{id}</button>)}
                     <button type="button" onClick={() => setInput(`${input.trim()}${input.trim() ? ', ' : ''}${stats ? stats.max + Math.max(10, stats.max - stats.min) : 20}`)} className="px-3 py-2 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-500"><Plus size={14} className="inline mr-1" />Add outlier</button>
-                    <button type="button" onClick={() => setInput(EXAMPLES.symmetric)} className={`px-3 py-2 rounded-lg text-xs font-bold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}><RotateCcw size={14} className="inline mr-1" />Reset</button>
+                    <button type="button" onClick={() => loadExample('symmetric')} className={`px-3 py-2 rounded-lg text-xs font-bold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}><RotateCcw size={14} className="inline mr-1" />Load default example</button>
                     <label className="ml-auto text-xs font-bold">Decimals <select value={precision} onChange={(event) => setPrecision(Number(event.target.value))} className={`ml-2 rounded-lg border p-2 ${darkMode ? 'bg-slate-950 border-slate-700' : 'bg-white border-slate-300'}`}>{[0, 1, 2, 3, 4].map((value) => <option key={value}>{value}</option>)}</select></label>
                 </div>
-                {parsed.invalid.length > 0 && <p role="alert" className="mt-3 text-sm text-amber-500">Ignored {parsed.invalid.length} invalid entr{parsed.invalid.length === 1 ? 'y' : 'ies'}: {parsed.invalid.join(', ')}</p>}
+
             </Card>
-            {stats ? <><Summary stats={stats} precision={precision} darkMode={darkMode} />{section === 'explorer' && <><DistributionPlot stats={stats} darkMode={darkMode} /><DataPlot stats={stats} darkMode={darkMode} /></>}<Card darkMode={darkMode}><div className="flex justify-between gap-4"><div><h4 className="font-black">Ordered observations</h4><p className={`mt-2 font-mono break-words ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{stats.sorted.map((value) => format(value, precision)).join(', ')}</p><p className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{Math.abs(stats.mean - stats.median) > 0.1 * Math.max(1, stats.max - stats.min) ? 'The mean and median are separated, suggesting skew or an influential value. Inspect the distribution before choosing a summary.' : 'The mean and median are close for these values. Still inspect the distribution and measurement scale before choosing a summary.'}</p></div><button type="button" onClick={copySummary} className="shrink-0 h-fit px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold">{copied ? <Check size={14} /> : <Clipboard size={14} />}<span className="sr-only">Copy summary</span></button></div></Card></> : <Card darkMode={darkMode}><p role="status">Enter at least one valid number to calculate results.</p></Card>}
+            <section ref={resultsRef} tabIndex={-1} aria-label="Descriptive results" className="space-y-6 min-w-0"><DescriptiveDataSummary source={source} count={parsed.values.length} invalid={parsed.invalid} darkMode={darkMode} />{stats ? <><Summary stats={stats} precision={precision} darkMode={darkMode} />{section === 'explorer' && <><DistributionPlot stats={stats} darkMode={darkMode} /><DataPlot stats={stats} darkMode={darkMode} /></>}<Card darkMode={darkMode}><div className="flex flex-col gap-4"><div><h4 className="font-black">Ordered observations</h4><p className={`mt-2 font-mono break-words ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{stats.sorted.map((value) => format(value, precision)).join(', ')}</p><p className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{Math.abs(stats.mean - stats.median) > 0.1 * Math.max(1, stats.max - stats.min) ? 'The mean and median are separated, suggesting skew or an influential value. Inspect the distribution before choosing a summary.' : 'The mean and median are close for these values. Still inspect the distribution and measurement scale before choosing a summary.'}</p></div><CopyResultsButton text={copyText} darkMode={darkMode} label="Copy summary" /></div></Card></> : <Card darkMode={darkMode}><p role="status">Enter at least one valid number to calculate results.</p></Card>}</section>
         </div>
     );
 

@@ -1,12 +1,10 @@
-import useAnalysisTableInput from '../../hooks/useAnalysisTableInput.js';
-import { summarizeAnalysisRows } from '../../utils/analysisRows.js';
+import useSimpleRegressionInput from '../../hooks/useSimpleRegressionInput.js';
 import { useEffect, useMemo, useState } from "react";
 import AnalysisAssumptionsSection from "../analysis/AnalysisAssumptionsSection.jsx";
 import {
     buildRegressionGuidance, buildRegressionTutorBaseDataset, calculateRegressionPrediction,
     calculateSimpleLinearRegressionStats, deriveRegressionTutorDataset, rSquaredToFSquared,
 } from "../../stats/regression.js";
-import { parseDelimitedTable } from "../../utils/delimitedTable.js";
 import {
     REGRESSION_TUTOR_PRESETS as TUTOR_PRESETS,
     REGRESSION_SAMPLE_DATASET as SAMPLE_DATASET,
@@ -142,9 +140,8 @@ const SimpleLinearRegressionPage = ({
     };
 
 
-    const { tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending } = useAnalysisTableInput(SAMPLE_DATASET);
-    const [selectedX, setSelectedX] = useState('');
-    const [selectedY, setSelectedY] = useState('');
+    const dataInput = useSimpleRegressionInput(SAMPLE_DATASET);
+    const { selectedXColumn, selectedYColumn, selectedX, selectedY } = dataInput;
     const [confidenceLevel, setConfidenceLevel] = useState(0.95);
     const [calculatorShowLine, setCalculatorShowLine] = useState(true);
     const [calculatorShowBand, setCalculatorShowBand] = useState(false);
@@ -152,32 +149,8 @@ const SimpleLinearRegressionPage = ({
     const [calculatorPredictionX, setCalculatorPredictionX] = useState('');
     const [calculatorSelectedPointId, setCalculatorSelectedPointId] = useState(null);
 
-    const parsedTable = useMemo(() => parseDelimitedTable(tableText), [tableText]);
-    const numericColumns = useMemo(() => parsedTable.numericColumns || [], [parsedTable]);
-
-    useEffect(() => {
-        if (!numericColumns.length) {
-            setSelectedX('');
-            setSelectedY('');
-            return;
-        }
-
-        if (!numericColumns.some((column) => column.name === selectedX)) {
-            setSelectedX(numericColumns[0]?.name || '');
-        }
-
-        if (!numericColumns.some((column) => column.name === selectedY)) {
-            setSelectedY(numericColumns[1]?.name || numericColumns[0]?.name || '');
-        }
-    }, [numericColumns, selectedX, selectedY]);
-
-    const selectedXColumn = numericColumns.find((column) => column.name === selectedX) || null;
-    const selectedYColumn = numericColumns.find((column) => column.name === selectedY) || null;
-
-    const rowSummary = useMemo(() => summarizeAnalysisRows([selectedXColumn, selectedYColumn], parsedTable.rowCount || 0), [selectedXColumn, selectedYColumn, parsedTable.rowCount]);
-    const sourceLabel = tableSource;
     const calculatorStats = useMemo(() => {
-        if (!selectedXColumn || !selectedYColumn || selectedXColumn.name === selectedYColumn.name) {
+        if (!selectedXColumn || !selectedYColumn || selectedX === selectedY) {
             return null;
         }
 
@@ -187,7 +160,7 @@ const SimpleLinearRegressionPage = ({
             confidenceLevel,
             alpha: 1 - confidenceLevel,
         });
-    }, [selectedXColumn, selectedYColumn, confidenceLevel]);
+    }, [selectedXColumn, selectedYColumn, selectedX, selectedY, confidenceLevel]);
 
     useEffect(() => {
         onStatsChange?.(calculatorStats?.ok ? calculatorStats : null);
@@ -276,10 +249,8 @@ const SimpleLinearRegressionPage = ({
     }
 
     if (section === 'calculator') {
-        return <RegressionCalculatorSection {...{
-            darkMode, onUpload, setTableText, tableText, onOpenDataManager, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
-            parsedTable, selectedX, setSelectedX, numericColumns,
-            selectedY, setSelectedY, confidenceLevel, setConfidenceLevel,
+        return <RegressionCalculatorSection {...dataInput} {...{
+            darkMode, onOpenDataManager, confidenceLevel, setConfidenceLevel,
             setCalculatorShowLine, calculatorShowLine, setCalculatorShowBand, calculatorShowBand,
             setCalculatorShowPredictionBand, calculatorShowPredictionBand, calculatorGuidance, calculatorStats,
             influentialIndex, calculatorSelectedPointId, setCalculatorSelectedPointId, calculatorPrediction,

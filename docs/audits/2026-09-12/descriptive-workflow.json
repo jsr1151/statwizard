@@ -1,0 +1,188 @@
+{
+  "checks": [
+    {
+      "label": "res_central_tendency/example/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/entered-explorer/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/example/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/entered-explorer/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/example/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/entered-explorer/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/example/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/entered-explorer/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/example/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/entered-explorer/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/example/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/entered-explorer/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/example/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/entered-explorer/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/example/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/entered-explorer/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/example/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/entered-explorer/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/example/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/entered-explorer/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/example/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/entered-explorer/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/example/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/entered-explorer/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_central_tendency/clipboard-fallback/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_variability/clipboard-fallback/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "res_frequency/clipboard-fallback/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/saved/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/saved/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/saved/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/saved/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/cleared-role",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/pasted-restored",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "simple-regression/example-reset",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "descriptive source and entry counts",
+    "excluded-entry disclosure",
+    "focus results",
+    "calculator to explorer input retention",
+    "clipboard denial fallback and stale-copy clearing",
+    "empty input",
+    "Data Manager saves and launches simple regression",
+    "saved regression complete pairs and labels",
+    "cleared roles remain empty",
+    "source switching restores entered table",
+    "load example restores predictor and outcome after identical or cleared roles"
+  ]
+}

@@ -37,6 +37,13 @@ export const ANALYSIS_OPTIONS = [
         buildDetail: ({ numericCount }) => `${numericCount} numeric variable${numericCount === 1 ? '' : 's'} detected.`,
     },
     {
+        id: 'simple_regression',
+        label: 'Simple Linear Regression',
+        summary: 'Load one numeric predictor and one numeric outcome into the regression calculator.',
+        isCompatible: ({ numericCount }) => numericCount >= 2,
+        buildDetail: ({ numericCount }) => `${numericCount} numeric variables detected. Confirm predictor X, outcome Y, and independent observations.`,
+    },
+    {
         id: 'multiple_regression',
         label: 'Multiple Regression',
         summary: 'Load one numeric outcome plus at least two numeric predictors into the regression calculator.',

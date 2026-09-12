@@ -5,6 +5,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import SimpleLinearRegressionPage from '../SimpleLinearRegressionPage.jsx';
 import { POWER_TEST_BY_STEP_ID } from '../../../power/testRegistry.js';
 
+vi.mock('../../../hooks/useDatasetLibrary.js', () => ({ useDatasetLibraryContext: () => ({ datasets: [] }) }));
+
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root;
 let container;

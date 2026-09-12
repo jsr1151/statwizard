@@ -59,6 +59,7 @@ export default function AppContent({
                             mann_whitney: 'res_mann_whitney',
                             wilcoxon_signed_rank: 'res_wilcoxon',
                             pearson_correlation: 'correlation_result',
+                            simple_regression: 'regression_result',
                             multiple_regression: 'multiple_regression_result',
                             one_sample_t_test: 'res_onesample_ttest',
                             independent_t_test: 'res_indep_ttest',

@@ -72,6 +72,7 @@ export default function ResultPage({
                     <CentralTendencyPage
                         section={activeResultSection}
                         darkMode={darkMode}
+                        onStatsChange={setCurrentStats}
                     />
                 ) : activeResultSection === 'equation' && displayFormulaId && displayFormulaId !== 'none' ? (
                     <div className="space-y-8">

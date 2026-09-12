@@ -1,0 +1,73 @@
+// @vitest-environment jsdom
+import { act, StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import CentralTendencyPage from '../CentralTendencyPage.jsx';
+import VariabilityPage from '../VariabilityPage.jsx';
+import FrequencyPage from '../FrequencyPage.jsx';
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const pages = [['Central tendency', CentralTendencyPage, 'symmetric'], ['Variability', VariabilityPage, 'compact'], ['Frequency', FrequencyPage, 'ratings']];
+let container, root, onStatsChange;
+beforeEach(() => {
+    container = document.createElement('main'); document.body.appendChild(container); root = createRoot(container);
+    onStatsChange = vi.fn();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue() } });
+});
+afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.restoreAllMocks(); });
+const mount = async (Page, section = 'calculator') => act(async () => root.render(<StrictMode><Page darkMode={false} section={section} onStatsChange={onStatsChange} /></StrictMode>));
+const click = async text => act(async () => [...container.querySelectorAll('button')].find(n => n.textContent.trim() === text).click());
+const edit = async value => act(async () => {
+    const input = container.querySelector('textarea:not([readonly])');
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+});
+
+it.each(pages)('%s identifies sources, focuses results, retains input in explorer, and resets explicitly', async (_, Page, example) => {
+    await mount(Page);
+    expect(container.textContent).toContain(`Active source: Example: ${example}.`);
+    await edit('1, 2, 2, 3');
+    expect(container.textContent).toContain('Results source: Entered values. 4 of 4 nonempty entries included; 0 excluded.');
+    expect(onStatsChange.mock.lastCall[0].n).toBe(4);
+    await click('Go to results'); expect(document.activeElement.getAttribute('aria-label')).toBe('Descriptive results');
+    await mount(Page, 'explorer'); expect(container.querySelector('textarea').value).toBe('1, 2, 2, 3');
+    await click('Load default example'); expect(container.textContent).toContain(`Results source: Example: ${example}.`);
+    await edit('  , ; \n'); expect(onStatsChange.mock.lastCall[0]).toBeNull();
+    expect(container.textContent).toContain('0 of 0 nonempty entries included');
+    expect([...container.querySelectorAll('button')].some(n => n.textContent === 'Go to results')).toBe(false);
+});
+
+it.each(pages.slice(0, 2))('%s counts invalid values and includes source, inputs, exclusions, and results when copied', async (_, Page) => {
+    await mount(Page); await edit('1, nope, 2, 3, Infinity');
+    expect(container.textContent).toContain('3 of 5 nonempty entries included; 2 excluded.');
+    expect(container.querySelector('details').textContent).toContain('nope');
+    expect(onStatsChange.mock.lastCall[0].n).toBe(3);
+    await click('Copy summary');
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(expect.stringContaining('Source: Entered values\nIncluded: 3; excluded: 2\nExcluded entries: nope, Infinity\nInput: 1, nope, 2, 3, Infinity'));
+    expect(container.textContent).toContain('Copied.');
+    await edit('nope'); expect(onStatsChange.mock.lastCall[0]).toBeNull();
+    expect(container.textContent).toContain('0 of 1 nonempty entries included; 1 excluded.');
+});
+
+it('keeps categorical labels and missing-value labels explicit in frequency counts', async () => {
+    await mount(FrequencyPage); await edit('New York, Boston, New York, NA,,');
+    expect(container.textContent).toContain('Labels such as NA count as categories');
+    expect(onStatsChange.mock.lastCall[0].n).toBe(4);
+    await click('Copy frequency table');
+    const text = navigator.clipboard.writeText.mock.lastCall[0];
+    expect(text).toContain('Source: Entered values'); expect(text).toContain('New York\t2\t50%'); expect(text).toContain('NA\t1\t25%');
+});
+
+it.each(pages)('%s provides selectable summary text when clipboard access is denied', async (_, Page) => {
+    navigator.clipboard.writeText.mockRejectedValue(new Error('Denied'));
+    await mount(Page); await click(Page === FrequencyPage ? 'Copy frequency table' : 'Copy summary');
+    expect(container.textContent).toContain('Copy unavailable. Select and copy the text below.');
+    expect(container.querySelector('textarea[readonly]').value).toContain('Source: Example:');
+    await edit('5, 6, 7'); expect(container.querySelector('textarea[readonly]')).toBeNull();
+});
+
+it('does not report a stale copy as current after the inputs change', async () => {
+    let resolveCopy; navigator.clipboard.writeText.mockImplementation(() => new Promise(resolve => { resolveCopy = resolve; }));
+    await mount(CentralTendencyPage); await click('Copy summary'); await edit('9, 10, 11');
+    await act(async () => resolveCopy()); expect(container.textContent).not.toContain('Copied.');
+});

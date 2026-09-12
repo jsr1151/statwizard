@@ -21,6 +21,7 @@ export default function RegressionCalculatorSection({
     setCalculatorShowPredictionBand, calculatorShowPredictionBand, calculatorGuidance, calculatorStats,
     influentialIndex, calculatorSelectedPointId, setCalculatorSelectedPointId, calculatorPrediction,
     calculatorPredictionX, setCalculatorPredictionX, calculatorSelectedPair,
+    calculatorInputMode, setCalculatorInputMode, datasets, savedDataset, selectedDatasetId, setSelectedDatasetId, activeXLabel, activeYLabel,
 }) {
     const resultsRef = useRef(null);
     const onGoResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
@@ -45,9 +46,9 @@ export default function RegressionCalculatorSection({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div className="min-w-0 lg:col-span-4 space-y-6">
                     <Card darkMode={darkMode}>
-                        <TableDataSourceFields {...{darkMode, tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending, onOpenDataManager, onGoResults, hasResults: !!calculatorStats?.ok}} sampleLabel="Load example data" />
+                        <TableDataSourceFields {...{darkMode, tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending, onOpenDataManager, onGoResults, calculatorInputMode, setCalculatorInputMode, datasets, savedDataset, selectedDatasetId, setSelectedDatasetId, hasResults: !!calculatorStats?.ok}} sampleLabel="Load example data" />
 
-                        {parsedTable.errors?.length > 0 && (
+                        {calculatorInputMode === 'paste' && parsedTable.errors?.length > 0 && (
                             <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
                                 {parsedTable.errors.join(' ')}
                             </div>
@@ -56,18 +57,20 @@ export default function RegressionCalculatorSection({
                         <div className="mt-6 grid grid-cols-1 gap-4">
                             <label className="block">
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predictor X</span>
-                                <select value={selectedX} onChange={(event) => setSelectedX(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                <select aria-label="Predictor X" value={selectedX} onChange={(event) => setSelectedX(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                    <option value="">Choose predictor</option>
                                     {numericColumns.map((column) => (
-                                        <option key={column.name} value={column.name}>{column.name}</option>
+                                        <option key={column.key} value={column.key}>{column.label}</option>
                                     ))}
                                 </select>
                             </label>
 
                             <label className="block">
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Outcome Y</span>
-                                <select value={selectedY} onChange={(event) => setSelectedY(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                <select aria-label="Outcome Y" value={selectedY} onChange={(event) => setSelectedY(event.target.value)} className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}>
+                                    <option value="">Choose outcome</option>
                                     {numericColumns.map((column) => (
-                                        <option key={column.name} value={column.name}>{column.name}</option>
+                                        <option key={column.key} value={column.key}>{column.label}</option>
                                     ))}
                                 </select>
                             </label>
@@ -124,8 +127,8 @@ export default function RegressionCalculatorSection({
                             pairs={calculatorStats?.pairs || []}
                             stats={calculatorStats}
                             darkMode={darkMode}
-                            xLabel={selectedX || 'Predictor X'}
-                            yLabel={selectedY || 'Outcome Y'}
+                            xLabel={activeXLabel || 'Predictor X'}
+                            yLabel={activeYLabel || 'Outcome Y'}
                             showLine={calculatorShowLine}
                             showConfidenceBand={calculatorShowBand}
                             showPredictionBand={calculatorShowPredictionBand}
@@ -146,8 +149,8 @@ export default function RegressionCalculatorSection({
                     ) : (
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                                <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(calculatorStats.slope, 3)} tone="primary" detail={buildSlopeInterpretation({ slope: calculatorStats.slope, predictorLabel: selectedX || 'X', outcomeLabel: selectedY || 'Y' })} />
-                                <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(calculatorStats.intercept, 3)} detail={`Predicted ${selectedY || 'Y'} when ${selectedX || 'X'} = 0.`} />
+                                <MetricTile darkMode={darkMode} label="Slope (b)" value={formatStat(calculatorStats.slope, 3)} tone="primary" detail={buildSlopeInterpretation({ slope: calculatorStats.slope, predictorLabel: activeXLabel || 'X', outcomeLabel: activeYLabel || 'Y' })} />
+                                <MetricTile darkMode={darkMode} label="Intercept" value={formatStat(calculatorStats.intercept, 3)} detail={`Predicted ${activeYLabel || 'Y'} when ${activeXLabel || 'X'} = 0.`} />
                                 <MetricTile darkMode={darkMode} label="R²" value={formatStat(calculatorStats.rSquared, 3)} detail={`${formatStat(calculatorStats.rSquared * 100, 1)}% variance explained`} />
                                 <MetricTile darkMode={darkMode} label="Adjusted R²" value={formatStat(calculatorStats.adjustedRSquared, 3)} />
                                 <MetricTile darkMode={darkMode} label="RMSE" value={formatStat(calculatorStats.rmse, 3)} detail="Typical prediction error around the fitted line." />
@@ -169,7 +172,7 @@ export default function RegressionCalculatorSection({
 
                                         <label className="block">
                                             <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                                Predictor Value ({selectedX || 'X'})
+                                                Predictor Value ({activeXLabel || 'X'})
                                             </span>
                                             <input
                                                 type="number"
@@ -181,14 +184,14 @@ export default function RegressionCalculatorSection({
                                         </label>
 
                                         <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                            Observed {selectedX || 'X'} range: {formatStat(calculatorStats.xSummary.min, 3)} to {formatStat(calculatorStats.xSummary.max, 3)}
+                                            Observed {activeXLabel || 'X'} range: {formatStat(calculatorStats.xSummary.min, 3)} to {formatStat(calculatorStats.xSummary.max, 3)}
                                         </p>
                                     </div>
 
                                     <div className="min-w-0 lg:col-span-7">
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
-                                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {selectedY || 'Y'}</div>
+                                                <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>Predicted Mean {activeYLabel || 'Y'}</div>
                                                 <p className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorPrediction?.fitted, 3)}</p>
                                             </div>
                                             <div className={`rounded-xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
@@ -206,7 +209,7 @@ export default function RegressionCalculatorSection({
                                         </div>
 
                                         <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                            The fitted line predicts the mean {selectedY || 'Y'} at this {selectedX || 'X'} value. The prediction interval is wider because individual observed outcomes can vary around that mean.
+                                            The fitted line predicts the mean {activeYLabel || 'Y'} at this {activeXLabel || 'X'} value. The prediction interval is wider because individual observed outcomes can vary around that mean.
                                         </p>
 
                                         {calculatorPrediction?.isExtrapolation && (
@@ -222,7 +225,7 @@ export default function RegressionCalculatorSection({
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Fitted Model</div>
-                                        <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{buildEquationText({ stats: calculatorStats, xLabel: selectedX || 'X', yLabel: selectedY || 'Y' })}</h3>
+                                        <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{buildEquationText({ stats: calculatorStats, xLabel: activeXLabel || 'X', yLabel: activeYLabel || 'Y' })}</h3>
                                         <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                             {calculatorStats.interpretation}
                                         </p>
@@ -288,15 +291,15 @@ export default function RegressionCalculatorSection({
 
                                             <div className="mt-4 space-y-3">
                                                 <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{selectedX || 'X'}</div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{activeXLabel || 'X'}</div>
                                                     <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.x, 3)}</p>
                                                 </div>
                                                 <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed {selectedY || 'Y'}</div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Observed {activeYLabel || 'Y'}</div>
                                                     <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.y, 3)}</p>
                                                 </div>
                                                 <div className={`rounded-xl border p-3 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predicted {selectedY || 'Y'}</div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Predicted {activeYLabel || 'Y'}</div>
                                                     <p className={`mt-1 text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>{formatStat(calculatorSelectedPair?.fitted, 3)}</p>
                                                 </div>
                                                 <div className={`rounded-xl border p-3 ${darkMode ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
@@ -306,7 +309,7 @@ export default function RegressionCalculatorSection({
                                             </div>
 
                                             <p className={`mt-4 text-sm leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                                Residual = observed {selectedY || 'Y'} - predicted {selectedY || 'Y'}. The residual plot helps you see whether those errors stay patternless around zero.
+                                                Residual = observed {activeYLabel || 'Y'} - predicted {activeYLabel || 'Y'}. The residual plot helps you see whether those errors stay patternless around zero.
                                             </p>
                                         </div>
                                     </div>
