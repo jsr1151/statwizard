@@ -9,6 +9,13 @@ export const DERIVED_OPERATION_OPTIONS = [
 
 export const ANALYSIS_OPTIONS = [
     {
+        id: 'repeated_measures_anova',
+        label: 'Repeated Measures ANOVA',
+        summary: 'Match participant IDs across repeated measurements of one outcome.',
+        isCompatible: ({ numericCount }) => numericCount >= 1,
+        buildDetail: () => 'Requires participant IDs plus either two or more repeated columns, or condition and measurement columns. Confirm the roles in the calculator.',
+    },
+    {
         id: 'mann_whitney',
         label: 'Mann–Whitney U',
         summary: 'Compare a numeric or ordered-score outcome across two independent groups.',

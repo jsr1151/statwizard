@@ -8,6 +8,7 @@ import ResultVisualizer from "./ResultVisualizer.jsx";
 import { METHOD_AVAILABILITY } from '../../data/methodAvailability.js';
 const MethodScopePage = lazy(() => import('../analysis/MethodScopePage.jsx'));
 const RankTestPage = lazy(() => import('../analysis/RankTestPage.jsx'));
+const RepeatedMeasuresPage = lazy(() => import('../analysis/RepeatedMeasuresPage.jsx'));
 const TutorPanel = lazy(() => import('../../components/tutor/TutorPanel'));
 const AssumptionItem = lazy(() => import('../../components/formula/AssumptionItem'));
 const PowerAnalysisTab = lazy(() => import('../../components/power/PowerAnalysisTab'));
@@ -61,7 +62,9 @@ export default function ResultPage({
                     />
                 )}
 
-                {['res_mann_whitney', 'res_wilcoxon'].includes(currentStepId) ? (
+                {currentStepId === 'res_rm_anova' ? (
+                    <RepeatedMeasuresPage section={activeResultSection} darkMode={darkMode} onSectionChange={handleResultSectionChange} onOpenDataManager={() => setAppMode('data_manager')} />
+                ) : ['res_mann_whitney', 'res_wilcoxon'].includes(currentStepId) ? (
                     <RankTestPage key={currentStepId} paired={currentStepId === 'res_wilcoxon'} section={activeResultSection} darkMode={darkMode} onSectionChange={handleResultSectionChange} onOpenDataManager={() => setAppMode('data_manager')} />
                 ) : METHOD_AVAILABILITY[currentStepId] ? (
                     <MethodScopePage step={currentStep} section={activeResultSection} darkMode={darkMode} />

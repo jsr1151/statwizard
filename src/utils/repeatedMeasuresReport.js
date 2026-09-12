@@ -1,0 +1,7 @@
+import { formatPValue, formatStatistic } from './statFormatters.js';
+
+export function buildRepeatedMeasuresReport(result, correction, alpha, source) {
+    const test = result.corrections.find(row => row.id === correction);
+    const mauchly = result.sphericity.mauchly;
+    return `One-way repeated-measures ANOVA. ${source}. Conditions: ${result.conditions.join(', ')}. ${result.n} complete participants retained from ${result.inputParticipants}; ${result.excluded.length} incomplete participants excluded (${result.missingPolicy === 'reject' ? 'complete data required' : 'complete-participant exclusion'}). ${test.label}: epsilon = ${formatStatistic(test.epsilon, 4)}, F(${formatStatistic(test.numeratorDf, 3)}, ${formatStatistic(test.denominatorDf, 3)}) = ${formatStatistic(result.f, 3)}, p ${formatPValue(test.p)}, alpha = ${alpha}. ${test.p < alpha ? 'Reject the equal-condition-means null hypothesis.' : 'Do not reject the equal-condition-means null hypothesis; this does not establish equivalence.'} Partial eta squared = ${formatStatistic(result.partialEtaSquared, 4)}; generalized eta squared = ${formatStatistic(result.generalizedEtaSquared, 4)}. ${mauchly.available ? `Mauchly W = ${formatStatistic(mauchly.w, 4)}, approximate p ${formatPValue(mauchly.p)}.` : mauchly.reason} Participant matching, independence between participants, residual assumptions, and the missing-data mechanism require review. No pairwise comparisons, confidence intervals, or multiplicity adjustment were performed.`;
+}

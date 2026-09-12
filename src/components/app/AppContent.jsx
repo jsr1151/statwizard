@@ -55,6 +55,7 @@ export default function AppContent({
                     darkMode={darkMode}
                     onOpenAnalysis={(analysisId) => {
                         const nextStepIdByAnalysisId = {
+                            repeated_measures_anova: 'res_rm_anova',
                             mann_whitney: 'res_mann_whitney',
                             wilcoxon_signed_rank: 'res_wilcoxon',
                             pearson_correlation: 'correlation_result',

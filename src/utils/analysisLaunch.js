@@ -57,6 +57,18 @@ export const inferAnalysisLaunchSelection = (dataset, analysisId) => {
     const numericColumns = getNumericColumns(dataset);
     const categoricalColumns = getCategoricalColumns(dataset);
 
+    if (analysisId === 'repeated_measures_anova') {
+        if (!dataset || !numericColumns.length) return null;
+        const subject = (dataset?.columns || []).find(column => /^(?:participant|subject|id|participant[ _-]?id|subject[ _-]?id)$/i.test(column.label || column.name || ''));
+        return {
+            datasetId: dataset.id,
+            subject: subject?.id || '',
+            // Numeric columns can also be age, IDs, or between-subject metadata.
+            // Require explicit selection instead of guessing repeated conditions.
+            conditions: [],
+        };
+    }
+
     if (analysisId === 'pearson_correlation') {
         if (numericColumns.length < 2) {
             return null;

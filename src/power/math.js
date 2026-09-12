@@ -94,9 +94,7 @@ export const logGamma = (z) => {
     return 0.5 * Math.log(2 * Math.PI) + (shifted + 0.5) * Math.log(t) - t + Math.log(x);
 };
 
-const betaContinuedFraction = (x, a, b) => {
-    const maxIterations = 200;
-    const epsilon = 3e-7;
+const betaContinuedFraction = (x, a, b, { maxIterations = 200, epsilon = 3e-7 } = {}) => {
     const minimum = 1e-30;
     const qab = a + b;
     const qap = a + 1;
@@ -152,7 +150,7 @@ const betaContinuedFraction = (x, a, b) => {
     return h;
 };
 
-export const regularizedIncompleteBeta = (x, a, b) => {
+export const regularizedIncompleteBeta = (x, a, b, precision) => {
     if (x <= 0) {
         return 0;
     }
@@ -165,10 +163,10 @@ export const regularizedIncompleteBeta = (x, a, b) => {
     const front = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - logBeta);
 
     if (x < (a + 1) / (a + b + 2)) {
-        return front * betaContinuedFraction(x, a, b) / a;
+        return front * betaContinuedFraction(x, a, b, precision) / a;
     }
 
-    return 1 - front * betaContinuedFraction(1 - x, b, a) / b;
+    return 1 - front * betaContinuedFraction(1 - x, b, a, precision) / b;
 };
 
 export const solveByBinarySearch = ({ low, high, tolerance = 1e-6, maxIterations = 80, predicate }) => {

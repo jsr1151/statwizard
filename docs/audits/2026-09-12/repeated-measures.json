@@ -1,0 +1,84 @@
+{
+  "checks": [
+    {
+      "label": "lessons/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "calculator/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "equation/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "assumptions/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "software/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "power/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lessons/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "calculator/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "equation/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "assumptions/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "software/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "power/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "incomplete-participants",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-workflow",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "explicit examples",
+    "result focus",
+    "correction selection",
+    "complete-participant exclusions",
+    "long-format matching",
+    "duplicate rejection",
+    "Data Manager launch with explicit repeated columns"
+  ]
+}

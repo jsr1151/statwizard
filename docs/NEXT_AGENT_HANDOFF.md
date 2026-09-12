@@ -1,6 +1,6 @@
 # StatWizard Next-Agent Handoff
 
-> September 12, 2026: the probability tasks below are historical. Continue from [audit implementation status](AUDIT_IMPLEMENTATION.md), including the new [rank-test calculators and validation](NONPARAMETRIC_VALIDATION.md). The next statistical engine priority is repeated-measures ANOVA; do not reuse ordinary independent-groups ANOVA for that route.
+> September 12, 2026: the probability tasks below are historical. Continue from [audit implementation status](AUDIT_IMPLEMENTATION.md), including the [rank-test calculators](NONPARAMETRIC_VALIDATION.md) and [dedicated one-factor repeated-measures ANOVA](REPEATED_MEASURES_VALIDATION.md). Next priorities are a consistent analysis workflow and a usable Learning Lab. Repeated-measures power and mixed/factorial repeated designs remain unsupported; do not substitute independent-groups models.
 
 Updated: September 11, 2026
 

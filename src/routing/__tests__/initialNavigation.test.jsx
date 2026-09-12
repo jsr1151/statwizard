@@ -80,10 +80,9 @@ const clickLabel = async (label) => act(async () => {
 
 it.each(['calculator', 'equation', 'power'])('keeps repeated-measures %s deep links out of the independent-groups engine', async section => {
     await mountAt('#/wizard/res_rm_anova/' + section);
-    await waitForView(() => expect(container.textContent).toContain('An on-site repeated-measures calculator is not available'));
+    await waitForView(() => expect(container.textContent).toContain(section === 'calculator' ? 'Repeated-measures calculator' : section === 'equation' ? 'Separate participant variation' : 'Repeated-measures power is not available here'));
     expect(container.textContent).not.toContain('ANOVA OBSERVED RESULTS');
     expect(container.textContent).not.toContain('Live Solver');
-    expect(container.textContent).toContain('Error(sub/time)');
     expect(container.querySelectorAll('input[type="range"]')).toHaveLength(0);
 });
 

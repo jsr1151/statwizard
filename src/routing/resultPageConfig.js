@@ -76,6 +76,14 @@ export const getResultPage = (currentStepId) => {
     const isStructuredResultPage = isResult && (STRUCTURED_RESULT_STEP_IDS.has(currentStepId) || Boolean(currentTestConfig) || Boolean(METHOD_AVAILABILITY[currentStepId]));
 
     const availableResultSections = (() => {
+        if (currentStepId === 'res_rm_anova') return [
+            { id: 'lessons', label: 'Learn', icon: BookOpen },
+            { id: 'calculator', label: 'Calculator', icon: Calculator },
+            { id: 'equation', label: 'Model & equations', icon: Sigma },
+            { id: 'assumptions', label: 'Assumptions', icon: CheckCircle },
+            { id: 'software', label: 'Software', icon: Terminal },
+            { id: 'power', label: 'Power availability', icon: BarChart2 },
+        ];
         if (['res_mann_whitney', 'res_wilcoxon'].includes(currentStepId)) return [
             { id: 'lessons', label: 'Learn', icon: BookOpen },
             { id: 'calculator', label: 'Calculator', icon: Calculator },

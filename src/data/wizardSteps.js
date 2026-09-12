@@ -550,7 +550,7 @@ export const STEPS = {
         id: 'res_rm_anova',
         type: 'result',
         title: "Repeated Measures ANOVA",
-        content: "Compares means of 3+ related conditions.",
+        content: "Compares repeated measurements on the same participants under one within-subject factor.",
         details: ["Accounts for subject error."],
         formulaId: 'anova',
         visualType: null,
