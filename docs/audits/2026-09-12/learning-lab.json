@@ -1,0 +1,150 @@
+{
+  "checks": [
+    {
+      "label": "incorrect feedback",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 1/1440/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 2/1440/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 3/1440/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 4/1440/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 5/1440/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 1/1440/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 2/1440/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 3/1440/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 4/1440/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 5/1440/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 1/375/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 2/375/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 3/375/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 4/375/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 5/375/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 1/375/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 2/375/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 3/375/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 4/375/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson 5/375/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "completed path",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "reset confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "home/1440/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "home/1440/light",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "home/375/dark",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "home/375/light",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "keyboard answer submission",
+    "incorrect feedback and retry",
+    "lesson heading focus",
+    "reload resumes partial answers and current lesson",
+    "all six module links and return",
+    "full path completion and reload",
+    "reset cancel and confirm",
+    "corrupt storage recovery"
+  ]
+}

@@ -18,19 +18,19 @@ export default function AppContent({
     <main className="max-w-[1400px] mx-auto p-4 md:p-8">
         <div className="mb-12">
             {appMode === 'menu' && (
-                <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
-                    <div className="mb-8 flex justify-center">
+                <div className="text-center mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
+                    <div className="mb-5 flex justify-center">
                         <img
                             src={`${import.meta.env.BASE_URL}statwizard.png`}
                             alt="StatWizard artwork"
-                            className="w-full max-w-[540px]"
+                            className="w-full max-w-[220px]"
                         />
                     </div>
-                    <h2 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    <h2 className={`text-4xl md:text-5xl font-black mb-4 tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                         Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400">Data.</span>
                     </h2>
-                    <p className={`text-xl md:text-2xl font-light max-w-3xl mx-auto leading-relaxed ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                        Whether you're an expert researcher or a student starting out, choose your path to statistical clarity.
+                    <p className={`text-lg md:text-xl max-w-3xl mx-auto leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                        Find a test, learn the foundations, or explore a statistical tool.
                     </p>
                 </div>
             )}
@@ -48,7 +48,7 @@ export default function AppContent({
                 />
             )}
 
-            {appMode === 'lessons' && <LessonsView darkMode={darkMode} />}
+            {appMode === 'lessons' && <LessonsView darkMode={darkMode} onOpenModule={openStep} />}
 
             {appMode === 'data_manager' && (
                 <DataManagerPage

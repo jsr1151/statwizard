@@ -46,7 +46,7 @@ it('replaces stale module state with the requested home page', async () => {
     });
     await vi.waitFor(async () => {
         await act(async () => {});
-        expect(container.textContent).toContain('Stat Modules');
+        expect(container.textContent).toContain('Explore stat modules');
     }, { timeout: 5000 });
     expect(window.location.hash).toBe('#/menu');
     expect(window.history.length).toBe(length);
@@ -67,7 +67,7 @@ it('switches probability sections and returns home through the header', async ()
     await act(async () => button('Calculator').click());
     expect(container.textContent).toContain('Exact binomial probability');
     await act(async () => container.querySelector('[aria-label="Return to StatWizard home"]').click());
-    expect(container.textContent).toContain('Stat Modules');
+    expect(container.textContent).toContain('Explore stat modules');
 });
 
 const waitForView = async (assertion) => vi.waitFor(async () => {
@@ -128,7 +128,7 @@ it('handles state-free hash navigation and malformed history after mounting', as
         window.history.replaceState({ appMode: 'wizard', history: null }, '', '#/wizard/toString');
         window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
     });
-    await waitForView(() => expect(container.textContent).toContain('Stat Modules'));
+    await waitForView(() => expect(container.textContent).toContain('Explore stat modules'));
     expect(window.location.hash).toBe('#/menu');
 });
 

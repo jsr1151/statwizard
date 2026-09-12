@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: first complete Learning Lab path
+
+The Learning Lab now offers five connected lessons from data types through one-sample inference, with worked examples, ten practice questions, answer-specific feedback, completion tracking, and browser-local progress. Learners can resume, review any lesson, reset with confirmation, and open related modules. Storage failures leave practice usable with a visible notice. The home page now emphasizes three primary choices and places the remaining tools below them; smaller artwork brings the choices higher on the page.
+
+Validation: 478 tests in 46 files, lint, production build, documentation, power fixtures, and bundle checks passed. All 27 final browser accessibility/overflow snapshots were clean; keyboard practice, reload, reset, completion, and all six module links passed without application errors. R independently confirmed the worked t-test example. See [scope and validation](LEARNING_LAB_VALIDATION.md).
+
 ## September 12: correlation and regression data workflow
 
 Pearson correlation, simple linear regression, and multiple regression now share labeled example/paste/upload controls and a keyboard-operable upload button. Both the input panel and results identify the active source. Results include usable/excluded counts and the first 100 excluded data-row numbers with the affected variables. Pearson's pasted-data count now checks complete pairs rather than the lengths of arrays that contain missing values. A shortcut moves focus to the results.
@@ -66,9 +72,9 @@ Automated accessibility snapshots do not establish complete accessibility confor
 
 ## Remaining work, in recommended order
 
-1. **Make the Learning Lab usable.** Replace its placeholder levels with a small complete learning path containing worked examples, practice, feedback, and progress. Simplify the home-page choices and connect the learning path to the existing modules.
-2. **Finish analysis workflow coverage.** Extend the source/provenance review to descriptive modules and add saved-data launching for simple regression. Extend row-level exclusion details to the older t-test/ANOVA wrappers, add durable calculator drafts and consistent reporting actions, and complete an end-to-end keyboard and screen-reader review of nested plots and editors.
-3. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators. Repeated-measures power, mixed/factorial repeated designs, post-hoc comparisons, and additional confidence intervals need separate validation.
-4. **Improve reproducibility and recovery.** Add analysis/report export with inputs, exclusions, assumptions, and results; consider durable draft recovery and clearer backup/restore controls. Review power interpretation and advanced model limitations as part of this work.
+1. **Finish analysis workflow coverage.** Extend the source/provenance review to descriptive modules and add saved-data launching for simple regression. Extend row-level exclusion details to the older t-test/ANOVA wrappers, add durable calculator drafts and consistent reporting actions, and complete an end-to-end keyboard and screen-reader review of nested plots and editors.
+2. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators. Repeated-measures power, mixed/factorial repeated designs, post-hoc comparisons, and additional confidence intervals need separate validation.
+3. **Improve reproducibility and recovery.** Add analysis/report export with inputs, exclusions, assumptions, and results; consider durable draft recovery and clearer backup/restore controls. Review power interpretation and advanced model limitations as part of this work.
+4. **Expand learning beyond the introductory path.** Add further worked examples and practice for comparing groups, association, and model assumptions. Review existing module explanations for consistency, and consider progress export and broader screen-reader testing.
 
 The larger audit roadmap remains open. This pass addresses the immediate correctness, data-loss, and common access issues without claiming that the full product expansion is finished.

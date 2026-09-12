@@ -1,6 +1,6 @@
 # StatWizard Next-Agent Handoff
 
-> September 12, 2026: the probability tasks below are historical. Continue from [audit implementation status](AUDIT_IMPLEMENTATION.md), including the [rank-test calculators](NONPARAMETRIC_VALIDATION.md), [repeated-measures ANOVA](REPEATED_MEASURES_VALIDATION.md), [shared t-test/ANOVA workflow](ANALYSIS_WORKFLOW_VALIDATION.md), and [correlation/regression workflow](TABULAR_WORKFLOW_VALIDATION.md). The next priority is a small complete Learning Lab path. Remaining workflow work includes descriptive modules, simple-regression saved launches, durable calculator drafts, and consistent exports. Repeated-measures power and mixed/factorial repeated designs remain unsupported; do not substitute independent-groups models.
+> September 12, 2026: the probability tasks below are historical. Continue from [audit implementation status](AUDIT_IMPLEMENTATION.md), including the [rank-test calculators](NONPARAMETRIC_VALIDATION.md), [repeated-measures ANOVA](REPEATED_MEASURES_VALIDATION.md), [shared t-test/ANOVA workflow](ANALYSIS_WORKFLOW_VALIDATION.md), and [correlation/regression workflow](TABULAR_WORKFLOW_VALIDATION.md). The [first complete Learning Lab path](LEARNING_LAB_VALIDATION.md) is implemented. The next priority is descriptive-module source/provenance coverage and simple-regression saved launches, followed by durable calculator drafts and consistent exports. Repeated-measures power and mixed/factorial repeated designs remain unsupported; do not substitute independent-groups models.
 
 Updated: September 11, 2026
 
