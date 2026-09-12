@@ -123,7 +123,7 @@ three hooks:
 
 The extracted views are `DataManagerHeader`, `DatasetLibraryCard`,
 `DatasetWorkspaceSummary`, `DatasetImportControls`, `DatasetPreviewCard`,
-and `DatasetAnalysisLauncher`. Their sizes range from 49 to 116 lines.
+and `DatasetAnalysisLauncher`. Their sizes range from 50 to 116 lines.
 Dataset status pills and summary fields also have separate components, and
 the page reuses the shared analysis card. The existing disabled legacy
 transform controls remain disabled in `DatasetLegacyTransforms.jsx`
@@ -148,7 +148,7 @@ render trees match the original implementation, ignoring formatting.
 
 The baseline already overflowed horizontally at 375 px after import, in
 the centered state, and with the launcher open, in both themes. The same six
-cases overflow after extraction. Address this in a separate layout change.
+cases overflowed after extraction; the responsive follow-up below resolves them.
 
 Repository validation: 31 test files / 278 tests passed, along with lint,
 production build, documentation checks, and all 30 power fixtures. The Data
@@ -168,7 +168,7 @@ the selected builder mode and composes six views in
 | `MeanCenterBuilder.jsx` | 82 | Source selection and centered-variable creation |
 | `RecodeBuilder.jsx` | 108 | Category mapping, overwrite option, and preview |
 | `RecommendedTransforms.jsx` | 179 | Group membership, aggregate actions, and reverse-coded scale scores |
-| `WideToLongTransform.jsx` | 283 | Measure selection, grouping labels, copied columns, and reshape preview |
+| `WideToLongTransform.jsx` | 289 | Measure selection, grouping labels, copied columns, and reshape preview |
 
 Six small shared controls also live in that directory. Builder modes and
 summary formatting moved to `src/data/dataTransformModes.js` and
@@ -187,20 +187,53 @@ and overflow status: four builder modes, edited recommendations, and a
 reshape preview at 375, 768, and 1440 px in both themes. No console errors
 or React warnings occurred. A source-tree comparison confirmed that state,
 props, all six view trees, shared controls, modes, and formatting preserve
-the original implementation. The existing mobile overflow remains present
-in all twelve 375 px cases and is tracked below.
+the original implementation. Mobile overflow remained present in all
+twelve 375 px cases until the responsive follow-up below.
 
 Repository validation: 31 test files / 284 tests passed, along with lint,
 production build, documentation checks, and all 30 power fixtures. The Data
 Manager feature chunk is now approximately 92.1 kB before gzip (19.4 kB
 gzip), compared with 89.7 kB (19.0 kB gzip) before this extraction.
 
+## Completed: Data Manager responsive layout
+
+The imported workspace expanded a 375 px viewport to 409 px because its
+implicit grid track inherited the contents' minimum width. Explicit
+single-column tracks and shrinkable grid items now keep it within the
+viewport. Long names can wrap, variable summaries and chips stack on small
+screens, and the dataset name has its own full-width row above the actions.
+Expanded variable editors can also shrink their tag-entry fields.
+
+The analysis launcher previously exceeded the screen height, putting its
+top and bottom out of reach. It now uses a named native dialog with a
+viewport-height limit and internal vertical scrolling. Close, Escape, and
+backdrop dismissal return focus to the opener; the native modal prevents
+background controls from receiving focus. Both dataset and reshape preview
+tables have named, keyboard-focusable scroll regions with visible focus
+styling.
+
+The browser review passed 140 layout checks across 375, 414, 768, 1024, and
+1440 px in both themes. It covered empty/imported data, expanded variables,
+builder modes, edited recommendations, reshaping, invalid imports, long
+names, recovery, and dialog dismissal. None had page overflow or
+horizontally clipped controls. Ten dialog checks verified viewport bounds,
+initial focus, keyboard traversal, Escape, and focus restoration. Additional
+checks at 375 x 667 px verified backdrop dismissal and that Tab/Arrow Right
+reach and scroll both wide tables in both themes without moving the page
+horizontally. Screenshots were inspected; there were no console errors or
+React warnings.
+
+A component test covers the dialog's accessible name and cancel/Close
+dismissal. jsdom lacks native dialog methods, so the test supplies only
+open/close stubs; real modal focus and scrolling were verified in Edge.
+All 31 test files / 285 tests pass, together with lint, production build,
+documentation checks, and all 30 power fixtures. The Data Manager feature
+chunk is approximately 93.1 kB before gzip (19.7 kB gzip).
+
 ## Follow-ups
 
 - Multiple Regression still exceeds the 500-line component limit and
   remains a separate extraction with interaction coverage first.
-- Fix Data Manager's existing mobile overflow, including imported data,
-  transformation states, and its analysis launcher.
 - Bundle optimization remains separate. This build reports approximately
   313 kB for the main chunk, 492 kB for SheetJS, and 55 kB for the Simple Linear
   Regression feature chunk before gzip. The extracted Pearson feature chunk

@@ -65,15 +65,15 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
     });
 
     return (
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <DataManagerHeader {...{
                 darkMode, handleFileImport, setEditorDataset, setImportSession,
                 clearUndoHistory, setDerivedDraft, setIsDirty, setFeedback,
                 infoTone, busy, infoMessage,
             }} />
 
-            <div className="grid gap-8 xl:grid-cols-12">
-                <div className="xl:col-span-4 space-y-6">
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+                <div className="min-w-0 xl:col-span-4 space-y-6">
                     <DatasetLibraryCard {...{
                         darkMode, isLoading, datasets, editorDataset,
                         handleOpenSavedDataset, handleDuplicateDataset, setAnalysisMenuDatasetId, handleDeleteDataset,
@@ -81,7 +81,7 @@ const DataManagerPage = ({ darkMode, onOpenAnalysis, onOpenMultipleRegression })
                     }} />
                 </div>
 
-                <div className="xl:col-span-8 space-y-6">
+                <div className="min-w-0 xl:col-span-8 space-y-6">
                     {!editorDataset ? (
                         <Card darkMode={darkMode}>
                             <div className="flex items-start gap-4">

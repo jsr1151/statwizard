@@ -14,7 +14,12 @@ export default function DatasetPreviewCard({
                 </h3>
             </div>
 
-            <div className="overflow-x-auto">
+            <div
+                role="region"
+                aria-label="Dataset preview table"
+                tabIndex={0}
+                className="overflow-x-auto rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            >
                 <table className="min-w-full text-sm">
                     <thead>
                         <tr className={darkMode ? 'text-slate-500' : 'text-slate-500'}>

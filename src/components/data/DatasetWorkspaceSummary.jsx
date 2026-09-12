@@ -11,12 +11,13 @@ export default function DatasetWorkspaceSummary({
 }) {
     return (
         <Card darkMode={darkMode}>
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-                <div className="flex-1">
+            <div className="flex flex-col gap-6">
+                <div className="min-w-0">
                     <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                         Active workspace
                     </div>
                     <input
+                        aria-label="Dataset name"
                         value={editorDataset.name}
                         onChange={(event) => handleDatasetNameChange(event.target.value)}
                         className={`w-full rounded-2xl border px-4 py-3 text-xl font-black outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}

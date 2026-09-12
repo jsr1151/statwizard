@@ -27,6 +27,11 @@ const mount = async () => {
     await act(async () => render());
 };
 beforeEach(() => {
+    // jsdom does not implement the native dialog methods; browser checks cover focus and scrolling.
+    Object.defineProperties(HTMLDialogElement.prototype, {
+        showModal: { configurable: true, value() { this.setAttribute('open', ''); } },
+        close: { configurable: true, value() { this.removeAttribute('open'); } },
+    });
     vi.clearAllMocks();
     loadStoredDatasets.mockResolvedValue([]);
     persistDatasetRecord.mockImplementation(async dataset => dataset);
@@ -37,6 +42,8 @@ afterEach(async () => {
     root = null;
     sessionStorage.clear();
     vi.restoreAllMocks();
+    delete HTMLDialogElement.prototype.showModal;
+    delete HTMLDialogElement.prototype.close;
 });
 const button = (text, scope = container) => [...scope.querySelectorAll('button')].find(node => node.textContent.trim() === text);
 const click = async (text, scope) => act(async () => button(text, scope).click());
@@ -188,6 +195,21 @@ it('keeps unsaved data available after a save failure', async () => {
     await click('Save Dataset');
     expect(saved().rowCount).toBe(5);
     expect(container.textContent).toContain('was saved locally');
+});
+
+it('names the analysis dialog and dismisses it through cancel and Close', async () => {
+    await mount();
+    await upload();
+    await click('Use in Analysis');
+    const dialog = container.querySelector('dialog');
+    expect(dialog.open).toBe(true);
+    expect(document.getElementById(dialog.getAttribute('aria-labelledby')).textContent).toContain('Choose analysis for Pairs');
+    await act(async () => dialog.dispatchEvent(new Event('cancel', { bubbles: false })));
+    expect(container.querySelector('dialog')).toBeNull();
+    await click('Use in Analysis');
+    await click('Close');
+    expect(container.querySelector('dialog')).toBeNull();
+    expect(container.querySelector('[aria-label="Dataset name"]').value).toBe('Pairs');
 });
 
 it('preserves category mappings across builder modes and overwrites only the selected variable', async () => {

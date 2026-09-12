@@ -141,7 +141,7 @@ const VariableBrowser = ({
                             <button
                                 type="button"
                                 onClick={() => setExpandedVariableId((previous) => previous === column.id ? null : column.id)}
-                                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                                className="flex w-full flex-col items-start gap-3 px-5 py-4 text-left sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="min-w-0">
                                     <div className={`font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
@@ -152,7 +152,7 @@ const VariableBrowser = ({
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex max-w-full flex-wrap items-center gap-2">
                                     {(column.tags || []).slice(0, 3).map((tag) => (
                                         <TonePill
                                             key={`${column.id}-${tag}`}
@@ -309,7 +309,7 @@ const VariableBrowser = ({
                                                         [column.id]: '',
                                                     }));
                                                 }}
-                                                className={`min-w-[14rem] flex-1 rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-500'}`}
+                                                className={`min-w-0 w-full flex-1 rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-white border-slate-200 text-slate-900 focus:border-indigo-500'}`}
                                             />
                                             <button
                                                 type="button"

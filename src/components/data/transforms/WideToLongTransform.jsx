@@ -240,7 +240,12 @@ export default function WideToLongTransform({
                         </div>
                     </div>
 
-                    <div className="mt-4 overflow-x-auto">
+                    <div
+                        role="region"
+                        aria-label="Reshape preview table"
+                        tabIndex={0}
+                        className="mt-4 overflow-x-auto rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    >
                         <table className="min-w-full text-sm">
                             <thead>
                                 <tr className={darkMode ? 'text-slate-500' : 'text-slate-500'}>
