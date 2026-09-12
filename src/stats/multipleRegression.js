@@ -211,6 +211,10 @@ const buildCompleteCases = ({ outcomeValues = [], predictorColumns = [] }) => {
     );
 
     return Array.from({ length: rowCount }, (_, index) => {
+        const rawValues = [outcomeValues[index], ...normalizedPredictors.map((column) => column.numericValues[index])];
+        if (rawValues.some((value) => value == null || typeof value === 'boolean' || (typeof value === 'string' && !value.trim()))) {
+            return null;
+        }
         const y = Number(outcomeValues[index]);
         const predictorValues = normalizedPredictors.map((column) => Number(column.numericValues[index]));
 

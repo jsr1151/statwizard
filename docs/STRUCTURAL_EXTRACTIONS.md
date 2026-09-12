@@ -2,9 +2,10 @@
 
 Updated September 11, 2026.
 
-Probability hardening is complete. The remaining structural work is being
-handled as independent slices, with interaction coverage established before
-moving each page's implementation.
+Probability hardening and extraction of all five oversized files named in
+the handoff are complete. Each extraction established interaction coverage
+before moving the implementation. Remaining layout and bundle work is
+tracked below.
 
 ## Completed: application shell
 
@@ -230,10 +231,58 @@ All 31 test files / 285 tests pass, together with lint, production build,
 documentation checks, and all 30 power fixtures. The Data Manager feature
 chunk is approximately 93.1 kB before gzip (19.7 kB gzip).
 
+## Completed: Multiple Regression extraction
+
+`MultipleRegressionPage.jsx` is now 136 lines. Calculator input, dataset
+launch mapping, complete-case summaries, model fitting, and prediction
+state live in `useMultipleRegressionCalculator.js` (370 lines). The tutor's
+sample generation, scenarios, context, prediction controls, selection, and
+floating-visual state live in `useMultipleRegressionLesson.js` (294 lines).
+Both hooks remain mounted across section changes, preserving independent
+calculator and lesson settings.
+
+The page delegates calculator, lesson, effect-size, and power rendering to
+section components. Data setup, predictions, coefficients, lesson controls,
+diagnostics, and teaching panels have focused components. The largest new
+view is 227 lines. Shared analysis cards, metric tiles, and statistical
+formatters replace local duplicates; lesson presets, tooltip copy, and
+pure helpers live outside component files.
+
+Tests added before moving the implementation exposed two prerequisite
+defects. The pasted-data predictor list was recreated on every render,
+invalidating the fitted model and repeatedly resetting prediction state.
+Memoizing that list stops the render loop and prevents prediction edits
+from publishing an unchanged model. Separately, the model fitter converted
+missing values to zero, disagreeing with the complete-case summary. It now
+excludes missing, blank, boolean, and nonfinite values while retaining
+numeric zero. Tests cover missing outcomes and predictors independently.
+
+Eight page interaction tests cover known coefficients, prediction edits,
+confidence levels, incomplete and singular data, recovery, uploads,
+scenario/context controls, outliers, visual switching, regeneration,
+section/theme persistence, effect size, power mode, and saved-data launches.
+Seven model tests cover complete-case filtering. An AST comparison against
+the corrected baseline verifies all 15 extracted view trees, visual
+branches, both hooks, routing/effect state, tooltip primitives, constants,
+and helpers.
+
+All 33 test files / 300 tests pass, together with lint, production build,
+documentation checks, and all 30 power fixtures. The browser comparison
+passed 36 cases: six sections at 375, 768, and 1440 px in both themes.
+Visible text, control values, plotted points, and overflow match the fixed
+baseline, with no console errors or React warnings. The comparison waits
+for calculator prediction inputs to initialize before taking snapshots.
+The existing overflow is unchanged and remains listed below.
+
+The production build reports approximately 135.2 kB for the Multiple
+Regression feature chunk (31.8 kB gzip), compared with 123.3 kB (27.7 kB
+gzip) before extraction. Bundle optimization remains a separate task.
+
 ## Follow-ups
 
-- Multiple Regression still exceeds the 500-line component limit and
-  remains a separate extraction with interaction coverage first.
+- Multiple Regression's lesson and calculator already overflowed at 375
+  and 768 px in both themes before extraction. Address their layout in a
+  separate follow-up; this slice preserves their existing styles.
 - Bundle optimization remains separate. This build reports approximately
   313 kB for the main chunk, 492 kB for SheetJS, and 55 kB for the Simple Linear
   Regression feature chunk before gzip. The extracted Pearson feature chunk
