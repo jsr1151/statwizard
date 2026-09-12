@@ -4,6 +4,7 @@ import AnalysisExclusionReview from './AnalysisExclusionReview.jsx';
 export default function AnalysisCalculatorWorkspace({
     darkMode, dataSource, onSourceChange, dataset, datasetSetup,
     savedWorkspace, onOpenDataManager, onStatsChange, children,
+    sourceHelp, manualLabel,
 }) {
     const calculator = useRef(null);
     const ready = dataSource === 'manual' || datasetSetup.ok;
@@ -24,9 +25,9 @@ export default function AnalysisCalculatorWorkspace({
                     ))}
                     {onOpenDataManager && <button type="button" className={button} onClick={onOpenDataManager}>Import / manage data</button>}
                 </div>
-                <p className={`mt-3 text-sm ${muted}`}>Changing source reloads the calculator inputs. Save or copy any edits you want to keep first.</p>
+                <p className={`mt-3 text-sm ${muted}`}>{sourceHelp || 'Changing source reloads the calculator inputs. Save or copy any edits you want to keep first.'}</p>
                 {dataSource === 'manual' ? (
-                    <p className={`mt-2 text-sm ${muted}`}><strong>Example starting values.</strong> Replace the values in the calculator to analyze your own data. Results update as you edit.</p>
+                    <p className={`mt-2 text-sm ${muted}`}><strong>{manualLabel || 'Example starting values.'}</strong> Replace the values in the calculator to analyze your own data. Results update as you edit.</p>
                 ) : (
                     <p className={`mt-2 break-words text-sm ${muted}`}><strong>Selected dataset:</strong> {dataset?.name || 'Choose a saved dataset below.'} {datasetSetup.ok && 'Review the variable roles and exclusions before interpreting the results. Calculator edits do not change the saved dataset.'}</p>
                 )}

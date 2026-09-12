@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({ datasets: [], renders: [] }));
 vi.mock('../../../hooks/useDatasetLibrary.js', () => ({ useDatasetLibraryContext: () => state }));
 const visual = ({ datasetSeed }) => { state.renders.push(datasetSeed); return <output data-testid="calculator">{datasetSeed ? JSON.stringify(datasetSeed) : 'Example values'}</output>; };
 vi.mock('../../visuals/NormalDistributionVisual.jsx', () => ({ default: props => visual(props) }));
+vi.mock('../OneSampleTTestCalculator.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/IndependentTTestVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/PairedTTestVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/AnovaVisual.jsx', () => ({ default: props => visual(props) }));
@@ -29,7 +30,7 @@ const pages = [
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root, container, props;
 beforeEach(() => {
-    state.datasets = []; state.renders = []; sessionStorage.clear();
+    state.datasets = []; state.renders = []; sessionStorage.clear(); localStorage.clear();
     container = document.createElement('main'); document.body.appendChild(container); root = createRoot(container);
     props = { section: 'calculator', darkMode: true, onOpenDataManager: vi.fn(), onStatsChange: vi.fn() };
 });

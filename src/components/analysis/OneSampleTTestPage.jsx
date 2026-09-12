@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calculator, Sparkles, Target } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
 import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
@@ -7,7 +7,9 @@ import NormalDistributionVisual from '../visuals/NormalDistributionVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
-import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
+import useOneSampleDraft from '../../hooks/useOneSampleDraft.js';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
+import OneSampleTTestCalculator from './OneSampleTTestCalculator.jsx';
 import { buildOneSampleTTestDatasetSetup } from '../../utils/analysisDatasetAdapters.js';
 import { getDatasetColumn } from '../../utils/datasetImport.js';
 
@@ -31,28 +33,8 @@ const OneSampleTTestPage = ({
     onTutorUpdate,
 }) => {
     const { datasets } = useDatasetLibraryContext();
-    const {
-        dataSource,
-        setDataSource,
-        launchPayload,
-        selectedDataset,
-        selectedDatasetId,
-        setSelectedDatasetId,
-    } = useAnalysisDatasetSelection({
-        analysisId: 'one_sample_t_test',
-        datasets,
-    });
-    const [roleSelection, setRoleSelection] = useState({ outcome: '' });
-
-    useEffect(() => {
-        if (!selectedDataset || launchPayload?.datasetId !== selectedDataset.id) {
-            return;
-        }
-
-        setRoleSelection((previous) => ({
-            outcome: launchPayload?.outcome || previous.outcome,
-        }));
-    }, [launchPayload, selectedDataset]);
+    const input = useOneSampleDraft(datasets);
+    const { dataSource, setDataSource, selectedDataset, selectedDatasetId, setSelectedDatasetId, roleSelection, setRoleSelection } = input;
 
     const roles = useMemo(() => ([
         {
@@ -153,7 +135,11 @@ const OneSampleTTestPage = ({
 
     if (section === 'calculator') {
         return (
+            <div className="space-y-5">
+            <CalculatorDraftNotice draft={input.draft} darkMode={darkMode} scope="Recovery includes manual raw and summary inputs, saved dataset and variable choices, the null mean, significance level, hypothesis, and confidence interval type." />
             <AnalysisCalculatorWorkspace
+                manualLabel={input.value.source}
+                sourceHelp="Switching sources preserves your manual inputs. Saved data follows the current library; use Edit a copy to change its values."
                 darkMode={darkMode}
                 dataSource={dataSource}
                 onSourceChange={setDataSource}
@@ -164,7 +150,7 @@ const OneSampleTTestPage = ({
                 savedWorkspace={
                     <AnalysisDatasetWorkspace
                         darkMode={darkMode}
-                        description="Choose a saved dataset, map one numeric sample variable, and the calculator below will preload those values immediately."
+                        description="Choose a saved dataset and map one numeric sample variable. The calculator reads its current values; use Edit a copy for manual changes."
                         datasets={datasets}
                         selectedDatasetId={selectedDatasetId}
                         onSelectDatasetId={setSelectedDatasetId}
@@ -180,29 +166,11 @@ const OneSampleTTestPage = ({
                 }
             >
 
-                <Card darkMode={darkMode}>
-                    <div className="flex items-start gap-4 mb-6">
-                        <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                            <Calculator size={20} />
-                        </div>
-                        <div>
-                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>One-sample calculator</h3>
-                            <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
-                            </p>
-                        </div>
-                    </div>
-
-                    <NormalDistributionVisual
-                        type="t"
-                        darkMode={darkMode}
-                        showTutor={false}
-                        onTutorUpdate={onTutorUpdate || noop}
-                        onStatsUpdate={onStatsChange}
-                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
-                    />
-                </Card>
+                <OneSampleTTestCalculator input={input} darkMode={darkMode} onStatsUpdate={onStatsChange}
+                    datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
+                    datasetName={selectedDataset?.name} rowReview={datasetSetup.rowReview} />
             </AnalysisCalculatorWorkspace>
+            </div>
         );
     }
 

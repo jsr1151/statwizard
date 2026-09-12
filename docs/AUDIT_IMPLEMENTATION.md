@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: one-sample t-test calculator recovery
+
+The one-sample calculator now restores separate raw/summary inputs, source and saved sample-variable choices, null mean, alpha, hypothesis, and interval settings. Saved values follow the current library and offer an explicit **Edit a copy** action. Invalid inputs block stale results, raw calculations retain full precision, exclusions are visible, and a copyable report has a selectable fallback.
+
+Validation: 610 tests in 53 files passed, including 39 new cases and eight independent R inference comparisons. All 17 production-browser accessibility/overflow checks passed without application errors. Lint, production build, documentation, power fixtures, and bundle checks passed. See [scope and validation](ONE_SAMPLE_DRAFT_VALIDATION.md). Independent/paired t-test and ANOVA recovery remains open.
+
 ## September 12: Pearson correlation draft recovery
 
 Pearson now restores its table/source, X/Y choices for each source, hypothesis direction, confidence level, null population correlation, and plot display settings. Fresh Data Manager launches take priority over older drafts. Cleared or unavailable variables remain unselected. Blank and out-of-range null values stay editable and block test output rather than being converted to zero or clamped. Shared inference controls expose selected states and validation to assistive technology.

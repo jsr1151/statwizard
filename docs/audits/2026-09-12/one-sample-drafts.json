@@ -1,0 +1,103 @@
+{
+  "checks": [
+    {
+      "label": "summary-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/raw-exclusions",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/copy-fallback",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/empty-raw",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/blank-null",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/edited-copy",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "summary and inference settings recover coherently",
+    "raw values and excluded entries recover without rounding",
+    "raw and summary inputs remain separate",
+    "results focus shortcut and selectable copy fallback",
+    "blank raw/null inputs suppress stale results after reload",
+    "removal cancellation restores focus",
+    "failed saving keeps previous draft",
+    "fresh Data Manager launch overrides old draft/settings",
+    "saved values are read-only and settings recover",
+    "Edit a copy preserves the saved dataset and recovers independently",
+    "draft removal leaves current inputs open and restores example on reload"
+  ]
+}
