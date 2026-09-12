@@ -109,6 +109,7 @@ export default function ResultPage({
                     />
                 ) : isPearsonCorrelationPage ? (
                     <PearsonCorrelationPage
+                        onOpenDataManager={() => setAppMode('data_manager')}
                         section={activeResultSection}
                         darkMode={darkMode}
                         currentStats={currentStats}
@@ -119,6 +120,7 @@ export default function ResultPage({
                     />
                 ) : isSimpleLinearRegressionPage ? (
                     <SimpleLinearRegressionPage
+                        onOpenDataManager={() => setAppMode('data_manager')}
                         section={activeResultSection}
                         darkMode={darkMode}
                         currentStats={currentStats}

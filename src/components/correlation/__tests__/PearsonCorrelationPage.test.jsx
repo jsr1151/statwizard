@@ -71,7 +71,7 @@ it('rejects identical columns and invalid data, then recovers with sample data',
     expect(container.textContent).not.toContain('95% CI for r');
     await change(container.querySelector('textarea'), '');
     expect(container.textContent).not.toContain('95% CI for r');
-    await click('Sample Data');
+    await click('Load example data');
     expect(stats().n).toBe(11);
     expect(container.textContent).toContain('95% CI for r');
 });

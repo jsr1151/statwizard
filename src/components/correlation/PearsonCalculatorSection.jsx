@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import AnalysisRowSummary from '../analysis/AnalysisRowSummary.jsx';
 import { AlertTriangle, Calculator, CheckCircle, SlidersHorizontal } from "lucide-react";
 import PearsonScatterplot from "./PearsonScatterplot";
 import AssumptionItem from "../formula/AssumptionItem";
@@ -9,6 +11,8 @@ import { formatPValue } from '../../utils/statFormatters.js';
 import PearsonDataSourceCard from './PearsonDataSourceCard.jsx';
 
 export default function PearsonCalculatorSection({
+    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
+
     tails, direction, darkMode, setCalculatorInputMode,
     calculatorInputMode, onUpload, setTableText, tableText,
     selectedDatasetId, setSelectedDatasetId, datasets, savedDataset,
@@ -18,8 +22,10 @@ export default function PearsonCalculatorSection({
     setCalculatorShowBand, calculatorShowBand, parsedTable, numericColumns,
     selectedX, setSelectedX, selectedY, setSelectedY,
     calculatorGuidance, calculatorStats, activeXLabel, activeYLabel,
-    influentialIndex, assumptions,
+    influentialIndex, assumptions, onOpenDataManager,
 }) {
+    const resultsRef = useRef(null);
+    const onGoResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
     const setupState = tails === 2 ? 'two_tailed' : (direction === 'less' ? 'negative' : 'positive');
 
     return (
@@ -43,6 +49,7 @@ export default function PearsonCalculatorSection({
             <div className="grid lg:grid-cols-12 gap-8 items-start">
                 <div className="lg:col-span-4 space-y-6">
                     <PearsonDataSourceCard {...{
+                        tableSource, loadExample, uploadError, uploadPending, onGoResults, hasResults: !!calculatorStats?.ok, onOpenDataManager,
                         darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
                         setTableText, tableText, selectedDatasetId, setSelectedDatasetId,
                         datasets, savedDataset, savedNumericColumns,
@@ -316,7 +323,8 @@ export default function PearsonCalculatorSection({
                     </Card>
                 </div>
 
-                <div className="lg:col-span-8 space-y-6">
+                <div ref={resultsRef} tabIndex={-1} aria-label="Analysis results" className="lg:col-span-8 space-y-6 scroll-mt-24">
+                    {rowSummary && <AnalysisRowSummary darkMode={darkMode} sourceLabel={sourceLabel} summary={rowSummary} />}
                     <Card darkMode={darkMode}>
                         <PearsonScatterplot
                             pairs={calculatorStats?.pairs || []}

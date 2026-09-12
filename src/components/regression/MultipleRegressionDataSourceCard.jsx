@@ -1,9 +1,10 @@
-import { Database, FileUp } from 'lucide-react';
+import TableDataSourceFields from '../analysis/TableDataSourceFields.jsx';
 import VariableRolePicker from '../data/VariableRolePicker.jsx';
 import Card from '../analysis/AnalysisCard.jsx';
-import { SAMPLE_DATASET } from '../../data/multipleRegressionLesson.js';
+
 
 export default function MultipleRegressionDataSourceCard({
+    tableSource, loadExample, uploadError, uploadPending, onGoResults, hasResults,
     darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
     setTableText, tableText, selectedOutcome, setSelectedOutcome,
     numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
@@ -12,60 +13,9 @@ export default function MultipleRegressionDataSourceCard({
 }) {
     return (
         <Card darkMode={darkMode}>
-            <div className="flex items-center gap-3 mb-4">
-                <Database size={18} className={darkMode ? 'text-sky-300' : 'text-sky-700'} />
-                <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    Data workspace
-                </h3>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-5">
-                {[
-                    { id: 'paste', label: 'Paste / Upload' },
-                    { id: 'saved', label: 'Saved Dataset' },
-                ].map((mode) => (
-                    <button
-                        key={mode.id}
-                        type="button"
-                        onClick={() => setCalculatorInputMode(mode.id)}
-                        className={`rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-widest transition-colors ${calculatorInputMode === mode.id
-                            ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300'
-                            : (darkMode ? 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-slate-200' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:text-slate-900')
-                        }`}
-                    >
-                        {mode.label}
-                    </button>
-                ))}
-            </div>
-
+            <TableDataSourceFields {...{darkMode, calculatorInputMode, setCalculatorInputMode, tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending, datasets, selectedDatasetId, setSelectedDatasetId, savedDataset, onOpenDataManager, onGoResults, hasResults}} sampleLabel="Load example data" />
             {calculatorInputMode === 'paste' ? (
                 <>
-                    <div className="flex flex-wrap gap-3">
-                        <label className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl cursor-pointer font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}>
-                            <FileUp size={16} />
-                            Upload CSV
-                            <input type="file" accept=".csv,.tsv,.txt" className="sr-only" onChange={onUpload} />
-                        </label>
-                        <button
-                            onClick={() => setTableText(SAMPLE_DATASET)}
-                            className={`px-4 py-3 rounded-xl font-bold text-sm border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'}`}
-                        >
-                            Load Sample Dataset
-                        </button>
-                    </div>
-
-                    <label className="block mt-5">
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                            Paste CSV / Table Data
-                        </span>
-                        <textarea
-                            value={tableText}
-                            onChange={(event) => setTableText(event.target.value)}
-                            rows={12}
-                            className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm font-medium outline-none resize-y transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                        />
-                    </label>
-
                     <label className="block">
                         <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
                             Outcome Variable (Y)
@@ -95,50 +45,12 @@ export default function MultipleRegressionDataSourceCard({
                             ))}
                         </div>
                         <p className={`mt-3 text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                            This fast lane keeps the existing quick-entry workflow intact for sample data and pasted tables.
+                            Select the predictors you want to include alongside the outcome.
                         </p>
                     </div>
                 </>
             ) : (
                 <div className="space-y-5">
-                    <label className="block">
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                            Saved Dataset
-                        </span>
-                        <select
-                            value={selectedDatasetId}
-                            onChange={(event) => setSelectedDatasetId(event.target.value)}
-                            className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                        >
-                            {!datasets.length && <option value="">No saved datasets yet</option>}
-                            {datasets.map((dataset) => (
-                                <option key={dataset.id} value={dataset.id}>{dataset.name}</option>
-                            ))}
-                        </select>
-                    </label>
-
-                    {savedDataset && (
-                        <div className={`rounded-2xl border p-4 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                        Dataset snapshot
-                                    </div>
-                                    <p className={`text-sm font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                                        {savedDataset.rowCount} rows • {savedDataset.columnCount} variables
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => onOpenDataManager?.()}
-                                    className={`rounded-lg border px-3 py-2 text-[11px] font-black uppercase tracking-widest ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900'}`}
-                                >
-                                    Open Data Manager
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
                     <VariableRolePicker
                         darkMode={darkMode}
                         dataset={savedDataset}
@@ -168,7 +80,7 @@ export default function MultipleRegressionDataSourceCard({
 
                     {savedDataset && (
                         <p className={`text-sm ${darkMode ? 'text-slate-500' : 'text-slate-600'}`}>
-                            Data preparation lives in the Data Manager. This calculator only maps variables and runs the existing regression engine.
+                            Prepare or export a backup of this dataset in Data Manager.
                         </p>
                     )}
                 </div>

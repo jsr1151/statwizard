@@ -1,8 +1,10 @@
+import useAnalysisTableInput from '../../hooks/useAnalysisTableInput.js';
+import { summarizeAnalysisRows } from '../../utils/analysisRows.js';
 import { useEffect, useMemo, useState } from "react";
 import AnalysisAssumptionsSection from "../analysis/AnalysisAssumptionsSection.jsx";
 import { buildCorrelationGuidance, buildPearsonTutorBaseDataset, calculatePearsonCorrelationStats, derivePearsonTutorDataset } from "../../stats/correlation.js";
 import { parseDelimitedTable } from "../../utils/delimitedTable.js";
-import { buildNumericAnalysisColumn, countCompleteRows } from "../../utils/datasetImport.js";
+import { buildNumericAnalysisColumn } from "../../utils/datasetImport.js";
 import { useDatasetLibraryContext } from "../../hooks/useDatasetLibrary.js";
 import { ACTIVE_DATASET_SESSION_KEY, readAnalysisLaunchPayload, consumeAnalysisLaunchPayload } from "../../utils/analysisLaunch.js";
 import { PEARSON_TUTOR_PRESETS as TUTOR_PRESETS } from '../../data/pearsonCorrelationPresets.js';
@@ -32,6 +34,7 @@ const PearsonCorrelationPage = ({
     assumptions = [],
     testConfig,
     initialPowerMode,
+    onOpenDataManager,
 }) => {
     const { datasets } = useDatasetLibraryContext();
     const [lessonPreset, setLessonPreset] = useState('strong_positive');
@@ -115,14 +118,15 @@ const PearsonCorrelationPage = ({
         }));
     };
 
-    const [tableText, setTableText] = useState(SAMPLE_DATASET);
+
     const [launchPayload] = useState(() => readAnalysisLaunchPayload('pearson_correlation'));
     const [calculatorInputMode, setCalculatorInputMode] = useState(launchPayload?.datasetId ? 'saved' : 'paste');
+    const { tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending } = useAnalysisTableInput(SAMPLE_DATASET, calculatorInputMode);
     const [selectedDatasetId, setSelectedDatasetId] = useState(launchPayload?.datasetId || '');
     useEffect(() => {
         if (launchPayload) consumeAnalysisLaunchPayload('pearson_correlation');
     }, [launchPayload]);
-    const [launchPayloadApplied, setLaunchPayloadApplied] = useState(false);
+
     const [savedRoleSelection, setSavedRoleSelection] = useState({
         x: launchPayload?.x || '',
         y: launchPayload?.y || '',
@@ -155,7 +159,6 @@ const PearsonCorrelationPage = ({
 
     useEffect(() => {
         if (!datasets.length) {
-            setSelectedDatasetId('');
             return;
         }
 
@@ -168,7 +171,7 @@ const PearsonCorrelationPage = ({
         }
 
         setSelectedDatasetId((previous) => {
-            if (datasets.some((dataset) => dataset.id === previous)) {
+            if (previous) {
                 return previous;
             }
 
@@ -207,48 +210,15 @@ const PearsonCorrelationPage = ({
     }, [numericColumns, selectedX, selectedY]);
 
     useEffect(() => {
-        if (!savedDataset) {
-            setSavedRoleSelection({
-                x: '',
-                y: '',
-            });
-            return;
-        }
-
-        const numericIds = savedDataset.columns
-            .filter((column) => column.summary?.detectedType === 'numeric')
-            .map((column) => column.id);
-
-        if (
-            launchPayload
-            && !launchPayloadApplied
-            && launchPayload.datasetId === savedDataset.id
-        ) {
-            const nextX = numericIds.includes(launchPayload.x) ? launchPayload.x : numericIds[0] || '';
-            const nextY = numericIds.includes(launchPayload.y) && launchPayload.y !== nextX
-                ? launchPayload.y
-                : (numericIds.find((columnId) => columnId !== nextX) || numericIds[1] || nextX);
-
-            setSavedRoleSelection({
-                x: nextX,
-                y: nextY,
-            });
-            setLaunchPayloadApplied(true);
-            return;
-        }
-
-        setSavedRoleSelection((previous) => {
-            const nextX = numericIds.includes(previous.x) ? previous.x : numericIds[0] || '';
-            const nextY = numericIds.includes(previous.y) && previous.y !== nextX
-                ? previous.y
-                : (numericIds.find((columnId) => columnId !== nextX) || numericIds[1] || nextX);
-
-            return {
-                x: nextX,
-                y: nextY,
-            };
+        if (!savedDataset) return;
+        const numericIds = savedDataset.columns.filter(column => column.summary?.detectedType === 'numeric').map(column => column.id);
+        const fromLaunch = launchPayload?.datasetId === savedDataset.id;
+        setSavedRoleSelection(previous => {
+            const x = numericIds.includes(previous.x) ? previous.x : (fromLaunch ? '' : numericIds[0] || '');
+            const y = numericIds.includes(previous.y) && previous.y !== x ? previous.y : (fromLaunch ? '' : numericIds.find(id => id !== x) || '');
+            return { x, y };
         });
-    }, [launchPayload, launchPayloadApplied, savedDataset]);
+    }, [savedDataset, launchPayload]);
 
     const selectedXColumn = numericColumns.find((column) => column.name === selectedX) || null;
     const selectedYColumn = numericColumns.find((column) => column.name === selectedY) || null;
@@ -260,19 +230,11 @@ const PearsonCorrelationPage = ({
         () => buildNumericAnalysisColumn(savedDataset, savedRoleSelection.y),
         [savedDataset, savedRoleSelection.y]
     );
-    const savedCompleteCaseSummary = useMemo(
-        () => countCompleteRows(savedDataset, [savedRoleSelection.x, savedRoleSelection.y].filter(Boolean), true),
-        [savedDataset, savedRoleSelection.x, savedRoleSelection.y]
-    );
     const activeXColumn = calculatorInputMode === 'saved' ? savedXColumn : selectedXColumn;
     const activeYColumn = calculatorInputMode === 'saved' ? savedYColumn : selectedYColumn;
-    const activeCompleteCaseSummary = calculatorInputMode === 'saved'
-        ? savedCompleteCaseSummary
-        : {
-            total: parsedTable.rowCount || 0,
-            usable: Math.min(selectedXColumn?.numericValues?.length || 0, selectedYColumn?.numericValues?.length || 0),
-            dropped: Math.max(0, (parsedTable.rowCount || 0) - Math.min(selectedXColumn?.numericValues?.length || 0, selectedYColumn?.numericValues?.length || 0)),
-        };
+    const rowSummary = useMemo(() => summarizeAnalysisRows([activeXColumn, activeYColumn], calculatorInputMode === 'saved' ? savedDataset?.rowCount || 0 : parsedTable.rowCount || 0), [activeXColumn, activeYColumn, calculatorInputMode, savedDataset, parsedTable.rowCount]);
+    const activeCompleteCaseSummary = rowSummary || { total: 0, usable: 0, dropped: 0 };
+    const sourceLabel = calculatorInputMode === 'saved' ? savedDataset?.name || 'No dataset selected' : tableSource;
     const activeXLabel = activeXColumn?.label || activeXColumn?.name || 'X';
     const activeYLabel = activeYColumn?.label || activeYColumn?.name || 'Y';
 
@@ -293,9 +255,7 @@ const PearsonCorrelationPage = ({
     }, [activeXColumn, activeYColumn, confidenceLevel, tails, direction, rho0]);
 
     useEffect(() => {
-        if (calculatorStats?.ok && typeof onStatsChange === 'function') {
-            onStatsChange(calculatorStats);
-        }
+        onStatsChange?.(calculatorStats?.ok ? calculatorStats : null);
     }, [calculatorStats, onStatsChange]);
 
     const calculatorGuidance = useMemo(
@@ -318,15 +278,7 @@ const PearsonCorrelationPage = ({
 
     const effectRSquared = Math.max(0, Math.min(1, effectRValue ** 2));
 
-    const onUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-        const text = await file.text();
-        setTableText(text);
-        event.target.value = '';
-    };
+
 
     if (section === 'power') {
         return <PearsonPowerSection {...{
@@ -363,7 +315,7 @@ const PearsonCorrelationPage = ({
             setCalculatorShowBand, calculatorShowBand, parsedTable, numericColumns,
             selectedX, setSelectedX, selectedY, setSelectedY,
             calculatorGuidance, calculatorStats, activeXLabel, activeYLabel,
-            influentialIndex, assumptions,
+            influentialIndex, assumptions, onOpenDataManager, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
         }} />;
     }
 

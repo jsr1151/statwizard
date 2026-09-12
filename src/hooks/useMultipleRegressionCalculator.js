@@ -1,3 +1,5 @@
+import useAnalysisTableInput from './useAnalysisTableInput.js';
+import { summarizeAnalysisRows } from '../utils/analysisRows.js';
 import { useEffect, useMemo, useState } from 'react';
 import { buildMultipleRegressionGuidance, calculateMultipleRegressionPrediction, calculateMultipleRegressionStats } from '../stats/multipleRegression.js';
 import { parseDelimitedTable } from '../utils/delimitedTable.js';
@@ -10,16 +12,17 @@ import { countNumericCompleteCasesFromColumns, buildPredictionInputsFromStats, f
 export default function useMultipleRegressionCalculator({ onStatsChange }) {
     const { datasets } = useDatasetLibraryContext();
 
-    const [tableText, setTableText] = useState(SAMPLE_DATASET);
+
 
     const [launchPayload] = useState(() => readAnalysisLaunchPayload('multiple_regression'));
     const [calculatorInputMode, setCalculatorInputMode] = useState(launchPayload?.datasetId ? 'saved' : 'paste');
+    const { tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending } = useAnalysisTableInput(SAMPLE_DATASET, calculatorInputMode);
     const [selectedDatasetId, setSelectedDatasetId] = useState(launchPayload?.datasetId || '');
     useEffect(() => {
         if (launchPayload) consumeAnalysisLaunchPayload('multiple_regression');
     }, [launchPayload]);
 
-    const [launchPayloadApplied, setLaunchPayloadApplied] = useState(false);
+
 
     const [savedRoleSelection, setSavedRoleSelection] = useState({
         outcome: launchPayload?.outcome || '',
@@ -53,7 +56,6 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
 
     useEffect(() => {
         if (!datasets.length) {
-            setSelectedDatasetId('');
             return;
         }
 
@@ -66,7 +68,7 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
         }
 
         setSelectedDatasetId((previous) => {
-            if (datasets.some((dataset) => dataset.id === previous)) {
+            if (previous) {
                 return previous;
             }
 
@@ -89,65 +91,16 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
     }, [datasets, launchPayload?.datasetId]);
 
     useEffect(() => {
-        if (!savedDataset) {
-            setSavedRoleSelection({
-                outcome: '',
-                predictors: [],
-            });
-            return;
-        }
-
-        const numericIds = savedDataset.columns
-            .filter((column) => column.summary?.detectedType === 'numeric')
-            .map((column) => column.id);
-
-        if (
-            launchPayload
-            && !launchPayloadApplied
-            && launchPayload.datasetId === savedDataset.id
-        ) {
-            const nextOutcome = numericIds.includes(launchPayload.outcome)
-                ? launchPayload.outcome
-                : numericIds[numericIds.length - 1] || '';
-            const availablePredictors = numericIds.filter((columnId) => columnId !== nextOutcome);
-            const nextPredictors = (launchPayload.predictors || []).filter((columnId) => availablePredictors.includes(columnId));
-
-            setSavedRoleSelection({
-                outcome: nextOutcome,
-                predictors: nextPredictors.length >= 2
-                    ? nextPredictors
-                    : [...new Set([
-                        ...nextPredictors,
-                        ...availablePredictors.slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
-                    ])].slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
-            });
-            setLaunchPayloadApplied(true);
-            return;
-        }
-
-        setSavedRoleSelection((previous) => {
-            const nextOutcome = numericIds.includes(previous.outcome)
-                ? previous.outcome
-                : numericIds[numericIds.length - 1] || '';
-            const availablePredictors = numericIds.filter((columnId) => columnId !== nextOutcome);
-            const validPredictors = (previous.predictors || []).filter((columnId) => availablePredictors.includes(columnId));
-
-            if (validPredictors.length >= 2) {
-                return {
-                    outcome: nextOutcome,
-                    predictors: validPredictors,
-                };
-            }
-
-            return {
-                outcome: nextOutcome,
-                predictors: [...new Set([
-                    ...validPredictors,
-                    ...availablePredictors.slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
-                ])].slice(0, Math.max(0, Math.min(3, availablePredictors.length))),
-            };
+        if (!savedDataset) return;
+        const numericIds = savedDataset.columns.filter(column => column.summary?.detectedType === 'numeric').map(column => column.id);
+        const fromLaunch = launchPayload?.datasetId === savedDataset.id;
+        setSavedRoleSelection(previous => {
+            const outcome = numericIds.includes(previous.outcome) ? previous.outcome : (fromLaunch ? '' : numericIds.at(-1) || '');
+            const available = numericIds.filter(id => id !== outcome);
+            const predictors = previous.predictors.filter(id => available.includes(id));
+            return { outcome, predictors: fromLaunch ? predictors : (predictors.length ? predictors : available.slice(0, 3)) };
         });
-    }, [launchPayload, launchPayloadApplied, savedDataset]);
+    }, [savedDataset, launchPayload]);
 
     useEffect(() => {
         if (!numericColumns.length) {
@@ -302,6 +255,8 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
 
     const calculatorNeedsSetup = calculatorSetupErrors.length > 0 || !calculatorStats?.ok;
 
+    const rowSummary = useMemo(() => summarizeAnalysisRows([activeOutcomeColumn, ...activePredictorColumns], activeCompleteCaseSummary.total), [activeOutcomeColumn, activePredictorColumns, activeCompleteCaseSummary.total]);
+    const sourceLabel = calculatorInputMode === 'saved' ? savedDataset?.name || 'No dataset selected' : tableSource;
     const calculatorGuidance = useMemo(
         () => buildMultipleRegressionGuidance(calculatorStats),
         [calculatorStats]
@@ -319,10 +274,8 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
     );
 
     useEffect(() => {
-        if (calculatorStats?.ok && typeof onStatsChange === 'function') {
-            onStatsChange(calculatorStats);
-        }
-    }, [calculatorStats, onStatsChange]);
+        onStatsChange?.(calculatorNeedsSetup ? null : calculatorStats);
+    }, [calculatorStats, calculatorNeedsSetup, onStatsChange]);
 
     useEffect(() => {
         if (!calculatorStats?.ok) {
@@ -338,15 +291,7 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
         setCalculatorPredictionInputs((previous) => buildPredictionInputsFromStats(calculatorStats, previous));
     }, [calculatorStats]);
 
-    const onUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-        const text = await file.text();
-        setTableText(text);
-        event.target.value = '';
-    };
+
 
     const togglePredictor = (predictorName) => {
         setSelectedPredictors((previous) => {
@@ -366,6 +311,6 @@ export default function useMultipleRegressionCalculator({ onStatsChange }) {
         setSavedRoleSelection, confidenceLevel, setConfidenceLevel, activeCompleteCaseSummary,
         calculatorNeedsSetup, calculatorModelErrors, activeOutcomeLabel, calculatorSelectedPointId,
         setCalculatorSelectedPointId, calculatorPrediction, calculatorPredictionInputs, setCalculatorPredictionInputs,
-        calculatorSelectedPair, calculatorGuidance,
+        calculatorSelectedPair, calculatorGuidance, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
     };
 }

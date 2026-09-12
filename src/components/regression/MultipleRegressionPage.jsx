@@ -40,10 +40,10 @@ const MultipleRegressionPage = ({
         setTableText, tableText, selectedOutcome, setSelectedOutcome,
         numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
         setSelectedDatasetId, datasets, savedDataset, savedRoleSelection,
-        setSavedRoleSelection, confidenceLevel, setConfidenceLevel, activeCompleteCaseSummary,
+        setSavedRoleSelection, confidenceLevel, setConfidenceLevel,
         calculatorNeedsSetup, calculatorModelErrors, activeOutcomeLabel, calculatorSelectedPointId,
         setCalculatorSelectedPointId, calculatorPrediction, calculatorPredictionInputs, setCalculatorPredictionInputs,
-        calculatorSelectedPair, calculatorGuidance,
+        calculatorSelectedPair, calculatorGuidance, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
     } = useMultipleRegressionCalculator({ onStatsChange });
 
     const effectSourceStats = currentStats?.ok ? currentStats : (calculatorStats?.ok ? calculatorStats : null);
@@ -107,9 +107,9 @@ const MultipleRegressionPage = ({
                 numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
                 setSelectedDatasetId, datasets, savedDataset, onOpenDataManager,
                 savedRoleSelection, setSavedRoleSelection, confidenceLevel, setConfidenceLevel,
-                activeCompleteCaseSummary, calculatorNeedsSetup, calculatorModelErrors, calculatorStats,
+                calculatorNeedsSetup, calculatorModelErrors, calculatorStats,
                 activeOutcomeLabel, calculatorSelectedPointId, setCalculatorSelectedPointId, calculatorPrediction,
-                calculatorPredictionInputs, setCalculatorPredictionInputs, calculatorSelectedPair, calculatorGuidance,
+                calculatorPredictionInputs, setCalculatorPredictionInputs, calculatorSelectedPair, calculatorGuidance, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
             }} />
         );
     }

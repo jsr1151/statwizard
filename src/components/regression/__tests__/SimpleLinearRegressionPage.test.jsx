@@ -57,7 +57,7 @@ it('rejects identical columns and invalid data, then recovers with sample data',
     expect(container.textContent).not.toContain('Coefficient summary');
     await change(container.querySelector('textarea'), '');
     expect(container.textContent).not.toContain('Coefficient summary');
-    await click('Load Sample Data');
+    await click('Load example data');
     expect(stats().n).toBe(14);
     expect(container.textContent).toContain('Coefficient summary');
 });

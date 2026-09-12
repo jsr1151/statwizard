@@ -1,3 +1,5 @@
+import useAnalysisTableInput from '../../hooks/useAnalysisTableInput.js';
+import { summarizeAnalysisRows } from '../../utils/analysisRows.js';
 import { useEffect, useMemo, useState } from "react";
 import AnalysisAssumptionsSection from "../analysis/AnalysisAssumptionsSection.jsx";
 import {
@@ -25,6 +27,7 @@ const SimpleLinearRegressionPage = ({
     assumptions = [],
     testConfig,
     initialPowerMode,
+    onOpenDataManager,
 }) => {
     const [lessonPreset, setLessonPreset] = useState('positive_low_noise');
     const [lessonSampleSize, setLessonSampleSize] = useState(36);
@@ -138,7 +141,8 @@ const SimpleLinearRegressionPage = ({
         }));
     };
 
-    const [tableText, setTableText] = useState(SAMPLE_DATASET);
+
+    const { tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending } = useAnalysisTableInput(SAMPLE_DATASET);
     const [selectedX, setSelectedX] = useState('');
     const [selectedY, setSelectedY] = useState('');
     const [confidenceLevel, setConfidenceLevel] = useState(0.95);
@@ -170,6 +174,8 @@ const SimpleLinearRegressionPage = ({
     const selectedXColumn = numericColumns.find((column) => column.name === selectedX) || null;
     const selectedYColumn = numericColumns.find((column) => column.name === selectedY) || null;
 
+    const rowSummary = useMemo(() => summarizeAnalysisRows([selectedXColumn, selectedYColumn], parsedTable.rowCount || 0), [selectedXColumn, selectedYColumn, parsedTable.rowCount]);
+    const sourceLabel = tableSource;
     const calculatorStats = useMemo(() => {
         if (!selectedXColumn || !selectedYColumn || selectedXColumn.name === selectedYColumn.name) {
             return null;
@@ -184,9 +190,7 @@ const SimpleLinearRegressionPage = ({
     }, [selectedXColumn, selectedYColumn, confidenceLevel]);
 
     useEffect(() => {
-        if (calculatorStats?.ok && typeof onStatsChange === 'function') {
-            onStatsChange(calculatorStats);
-        }
+        onStatsChange?.(calculatorStats?.ok ? calculatorStats : null);
     }, [calculatorStats, onStatsChange]);
 
     const calculatorGuidance = useMemo(
@@ -244,15 +248,7 @@ const SimpleLinearRegressionPage = ({
     const effectFSquared = rSquaredToFSquared(effectRSquared);
     const effectPredictedChange = effectSlope * effectUnitChange;
 
-    const onUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-        const text = await file.text();
-        setTableText(text);
-        event.target.value = '';
-    };
+
 
     if (section === 'power') {
         return <RegressionPowerSection {...{
@@ -281,7 +277,7 @@ const SimpleLinearRegressionPage = ({
 
     if (section === 'calculator') {
         return <RegressionCalculatorSection {...{
-            darkMode, onUpload, setTableText, tableText,
+            darkMode, onUpload, setTableText, tableText, onOpenDataManager, tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
             parsedTable, selectedX, setSelectedX, numericColumns,
             selectedY, setSelectedY, confidenceLevel, setConfidenceLevel,
             setCalculatorShowLine, calculatorShowLine, setCalculatorShowBand, calculatorShowBand,

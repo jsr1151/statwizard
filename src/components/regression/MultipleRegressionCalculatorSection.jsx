@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import AnalysisRowSummary from '../analysis/AnalysisRowSummary.jsx';
 import { AlertTriangle, Calculator, Info } from 'lucide-react';
 import RegressionResidualPlot from './RegressionResidualPlot';
 import ObservedFittedPlot from './ObservedFittedPlot';
@@ -11,15 +13,19 @@ import MultipleRegressionPredictionCard from './MultipleRegressionPredictionCard
 import MultipleRegressionCoefficientCard from './MultipleRegressionCoefficientCard.jsx';
 
 export default function MultipleRegressionCalculatorSection({
+    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary,
+
     darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
     setTableText, tableText, selectedOutcome, setSelectedOutcome,
     numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
     setSelectedDatasetId, datasets, savedDataset, onOpenDataManager,
     savedRoleSelection, setSavedRoleSelection, confidenceLevel, setConfidenceLevel,
-    activeCompleteCaseSummary, calculatorNeedsSetup, calculatorModelErrors, calculatorStats,
+    calculatorNeedsSetup, calculatorModelErrors, calculatorStats,
     activeOutcomeLabel, calculatorSelectedPointId, setCalculatorSelectedPointId, calculatorPrediction,
     calculatorPredictionInputs, setCalculatorPredictionInputs, calculatorSelectedPair, calculatorGuidance,
 }) {
+    const resultsRef = useRef(null);
+    const onGoResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
     return (
         <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <Card darkMode={darkMode}>
@@ -44,6 +50,7 @@ export default function MultipleRegressionCalculatorSection({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div className="min-w-0 lg:col-span-4 space-y-6">
                     <MultipleRegressionDataSourceCard {...{
+                        tableSource, loadExample, uploadError, uploadPending, onGoResults, hasResults: !calculatorNeedsSetup,
                         darkMode, setCalculatorInputMode, calculatorInputMode, onUpload,
                         setTableText, tableText, selectedOutcome, setSelectedOutcome,
                         numericColumns, selectedPredictors, togglePredictor, selectedDatasetId,
@@ -52,33 +59,8 @@ export default function MultipleRegressionCalculatorSection({
                     }} />
                 </div>
 
-                <div className="min-w-0 lg:col-span-8 space-y-6">
-                    {(activeCompleteCaseSummary.total > 0 && (activeCompleteCaseSummary.usable > 0 || activeCompleteCaseSummary.dropped > 0)) && (
-                        <Card darkMode={darkMode}>
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                                <div>
-                                    <div className={`text-[10px] font-black uppercase tracking-widest mb-2 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                        Complete-case summary
-                                    </div>
-                                    <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                        {activeCompleteCaseSummary.usable} usable rows remain for this model
-                                    </h3>
-                                    <p className={`mt-2 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {activeCompleteCaseSummary.dropped > 0
-                                            ? `${activeCompleteCaseSummary.dropped} rows were excluded because at least one selected analysis variable was missing or non-numeric.`
-                                            : 'All rows are currently usable for the selected variables.'}
-                                    </p>
-                                </div>
-                                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${activeCompleteCaseSummary.dropped > 0
-                                    ? (darkMode ? 'bg-amber-500/10 text-amber-200 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-200')
-                                    : (darkMode ? 'bg-slate-950 border border-slate-800 text-slate-400' : 'bg-slate-50 border border-slate-200 text-slate-600')
-                                }`}>
-                                    {activeCompleteCaseSummary.usable} / {activeCompleteCaseSummary.total} rows
-                                </div>
-                            </div>
-                        </Card>
-                    )}
-
+                <div ref={resultsRef} tabIndex={-1} aria-label="Analysis results" className="min-w-0 lg:col-span-8 space-y-6 scroll-mt-24">
+                    {rowSummary && <AnalysisRowSummary darkMode={darkMode} sourceLabel={sourceLabel} summary={rowSummary} />}
                     {calculatorNeedsSetup ? (
                         <Card darkMode={darkMode}>
                             <div className="flex items-start gap-4">

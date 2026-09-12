@@ -1,5 +1,7 @@
 # Shared calculator workflow
 
+This documents the first workflow pass. The subsequent [correlation and regression pass](TABULAR_WORKFLOW_VALIDATION.md) adds source labels and row-level exclusion details to those calculators.
+
 This pass updates one-sample, independent, and paired t-tests, one-way ANOVA, factorial ANOVA, and ANCOVA. Statistical engines and exclusion rules are unchanged.
 
 ## Behavior

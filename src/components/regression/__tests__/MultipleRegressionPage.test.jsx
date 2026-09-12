@@ -73,7 +73,7 @@ it('excludes incomplete rows and rejects a singular model before recovering', as
     expect(container.textContent).toContain('Complete the model setup');
     await change(container.querySelector('textarea'), '');
     expect(container.textContent).toContain('Complete the model setup');
-    await click('Load Sample Dataset');
+    await click('Load example data');
     expect(stats()).toMatchObject({ ok: true, n: 15 });
 });
 

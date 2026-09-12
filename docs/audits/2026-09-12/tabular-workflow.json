@@ -1,0 +1,106 @@
+{
+  "checks": [
+    {
+      "label": "correlation_result/example/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "correlation_result/entered/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "correlation_result/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "regression_result/example/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "regression_result/entered/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "multiple_regression_result/example/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "multiple_regression_result/entered/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "multiple_regression_result/empty-saved/1440",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "correlation_result/example/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "correlation_result/entered/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "correlation_result/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "regression_result/example/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "regression_result/entered/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "multiple_regression_result/example/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "multiple_regression_result/entered/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "multiple_regression_result/empty-saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Pearson Correlation/saved/375",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "Multiple Regression/saved/375",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "keyboard upload",
+    "file provenance",
+    "entered-table provenance",
+    "excluded row details",
+    "focus results",
+    "invalid data hides results shortcut",
+    "saved data launches",
+    "cleared roles hide results shortcut",
+    "source switching preserves pasted table"
+  ]
+}

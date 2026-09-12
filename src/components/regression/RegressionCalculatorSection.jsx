@@ -1,4 +1,7 @@
-import { AlertTriangle, Calculator, Database, FileUp, TrendingUp } from "lucide-react";
+import { useRef } from 'react';
+import TableDataSourceFields from '../analysis/TableDataSourceFields.jsx';
+import AnalysisRowSummary from '../analysis/AnalysisRowSummary.jsx';
+import { AlertTriangle, Calculator, TrendingUp } from "lucide-react";
 import RegressionResidualPlot from "./RegressionResidualPlot";
 import RegressionScatterplot from "./RegressionScatterplot";
 import { buildSlopeInterpretation } from "../../stats/regression.js";
@@ -6,10 +9,11 @@ import Card from '../analysis/AnalysisCard.jsx';
 import MetricTile from '../analysis/AnalysisMetricTile.jsx';
 import { formatStatistic as formatStat } from '../../utils/statFormatters.js';
 import { formatPValue } from '../../utils/statFormatters.js';
-import { REGRESSION_SAMPLE_DATASET as SAMPLE_DATASET } from '../../data/regressionPresets.js';
+
 import { buildEquationText } from '../../utils/simpleRegressionPage.js';
 
 export default function RegressionCalculatorSection({
+    tableSource, loadExample, uploadError, uploadPending, sourceLabel, rowSummary, onOpenDataManager,
     darkMode, onUpload, setTableText, tableText,
     parsedTable, selectedX, setSelectedX, numericColumns,
     selectedY, setSelectedY, confidenceLevel, setConfidenceLevel,
@@ -18,6 +22,8 @@ export default function RegressionCalculatorSection({
     influentialIndex, calculatorSelectedPointId, setCalculatorSelectedPointId, calculatorPrediction,
     calculatorPredictionX, setCalculatorPredictionX, calculatorSelectedPair,
 }) {
+    const resultsRef = useRef(null);
+    const onGoResults = () => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView?.({ block: 'start' }); };
     return (
         <div className="min-w-0 space-y-8 [overflow-wrap:anywhere]">
             <Card darkMode={darkMode}>
@@ -39,37 +45,7 @@ export default function RegressionCalculatorSection({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div className="min-w-0 lg:col-span-4 space-y-6">
                     <Card darkMode={darkMode}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <Database size={18} className={darkMode ? 'text-indigo-300' : 'text-indigo-700'} />
-                            <div>
-                                <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                    Data Workspace
-                                </div>
-                                <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                    Load a predictor and outcome
-                                </h3>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-3 mb-4">
-                            <label className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest cursor-pointer transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-indigo-500'}`}>
-                                <FileUp size={14} />
-                                Upload CSV
-                                <input type="file" accept=".csv,.txt" onChange={onUpload} className="sr-only" />
-                            </label>
-                            <button onClick={() => setTableText(SAMPLE_DATASET)} className={`rounded-xl border px-4 py-3 text-xs font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-indigo-500'}`}>
-                                Load Sample Data
-                            </button>
-                        </div>
-
-                        <textarea
-                            aria-label="Paste regression data as CSV or a table"
-                            value={tableText}
-                            onChange={(event) => setTableText(event.target.value)}
-                            rows={12}
-                            className={`w-full rounded-2xl border px-4 py-4 text-sm font-medium outline-none transition-colors ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'}`}
-                            spellCheck={false}
-                        />
+                        <TableDataSourceFields {...{darkMode, tableText, setTableText, tableSource, loadExample, onUpload, uploadError, uploadPending, onOpenDataManager, onGoResults, hasResults: !!calculatorStats?.ok}} sampleLabel="Load example data" />
 
                         {parsedTable.errors?.length > 0 && (
                             <div className={`mt-4 rounded-xl border p-4 ${darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
@@ -141,7 +117,8 @@ export default function RegressionCalculatorSection({
                     </Card>
                 </div>
 
-                <div className="min-w-0 lg:col-span-8 space-y-6">
+                <div ref={resultsRef} tabIndex={-1} aria-label="Analysis results" className="min-w-0 lg:col-span-8 space-y-6 scroll-mt-24">
+                    {rowSummary && <AnalysisRowSummary darkMode={darkMode} sourceLabel={sourceLabel} summary={rowSummary} />}
                     <Card darkMode={darkMode}>
                         <RegressionScatterplot
                             pairs={calculatorStats?.pairs || []}

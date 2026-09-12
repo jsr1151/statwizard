@@ -2,6 +2,14 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: correlation and regression data workflow
+
+Pearson correlation, simple linear regression, and multiple regression now share labeled example/paste/upload controls and a keyboard-operable upload button. Both the input panel and results identify the active source. Results include usable/excluded counts and the first 100 excluded data-row numbers with the affected variables. Pearson's pasted-data count now checks complete pairs rather than the lengths of arrays that contain missing values. A shortcut moves focus to the results.
+
+Invalid calculations clear shared statistics. Saved launches into Pearson and multiple regression retain the requested dataset while the library loads, do not substitute another dataset when it is missing, and respect cleared roles. Switching between saved and pasted data preserves the pasted table. Failed uploads keep the current table; a late file read cannot overwrite a newer edit or upload.
+
+Validation: 466 tests across 45 files passed, plus lint, production build, documentation, power fixtures, and the startup bundle check. All 18 final browser accessibility/overflow checks were clean, with no application errors. See [scope and validation](TABULAR_WORKFLOW_VALIDATION.md).
+
 ## September 12: shared calculator entry workflow
 
 One-sample, independent, and paired t-tests, one-way and factorial ANOVA, and ANCOVA now share a compact source selector. Example/manual input opens directly; saved-data setup appears only when selected. The active dataset, variable roles, usable rows, and excluded rows stay together. A keyboard-operable shortcut moves focus to the calculator. Import opens Data Manager.
@@ -58,8 +66,8 @@ Automated accessibility snapshots do not establish complete accessibility confor
 
 ## Remaining work, in recommended order
 
-1. **Extend the shared analysis workflow.** The six saved-data wrappers now have compact source selection and result gating. Extend consistent source/provenance controls to correlation, regression, and descriptive modules; add row-level exclusion details, durable calculator drafts, and consistent reporting actions. Complete an end-to-end keyboard and screen-reader review of nested plots and editors.
-2. **Make the Learning Lab usable.** Replace its placeholder levels with a small complete learning path containing worked examples, practice, feedback, and progress. Simplify the home-page choices and connect the learning path to the existing modules.
+1. **Make the Learning Lab usable.** Replace its placeholder levels with a small complete learning path containing worked examples, practice, feedback, and progress. Simplify the home-page choices and connect the learning path to the existing modules.
+2. **Finish analysis workflow coverage.** Extend the source/provenance review to descriptive modules and add saved-data launching for simple regression. Extend row-level exclusion details to the older t-test/ANOVA wrappers, add durable calculator drafts and consistent reporting actions, and complete an end-to-end keyboard and screen-reader review of nested plots and editors.
 3. **Expand supported designs deliberately.** Prioritize categorical analyses and rank correlation, then other requested models. Extend wizard reasoning alongside validated calculators. Repeated-measures power, mixed/factorial repeated designs, post-hoc comparisons, and additional confidence intervals need separate validation.
 4. **Improve reproducibility and recovery.** Add analysis/report export with inputs, exclusions, assumptions, and results; consider durable draft recovery and clearer backup/restore controls. Review power interpretation and advanced model limitations as part of this work.
 
