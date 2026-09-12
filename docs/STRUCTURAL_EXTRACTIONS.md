@@ -155,12 +155,50 @@ production build, documentation checks, and all 30 power fixtures. The Data
 Manager feature chunk grew from approximately 82.5 to 89.7 kB before gzip
 (17.5 to 19.0 kB gzip); bundle optimization remains a separate follow-up.
 
+## Completed: transformation workbench
+
+`DataTransformWorkbench.jsx` decreased from 1,018 to 151 lines. It retains
+the selected builder mode and composes six views in
+`src/components/data/transforms/`:
+
+| Component | Lines | Responsibility |
+| --- | ---: | --- |
+| `DerivedVariableBuilder.jsx` | 112 | Operations, source search, and single/pair/multiple selection |
+| `ReverseCodeBuilder.jsx` | 147 | Bounds, overwrite option, and reverse-code preview |
+| `MeanCenterBuilder.jsx` | 82 | Source selection and centered-variable creation |
+| `RecodeBuilder.jsx` | 108 | Category mapping, overwrite option, and preview |
+| `RecommendedTransforms.jsx` | 179 | Group membership, aggregate actions, and reverse-coded scale scores |
+| `WideToLongTransform.jsx` | 283 | Measure selection, grouping labels, copied columns, and reshape preview |
+
+Six small shared controls also live in that directory. Builder modes and
+summary formatting moved to `src/data/dataTransformModes.js` and
+`src/utils/dataTransformDisplay.js`. Transformation drafts, calculations,
+and action handlers remain in the existing Data Manager hooks.
+
+Six additional interaction tests passed before and after extraction,
+bringing Data Manager coverage to 15 tests. They verify category-map
+persistence across modes and overwrite behavior; source search and pair
+selection limits; edited group averages; reverse-coded scale scores with
+undo; multi-measure reshaping with renamed grouping values and preserved
+identifiers; and single-measure selection.
+
+All 36 browser comparisons matched for displayed content, control values,
+and overflow status: four builder modes, edited recommendations, and a
+reshape preview at 375, 768, and 1440 px in both themes. No console errors
+or React warnings occurred. A source-tree comparison confirmed that state,
+props, all six view trees, shared controls, modes, and formatting preserve
+the original implementation. The existing mobile overflow remains present
+in all twelve 375 px cases and is tracked below.
+
+Repository validation: 31 test files / 284 tests passed, along with lint,
+production build, documentation checks, and all 30 power fixtures. The Data
+Manager feature chunk is now approximately 92.1 kB before gzip (19.4 kB
+gzip), compared with 89.7 kB (19.0 kB gzip) before this extraction.
+
 ## Follow-ups
 
-- Multiple Regression still exceeds the 500-line component limit. Data
-  Manager's existing `DataTransformWorkbench.jsx` is also 1,018 lines and
-  remains a separate extraction. Add coverage for its remaining transform
-  modes and grouped/reshape workflows before moving them.
+- Multiple Regression still exceeds the 500-line component limit and
+  remains a separate extraction with interaction coverage first.
 - Fix Data Manager's existing mobile overflow, including imported data,
   transformation states, and its analysis launcher.
 - Bundle optimization remains separate. This build reports approximately

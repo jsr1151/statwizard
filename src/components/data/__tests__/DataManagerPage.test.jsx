@@ -40,7 +40,7 @@ afterEach(async () => {
 });
 const button = (text, scope = container) => [...scope.querySelectorAll('button')].find(node => node.textContent.trim() === text);
 const click = async (text, scope) => act(async () => button(text, scope).click());
-const field = text => [...container.querySelectorAll('label')].find(node => node.textContent.includes(text))?.querySelector('input,select');
+const field = (text, scope = container) => [...scope.querySelectorAll('label')].find(node => node.textContent.includes(text))?.querySelector('input,select');
 const change = async (node, value) => act(async () => {
     const prototype = node.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
     Object.getOwnPropertyDescriptor(prototype, 'value').set.call(node, String(value));
@@ -188,4 +188,109 @@ it('keeps unsaved data available after a save failure', async () => {
     await click('Save Dataset');
     expect(saved().rowCount).toBe(5);
     expect(container.textContent).toContain('was saved locally');
+});
+
+it('preserves category mappings across builder modes and overwrites only the selected variable', async () => {
+    await mount();
+    await upload();
+    await click('Recode categories');
+    await chooseSource('Group');
+    const mapping = [...container.querySelectorAll('input')].find(node => node.value === 'A');
+    await change(mapping, 'Combined');
+    await click('Mean-center');
+    await click('Recode categories');
+    expect([...container.querySelectorAll('input')].some(node => node.value === 'Combined')).toBe(true);
+    await act(async () => field('Overwrite the existing variable').click());
+    expect(field('Output label').disabled).toBe(true);
+    await click('Apply Category Mapping');
+    await click('Save Dataset');
+    expect(saved().columnCount).toBe(3);
+    expect(values(saved(), 'Group')).toEqual(['Combined', 'B', 'Combined', 'B', 'Combined']);
+    expect(values(saved(), 'X').map(Number)).toEqual([1, 2, 3, 4, 5]);
+});
+
+it('filters source variables and limits a difference to exactly two selections', async () => {
+    await mount();
+    await upload({ name: 'Three.csv', text: async () => 'X,Y,Z\n1,3,9\n2,5,8\n3,8,7' });
+    await change(field('Transformation'), 'difference');
+    await change(field('Source search'), 'no match');
+    expect(container.textContent).toContain('No variables match this search yet');
+    await change(field('Source search'), '');
+    const choices = () => container.querySelector('section').querySelectorAll('input[type="checkbox"]');
+    await act(async () => choices()[0].click());
+    await act(async () => choices()[1].click());
+    expect(choices()[2].disabled).toBe(true);
+    await change(field('New variable label'), 'Difference');
+    await click('Add Derived Variable');
+    await click('Save Dataset');
+    expect(values(saved(), 'Difference').map(Number)).toEqual([-2, -3, -5]);
+});
+
+const groupedCsv = 'ID,Stress1,Stress2,Extra\nA,1,5,2\nB,2,4,3\nC,3,3,4';
+const recommendations = () => [...container.querySelectorAll('section')].find(node => node.textContent.includes('Suggested grouped transforms'));
+
+it('validates grouped selections and averages the edited group', async () => {
+    await mount();
+    await upload({ name: 'Scale.csv', text: async () => groupedCsv });
+    await click('Stress2 x', recommendations());
+    await click('Average', recommendations());
+    expect(container.textContent).toContain('Select at least two variables before creating an average');
+    const add = field('Add variable to this group', recommendations());
+    await change(add, [...add.options].find(option => option.textContent === 'Extra').value);
+    await click('Average', recommendations());
+    await click('Save Dataset');
+    expect(values(saved(), 'Stress Average').map(Number)).toEqual([1.5, 2.5, 3.5]);
+});
+
+it('reverse-codes selected group items before averaging and can undo the whole operation', async () => {
+    await mount();
+    await upload({ name: 'Scale.csv', text: async () => groupedCsv });
+    await click('Reverse + Average', recommendations());
+    expect(container.textContent).toContain('Choose at least one item to reverse code');
+    await click('Stress2', recommendations());
+    await change(field('Minimum', recommendations()), 1);
+    await change(field('Maximum', recommendations()), 5);
+    await click('Reverse + Average', recommendations());
+    await click('Save Dataset');
+    expect(values(saved(), 'Stress Scale Score').map(Number)).toEqual([1, 2, 3]);
+    expect(values(saved(), 'Stress2 (RC)').map(Number)).toEqual([1, 2, 3]);
+    await click('Undo');
+    await click('Save Updates');
+    expect(saved().columnCount).toBe(4);
+});
+
+const repeatedCsv = 'ID,Stress T1,Stress T2,Calm T1,Calm T2\nA,1,5,2,4\nB,2,4,3,5\nC,3,3,4,2';
+
+it('reshapes multiple measures with renamed grouping values and stable identifiers', async () => {
+    await mount();
+    await upload({ name: 'Repeated.csv', text: async () => repeatedCsv });
+    expect(field('Allow multiple long columns').checked).toBe(true);
+    await change(field('New grouping column name'), 'Visit');
+    const overrides = [...container.querySelectorAll('input')].filter(node => node.placeholder.startsWith('Keep '));
+    await change(overrides[0], 'Before');
+    await change(overrides[1], 'After');
+    await click('Reshape to Long');
+    await click('Save Dataset');
+    expect(saved().rowCount).toBe(6);
+    expect(values(saved(), 'ID')).toEqual(['A', 'A', 'B', 'B', 'C', 'C']);
+    expect(values(saved(), 'Visit')).toEqual(['Before', 'After', 'Before', 'After', 'Before', 'After']);
+    expect(values(saved(), 'Stress').map(Number)).toEqual([1, 5, 2, 4, 3, 3]);
+    expect(values(saved(), 'Calm').map(Number)).toEqual([2, 4, 3, 5, 4, 2]);
+});
+
+it('selects one reshape measure when multiple long columns are disabled', async () => {
+    await mount();
+    await upload({ name: 'Repeated.csv', text: async () => repeatedCsv });
+    await act(async () => field('Allow multiple long columns').click());
+    const reshape = [...container.querySelectorAll('section')].find(node => node.textContent.includes('Wide to long'));
+    const choices = [...reshape.querySelectorAll('input[type="radio"]')];
+    expect(choices).toHaveLength(2);
+    await act(async () => choices[1].click());
+    const selected = choices[1].closest('label').textContent;
+    await click('Reshape to Long');
+    await click('Save Dataset');
+    const labels = saved().columns.map(column => column.label);
+    expect(saved().rowCount).toBe(6);
+    expect(labels).toContain(selected.includes('Stress') ? 'Stress' : 'Calm');
+    expect(labels).not.toContain(selected.includes('Stress') ? 'Calm' : 'Stress');
 });
