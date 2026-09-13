@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calculator, Sparkles, Target } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
 import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
@@ -7,7 +7,9 @@ import PairedTTestVisual from '../visuals/PairedTTestVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
-import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
+import usePairedDraft from '../../hooks/usePairedDraft.js';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
+import PairedTTestCalculator from './PairedTTestCalculator.jsx';
 import { buildPairedTTestDatasetSetup } from '../../utils/analysisDatasetAdapters.js';
 import { getDatasetColumn } from '../../utils/datasetImport.js';
 
@@ -31,32 +33,8 @@ const PairedTTestPage = ({
     onTutorUpdate,
 }) => {
     const { datasets } = useDatasetLibraryContext();
-    const {
-        dataSource,
-        setDataSource,
-        launchPayload,
-        selectedDataset,
-        selectedDatasetId,
-        setSelectedDatasetId,
-    } = useAnalysisDatasetSelection({
-        analysisId: 'paired_t_test',
-        datasets,
-    });
-    const [roleSelection, setRoleSelection] = useState({
-        first: '',
-        second: '',
-    });
-
-    useEffect(() => {
-        if (!selectedDataset || launchPayload?.datasetId !== selectedDataset.id) {
-            return;
-        }
-
-        setRoleSelection((previous) => ({
-            first: launchPayload?.first || previous.first,
-            second: launchPayload?.second || previous.second,
-        }));
-    }, [launchPayload, selectedDataset]);
+    const input = usePairedDraft(datasets);
+    const { dataSource, setDataSource, selectedDataset, selectedDatasetId, setSelectedDatasetId, roleSelection, setRoleSelection } = input;
 
     const roles = useMemo(() => ([
         {
@@ -171,7 +149,11 @@ const PairedTTestPage = ({
 
     if (section === 'calculator') {
         return (
+            <div className="space-y-5">
+            <CalculatorDraftNotice draft={input.draft} darkMode={darkMode} scope="Recovery includes raw paired rows and separate summaries, condition labels and comparison order, saved dataset and variable choices, significance level, hypothesis, and confidence interval settings." />
             <AnalysisCalculatorWorkspace
+                manualLabel={input.manualSource}
+                sourceHelp="Switching sources preserves your manual inputs. Saved data follows the current library; use Edit a copy to change its values."
                 darkMode={darkMode}
                 dataSource={dataSource}
                 onSourceChange={setDataSource}
@@ -182,7 +164,7 @@ const PairedTTestPage = ({
                 savedWorkspace={
                     <AnalysisDatasetWorkspace
                         darkMode={darkMode}
-                        description="Choose a saved dataset, map two numeric repeated measures, and the calculator below will preload those paired values immediately."
+                        description="Choose two numeric repeated measures in comparison order. The calculator reads current complete pairs; use Edit a copy for manual changes."
                         datasets={datasets}
                         selectedDatasetId={selectedDatasetId}
                         onSelectDatasetId={setSelectedDatasetId}
@@ -198,28 +180,11 @@ const PairedTTestPage = ({
                 }
             >
 
-                <Card darkMode={darkMode}>
-                    <div className="flex items-start gap-4 mb-6">
-                        <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                            <Calculator size={20} />
-                        </div>
-                        <div>
-                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Paired-samples calculator</h3>
-                            <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
-                            </p>
-                        </div>
-                    </div>
-
-                    <PairedTTestVisual
-                        darkMode={darkMode}
-                        onTutorUpdate={onTutorUpdate || noop}
-                        onStatsUpdate={onStatsChange}
-                        mode="calculator"
-                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
-                    />
-                </Card>
+                <PairedTTestCalculator input={input} darkMode={darkMode} onStatsUpdate={onStatsChange}
+                    datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
+                    datasetName={selectedDataset?.name} rowReview={datasetSetup.rowReview} />
             </AnalysisCalculatorWorkspace>
+            </div>
         );
     }
 

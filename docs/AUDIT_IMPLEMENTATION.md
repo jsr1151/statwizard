@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: paired t-test calculator recovery and matching
+
+Paired t-tests now recover exact matched rows and separate summary profiles, labels/order, saved variable choices, hypothesis, alpha, and interval settings. Whole-row exclusions prevent missing values from shifting pair alignment. Saved pairs follow current library edits and offer **Edit a copy**. The calculator uses Student t confidence bounds and requires a valid within-pair correlation for summaries. Reports include comparison order, confidence level, excluded-row counts, and analyzed pairs.
+
+Validation: 710 tests in 57 files passed, including 57 new cases and eight independent R comparisons. Lint, build, documentation, power fixtures, and bundle checks passed. All 20 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](PAIRED_DRAFT_VALIDATION.md). The legacy paired lesson interval/reporting still needs parity with the calculator; ANOVA draft recovery remains open.
+
 ## September 12: independent-samples t-test calculator recovery
 
 Independent-samples t-tests now recover both raw/summary groups, labels and order, source-specific saved roles, pooled/Welch method, hypothesis, alpha, and interval settings. Saved values follow current library edits and offer an explicit **Edit a copy** action. Invalid and degenerate inputs block stale results. Group order and excluded entries are visible, and the copyable report includes both groups and inference settings.

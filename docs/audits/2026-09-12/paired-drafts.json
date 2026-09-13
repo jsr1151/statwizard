@@ -1,0 +1,120 @@
+{
+  "checks": [
+    {
+      "label": "raw-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/excluded-pairs",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/copy-fallback",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/blank-correlation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/constant-differences",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/edited-copy",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/cleared-paired-variable",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "exact raw rows, labels and inference settings recover",
+    "missing, invalid and extra values exclude complete rows with original line numbers",
+    "raw swaps preserve gaps and directional alternatives",
+    "summary values, correlation, labels and order recover independently of raw pairs",
+    "blank correlation and constant differences block stale results",
+    "results focus and selectable report include pair order and exclusions",
+    "removal cancellation restores focus",
+    "failed save preserves previous draft",
+    "fresh Data Manager launch overrides old draft/settings",
+    "saved complete pairs are read-only and condition order recovers",
+    "manual copies preserve saved pairs and summaries",
+    "cleared saved paired variables stay unselected",
+    "removal keeps current inputs open and restores example on reload"
+  ]
+}
