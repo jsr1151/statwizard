@@ -428,7 +428,7 @@ export const STEPS = {
         id: 'res_one_way_anova',
         type: 'result',
         title: "One-Way ANOVA",
-        content: "Compares means of 3+ independent groups.",
+        content: "Compares means of two or more independent groups.",
         details: ["Between vs Within Variance."],
         formulaId: 'anova',
         visualType: 'anova',

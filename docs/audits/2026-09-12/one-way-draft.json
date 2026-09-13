@@ -1,0 +1,119 @@
+{
+  "checks": [
+    {
+      "label": "raw-restored-comparisons/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored-comparisons/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored-comparisons/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored-comparisons/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored-comparisons/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "raw-restored-comparisons/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/copy-fallback",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/empty-group",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/summary-profile",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/fractional-sample-size",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/fractional-F",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/invalid-F",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/edited-copy",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/cleared-outcome",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "raw group precision, labels, group count, alpha and comparisons recover",
+    "raw, summary and supplied F profiles remain separate",
+    "results focus and selectable report fallback",
+    "empty group and fractional summary size block stale results",
+    "fractional supplied F df recover; invalid F blocks results",
+    "removal cancellation restores focus",
+    "failed save preserves previous draft",
+    "fresh Data Manager launch overrides old draft/settings",
+    "saved values are read-only and settings recover",
+    "Edit a copy preserves saved values and recovers independently",
+    "cleared saved outcome stays unselected",
+    "draft removal keeps current inputs open and restores example on reload"
+  ]
+}

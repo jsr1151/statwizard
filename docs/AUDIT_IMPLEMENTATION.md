@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: one-way ANOVA calculator recovery
+
+One-way ANOVA now recovers separate raw, summary, and supplied-F profiles, group labels/counts, saved dataset roles, alpha, and pairwise comparison settings. Current saved data offers an explicit manual copy. Invalid groups block stale results. The dedicated calculator adds a report, an ANOVA table, full-precision raw exclusions, and Bonferroni comparisons using residual degrees of freedom and the selected alpha.
+
+Validation: 782 tests in 60 files passed, including 49 new cases and independent base R references for eight ANOVAs/comparison families and four supplied-F cases. Lint, build, documentation, power fixtures, and bundle checks passed. All 20 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](ONE_WAY_DRAFT_VALIDATION.md). Next: one-way lesson inference/report parity, then remaining ANOVA-family drafts.
+
 ## September 12: paired lesson inference and report parity
 
 The paired lesson now uses the calculator's validated inference and report formatting, including selected confidence levels and Student t bounds. Invalid lesson inputs suppress results instead of being coerced. Summary plots follow the current summaries; individual observations are shown only from explicit example pairs. Plot controls, report copying, tutor interactions, and condition order have consistent behavior, while calculator drafts remain untouched.

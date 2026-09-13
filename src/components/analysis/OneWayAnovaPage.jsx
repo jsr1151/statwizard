@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calculator, Sparkles, Target } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
 import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
@@ -7,7 +7,9 @@ import AnovaVisual from '../visuals/AnovaVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
-import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
+import useOneWayDraft from '../../hooks/useOneWayDraft.js';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
+import OneWayAnovaCalculator from './OneWayAnovaCalculator.jsx';
 import { buildOneWayAnovaDatasetSetup } from '../../utils/analysisDatasetAdapters.js';
 import { getDatasetColumn } from '../../utils/datasetImport.js';
 
@@ -33,32 +35,8 @@ const OneWayAnovaPage = ({
     showValues = false,
 }) => {
     const { datasets } = useDatasetLibraryContext();
-    const {
-        dataSource,
-        setDataSource,
-        launchPayload,
-        selectedDataset,
-        selectedDatasetId,
-        setSelectedDatasetId,
-    } = useAnalysisDatasetSelection({
-        analysisId: 'one_way_anova',
-        datasets,
-    });
-    const [roleSelection, setRoleSelection] = useState({
-        outcome: '',
-        grouping: '',
-    });
-
-    useEffect(() => {
-        if (!selectedDataset || launchPayload?.datasetId !== selectedDataset.id) {
-            return;
-        }
-
-        setRoleSelection((previous) => ({
-            outcome: launchPayload?.outcome || previous.outcome,
-            grouping: launchPayload?.grouping || previous.grouping,
-        }));
-    }, [launchPayload, selectedDataset]);
+    const input = useOneWayDraft(datasets);
+    const { dataSource, setDataSource, selectedDataset, selectedDatasetId, setSelectedDatasetId, roleSelection, setRoleSelection } = input;
 
     const roles = useMemo(() => ([
         {
@@ -170,7 +148,11 @@ const OneWayAnovaPage = ({
 
     if (section === 'calculator') {
         return (
+            <div className="space-y-5">
+            <CalculatorDraftNotice draft={input.draft} darkMode={darkMode} scope="Recovery includes separate raw and summary groups, labels, supplied F inputs, saved dataset and variable choices, significance level, and pairwise comparison settings." />
             <AnalysisCalculatorWorkspace
+                manualLabel={input.value.inputMode === 'f' ? 'Supplied F statistic' : input.value[input.value.inputMode].source}
+                sourceHelp="Switching sources preserves your manual inputs. Saved data follows the current library; use Edit a copy to change its values."
                 darkMode={darkMode}
                 dataSource={dataSource}
                 onSourceChange={setDataSource}
@@ -181,7 +163,7 @@ const OneWayAnovaPage = ({
                 savedWorkspace={
                     <AnalysisDatasetWorkspace
                         darkMode={darkMode}
-                        description="Choose a saved dataset, map one numeric dependent variable plus one categorical grouping variable, and the calculator below will preload those groups immediately."
+                        description="Choose a numeric dependent variable and a categorical grouping variable. The calculator reads current saved values; use Edit a copy for manual changes."
                         datasets={datasets}
                         selectedDatasetId={selectedDatasetId}
                         onSelectDatasetId={setSelectedDatasetId}
@@ -197,29 +179,11 @@ const OneWayAnovaPage = ({
                 }
             >
 
-                <Card darkMode={darkMode}>
-                    <div className="flex items-start gap-4 mb-6">
-                        <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                            <Calculator size={20} />
-                        </div>
-                        <div>
-                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>One-way ANOVA calculator</h3>
-                            <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
-                            </p>
-                        </div>
-                    </div>
-
-                    <AnovaVisual
-                        darkMode={darkMode}
-                        showValues={showValues}
-                        onTutorUpdate={onTutorUpdate || noop}
-                        onStatsUpdate={onStatsChange}
-                        tutor={tutor}
-                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
-                    />
-                </Card>
+                <OneWayAnovaCalculator input={input} darkMode={darkMode} onStatsUpdate={onStatsChange}
+                    datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
+                    datasetName={selectedDataset?.name} rowReview={datasetSetup.rowReview} />
             </AnalysisCalculatorWorkspace>
+            </div>
         );
     }
 

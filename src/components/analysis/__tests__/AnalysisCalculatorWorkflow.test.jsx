@@ -21,6 +21,7 @@ vi.mock('../../visuals/IndependentTTestVisual.jsx', () => ({ default: props => v
 vi.mock('../PairedTTestCalculator.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/PairedTTestVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/AnovaVisual.jsx', () => ({ default: props => visual(props) }));
+vi.mock('../OneWayAnovaCalculator.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/FactorialAnovaVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/AncovaVisual.jsx', () => ({ default: props => visual(props) }));
 
@@ -50,7 +51,7 @@ const study = () => buildDatasetFromGrid({
 it.each(pages)('%s starts with clearly identified examples and hides saved-data setup until requested', async (analysisId, Page) => {
     await mount(Page);
     expect(calculator().textContent).toBe('Example values');
-    expect(container.textContent).toContain(analysisId === 'paired_t_test' ? 'Example paired observations' : 'Example starting values.');
+    expect(container.textContent).toContain(analysisId === 'paired_t_test' ? 'Example paired observations' : analysisId === 'one_way_anova' ? 'Example group observations' : 'Example starting values.');
     expect(container.querySelector('[aria-label="Saved dataset setup"]')).toBeNull();
     await click('Go to calculator'); expect(document.activeElement.getAttribute('aria-label')).toBe('Active calculator');
     await click('Saved dataset'); expect(calculator()).toBeNull();
