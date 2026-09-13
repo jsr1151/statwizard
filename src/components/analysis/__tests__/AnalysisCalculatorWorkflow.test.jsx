@@ -16,6 +16,7 @@ vi.mock('../../../hooks/useDatasetLibrary.js', () => ({ useDatasetLibraryContext
 const visual = ({ datasetSeed }) => { state.renders.push(datasetSeed); return <output data-testid="calculator">{datasetSeed ? JSON.stringify(datasetSeed) : 'Example values'}</output>; };
 vi.mock('../../visuals/NormalDistributionVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../OneSampleTTestCalculator.jsx', () => ({ default: props => visual(props) }));
+vi.mock('../IndependentTTestCalculator.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/IndependentTTestVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/PairedTTestVisual.jsx', () => ({ default: props => visual(props) }));
 vi.mock('../../visuals/AnovaVisual.jsx', () => ({ default: props => visual(props) }));

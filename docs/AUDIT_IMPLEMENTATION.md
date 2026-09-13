@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: independent-samples t-test calculator recovery
+
+Independent-samples t-tests now recover both raw/summary groups, labels and order, source-specific saved roles, pooled/Welch method, hypothesis, alpha, and interval settings. Saved values follow current library edits and offer an explicit **Edit a copy** action. Invalid and degenerate inputs block stale results. Group order and excluded entries are visible, and the copyable report includes both groups and inference settings.
+
+Validation: 653 tests in 55 files passed, including 43 new cases and eight independent R comparisons. Lint, production build, documentation, power fixtures, and bundle checks passed. All 19 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](INDEPENDENT_DRAFT_VALIDATION.md). Paired t-test and ANOVA draft recovery remain open.
+
 ## September 12: one-sample t-test calculator recovery
 
 The one-sample calculator now restores separate raw/summary inputs, source and saved sample-variable choices, null mean, alpha, hypothesis, and interval settings. Saved values follow the current library and offer an explicit **Edit a copy** action. Invalid inputs block stale results, raw calculations retain full precision, exclusions are visible, and a copyable report has a selectable fallback.

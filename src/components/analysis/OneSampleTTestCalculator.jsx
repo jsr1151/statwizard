@@ -3,7 +3,7 @@ import { calculateOneSampleCalculator } from '../../stats/oneSampleCalculator.js
 import { formatStatistic, formatPValue } from '../../utils/statFormatters.js';
 import Card from './AnalysisCard.jsx';
 import MetricTile from './AnalysisMetricTile.jsx';
-import OneSampleTPlot from '../visuals/OneSampleTPlot.jsx';
+import TTestNullPlot from '../common/TTestNullPlot.jsx';
 import DescriptiveDataSummary from '../descriptive/DescriptiveDataSummary.jsx';
 import CopyResultsButton from '../common/CopyResultsButton.jsx';
 
@@ -86,7 +86,7 @@ export default function OneSampleTTestCalculator({ input, datasetSeed, datasetNa
                     <p className="mt-2">{result.isSignificant ? 'Reject the null hypothesis' : 'Do not reject the null hypothesis'} at alpha = {value.alpha}.</p>
                     <p className="mt-2">{Math.round((1 - value.alpha) * 100)}% {value.ciType} confidence interval for the population mean: [{formatBound(result.confidenceInterval.lower, 4)}, {formatBound(result.confidenceInterval.upper, 4)}].</p>
                     <p className="mt-2 text-sm">Check independence, the sampling process, and the distribution of the observations before reporting this result. Failing to reject does not establish equality.</p>
-                    <OneSampleTPlot result={result} darkMode={darkMode} />
+                    <TTestNullPlot result={result} darkMode={darkMode} />
                     <CopyResultsButton text={report} label="Copy test report" darkMode={darkMode} />
                 </Card>
             </>}

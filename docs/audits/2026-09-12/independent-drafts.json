@@ -1,0 +1,115 @@
+{
+  "checks": [
+    {
+      "label": "summary-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "summary-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/raw-exclusions",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/swapped-groups",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/copy-fallback",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/empty-group",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/fractional-sample-size",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/remove-confirmation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/save-failure",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "saved-restored/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/edited-copy",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/cleared-outcome",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "both summaries and inference settings recover",
+    "raw values, unequal group sizes and exclusions recover without rounding",
+    "swapping retains group labels, data and hypothesis",
+    "raw and summary inputs remain separate",
+    "results focus and selectable copy fallback",
+    "empty raw group and fractional sample size block stale results",
+    "removal cancellation restores focus",
+    "failed save preserves previous draft",
+    "fresh Data Manager launch overrides old draft/settings",
+    "saved values are read-only and group order recovers",
+    "Edit a copy preserves saved values and recovers independently",
+    "cleared saved outcome stays unselected",
+    "draft removal keeps current inputs open and restores example on reload"
+  ]
+}

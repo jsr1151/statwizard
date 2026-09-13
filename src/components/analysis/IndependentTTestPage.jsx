@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calculator, Sparkles, Target } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Sparkles, Target } from 'lucide-react';
 import AnalysisAssumptionsSection from './AnalysisAssumptionsSection.jsx';
 import AnalysisDatasetWorkspace from './AnalysisDatasetWorkspace.jsx';
 import AnalysisCalculatorWorkspace from './AnalysisCalculatorWorkspace.jsx';
@@ -7,7 +7,9 @@ import IndependentTTestVisual from '../visuals/IndependentTTestVisual.jsx';
 import PowerAnalysisTab from '../power/PowerAnalysisTab.jsx';
 import EffectSizePanel from '../power/EffectSizePanel.jsx';
 import { useDatasetLibraryContext } from '../../hooks/useDatasetLibrary.js';
-import useAnalysisDatasetSelection from '../../hooks/useAnalysisDatasetSelection.js';
+import useIndependentDraft from '../../hooks/useIndependentDraft.js';
+import CalculatorDraftNotice from '../common/CalculatorDraftNotice.jsx';
+import IndependentTTestCalculator from './IndependentTTestCalculator.jsx';
 import {
     buildIndependentTTestDatasetSetup,
 } from '../../utils/analysisDatasetAdapters.js';
@@ -33,36 +35,8 @@ const IndependentTTestPage = ({
     onTutorUpdate,
 }) => {
     const { datasets } = useDatasetLibraryContext();
-    const {
-        dataSource,
-        setDataSource,
-        launchPayload,
-        selectedDataset,
-        selectedDatasetId,
-        setSelectedDatasetId,
-    } = useAnalysisDatasetSelection({
-        analysisId: 'independent_t_test',
-        datasets,
-    });
-    const [roleSelection, setRoleSelection] = useState({
-        outcome: '',
-        grouping: '',
-    });
-
-    useEffect(() => {
-        if (!selectedDataset) {
-            return;
-        }
-
-        if (launchPayload?.datasetId !== selectedDataset.id) {
-            return;
-        }
-
-        setRoleSelection((previous) => ({
-            outcome: launchPayload?.outcome || previous.outcome,
-            grouping: launchPayload?.grouping || previous.grouping,
-        }));
-    }, [launchPayload, selectedDataset]);
+    const input = useIndependentDraft(datasets);
+    const { dataSource, setDataSource, selectedDataset, selectedDatasetId, setSelectedDatasetId, roleSelection, setRoleSelection } = input;
 
     const roles = useMemo(() => ([
         {
@@ -174,7 +148,11 @@ const IndependentTTestPage = ({
 
     if (section === 'calculator') {
         return (
+            <div className="space-y-5">
+            <CalculatorDraftNotice draft={input.draft} darkMode={darkMode} scope="Recovery includes both raw and summary groups, labels and group order, saved dataset and variable choices, test method, significance level, hypothesis, and confidence interval settings." />
             <AnalysisCalculatorWorkspace
+                manualLabel={input.value.source}
+                sourceHelp="Switching sources preserves your manual inputs. Saved data follows the current library; use Edit a copy to change its values."
                 darkMode={darkMode}
                 dataSource={dataSource}
                 onSourceChange={setDataSource}
@@ -185,7 +163,7 @@ const IndependentTTestPage = ({
                 savedWorkspace={
                     <AnalysisDatasetWorkspace
                         darkMode={darkMode}
-                        description="Choose a saved dataset, map one numeric outcome plus one 2-level grouping variable, and the calculator below will preload those values immediately."
+                        description="Choose a numeric outcome and a grouping variable with two levels. The calculator reads current saved values; use Edit a copy for manual changes."
                         datasets={datasets}
                         selectedDatasetId={selectedDatasetId}
                         onSelectDatasetId={setSelectedDatasetId}
@@ -201,28 +179,11 @@ const IndependentTTestPage = ({
                 }
             >
 
-                <Card darkMode={darkMode}>
-                    <div className="flex items-start gap-4 mb-6">
-                        <div className={`p-3 rounded-xl ${darkMode ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
-                            <Calculator size={20} />
-                        </div>
-                        <div>
-                            <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>Independent-samples calculator</h3>
-                            <p className={`mt-2 text-sm max-w-3xl ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Inspect the current inputs and results below. Check the Assumptions section before reporting your findings.
-                            </p>
-                        </div>
-                    </div>
-
-                    <IndependentTTestVisual
-                        darkMode={darkMode}
-                        onTutorUpdate={onTutorUpdate || noop}
-                        onStatsUpdate={onStatsChange}
-                        mode="calculator"
-                        datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
-                    />
-                </Card>
+                <IndependentTTestCalculator input={input} darkMode={darkMode} onStatsUpdate={onStatsChange}
+                    datasetSeed={dataSource === 'saved' ? datasetSetup.seed : undefined}
+                    datasetName={selectedDataset?.name} rowReview={datasetSetup.rowReview} />
             </AnalysisCalculatorWorkspace>
+            </div>
         );
     }
 

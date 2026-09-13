@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { formatStatistic } from '../../utils/statFormatters.js';
 
-export default function OneSampleTPlot({ result, darkMode }) {
+export default function TTestNullPlot({ result, darkMode, title = 'One-sample t-test null distribution' }) {
     const id = useId();
     const range = Math.max(4, Math.min(30, Math.abs(result.criticalValue) * 1.2), Math.min(30, Math.abs(result.t) * 1.1));
     const x = value => 35 + ((value + range) / (2 * range)) * 530;
@@ -12,7 +12,7 @@ export default function OneSampleTPlot({ result, darkMode }) {
     const observed = Math.max(-range, Math.min(range, result.t));
     return <figure className="space-y-2">
         <svg viewBox="0 0 600 210" role="img" aria-labelledby={`${id}-title ${id}-desc`} className="w-full">
-            <title id={`${id}-title`}>One-sample t-test null distribution</title>
+            <title id={`${id}-title`}>{title}</title>
             <desc id={`${id}-desc`}>Student t distribution with {result.df} degrees of freedom. The solid marker is the observed t statistic, {formatStatistic(result.t, 3)}. Dashed markers indicate the rejection boundary.</desc>
             <line x1="35" x2="565" y1="160" y2="160" stroke={darkMode ? '#94a3b8' : '#64748b'} />
             <path d={path} fill="none" stroke={darkMode ? '#a5b4fc' : '#4338ca'} strokeWidth="3" />
