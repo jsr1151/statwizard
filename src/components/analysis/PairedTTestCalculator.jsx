@@ -6,7 +6,7 @@ import MetricTile from './AnalysisMetricTile.jsx';
 import TTestNullPlot from '../common/TTestNullPlot.jsx';
 import PairedInputReview from './PairedInputReview.jsx';
 import CopyResultsButton from '../common/CopyResultsButton.jsx';
-const bound = value => value === Infinity ? 'Infinity' : value === -Infinity ? '-Infinity' : formatStatistic(value, 6);
+import { buildPairedReport, formatPairedInterval } from '../../stats/pairedReport.js';
 export default function PairedTTestCalculator({ input, datasetSeed, datasetName, rowReview, darkMode, onStatsUpdate }) {
     const { value, patch } = input;
     const saved = !!datasetSeed;
@@ -20,18 +20,7 @@ export default function PairedTTestCalculator({ input, datasetSeed, datasetName,
     const results = useRef(null);
     const field = `mt-2 w-full min-w-0 rounded-xl border p-3 ${darkMode ? 'bg-slate-950 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-900'}`;
     const button = `rounded-xl border px-3 py-2 text-sm font-semibold ${darkMode ? 'border-slate-700 text-slate-200' : 'border-slate-300 text-slate-800'}`;
-    const report = result.ok ? [
-        `Paired-samples t-test. Source: ${source}.`,
-        `Comparison: Condition 1 minus Condition 2 (${labels[0]} minus ${labels[1]}). Null mean difference = 0.`,
-        `Complete pairs = ${result.n}; mean difference = ${formatStatistic(result.dBar, 6)}; sample SD of differences = ${formatStatistic(result.sd, 6)}.`,
-        `Condition 1: mean = ${formatStatistic(result.mean1, 6)}, sample SD = ${formatStatistic(result.sd1, 6)}. Condition 2: mean = ${formatStatistic(result.mean2, 6)}, sample SD = ${formatStatistic(result.sd2, 6)}.`,
-        `Within-pair correlation = ${result.r === null ? 'undefined (constant condition)' : formatStatistic(result.r, 6)}.`,
-        `Alternative: mean difference ${value.tails === 2 ? 'differs from' : value.direction === 'greater' ? 'is greater than' : 'is less than'} 0; alpha = ${value.alpha}.`,
-        `t(${result.df}) = ${formatStatistic(result.t, 6)}, p ${formatPValue(result.p)}; Cohen's dz = ${formatStatistic(result.dz, 6)} (sample SD of differences).`,
-        `${Math.round((1-value.alpha)*100)}% ${value.ciType} confidence interval for the population mean difference: [${bound(result.ciLower)}, ${bound(result.ciUpper)}].`,
-        saved ? `${rowReview?.dropped || 0} saved rows excluded.` : inputMode === 'raw' ? `${result.review.dropped} input rows excluded.` : 'Input: paired summary statistics.',
-        inputMode === 'raw' ? `Analyzed pairs (Condition 1, Condition 2):\n${result.review.pairs.map(pair => `${pair.first},${pair.second}`).join('\n')}` : '',
-    ].filter(Boolean).join('\n') : '';
+    const report = buildPairedReport({ result, source, labels, inputMode, savedExcluded: saved ? rowReview?.dropped || 0 : undefined });
     return <div className="space-y-5 min-w-0 [overflow-wrap:anywhere]">
         <Card darkMode={darkMode}>
             <h3 className="text-xl font-bold">Paired-samples t-test inputs</h3>
@@ -69,7 +58,7 @@ export default function PairedTTestCalculator({ input, datasetSeed, datasetName,
                 <Card darkMode={darkMode}>
                     <h3 className="text-lg font-bold">Paired test result</h3>
                     <p className="mt-2">{result.isSignificant ? 'Reject the null hypothesis' : 'Do not reject the null hypothesis'} at alpha = {value.alpha}.</p>
-                    <p className="mt-2">{Math.round((1-value.alpha)*100)}% {value.ciType} confidence interval for the population mean difference (Condition 1 minus Condition 2): [{bound(result.ciLower)}, {bound(result.ciUpper)}].</p>
+                    <p className="mt-2">{formatPairedInterval(result)}</p>
                     <p className="mt-2 text-sm">Cohen's dz uses the sample SD of paired differences. Check that observations are correctly matched, pairs are independent, and the differences have an appropriate distribution. Failing to reject does not establish equality.</p>
                     <TTestNullPlot title="Paired-samples t-test null distribution" result={result} darkMode={darkMode} />
                     <CopyResultsButton text={report} label="Copy test report" darkMode={darkMode} />

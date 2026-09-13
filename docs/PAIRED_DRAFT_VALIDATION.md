@@ -30,6 +30,6 @@ Results have a compact phone metric layout, an accessible null-distribution plot
 
 ## Remaining scope
 
-The legacy paired lesson visualizer still has a simplified interval calculation and hardcoded confidence labels; migrate its inference/reporting to the shared calculation in a follow-up. This release replaces the calculator path only. Lesson, power, and effect-size settings are not saved. ANOVA draft recovery, broader report/export consistency, and manual-input exclusion review remain open. Descriptive drafts still save input/source information only.
+The subsequent [paired lesson update](PAIRED_LESSON_VALIDATION.md) now uses the shared calculation and report formatting. This document records the earlier calculator release. Lesson, power, and effect-size settings are not saved. ANOVA draft recovery, broader report/export consistency, and manual-input exclusion review remain open. Descriptive drafts still save input/source information only.
 
 Drafts stay in the current browser/device, disappear when site data is cleared, and do not synchronize across tabs. This increment does not independently validate every statistical engine or establish complete screen-reader conformance.

@@ -2,11 +2,17 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 12: paired lesson inference and report parity
+
+The paired lesson now uses the calculator's validated inference and report formatting, including selected confidence levels and Student t bounds. Invalid lesson inputs suppress results instead of being coerced. Summary plots follow the current summaries; individual observations are shown only from explicit example pairs. Plot controls, report copying, tutor interactions, and condition order have consistent behavior, while calculator drafts remain untouched.
+
+Validation: 733 tests in 58 files passed, including 23 new lesson cases and eight R comparisons through lesson controls. Lint, build, documentation, power fixtures, and bundle checks passed. All 20 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](PAIRED_LESSON_VALIDATION.md). Next: ANOVA draft recovery.
+
 ## September 12: paired t-test calculator recovery and matching
 
 Paired t-tests now recover exact matched rows and separate summary profiles, labels/order, saved variable choices, hypothesis, alpha, and interval settings. Whole-row exclusions prevent missing values from shifting pair alignment. Saved pairs follow current library edits and offer **Edit a copy**. The calculator uses Student t confidence bounds and requires a valid within-pair correlation for summaries. Reports include comparison order, confidence level, excluded-row counts, and analyzed pairs.
 
-Validation: 710 tests in 57 files passed, including 57 new cases and eight independent R comparisons. Lint, build, documentation, power fixtures, and bundle checks passed. All 20 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](PAIRED_DRAFT_VALIDATION.md). The legacy paired lesson interval/reporting still needs parity with the calculator; ANOVA draft recovery remains open.
+Validation: 710 tests in 57 files passed, including 57 new cases and eight independent R comparisons. Lint, build, documentation, power fixtures, and bundle checks passed. All 20 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](PAIRED_DRAFT_VALIDATION.md). Paired lesson parity was completed in the subsequent increment above; ANOVA draft recovery remains open.
 
 ## September 12: independent-samples t-test calculator recovery
 

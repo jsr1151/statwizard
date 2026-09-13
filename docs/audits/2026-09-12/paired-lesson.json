@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "label": "lesson-summary/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-summary/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-summary/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-summary/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-summary/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-summary/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/copy-fallback",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/blank-correlation",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/constant-differences",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/no-invented-pairs",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/summary-bars/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/summary-bars/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/invalid-axis-range",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/cropped-axis",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "example-pairs/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "example-pairs/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "example-pairs/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "example-pairs/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/example-differences",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/calculator-report-parity",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "99% one-sided interval and report match calculator inference",
+    "copy fallback matches visible lesson report",
+    "blank correlation and constant differences suppress inference",
+    "summary data cannot produce invented individual observations",
+    "mean plots follow current summary values",
+    "error bar descriptions identify SD/SE rather than paired CI",
+    "custom plot limits validate and clip marks without changing inference",
+    "custom axis labels persist through plot-type changes",
+    "real example pairs retain order across swaps and views",
+    "calculator draft remains unchanged by lesson interactions",
+    "recovered calculator report equals lesson report except source"
+  ]
+}

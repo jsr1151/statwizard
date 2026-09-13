@@ -408,7 +408,7 @@ export const TUTOR_SCRIPTS = {
                 whatChanged: `The mean difference is now ${next.dBar.toFixed(2)} units.`,
                 why: "The paired t-score represents how many standard errors this average change is from zero (the null hypothesis).",
                 math: `t = \\bar{d} / (s_d / √n) = ${next.t.toFixed(3)}`,
-                tryNext: "Drag the marker to see how much 'average change' is needed to reach significance."
+                tryNext: "Change a condition mean to see how the average difference moves the observed t statistic."
             })
         },
         {
@@ -420,7 +420,7 @@ export const TUTOR_SCRIPTS = {
                 whatChanged: `The p-value (${next.p.toFixed(4)}) is below α (${next.alpha}).`,
                 why: "The consistent change observed across your pairs is very unlikely to be due to chance. There is likely a real effect of the treatment/condition.",
                 math: "p < α",
-                tryNext: "Switch to 'Paired Lines' view to see how many individuals improved vs. declined."
+                tryNext: "Choose Example pairs and the Paired view to inspect individual changes; summary statistics do not determine individual observations."
             })
         }
     ]

@@ -1,7 +1,4 @@
-import React, { useMemo } from 'react';
-
-const parseRawValues = (rawText = '') =>
-    rawText.replace(/,/g, ' ').split(/\s+/).map((value) => parseFloat(value)).filter((value) => !Number.isNaN(value));
+import React, { useId, useMemo } from 'react';
 
 const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
     const {
@@ -17,8 +14,8 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
     } = settings;
 
     const rawPairs = useMemo(() => {
-        const firstValues = stats.raw1?.length ? stats.raw1 : parseRawValues(group1.raw);
-        const secondValues = stats.raw2?.length ? stats.raw2 : parseRawValues(group2.raw);
+        const firstValues = stats.raw1 || [];
+        const secondValues = stats.raw2 || [];
         const pairCount = Math.min(firstValues.length, secondValues.length);
 
         return Array.from({ length: pairCount }, (_, index) => ({
@@ -26,8 +23,10 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
             second: secondValues[index],
             difference: firstValues[index] - secondValues[index],
         })).filter((pair) => Number.isFinite(pair.first) && Number.isFinite(pair.second));
-    }, [group1.raw, group2.raw, stats.raw1, stats.raw2]);
+    }, [stats.raw1, stats.raw2]);
 
+    const id = useId();
+    const description = `${stats.n} complete pairs. Condition 1 (${group1.name}): mean ${stats.mean1.toFixed(3)}. Condition 2 (${group2.name}): mean ${stats.mean2.toFixed(3)}. Mean difference, Condition 1 minus Condition 2: ${stats.dBar.toFixed(3)}.`;
     const margin = { top: 34, right: 34, bottom: 56, left: 66 };
     const width = 520;
     const height = 300;
@@ -60,8 +59,8 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
     const autoYMin = type === 'change'
         ? dataMin - (span * 0.18)
         : (dataMin >= 0 ? 0 : dataMin - (span * 0.12));
-    const effectiveYMin = yMin !== null ? yMin : autoYMin;
-    const effectiveYMax = yMax !== null ? yMax : dataMax + (span * 0.18);
+    const effectiveYMin = yMin !== null ? yMin : Math.min(autoYMin, yMax !== null ? yMax - 1 : Infinity);
+    const effectiveYMax = yMax !== null ? yMax : Math.max(dataMax + (span * 0.18), effectiveYMin + 1);
     const yToPos = (value) => margin.top + plotHeight - ((value - effectiveYMin) / Math.max(1e-9, effectiveYMax - effectiveYMin)) * plotHeight;
     const x1 = margin.left + plotWidth * 0.32;
     const x2 = margin.left + plotWidth * 0.68;
@@ -86,7 +85,9 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
 
     return (
         <div className={`w-full h-full flex items-center justify-center p-4 ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible font-sans">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible font-sans" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
+                <title id={`${id}-title`}>Paired {type === 'bar' ? 'condition means with error bars' : type === 'line' ? 'mean trend' : type === 'change' ? 'differences' : 'observations'}</title>
+                <desc id={`${id}-desc`}>{description}</desc>
                 {showGrid && tickValues.map((tick) => (
                     <line key={`grid-${tick}`} x1={margin.left} y1={yToPos(tick)} x2={margin.left + plotWidth} y2={yToPos(tick)} stroke={darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)'} />
                 ))}
@@ -103,6 +104,8 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
 
                 <text x={24} y={margin.top + plotHeight / 2} textAnchor="middle" fontSize="12" fontWeight="800" transform={`rotate(-90, 24, ${margin.top + plotHeight / 2})`} fill={darkMode ? '#94a3b8' : '#475569'}>{yLabel}</text>
 
+                <defs><clipPath id={`${id}-clip`}><rect x={margin.left} y={margin.top} width={plotWidth} height={plotHeight} /></clipPath></defs>
+                <g clipPath={`url(#${id}-clip)`}>
                 {type === 'bar' && (
                     <>
                         {[{ x: x1, mean: stats.mean1, error: c1Error, color: condition1Color }, { x: x2, mean: stats.mean2, error: c2Error, color: condition2Color }].map((bar, index) => (
@@ -126,7 +129,7 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
                     <>
                         <line x1={x1} y1={yToPos(stats.mean1)} x2={x2} y2={yToPos(stats.mean2)} stroke={stats.mean2 >= stats.mean1 ? '#22c55e' : '#f97316'} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
                         <text x={(x1 + x2) / 2} y={lineLabelY} textAnchor="middle" fontSize="10" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#475569'}>
-                            C2 - C1 = {(stats.mean2 - stats.mean1).toFixed(2)}
+                            C1 - C2 = {stats.dBar.toFixed(2)}
                         </text>
                     </>
                 )}
@@ -148,6 +151,7 @@ const PairedTTestPlots = ({ stats, group1, group2, settings, darkMode }) => {
                     </>
                 )}
 
+                </g>
                 {type !== 'change' ? (
                     <>
                         <text x={x1} y={margin.top + plotHeight + 22} textAnchor="middle" fontSize="11" fontWeight="800" fill={darkMode ? '#cbd5e1' : '#0f172a'}>{group1.name || 'Condition 1'}</text>
