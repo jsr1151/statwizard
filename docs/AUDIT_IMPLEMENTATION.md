@@ -2,6 +2,12 @@
 
 This tracks implementation following the [September 11 site audit](SITE_AUDIT_2026-09-11.md). The audit is a historical record of the previously deployed version; the items below describe subsequent changes.
 
+## September 13: one-way ANOVA lesson parity
+
+The one-way lesson now shares validated calculator inputs, inference, tables, Bonferroni comparisons, and reports. Teaching plots distinguish observed values from summaries, support valid custom ranges and keyboard controls, and explain variance decomposition using current results. The active app report builder follows the selected alpha and handles supplied F and invalid inputs safely. Lesson edits leave calculator drafts unchanged.
+
+Validation: 822 tests in 63 files passed, including 40 new cases and 12 R reference cases through lesson controls. Lint, build, documentation, power fixtures, and bundle checks passed. All 23 production-browser accessibility/overflow checks passed without application errors. See [scope and validation](ANOVA_LESSON_VALIDATION.md). Next: factorial ANOVA draft recovery, followed by ANCOVA and repeated measures.
+
 ## September 12: one-way ANOVA calculator recovery
 
 One-way ANOVA now recovers separate raw, summary, and supplied-F profiles, group labels/counts, saved dataset roles, alpha, and pairwise comparison settings. Current saved data offers an explicit manual copy. Invalid groups block stale results. The dedicated calculator adds a report, an ANOVA table, full-precision raw exclusions, and Bonferroni comparisons using residual degrees of freedom and the selected alpha.

@@ -64,7 +64,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
         priority: 860,
         type: "enrichment",
         title: "Why use Post-Hocs?",
-        body: "ANOVA can show evidence that at least one mean differs, but it does not identify which groups differ. Post-hoc tests (like Tukey) compare pairs while controlling the overall Type I error rate.",
+        body: "ANOVA can show evidence that at least one mean differs, but it does not identify which groups differ. Here, Bonferroni comparisons use the pooled ANOVA error variance and residual degrees of freedom, with adjusted p-values and confidence intervals for all group pairs.",
         condition: (state) => state.lastAction === 'run_post_hoc',
         buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
@@ -102,7 +102,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
         priority: 820,
         type: "hint",
         title: "Adjusting the F-statistic",
-        body: "As F increases, the shaded right-tail area (the p-value) gets smaller. F is MS_between / MS_within.",
+        body: "As F increases, the upper-tail probability (the p-value) gets smaller. Use the F input or Explore F slider to move the observed marker. For group data, F is MS_between / MS_within.",
         condition: (state) => state.lastAction === 'change_f_calc',
         buttons: [{ label: "Got it", action: "dismiss_session" }]
     },
@@ -142,7 +142,7 @@ export const ANOVA_TUTOR_SCRIPTS = [
         type: "enrichment",
         title: "Significant F-ratio",
         body: "When F is significantly larger than F_crit (and p < alpha), it suggests group differences are larger than expected by random noise.",
-        condition: (state) => state.stats?.p <= (state.stats?.alpha || 0.05),
+        condition: (state) => state.stats?.valid && state.stats.p < state.stats.alpha,
         buttons: [
             { label: "Highlight what changed", action: "highlight_f_drivers" },
             { label: "Got it", action: "dismiss_session" }

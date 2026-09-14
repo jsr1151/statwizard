@@ -9,12 +9,12 @@ import FTestNullPlot from '../common/FTestNullPlot.jsx';
 import DescriptiveDataSummary from '../descriptive/DescriptiveDataSummary.jsx';
 import CopyResultsButton from '../common/CopyResultsButton.jsx';
 
-export default function OneWayAnovaCalculator({ input, datasetSeed, datasetName, rowReview, darkMode, onStatsUpdate }) {
+export default function OneWayAnovaCalculator({ input, datasetSeed, datasetName, rowReview, darkMode, onStatsUpdate, lesson = false, renderPlot }) {
     const { value, patch } = input;
     const saved = !!datasetSeed, inputMode = saved ? 'raw' : value.inputMode;
     const groups = useMemo(() => saved ? oneWaySeedGroups(datasetSeed) : value[inputMode]?.groups || [], [saved, datasetSeed, value, inputMode]);
-    const source = saved ? datasetName : inputMode === 'f' ? 'Supplied F statistic and degrees of freedom' : value[inputMode].source;
-    const result = useMemo(() => calculateOneWayCalculator({ ...value, inputMode, groups }), [value, inputMode, groups]);
+    const source = `${lesson ? 'Lesson: ' : ''}${saved ? datasetName : inputMode === 'f' ? 'Supplied F statistic and degrees of freedom' : value[inputMode].source}`;
+    const result = useMemo(() => ({ ...calculateOneWayCalculator({ ...value, inputMode, groups }), source }), [value, inputMode, groups, source]);
     useEffect(() => { onStatsUpdate?.(result.ok ? result : null); }, [result, onStatsUpdate]);
     const results = useRef(null);
     const field = `mt-2 w-full min-w-0 rounded-xl border p-3 ${darkMode ? 'bg-slate-950 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-900'}`;
@@ -22,7 +22,7 @@ export default function OneWayAnovaCalculator({ input, datasetSeed, datasetName,
     const report = buildOneWayReport({ result, source, excluded: saved ? rowReview?.dropped || 0 : 0 });
     return <div className="space-y-5 min-w-0 [overflow-wrap:anywhere]">
         <Card darkMode={darkMode}>
-            <h3 className="text-xl font-bold">One-way ANOVA inputs</h3>
+            <h3 className="text-xl font-bold">{lesson ? 'One-way ANOVA lesson inputs' : 'One-way ANOVA inputs'}</h3>
             <p className="mt-2 text-sm"><strong>Active source: {source}</strong></p>
             <div className="mt-3 flex flex-wrap gap-2">
                 {saved ? <button type="button" disabled={groups.length > MAX_ANOVA_GROUPS} className={button} onClick={() => input.editCopy(groups, datasetName)}>Edit a copy</button> : <>
@@ -52,7 +52,7 @@ export default function OneWayAnovaCalculator({ input, datasetSeed, datasetName,
             <p className="mt-3 text-sm">This ANOVA assumes independent observations, approximately normal errors, and equal population variances. The omnibus test asks whether at least one population mean differs; it does not identify which groups differ.</p>
             {result.ok && <button type="button" className={`${button} mt-4`} onClick={() => { results.current?.focus(); results.current?.scrollIntoView?.({ block: 'start' }); }}>Go to results</button>}
         </Card>
-        <section ref={results} tabIndex={-1} aria-label="One-way ANOVA results" className="space-y-4 scroll-mt-24">
+        <section ref={results} tabIndex={-1} aria-label={lesson ? 'One-way ANOVA lesson results' : 'One-way ANOVA results'} className="space-y-4 scroll-mt-24">
             {!result.ok ? <div role="status" className={`rounded-xl border p-4 text-sm ${darkMode ? 'border-amber-700 bg-amber-950 text-amber-100' : 'border-amber-300 bg-amber-50 text-amber-900'}`}><p className="font-semibold">Complete the ANOVA inputs</p><ul className="mt-2 list-disc pl-5">{result.errors.map(error => <li key={error}>{error}</li>)}</ul></div> : <>
                 {result.samples && <Card darkMode={darkMode}><h3 className="text-lg font-bold">Analyzed groups</h3>{result.samples.map((sample, i) => <p key={i} className="mt-2">Group {i + 1} ({sample.label}): n = {sample.n}, mean = {number(sample.mean, 4)}, sample SD = {sample.n === 1 ? 'undefined (one observation)' : number(sample.sd, 4)}.</p>)}</Card>}
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[['F statistic', result.F], ['df1', result.df1], ['df2', result.df2], ...(result.samples ? [['Eta squared', result.eta2]] : [])].map(([label, val]) => <MetricTile key={label} darkMode={darkMode} label={label} value={number(val, 4)} />)}<MetricTile darkMode={darkMode} label="p-value" value={formatPValue(result.p)} /></div>
@@ -62,7 +62,7 @@ export default function OneWayAnovaCalculator({ input, datasetSeed, datasetName,
                     <h3 className="text-lg font-bold">Bonferroni pairwise comparisons</h3><p className="mt-2 text-sm">All {result.comparisons.length} pairwise differences use the pooled ANOVA error variance and {result.df2} residual degrees of freedom. Adjusted p-values and {Math.round((1 - value.alpha) * 100)}% familywise confidence intervals account for this entire family of comparisons. Differences are first group minus second group.</p>
                     <div className="mt-3 grid gap-3 lg:grid-cols-2">{result.comparisons.map(pair => <div key={`${pair.first}-${pair.second}`} className={`rounded-xl border p-3 text-sm ${darkMode ? 'border-slate-700' : 'border-slate-300'}`}><h4 className="font-bold">{result.samples[pair.first].label} minus {result.samples[pair.second].label}</h4><p className="mt-2">Difference: {number(pair.difference, 4)}; adjusted p {formatPValue(pair.pAdjusted)}.</p><p className="mt-2">Interval: [{number(pair.lower, 4)}, {number(pair.upper, 4)}]. {pair.significant ? 'Significant' : 'Not significant'} at alpha = {value.alpha}.</p></div>)}</div>
                 </Card>}
-                <Card darkMode={darkMode}><h3 className="text-lg font-bold">{inputMode === 'f' ? 'F test result' : 'One-way ANOVA test result'}</h3><p className="mt-2">{result.isSignificant ? 'Reject the null hypothesis' : 'Do not reject the null hypothesis'} at alpha = {value.alpha}.</p><p className="mt-2 text-sm">Failing to reject does not establish equality. Review the assumptions before reporting.</p><FTestNullPlot result={result} darkMode={darkMode} /><CopyResultsButton text={report} label="Copy ANOVA report" darkMode={darkMode} /></Card>
+                <Card darkMode={darkMode}><h3 className="text-lg font-bold">{inputMode === 'f' ? 'F test result' : 'One-way ANOVA test result'}</h3><p className="mt-2">{result.isSignificant ? 'Reject the null hypothesis' : 'Do not reject the null hypothesis'} at alpha = {value.alpha}.</p><p className="mt-2 text-sm">Failing to reject does not establish equality. Review the assumptions before reporting.</p>{renderPlot ? renderPlot(result) : <FTestNullPlot result={result} darkMode={darkMode} />}<CopyResultsButton text={report} label={lesson ? 'Copy lesson report' : 'Copy ANOVA report'} darkMode={darkMode} /></Card>
             </>}
         </section>
     </div>;

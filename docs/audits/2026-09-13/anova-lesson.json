@@ -1,0 +1,135 @@
+{
+  "checks": [
+    {
+      "label": "lesson-F/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-F/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-F/768/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-F/768/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-F/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "lesson-F/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/tutor-report-dialog",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/open-report-invalid",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/no-groups-from-F",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/calculator-report-parity",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/summary-means",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/summary-bars/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/summary-bars/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/invalid-axis",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/clipped-axis",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/plot-position-and-color",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "observed-negative-groups/1440/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "observed-negative-groups/1440/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "observed-negative-groups/375/true",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "observed-negative-groups/375/false",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/variance-decomposition",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/zero-between-table",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "label": "phone/empty-added-group",
+      "violations": [],
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "workflows": [
+    "supplied F and fractional df use the selected alpha",
+    "native tutor report dialog supports copying, updates, invalidation and Escape",
+    "F alone cannot reconstruct groups or an ANOVA table",
+    "lesson and calculator reports match except source",
+    "summary plots do not invent observations",
+    "SD/SE plot controls and axis limits preserve inference",
+    "custom limits clip marks and labels survive type changes",
+    "group colors and positions are editable",
+    "observed negative values and exclusions are preserved",
+    "variance decomposition and zero between-group SS remain valid",
+    "empty added groups suppress stale results",
+    "tutor navigation and comparison actions respond",
+    "lesson edits and reset leave the calculator draft untouched"
+  ]
+}

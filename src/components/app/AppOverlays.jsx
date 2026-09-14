@@ -1,4 +1,6 @@
-import { lazy } from "react";
+import { lazy, Suspense, useEffect } from "react";
+const TutorExplanationModal = lazy(() => import('../tutor/TutorExplanationModal.jsx'));
+const AnovaReportContent = lazy(() => import('../tutor/AnovaReportContent.jsx'));
 import { X, History, BookOpen } from "lucide-react";
 const AnovaTutorPanel = lazy(() => import('../../components/tutor/AnovaTutorPanel'));
 const FactorialAnovaTutorPanel = lazy(() => import('../../components/tutor/FactorialAnovaTutorPanel'));
@@ -11,6 +13,17 @@ export default function AppOverlays({
         isAnovaActive, setShowEquationValues, showEquationValues, currentStats, currentStepId,
         factorialAnovaTutor, ancovaTutor,
 }) {
+    useEffect(() => {
+        const openReport = event => {
+            if (event.detail === 'generate_apa_report' && ['res_one_way_anova', 'res_anova'].includes(currentStepId)) setActiveExplanation({ id: 'anova-report' });
+        };
+        window.addEventListener('anovaTutorAction', openReport);
+        return () => window.removeEventListener('anovaTutorAction', openReport);
+    }, [currentStepId, setActiveExplanation]);
+    const explanation = activeExplanation?.id === 'anova-report' ? {
+        title: 'ANOVA Report Builder', body: 'This report follows the current lesson inputs and significance level.',
+        content: <AnovaReportContent result={currentStats} darkMode={darkMode} />,
+    } : activeExplanation;
     return (<>
     {aiModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -34,25 +47,9 @@ export default function AppOverlays({
         </div>
     )}
 
-    {activeExplanation && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[11000] flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div className={`rounded-2xl shadow-2xl max-w-lg w-full p-6 border animate-in zoom-in-95 duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className={`font-bold text-lg ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{activeExplanation.title}</h3>
-                    <button onClick={() => setActiveExplanation(null)} className={`p-1 rounded-full hover:bg-slate-800 transition-colors ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}><X size={18} /></button>
-                </div>
-                <div className={`text-sm leading-relaxed max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                    <p className="mb-4">{activeExplanation.body}</p>
-                    {activeExplanation.content && (
-                        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                            {activeExplanation.content}
-                        </div>
-                    )}
-                </div>
-                <button onClick={() => setActiveExplanation(null)} className={`mt-6 w-full py-3 rounded-xl font-bold transition-all ${darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>Close</button>
-            </div>
-        </div>
-    )}
+    <Suspense fallback={null}>
+        {explanation && <TutorExplanationModal explanation={explanation} darkMode={darkMode} onClose={() => setActiveExplanation(null)} />}
+    </Suspense>
 
     {showHistory && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[11000] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -136,23 +133,7 @@ export default function AppOverlays({
                         title: "Numeric Example: Scaling",
                         body: "If group size nⱼ = 10 and the mean difference (x̄ⱼ - x̄_grand)² = 4, that group contributes 10 * 4 = 40 to the SS_between.",
                     },
-                    'generate_apa_report': {
-                        title: "ANOVA Report Builder",
-                        body: "Based on your current data, here is an APA-formatted sentence for your results section:",
-                        content: (
-                            <div className="space-y-3">
-                                <p className={`font-mono text-[13px] leading-relaxed p-4 rounded-lg italic ${darkMode ? 'bg-slate-900 border-slate-800 text-indigo-300' : 'bg-white border-slate-200 text-indigo-700 shadow-sm'}`}>
-                                    {(() => {
-                                        if (!currentStats) return "Add more data to generate a report.";
-                                        const { F, dfB, dfW, p, eta2 } = currentStats;
-                                        const sigText = p < .05 ? "was statistically significant" : "was not statistically significant";
-                                        return `A one-way ANOVA revealed that the effect of group membership ${sigText}, F(${dfB}, ${dfW}) = ${F.toFixed(2)}, p ${p < .001 ? '< .001' : '= ' + p.toFixed(3)}, η² = ${eta2.toFixed(2)}.`;
-                                    })()}
-                                </p>
-                                <p className="text-[10px] opacity-60">Tip: Report F with both degrees of freedom in parentheses.</p>
-                            </div>
-                        )
-                    },
+                    'generate_apa_report': { id: 'anova-report' },
                     'show_f1_example': {
                         title: "F ≈ 1 Example",
                         body: "If between-group variance is 20 and within-group variance is 20, F = 20/20 = 1.0. This happens when the treatment has no more effect than random chance.",
